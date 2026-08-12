@@ -301,8 +301,8 @@ Member functions of `std::vector` are constexpr.
 - 包裹范围必须等于 `immutable.inlineRevisions[].text` 对应的精确文本范围。
 - 不得把行内版本提升为整个段落的 `<Revision>`。
 - 不得把版本压平为普通的 `(since C++17)` 文本。
-- 仅有版本、没有文本内容的成员条目标记可以使用空的 `<InlineRevision since="C++23" />`。
-- 行内版本的正文范围必须有连续的浅色覆盖，以准确显示版本作用域，例如 `and lambda-expressions,` 整段均被覆盖。
+- 仅有版本、没有文本内容的成员条目标记可以使用空的 `<InlineRevision since="C++23" />`。这类空标记只显示 `since C++xx` 胶囊；前面的条目名称不得出现正文覆盖。典型例子包括 `insert_range` 和 `erase(std::vector), erase_if(std::vector)`。
+- 非空 `<InlineRevision>` 的正文范围必须有连续的浅色覆盖，以准确显示版本作用域，例如正文列中的 `and lambda-expressions,` 整段均被覆盖。
 - 正文覆盖与 `since C++xx` 标签必须是两个独立视觉层：覆盖不得延伸到、包住或破坏已有的版本胶囊；胶囊仍保持单层。
 - 胶囊内文字必须居中，不得再套另一层覆盖。
 
@@ -691,7 +691,7 @@ Member functions of `std::vector` are constexpr.
 
 - [ ] 声明编号居中。
 - [ ] 声明版本在右侧胶囊内居中。
-- [ ] 行内版本正文范围完整覆盖；`since C++xx` 仍是独立的单层居中胶囊，正文覆盖不侵入胶囊。
+- [ ] 表格/描述列表中的空行内版本只显示胶囊，前置条目名不覆盖；正文中的非空行内版本仍完整覆盖其正文范围。
 - [ ] 两列语义列表字号、字重、列宽和分隔线统一。
 - [ ] 左右列代码字体、字号、行高和粗细一致。
 - [ ] 行内代码为绿色平面文字，无框、背景、圆角或阴影。
