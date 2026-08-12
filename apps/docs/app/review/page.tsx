@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, CircleAlert, GitCompareArrows } from "lucide-react";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const sampleRows = [
   { source: "0000", kind: "paragraph", state: "covered" },
   { source: "0001", kind: "paragraph", state: "covered" },
@@ -32,7 +34,7 @@ export default function ReviewPage() {
               <span className="font-mono text-[11px] text-fd-muted-foreground">English corpus</span>
             </div>
             <div className="p-3">
-              <iframe className="h-[calc(100vh-8.5rem)] min-h-[38rem] w-full border border-fd-border bg-white" src="/source/default_arguments.html" title="Original cppreference page" />
+              <iframe className="h-[calc(100vh-8.5rem)] min-h-[38rem] w-full border border-fd-border bg-white" src={`${basePath}/source/default_arguments.html`} title="Original cppreference page" />
               <p className="mt-2 text-[11px] text-fd-muted-foreground">Scroll this pane independently. Section synchronization is the next review-layer milestone.</p>
             </div>
           </article>
@@ -43,7 +45,7 @@ export default function ReviewPage() {
               <span className="font-mono text-[11px] text-fd-muted-foreground">Fumadocs MDX</span>
             </div>
             <div className="p-3">
-              <iframe className="h-[calc(100vh-8.5rem)] min-h-[38rem] w-full border border-fd-border bg-fd-background" src="/docs/cpp/language/default-arguments" title="Migrated documentation page" />
+              <iframe className="h-[calc(100vh-8.5rem)] min-h-[38rem] w-full border border-fd-border bg-fd-background" src={`${basePath}/docs/cpp/language/default-arguments/`} title="Migrated documentation page" />
               <p className="mt-2 text-[11px] text-fd-muted-foreground">Rendered output includes its production navigation and responsive layout.</p>
             </div>
           </article>
