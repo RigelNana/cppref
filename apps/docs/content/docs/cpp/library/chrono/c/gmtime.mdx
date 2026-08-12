@@ -1,0 +1,82 @@
+---
+title: "std::gmtime"
+description: "Converts given time since epoch as std::time_t value into calendar time, expressed in Coordinated Universal Time (UTC)."
+source_url: "https://en.cppreference.com/w/cpp/chrono/c/gmtime"
+language: "C++"
+---
+
+{/* source:cpp-chrono-c-gmtime:0000 */}
+<DeclarationDoc>
+Defined in header [`<ctime>`](/docs/cpp/library/headers/ctime)
+
+  <Declaration language="cpp" code={`std::tm* gmtime( const std::time_t* time );`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-c-gmtime:0001 */}
+Converts given time since epoch as [`std::time_t`](/docs/cpp/library/chrono/c/time_t) value into calendar time, expressed in Coordinated Universal Time (UTC).
+
+## Parameters
+
+{/* source:cpp-chrono-c-gmtime:0002 */}
+<ParameterList>
+  <Parameter name="time">pointer to a time_t object to convert</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-chrono-c-gmtime:0003 */}
+Pointer to a static internal [`std::tm`](/docs/cpp/library/chrono/c/tm) object on success, or null pointer otherwise. The structure may be shared between `std::gmtime`, [`std::localtime`](/docs/cpp/library/chrono/c/localtime), and [`std::ctime`](/docs/cpp/library/chrono/c/ctime) and may be overwritten on each invocation.
+
+## Notes
+
+{/* source:cpp-chrono-c-gmtime:0004 */}
+This function may not be thread-safe.
+
+{/* source:cpp-chrono-c-gmtime:0005 */}
+POSIX requires that this function sets [`errno`](/docs/cpp/library/error/errno) to [`EOVERFLOW`](/docs/cpp/library/error/errno_macros) if it fails because the argument is too large.
+
+## Example
+
+{/* source:cpp-chrono-c-gmtime:0006 */}
+```cpp
+#include <ctime>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
+int main()
+{
+    setenv("TZ", "/usr/share/zoneinfo/Europe/London", 1); // POSIX-specific
+
+    std::tm tm{}; // get_time does not set all fields hence {}
+    tm.tm_year = 2020 - 1900; // 2020
+    tm.tm_mon = 7 - 1; // July
+    tm.tm_mday = 15; // 15th
+    tm.tm_hour = 10;
+    tm.tm_min = 15;
+    tm.tm_isdst = 1; // Daylight saving in London
+    std::time_t t = std::mktime(&tm); 
+
+    std::cout << "UTC:   " << std::put_time(std::gmtime(&t), "%c %Z") << '\n';
+    std::cout << "local: " << std::put_time(std::localtime(&t), "%c %Z") << '\n';
+}
+```
+
+Possible output:
+
+```text
+UTC:   Wed Jul 15 09:15:00 2020 GMT
+local: Wed Jul 15 10:15:00 2020 BST
+```
+
+## See also
+
+{/* source:cpp-chrono-c-gmtime:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`localtime`](/docs/cpp/library/chrono/c/localtime)</DescriptionTerm>
+    <DescriptionBody>converts time since epoch to calendar time expressed as local time (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/chrono/gmtime) for `gmtime`

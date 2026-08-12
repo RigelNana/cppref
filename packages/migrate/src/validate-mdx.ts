@@ -4,16 +4,51 @@ import type { ValidationIssue, ValidationReport } from "./validate.ts";
 const sourceMarkerPattern = /\{\/\*\s*source:([^*]+?)\s*\*\/\}/gu;
 const forbiddenPattern = /<(?:SourceHtml|script|style)\b|dangerouslySetInnerHTML/gu;
 
+/**
+ * Normalization must be context-independent: the same source text appears
+ * both as a bare immutable string (e.g. `immutable.code`) and embedded in
+ * MDX syntax (fenced blocks, inline code, JSX props such as
+ * `<Declaration code={...}>`). Any syntax-dependent rewriting of `<`/`>`
+ * would normalize those two occurrences differently, so tag-like runs are
+ * left untouched and only punctuation that MDX itself inserts (backticks,
+ * brackets, pipes, stars) is removed. This keeps `std::ratio<1, 30>>` and
+ * `a << b` intact on both sides.
+ */
 function normalize(value: string): string {
   return value
     .normalize("NFKC")
     .replace(/\\[<>{}]/gu, (value) => value.slice(1))
     .replace(/&(?:lt|gt|amp|quot);/gu, (entity) => ({ "&lt;": "<", "&gt;": ">", "&amp;": "&", "&quot;": "\"" })[entity]!)
-    .replace(/<[^>]+>/gu, " ")
     .replace(/\{["']\s+["']\}/gu, " ")
-    .replace(/`|\*|_|#|\[|\]|\(|\)|\|/gu, " ")
+    .replace(/[\u200b-\u200d\ufeff]/gu, "")
+    .replace(/`|\*|_|#|\[|\]|\(|\)|\||,/gu, " ")
     .replace(/\s+/gu, "")
     .trim();
+}
+
+/**
+ * Visible text must be covered by the MDX as a token multiset rather than a
+ * single contiguous normalized substring: semantic components legitimately
+ * re-emit facts through props (`<DefectReport kind="lwg" id={69} .../>`),
+ * and inline markers (`<InlineRevision since="C++11" />`) insert syntax
+ * between the source's adjacent words. Tokenizing the NFKC-normalized raw
+ * text on non-alphanumeric runs treats MDX syntax characters as separators,
+ * so `duration_cast(C++11)` and `` [`duration_cast`](/docs/...) ``
+ * `<InlineRevision since="C++11" />` yield the same token multiset.
+ * Checking every word of the visible text still catches omissions and
+ * invented content.
+ */
+function containsTokens(container: string, required: string): boolean {
+  const counts = new Map<string, number>();
+  for (const token of container.normalize("NFKC").split(/[^A-Za-z0-9]+/u).filter(Boolean)) {
+    counts.set(token, (counts.get(token) ?? 0) + 1);
+  }
+  for (const token of required.normalize("NFKC").split(/[^A-Za-z0-9]+/u).filter(Boolean)) {
+    const remaining = counts.get(token) ?? 0;
+    if (remaining <= 0) return false;
+    counts.set(token, remaining - 1);
+  }
+  return true;
 }
 
 function compact(value: string): string {
@@ -85,7 +120,7 @@ export function validateDirectMdx(source: LosslessPage, mdx: string): Validation
         issues.push({ severity: "error", code: "missing-revision", sourceId: block.sourceId, message: `Revision marker ${revision} from ${block.sourceId} is missing.` });
       }
     }
-    if (block.visibleText && !compactMdx.includes(compact(block.visibleText))) {
+    if (block.visibleText && !containsTokens(mdx, block.visibleText)) {
       issues.push({ severity: "error", code: "missing-source", sourceId: block.sourceId, message: `Visible text from ${block.sourceId} is not represented in MDX.` });
     }
   }

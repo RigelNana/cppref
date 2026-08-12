@@ -1,0 +1,111 @@
+---
+title: "std::chrono::operator<< (std::chrono::duration)"
+description: "Inserts a textual representation of d into os."
+source_url: "https://en.cppreference.com/w/cpp/chrono/duration/operator_ltlt"
+language: "C++"
+---
+
+{/* source:cpp-chrono-duration-operator-ltlt:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration language="cpp" since="C++20" code={`template<
+    class CharT,
+    class Traits,
+    class Rep,
+    class Period
+> std::basic_ostream<CharT, Traits>&
+    operator<<( std::basic_ostream<CharT, Traits>& os,
+
+                const std::chrono::duration<Rep, Period>& d );`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-duration-operator-ltlt:0001 */}
+Inserts a textual representation of `d` into `os`.
+
+{/* source:cpp-chrono-duration-operator-ltlt:0002 */}
+Behaves as if it was implemented as
+
+{/* source:cpp-chrono-duration-operator-ltlt:0003 */}
+```cpp
+std::basic_ostringstream<CharT, Traits> s;
+s.flags(os.flags());
+s.imbue(os.getloc());
+s.precision(os.precision());
+s << d.count() << units_suffix; // see below
+return os << s.str();
+```
+
+{/* source:cpp-chrono-duration-operator-ltlt:0004 */}
+In other words, the stream flags, locale, and precision are determined by the stream, but any padding are determined using the entire output string.
+
+{/* source:cpp-chrono-duration-operator-ltlt:0005 */}
+The `units_suffix` is determined based on `Period::type` according to the following table.
+
+{/* source:cpp-chrono-duration-operator-ltlt:0006 */}
+| `Period::type` | Suffix |
+| --- | --- |
+| `std::atto` | `as` |
+| [`std::femto`](/docs/cpp/library/meta/ratio/ratio) | `fs` |
+| [`std::pico`](/docs/cpp/library/meta/ratio/ratio) | `ps` |
+| [`std::nano`](/docs/cpp/library/meta/ratio/ratio) | `ns` |
+| [`std::micro`](/docs/cpp/library/meta/ratio/ratio) | `µs` (U+00B5) or `us`, it is implementation-defined which one is used |
+| [`std::milli`](/docs/cpp/library/meta/ratio/ratio) | `ms` |
+| [`std::centi`](/docs/cpp/library/meta/ratio/ratio) | `cs` |
+| [`std::deci`](/docs/cpp/library/meta/ratio/ratio) | `ds` |
+| [`std::ratio<1>`](/docs/cpp/library/meta/ratio/ratio) | `s` |
+| [`std::deca`](/docs/cpp/library/meta/ratio/ratio) | `das` |
+| [`std::hecto`](/docs/cpp/library/meta/ratio/ratio) | `hs` |
+| [`std::kilo`](/docs/cpp/library/meta/ratio/ratio) | `ks` |
+| [`std::mega`](/docs/cpp/library/meta/ratio/ratio) | `Ms` |
+| [`std::giga`](/docs/cpp/library/meta/ratio/ratio) | `Gs` |
+| [`std::tera`](/docs/cpp/library/meta/ratio/ratio) | `Ts` |
+| [`std::peta`](/docs/cpp/library/meta/ratio/ratio) | `Ps` |
+| [`std::exa`](/docs/cpp/library/meta/ratio/ratio) | `Es` |
+| [`std::ratio<60>`](/docs/cpp/library/meta/ratio/ratio) | `min` |
+| [`std::ratio<3600>`](/docs/cpp/library/meta/ratio/ratio) | `h` |
+| [`std::ratio<86400>`](/docs/cpp/library/meta/ratio/ratio) | `d` |
+| None of the above, and `Period::type::den == 1` | `[num]s` |
+| None of the above | `[num/den]s` |
+
+{/* source:cpp-chrono-duration-operator-ltlt:0007 */}
+For the last two rows of the table, `num` and `den` in the suffix are `Period::type::num` and `Period::type::den` formatted as a decimal number with no leading zeroes, respectively.
+
+## Return value
+
+{/* source:cpp-chrono-duration-operator-ltlt:0008 */}
+A reference to the stream, i.e., `os`.
+
+## Example
+
+{/* source:cpp-chrono-duration-operator-ltlt:0009 */}
+This example shows the output of `std::chrono::operator<<` when given a duration:
+
+```cpp
+#include <chrono>
+#include <iostream>
+using namespace std::chrono_literals;
+ 
+int main()
+{
+    constexpr auto duration = 123ms;
+    std::cout << duration << '\n';
+}
+```
+
+Output:
+
+```text
+123ms
+```
+
+## See also
+
+{/* source:cpp-chrono-duration-operator-ltlt:0010 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`format`](/docs/cpp/library/text/format/format) <InlineRevision since="C++20" /></DescriptionTerm><DescriptionBody>stores formatted representation of the arguments in a new string (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`std::formatter<std::chrono::duration>`](/docs/cpp/library/chrono/duration/formatter) <InlineRevision since="C++20" /></DescriptionTerm><DescriptionBody>formatting support for duration (class template specialization)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<`, `operator>>`](/docs/cpp/library/string/basic_string/operator_ltltgtgt) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>performs stream input and output on strings (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`to_string`](/docs/cpp/library/string/basic_string/to_string)</DescriptionTerm><DescriptionBody>converts an integral or floating-point value to string (function)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`to_wstring`](/docs/cpp/library/string/basic_string/to_wstring)</DescriptionTerm><DescriptionBody>converts an integral or floating-point value to wstring (function)</DescriptionBody></DescriptionItem>
+</DescriptionList>

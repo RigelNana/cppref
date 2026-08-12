@@ -1,0 +1,113 @@
+---
+title: "std::chrono::is_am, std::chrono::is_pm, std::chrono::make12, std::chrono::make24"
+description: "These functions aid in translating between a 12-hour format time of day, and a 24-hour format time of day."
+source_url: "https://en.cppreference.com/w/cpp/chrono/hour_fun"
+language: "C++"
+---
+
+{/* source:cpp-chrono-hour-fun:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+<Declaration id="1" language="cpp" since="C++20" code={`constexpr bool is_am( const std::chrono::hours& h ) noexcept;`} />
+<Declaration id="2" language="cpp" since="C++20" code={`constexpr bool is_pm( const std::chrono::hours& h ) noexcept;`} />
+<Declaration id="3" language="cpp" since="C++20" code={`constexpr std::chrono::hours make12( const std::chrono::hours& h ) noexcept;`} />
+<Declaration id="4" language="cpp" since="C++20" code={`constexpr std::chrono::hours make24( const std::chrono::hours& h,
+                                     bool is_pm ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-hour-fun:0001 */}
+These functions aid in translating between a 12-hour format time of day, and a 24-hour format time of day.
+
+{/* source:cpp-chrono-hour-fun:0002 */}
+1. Detects whether the 24-hour format time is a.m. (ante meridiem, before midday).
+
+{/* source:cpp-chrono-hour-fun:0003 */}
+2. Detects whether the 24-hour format time is p.m. (post meridiem, after midday).
+
+{/* source:cpp-chrono-hour-fun:0004 */}
+3. Returns the 12-hour equivalent of a 24-hour format time.
+
+{/* source:cpp-chrono-hour-fun:0005 */}
+4. Returns the 24-hour equivalent of a 12-hour format time `h`, where `is_pm` determines whether the time is p.m.
+
+## Parameters
+
+{/* source:cpp-chrono-hour-fun:0006 */}
+<ParameterList>
+  <Parameter name="h">12-hour or 24-hour format time to detect</Parameter>
+  <Parameter name="is_pm">whether the 12-hour format time is p.m.</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-chrono-hour-fun:0007 */}
+1. `0h <= h && h <= 11h`
+
+{/* source:cpp-chrono-hour-fun:0008 */}
+2. `12h <= h && h <= 23h`
+
+{/* source:cpp-chrono-hour-fun:0009 */}
+3. If `h` is in range `[0h, 23h]`, returns the 12-hour equivalent in range `[1h, 12h]`. Otherwise, the return value is unspecified.
+
+{/* source:cpp-chrono-hour-fun:0010 */}
+4. If `h` is in range `[1h, 12h]`, returns the 24-hour equivalent in range `[0h, 11h]` if `is_pm` is `false`, or in range `[12h, 23h]` otherwise. Otherwise, the return value is unspecified.
+
+## Example
+
+{/* source:cpp-chrono-hour-fun:0011 */}
+```cpp
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <utility>
+ 
+int main()
+{
+    using namespace std::chrono;
+ 
+    static_assert(
+        is_am(10h) &&  is_am(11h) && !is_am(12h) && !is_am(23h) &&
+       !is_pm(10h) && !is_pm(11h) &&  is_pm(12h) &&  is_pm(23h)
+    );
+ 
+    std::cout << "make12():\n";
+ 
+    for (const hours hh : {0h, 1h, 11h, 12h, 13h, 23h})
+    {
+        const hours am{make12(hh)};
+        std::cout << std::setw(2) << hh.count() << "h == "
+                  << std::setw(2) << am.count() << (is_am(hh) ? "h a.m.\n" : "h p.m.\n");
+    }
+ 
+    std::cout << "\nmake24():\n";
+ 
+    using p = std::pair<hours, bool>;
+ 
+    for (const auto& [hh, pm] : {p{1h, 0}, p{12h, 0}, p{1h, 1}, p{12h, 1}})
+    {
+        std::cout << std::setw(2) << hh.count()
+                  << (pm ? "h p.m." : "h a.m.")
+                  << " == " << std::setw(2)
+                  << make24(hh, pm).count() << "h\n";
+    }
+}
+```
+
+Output:
+
+```text
+make12():
+ 0h == 12h a.m.
+ 1h ==  1h a.m.
+11h == 11h a.m.
+12h == 12h p.m.
+13h ==  1h p.m.
+23h == 11h p.m.
+ 
+make24():
+ 1h a.m. ==  1h
+12h a.m. ==  0h
+ 1h p.m. == 13h
+12h p.m. == 12h
+```

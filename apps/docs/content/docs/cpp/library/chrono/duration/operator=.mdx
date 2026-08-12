@@ -1,0 +1,85 @@
+---
+title: "std::chrono::duration<Rep,Period>::operator="
+description: "Assigns the contents of one duration to another."
+source_url: "https://en.cppreference.com/w/cpp/chrono/duration/operator="
+language: "C++"
+---
+
+{/* source:cpp-chrono-duration-operator:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`duration& operator=( const duration &other ) = default;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-duration-operator:0001 */}
+Assigns the contents of one `duration` to another.
+
+## Parameters
+
+{/* source:cpp-chrono-duration-operator:0002 */}
+<ParameterList>
+  <Parameter name="other">`duration` to copy from</Parameter>
+</ParameterList>
+
+## Example
+
+{/* source:cpp-chrono-duration-operator:0003 */}
+```cpp
+#include <chrono>
+#include <iostream>
+
+int main()
+{
+    using namespace std::chrono_literals;
+
+    std::chrono::hours z_hours{};
+    std::chrono::seconds z_seconds{};
+
+    z_hours = 2h; // ok, no conversion needed
+
+    z_seconds = z_hours;
+    // First, the converting ctor is used to create a temporary object of `lhs`s type.
+    // This ctor implicitly invokes the casting function
+    // chrono::duration_cast<std::seconds>(z_hours). The resulting `rhs` rvalue
+    // has the same type as `lhs`, and the `operator=` finally performs the assignment.
+
+    std::cout << "hours: " << z_hours.count() << '\n';
+    std::cout << "seconds: " << z_seconds.count() << '\n';
+
+    z_seconds -= 42s;
+
+//  z_hours = z_seconds; // compile-time error (which is good): incompatible types.
+    // The library avoids the implicit cast to prevent a potential precision loss.
+
+    z_hours = std::chrono::duration_cast<std::chrono::hours>(z_seconds); // ok
+    z_hours = std::chrono::duration_cast<decltype(z_hours)>(z_seconds);  // ditto
+
+    std::cout << "hours: " << z_hours.count() << '\n';
+    std::cout << "seconds: " << z_seconds.count() << '\n';
+
+    std::chrono::duration<double, std::ratio<3600>> z2_hours{};
+
+    z2_hours = z_seconds; // ok, no truncation, implicit cast
+
+    std::cout << "hours: " << z2_hours.count() << '\n';
+}
+```
+
+Output:
+
+```text
+hours: 2
+seconds: 7200
+hours: 1
+seconds: 7158
+hours: 1.98833
+```
+
+## See also
+
+{/* source:cpp-chrono-duration-operator:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/chrono/duration/duration)</DescriptionTerm>
+    <DescriptionBody>constructs new duration (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

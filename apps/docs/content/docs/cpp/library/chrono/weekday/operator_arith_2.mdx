@@ -1,0 +1,91 @@
+---
+title: "std::chrono::operator+, std::chrono::operator- (std::chrono::weekday)"
+description: "Adds or subtracts days from a weekday value."
+source_url: "https://en.cppreference.com/w/cpp/chrono/weekday/operator_arith_2"
+language: "C++"
+---
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr std::chrono::weekday operator+( const std::chrono::weekday& wd,
+                                          const std::chrono::days& d ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr std::chrono::weekday operator+( const std::chrono::days& d,
+                                          const std::chrono::weekday& wd ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr std::chrono::weekday operator-( const std::chrono::weekday& wd,
+                                          const std::chrono::days& d ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`constexpr std::chrono::days operator-( const std::chrono::weekday& wd1,
+                                       const std::chrono::weekday& wd2 ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0001 */}
+1,2) Adds `d.count()` days to `wd`. The weekday value held in the result is computed by first evaluating `static_cast<long long>(wd.c_encoding()) + d.count()` and reducing it modulo 7 to an integer in the range `[0, 6]`.
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0002 */}
+3) Subtracts `d.count()` days from `wd`. Equivalent to `return wd + -d;`.
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0003 */}
+4) If `wd1.ok()` and `wd2.ok()` are both `true`, returns a `std::chrono::days` value `d` such that `d.count()` is in the range `[0, 6]` and `wd2 + d == wd1`. Otherwise the returned value is unspecified.
+
+## Return value
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0004 */}
+1-3) A `std::chrono::weekday` holding a weekday value calculated as described above.
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0005 */}
+4) A `std::chrono::days` representing the distance between `wd1` and `wd2`.
+
+## Notes
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0006 */}
+As long as the computation doesn't overflow, (1-3) always return a valid `weekday` even if `wd.ok()` is `false`.
+
+## Example
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0007 */}
+```cpp
+#include <chrono>
+#include <iostream>
+
+int main()
+{
+    std::cout << std::boolalpha;
+
+    std::chrono::weekday wd{4};
+    wd = wd + std::chrono::days(2);
+    std::cout << (wd == std::chrono::weekday(6)) << ' '
+              << (wd == std::chrono::Saturday) << ' ';
+
+    wd = wd - std::chrono::days(3);
+    std::cout << (wd == std::chrono::weekday(3)) << ' '
+              << (wd == std::chrono::Wednesday) << ' ';
+
+    wd = std::chrono::Tuesday;
+    wd = wd + std::chrono::days{8}; // (((2 + 8) == 10) % 7) == 3;
+    std::cout << (wd == std::chrono::Wednesday) << ' ';
+
+    wd = wd + (std::chrono::Sunday - std::chrono::Thursday); // (3 + 3) == 6
+    std::cout << (wd == std::chrono::Saturday) << '\n';
+}
+```
+
+Output:
+
+```text
+true true true true true true
+```
+
+## See also
+
+{/* source:cpp-chrono-weekday-operator-arith-2:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator--`, `operator--(int)`](/docs/cpp/library/chrono/weekday/operator_inc_dec)</DescriptionTerm>
+    <DescriptionBody>increments or decrements the weekday (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+=`, `operator-=`](/docs/cpp/library/chrono/weekday/operator_arith)</DescriptionTerm>
+    <DescriptionBody>adds or subtracts a number of days (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

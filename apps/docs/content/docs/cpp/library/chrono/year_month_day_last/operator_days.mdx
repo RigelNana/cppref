@@ -1,0 +1,71 @@
+---
+title: "std::chrono::year_month_day_last::operator sys_days, std::chrono::year_month_day_last::operator local_days"
+description: "Converts *this to a std::chrono::time_point representing the same date as this year_month_day_last."
+source_url: "https://en.cppreference.com/w/cpp/chrono/year_month_day_last/operator_days"
+language: "C++"
+---
+
+{/* source:cpp-chrono-year-month-day-last-operator-days:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr operator std::chrono::sys_days() const noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit operator std::chrono::local_days() const noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-year-month-day-last-operator-days:0001 */}
+Converts `*this` to a [`std::chrono::time_point`](/docs/cpp/library/chrono/time_point) representing the same date as this `year_month_day_last`. This is equivalent to composing a `year_month_day` from `year()`, `month()` and `day()` and converting that `year_month_day` to the destination type.
+
+{/* source:cpp-chrono-year-month-day-last-operator-days:0002 */}
+1. Equivalent to `std::chrono::sys_days(year()/month()/day())`.
+
+{/* source:cpp-chrono-year-month-day-last-operator-days:0003 */}
+2. Equivalent to `std::chrono::local_days(year()/month()/day())`.
+
+## Example
+
+{/* source:cpp-chrono-year-month-day-last-operator-days:0004 */}
+```cpp
+#include <array>
+#include <chrono>
+#include <iostream>
+#include <string_view>
+using namespace std::chrono;
+using namespace std::literals;
+
+int main()
+{
+    constexpr std::chrono::year y{2023y};
+    constexpr std::array quarters{"1st"sv, "2nd"sv, "3rd"sv, "4th"sv};
+    constexpr auto mq{12 / 4}; // months per quarter
+
+    std::cout << "In year " << static_cast<int>(y) << '\n';
+    for (auto q = 1; q < 5; ++q)
+    {
+        const auto ls = y / std::chrono::month(q * mq) / Sunday[last];
+        const auto ld = y / std::chrono::month(q * mq) / last;
+        // subtract last Sunday from last day for day of week
+        const auto index = (sys_days(ld) - sys_days(ls)).count();
+        std::cout << "The " << quarters[q - 1] << " quarter ends on a "
+                  << std::chrono::weekday(index) << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+In year 2023
+The 1st quarter ends on a Fri
+The 2nd quarter ends on a Fri
+The 3rd quarter ends on a Sat
+The 4th quarter ends on a Sun
+```
+
+## See also
+
+{/* source:cpp-chrono-year-month-day-last-operator-days:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator sys_days` `operator local_days`](/docs/cpp/library/chrono/year_month_day/operator_days)</DescriptionTerm>
+    <DescriptionBody>converts to a [`std::chrono::time_point`](/docs/cpp/library/chrono/time_point) (public member function of `std::chrono::year_month_day`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

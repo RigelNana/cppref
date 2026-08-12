@@ -160,11 +160,12 @@ export function DefectReportList({ children }: PropsWithChildren) {
   return <div className="cpp-defect-list">{children}</div>;
 }
 
-export function DefectReport({ kind, id, standard, children }: PropsWithChildren<{ kind: "cwg" | "lwg"; id: number; standard: string }>) {
+export function DefectReport({ kind, id, standard, children }: PropsWithChildren<{ kind: "cwg" | "lwg" | "paper"; id: number | string; standard: string }>) {
+  const label = kind === "paper" ? String(id) : `${kind.toUpperCase()} ${id}`;
   return (
     <article className="cpp-defect-report">
       <div className="cpp-defect-report__meta">
-        <strong>{kind.toUpperCase()} {id}</strong>
+        {kind === "paper" ? <PaperLink paper={String(id)}>{label}</PaperLink> : <strong>{label}</strong>}
         <div>{standard}</div>
       </div>
       <div className="cpp-defect-report__change">{children}</div>

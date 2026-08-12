@@ -488,10 +488,20 @@ Member functions of `std::vector` are constexpr.
 </DefectReportList>
 ```
 
+WG21 paper 缺陷报告（如 `P2372R3`）使用同一结构，`kind="paper"`、`id` 传完整标签（含 `P` 前缀和修订号），渲染为 wg21.link 链接：
+
+```mdx
+<DefectReport kind="paper" id="P2372R3" standard="C++20">
+  <PublishedBehavior>the given locale was used by default</PublishedBehavior>
+  <CorrectedBehavior>`L` is needed to use the given locale</CorrectedBehavior>
+</DefectReport>
+```
+
 规则：
 
-- `kind` 只能来自源数据，当前为 `cwg` 或 `lwg`。
-- `id`、`standard` 不得修改。
+- `kind` 只能来自源数据，当前为 `cwg`、`lwg` 或 `paper`。
+- `id`、`standard` 不得修改；`paper` 的 `id` 必须包含 `P` 前缀与修订号。
+- 标签单元格（DR 列）和 Applied to 列是结构性 chrome，提取器已从可见文本与链接中排除；kind/id/standard 从 block 的 `html` 读取。
 - 每个报告必须同时保留 Published 和 Corrected。
 - 保持报告顺序。
 - Published/Corrected 内容不得概括。

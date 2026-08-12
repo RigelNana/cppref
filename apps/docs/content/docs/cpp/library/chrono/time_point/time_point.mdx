@@ -1,0 +1,89 @@
+---
+title: "std::chrono::time_point<Clock,Duration>::time_point"
+description: "Constructs a new time_point from one of several optional data sources."
+source_url: "https://en.cppreference.com/w/cpp/chrono/time_point/time_point"
+language: "C++"
+---
+
+{/* source:cpp-chrono-time-point-time-point:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`time_point();`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`explicit time_point( const duration& d );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class Duration2 >
+time_point( const time_point<Clock, Duration2>& t );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-chrono-time-point-time-point:0001 */}
+Constructs a new `time_point` from one of several optional data sources.
+
+{/* source:cpp-chrono-time-point-time-point:0002 */}
+1) Default constructor, creates a `time_point` representing the `Clock`'s epoch (i.e., [`time_since_epoch()`](/docs/cpp/library/chrono/time_point/time_since_epoch) is zero).
+
+{/* source:cpp-chrono-time-point-time-point:0003 */}
+2) Constructs a `time_point` at `Clock`'s epoch plus `d`.
+
+{/* source:cpp-chrono-time-point-time-point:0004 */}
+3) Constructs a `time_point` by converting `t` to `duration`. This constructor only participates in overload resolution if `Duration2` is implicitly convertible to `duration`.
+
+## Parameters
+
+{/* source:cpp-chrono-time-point-time-point:0005 */}
+<ParameterList>
+  <Parameter name="d">a `duration` to copy from</Parameter>
+  <Parameter name="t">a `time_point` to convert from</Parameter>
+</ParameterList>
+
+## Example
+
+{/* source:cpp-chrono-time-point-time-point:0006 */}
+```cpp
+#include <chrono>
+#include <iostream>
+
+using Clock = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
+
+void print_ms(const TimePoint& point)
+{
+    using Ms = std::chrono::milliseconds;
+    const Clock::duration since_epoch = point.time_since_epoch();
+    std::cout << std::chrono::duration_cast<Ms>(since_epoch) << '\n';
+}
+
+int main()
+{
+    const TimePoint default_value = TimePoint(); // (1)
+    print_ms(default_value); // 0ms
+
+    const Clock::duration duration_4_seconds = std::chrono::seconds(4);
+    const TimePoint time_point_4_seconds(duration_4_seconds); // (2)
+    // 4 seconds from start of epoch
+    print_ms(time_point_4_seconds); // 4000ms
+
+    const TimePoint time_point_now = Clock::now(); // (3)
+    print_ms(time_point_now); // 212178842ms
+}
+```
+
+Possible output:
+
+```text
+0ms
+4000ms
+212178842ms
+```
+
+## See also
+
+{/* source:cpp-chrono-time-point-time-point:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/chrono/duration/duration)</DescriptionTerm>
+    <DescriptionBody>constructs new duration (public member function of `std::chrono::duration<Rep,Period>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`duration_cast`](/docs/cpp/library/chrono/duration/duration_cast) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, with a different tick interval (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

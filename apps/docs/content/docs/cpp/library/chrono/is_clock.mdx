@@ -1,0 +1,134 @@
+---
+title: "std::chrono::is_clock"
+description: "If T satisfies the Clock requirements, provides the member constant value equal true. For any other type, value is false."
+source_url: "https://en.cppreference.com/w/cpp/chrono/is_clock"
+language: "C++"
+---
+
+{/* source:cpp-chrono-is-clock:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+struct is_clock;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-is-clock:0001 */}
+If `T` satisfies the [Clock](/docs/cpp/library/named_req/Clock) requirements, provides the member constant `value` equal `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-chrono-is-clock:0002 */}
+For the purpose of this trait, the extent to which an implementation determines that a type cannot meet the Clock requirements is unspecified, except that a minimum `T` shall not qualify as a Clock unless it meets all following conditions:
+
+{/* source:cpp-chrono-is-clock:0003 */}
+Each of the following [qualified identifiers](/docs/cpp/language/basic_concepts/name#Qualified_identifiers) is valid and denotes a type:
+
+{/* source:cpp-chrono-is-clock:0004 */}
+- `T::rep`
+- `T::period`
+- `T::duration`
+- `T::time_point`
+
+{/* source:cpp-chrono-is-clock:0005 */}
+Each of the following expressions is well-formed when treated as an [unevaluated operand](/docs/cpp/language/expressions#Potentially-evaluated_expressions):
+
+{/* source:cpp-chrono-is-clock:0006 */}
+- `T::is_steady`
+- `T::now()`
+
+{/* source:cpp-chrono-is-clock:0007 */}
+If the program adds specializations for `std::is_clock` or `std::is_clock_v`, the behavior is undefined.
+
+## Template parameters
+
+{/* source:cpp-chrono-is-clock:0008 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+## Helper variable template
+
+{/* source:cpp-chrono-is-clock:0009 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+constexpr bool is_clock_v = is_clock<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-is-clock:0010 */}
+#### Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+##### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` satisfies the [Clock](/docs/cpp/library/named_req/Clock) requirements, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()` <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>[`std::integral_constant<bool, value>`](/docs/cpp/library/meta/integral_constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Possible implementation
+
+{/* source:cpp-chrono-is-clock:0011 */}
+```cpp
+template<class>
+struct is_clock : std::false_type {};
+
+template<class T>
+    requires
+        requires
+        {
+            typename T::rep;
+            typename T::period;
+            typename T::duration;
+            typename T::time_point;
+            T::is_steady; // type is not checked
+            T::now();     // return type is not checked
+        }
+struct is_clock<T> : std::true_type {};
+```
+
+## Notes
+
+{/* source:cpp-chrono-is-clock:0012 */}
+If `T` otherwise meets the Clock requirements, but `T::is_steady` is not of type `const bool`, or `T::now()` is not of type `T::time_point`, the result of `is_clock_v<T>` is unspecified.
+
+## Example
+
+{/* source:cpp-chrono-is-clock:0013 */}
+```cpp
+#include <chrono>
+#include <ratio>
+
+static_assert
+(
+    std::chrono::is_clock_v<std::chrono::utc_clock> and
+    not std::chrono::is_clock_v<std::chrono::duration<int, std::exa>>
+);
+
+int main() {}
+```

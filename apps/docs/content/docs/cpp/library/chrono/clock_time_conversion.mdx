@@ -1,0 +1,166 @@
+---
+title: "std::chrono::clock_time_conversion"
+description: "std::chrono::clock_time_conversion is a trait that specifies how to convert a std::chrono::time_point of the Source clock to that of the Dest clock."
+source_url: "https://en.cppreference.com/w/cpp/chrono/clock_time_conversion"
+language: "C++"
+---
+
+{/* source:cpp-chrono-clock-time-conversion:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration language="cpp" since="C++20" code={`template< class Dest, class Source >
+struct clock_time_conversion {};`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-clock-time-conversion:0001 */}
+`std::chrono::clock_time_conversion` is a trait that specifies how to convert a [`std::chrono::time_point`](/docs/cpp/library/chrono/time_point) of the `Source` clock to that of the `Dest` clock. It does so by providing a const-callable `operator()` that accepts an argument of type `std::chrono::time_point<Source, Duration>` and returns a `std::chrono::time_point<Dest, OtherDuration>` that represents an equivalent point in time. The duration of the returned time point is computed from the source duration in a manner that varies for each specialization. `clock_time_conversion` is normally only used indirectly, via `std::chrono::clock_cast`.
+
+{/* source:cpp-chrono-clock-time-conversion:0002 */}
+A program may specialize `clock_time_conversion` if at least one of the template parameters is a user-defined clock type.
+
+{/* source:cpp-chrono-clock-time-conversion:0003 */}
+The primary template is an empty struct. The standard defines the following specializations:
+
+{/* source:cpp-chrono-clock-time-conversion:0004 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class Clock >
+struct clock_time_conversion<Clock, Clock>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template<>
+struct clock_time_conversion<std::chrono::system_clock, std::chrono::system_clock>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template<>
+struct clock_time_conversion<std::chrono::utc_clock, std::chrono::utc_clock>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template<>
+struct clock_time_conversion<std::chrono::system_clock, std::chrono::utc_clock>;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template<>
+struct clock_time_conversion<std::chrono::utc_clock, std::chrono::system_clock>;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class Clock >
+struct clock_time_conversion<Clock, std::chrono::system_clock>;`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class Clock >
+struct clock_time_conversion<std::chrono::system_clock, Clock>;`} />
+  <Declaration id="8" language="cpp" since="C++20" code={`template< class Clock >
+struct clock_time_conversion<Clock, std::chrono::utc_clock>;`} />
+  <Declaration id="9" language="cpp" since="C++20" code={`template< class Clock >
+struct clock_time_conversion<std::chrono::utc_clock, Clock>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-clock-time-conversion:0005 */}
+1-3) Identity conversion: `operator()` returns a copy of the argument.
+
+{/* source:cpp-chrono-clock-time-conversion:0006 */}
+4,5) Conversions between `std::chrono::sys_time` and `std::chrono::utc_time`: `operator()` calls `std::chrono::utc_clock::to_sys` and `std::chrono::utc_clock::from_sys`, respectively.
+
+{/* source:cpp-chrono-clock-time-conversion:0007 */}
+6,7) Conversions to and from `std::chrono::sys_time` when `Clock` supports `from_sys` and `to_sys`: `operator()` calls `Clock::to_sys` and `Clock::from_sys`, respectively.
+
+{/* source:cpp-chrono-clock-time-conversion:0008 */}
+8,9) Conversions to and from `std::chrono::utc_time` when `Clock` supports `from_utc` and `to_utc`: `operator()` calls `Clock::to_utc` and `Clock::from_utc`, respectively.
+
+## Member functions
+
+{/* source:cpp-chrono-clock-time-conversion:0009 */}
+Each specialization has an implicitly-declared default constructor, copy constructor, move constructor, copy assignment operator, move assignment operator, and destructor.
+
+{/* source:cpp-chrono-clock-time-conversion:0010 */}
+### std::chrono::clock_time_conversion::operator()
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< class Duration >
+std::chrono::time_point<Clock, Duration>
+
+    operator()( const std::chrono::time_point<Clock, Duration>& t ) const;`} />
+  <Declaration id="2" language="cpp" code={`template< class Duration >
+std::chrono::sys_time<Duration>
+
+    operator()( const std::chrono::sys_time<Duration> & t ) const;`} />
+  <Declaration id="3" language="cpp" code={`template< class Duration >
+std::chrono::utc_time<Duration>
+
+    operator()( const std::chrono::utc_time<Duration>& t ) const;`} />
+  <Declaration id="4" language="cpp" code={`template< class Duration >
+std::chrono::sys_time<Duration>
+
+    operator()( const std::chrono::utc_time<Duration>& t ) const;`} />
+  <Declaration id="5" language="cpp" code={`template< class Duration >
+std::chrono::utc_time<Duration>
+
+    operator()( const std::chrono::sys_time<Duration>& t ) const;`} />
+  <Declaration id="6" language="cpp" code={`template< class Duration >
+auto operator()( const std::chrono::sys_time<Duration>& t ) const
+
+    -> decltype(Clock::from_sys(t));`} />
+  <Declaration id="7" language="cpp" code={`template< class Duration >
+auto operator()( const std::chrono::time_point<SourceClock, Duration>& t ) const
+
+    -> decltype(Clock::to_sys(t));`} />
+  <Declaration id="8" language="cpp" code={`template< class Duration >
+auto operator()( const std::chrono::utc_time<Duration>& t ) const
+
+    -> decltype(Clock::from_utc(t));`} />
+  <Declaration id="9" language="cpp" code={`template< class Duration >
+auto operator()( const std::chrono::time_point<Clock, Duration>& t ) const
+
+    -> decltype(Clock::to_utc(t));`} />
+
+  <DeclarationDescription>
+    1. (member of specialization (1))
+    2. (member of specialization (2))
+    3. (member of specialization (3))
+    4. (member of specialization (4))
+    5. (member of specialization (5))
+    6. (member of specialization (6))
+    7. (member of specialization (7))
+    8. (member of specialization (8))
+    9. (member of specialization (9))
+  </DeclarationDescription>
+</DeclarationDoc>
+
+Converts the argument [`std::chrono::time_point`](/docs/cpp/library/chrono/time_point) to the destination clock.
+
+1-3) Identity conversion. Returns `t` unchanged.
+
+4) Returns `std::chrono::utc_clock::to_sys(t)`.
+
+5) Returns `std::chrono::utc_clock::from_sys(t)`.
+
+6) Returns `Clock::from_sys(t)`. This overload participates in overload resolution only if the expression `Clock::from_sys(t)` is well-formed. The program is ill-formed if `Clock::from_sys(t)` does not return `std::chrono::time_point<Clock, Duration>` where `Duration` is some valid specialization of [`std::chrono::duration`](/docs/cpp/library/chrono/duration).
+
+7) Returns `Clock::to_sys(t)`. This overload participates in overload resolution only if the expression `Clock::to_sys(t)` is well-formed. The program is ill-formed if `Clock::to_sys(t)` does not return `std::chrono::sys_time<Duration>` where `Duration` is some valid specialization of [`std::chrono::duration`](/docs/cpp/library/chrono/duration).
+
+8) Returns `Clock::from_utc(t)`. This overload participates in overload resolution only if the expression `Clock::from_utc(t)` is well-formed. The program is ill-formed if `Clock::from_utc(t)` does not return `std::chrono::time_point<Clock, Duration>` where `Duration` is some valid specialization of [`std::chrono::duration`](/docs/cpp/library/chrono/duration).
+
+9) Returns `Clock::to_utc(t)`. This overload participates in overload resolution only if the expression `Clock::to_utc(t)` is well-formed. The program is ill-formed if `Clock::to_utc(t)` does not return `std::chrono::utc_time<Duration>` where `Duration` is some valid specialization of [`std::chrono::duration`](/docs/cpp/library/chrono/duration).
+
+### Parameters
+
+<ParameterList>
+  <Parameter name="t">time point to convert</Parameter>
+</ParameterList>
+
+### Return value
+
+The result of the conversion as described above:
+
+1-3) `t`.
+
+4) `std::chrono::utc_clock::to_sys(t)`.
+
+5) `std::chrono::utc_clock::from_sys(t)`.
+
+6) `Clock::from_sys(t)`.
+
+7) `Clock::to_sys(t)`.
+
+8) `Clock::from_utc(t)`.
+
+9) `Clock::to_utc(t)`.
+
+## See also
+
+{/* source:cpp-chrono-clock-time-conversion:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clock_cast`](/docs/cpp/library/chrono/clock_cast) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>convert time points of one clock to another (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

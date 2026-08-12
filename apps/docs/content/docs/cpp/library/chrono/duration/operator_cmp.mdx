@@ -1,0 +1,129 @@
+---
+title: "operator==,!=,<,<=,>,>=,<=>(std::chrono::duration)"
+description: "Compares two durations. Let CT be std::common_type<std::chrono::duration<Rep1, Period1>, std::chrono::duration<Rep2, Period2>>::type:"
+source_url: "https://en.cppreference.com/w/cpp/chrono/duration/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-chrono-duration-operator-cmp:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+constexpr bool operator==( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                           const std::chrono::duration<Rep2, Period2>& rhs );`} />
+  <Declaration id="2" language="cpp" since="C++11" until="C++20" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+constexpr bool operator!=( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                           const std::chrono::duration<Rep2, Period2>& rhs );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+constexpr bool operator<( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                          const std::chrono::duration<Rep2, Period2>& rhs );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+constexpr bool operator<=( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                           const std::chrono::duration<Rep2, Period2>& rhs );`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+constexpr bool operator>( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                          const std::chrono::duration<Rep2, Period2>& rhs );`} />
+  <Declaration id="6" language="cpp" since="C++11" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+constexpr bool operator>=( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                           const std::chrono::duration<Rep2, Period2>& rhs );`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class Rep1, class Period1, class Rep2, class Period2 >
+    requires std::three_way_comparable<std::common_type_t<Rep1, Rep2>>
+constexpr auto operator<=>( const std::chrono::duration<Rep1, Period1>& lhs,
+
+                            const std::chrono::duration<Rep2, Period2>& rhs );`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-duration-operator-cmp:0001 */}
+Compares two durations. Let `CT` be `std::common_type<std::chrono::duration<Rep1, Period1>, std::chrono::duration<Rep2, Period2>>::type`:
+
+{/* source:cpp-chrono-duration-operator-cmp:0002 */}
+1,2) Checks if `lhs` and `rhs` are equal, i.e. the number of ticks for the type common to both durations are equal.
+
+{/* source:cpp-chrono-duration-operator-cmp:0003 */}
+3-6) Compares `lhs` to `rhs`, i.e. compares the number of ticks for the type common to both durations.
+
+{/* source:cpp-chrono-duration-operator-cmp:0004 */}
+7) Compares `lhs` to `rhs`, i.e. compares the number of ticks for the type common to both durations. The return type is deduced from `CT(lhs).count() <=> CT(rhs).count()`.
+
+{/* source:cpp-chrono-duration-operator-cmp:0005 */}
+<Revision since="C++20">
+The `!=` operator is [synthesized](/docs/cpp/language/expressions/default_comparisons#Other_defaulted_comparison_operators) from `operator==`.
+</Revision>
+
+## Parameters
+
+{/* source:cpp-chrono-duration-operator-cmp:0006 */}
+<ParameterList>
+  <Parameter name="lhs">duration on the left-hand side of the operator</Parameter>
+  <Parameter name="rhs">duration on the right-hand side of the operator</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-chrono-duration-operator-cmp:0007 */}
+1. `CT(lhs).count() == CT(rhs).count()`
+
+{/* source:cpp-chrono-duration-operator-cmp:0008 */}
+2. `!(lhs == rhs)`
+
+{/* source:cpp-chrono-duration-operator-cmp:0009 */}
+3. `CT(lhs).count() < CT(rhs).count()`
+
+{/* source:cpp-chrono-duration-operator-cmp:0010 */}
+4. `!(rhs < lhs)`
+
+{/* source:cpp-chrono-duration-operator-cmp:0011 */}
+5. `rhs < lhs`
+
+{/* source:cpp-chrono-duration-operator-cmp:0012 */}
+6. `!(lhs < rhs)`
+
+{/* source:cpp-chrono-duration-operator-cmp:0013 */}
+7. `CT(lhs).count() <=> CT(rhs).count()`
+
+## Example
+
+{/* source:cpp-chrono-duration-operator-cmp:0014 */}
+```cpp
+#include <chrono>
+#include <iostream>
+
+int main()
+{
+    constexpr auto t1 = std::chrono::seconds(2);
+    constexpr auto t2 = std::chrono::milliseconds(2000);
+
+    if constexpr (t1 == t2)
+        std::cout << t1 << " == " << t2 << '\n';
+    else
+        std::cout << t1 << "!= " << t2 << '\n';
+
+    constexpr auto t3 = std::chrono::seconds(61);
+    constexpr auto t4 = std::chrono::minutes(1);
+
+    if constexpr (t3 > t4)
+        std::cout << t3 << " > " << t4 << '\n';
+    else
+        std::cout << t3 << " <= " << t4 << '\n';
+
+    using namespace std::chrono_literals;
+
+    static_assert(1h == 60min);
+    static_assert(1min == 60s);
+    static_assert(1s == 1'000ms);
+    static_assert(1ms == 1'000us);
+    static_assert(1us == 1'000ns);
+}
+```
+
+Output:
+
+```text
+2s == 2000ms
+61s > 1min
+```

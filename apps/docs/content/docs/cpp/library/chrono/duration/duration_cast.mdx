@@ -1,0 +1,133 @@
+---
+title: "std::chrono::duration_cast"
+description: "Converts a std::chrono::duration to a duration of different type ToDuration."
+source_url: "https://en.cppreference.com/w/cpp/chrono/duration/duration_cast"
+language: "C++"
+---
+
+{/* source:cpp-chrono-duration-duration-cast:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration language="cpp" since="C++11" code={`template< class ToDuration, class Rep, class Period >
+constexpr ToDuration duration_cast( const std::chrono::duration<Rep, Period>& d );`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-duration-duration-cast:0001 */}
+Converts a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) to a duration of different type `ToDuration`.
+
+{/* source:cpp-chrono-duration-duration-cast:0002 */}
+The function only participate in overload resolution if `ToDuration` is a specialization of [`std::chrono::duration`](/docs/cpp/library/chrono/duration).
+
+{/* source:cpp-chrono-duration-duration-cast:0003 */}
+Let
+
+{/* source:cpp-chrono-duration-duration-cast:0004 */}
+- `ToRep` be `typename ToDuration::rep`,
+- `ToPeriod` be `typename ToDuration::period`,
+- `CF` be `std::ratio_divide<Period, ToPeriod>`,
+- `CR` be `std::common_type<Rep, ToRep, std::intmax_t>::type`,
+- `cr_count` be `static_cast<CR>(d.count())`, `cr_num` be `static_cast<CR>(CF::num)`, and `cr_den` be `static_cast<CR>(CF::den)`,
+
+{/* source:cpp-chrono-duration-duration-cast:0005 */}
+the result is:
+
+{/* source:cpp-chrono-duration-duration-cast:0006 */}
+| | | `CF::num` | |
+| --- | --- | --- | --- |
+| | `1` | not `1` | |
+| `CF::den` | `1` | `ToDuration(static_cast<ToRep> (d.count()))` | `ToDuration(static_cast<ToRep> (cr_count * cr_num))` |
+| | not `1` | `ToDuration(static_cast<ToRep> (cr_count / cr_den))` | `ToDuration(static_cast<ToRep> (cr_count * cr_num / cr_den))` |
+
+## Parameters
+
+{/* source:cpp-chrono-duration-duration-cast:0007 */}
+<ParameterList>
+  <Parameter name="d">duration to convert</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-chrono-duration-duration-cast:0008 */}
+`d` converted to a duration of type `ToDuration`.
+
+## Notes
+
+{/* source:cpp-chrono-duration-duration-cast:0009 */}
+No implicit conversions are used. Multiplications and divisions are avoided where possible, if it is known at compile time that one or more parameters are `1`. Computations are done in the widest type available and converted, as if by [`static_cast`](/docs/cpp/language/expressions/static_cast), to the result type only when finished.
+
+{/* source:cpp-chrono-duration-duration-cast:0010 */}
+Casting between integer durations where the source period is exactly divisible by the target period (e.g. hours to minutes) or between floating-point durations can be performed with ordinary casts or implicitly via [`std::chrono::duration` constructors](/docs/cpp/library/chrono/duration/duration), no `duration_cast` is needed.
+
+{/* source:cpp-chrono-duration-duration-cast:0011 */}
+Casting from a floating-point duration to an integer duration is [subject to undefined behavior](/docs/cpp/language/expressions/implicit_cast#Floating-integral_conversions) when the floating-point value is NaN, infinity, or too large to be representable by the target's integer type. Otherwise, casting to an integer duration is subject to truncation as with any `static_cast` to an integer type.
+
+## Example
+
+{/* source:cpp-chrono-duration-duration-cast:0012 */}
+This example measures the execution time of a function.
+
+```cpp
+#include <chrono>
+#include <iostream>
+#include <ratio>
+#include <thread>
+
+void f()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+int main()
+{
+    const auto t1 = std::chrono::high_resolution_clock::now();
+    f();
+    const auto t2 = std::chrono::high_resolution_clock::now();
+
+    // floating-point duration: no duration_cast needed
+    const std::chrono::duration<double, std::milli> fp_ms = t2 - t1;
+
+    // integral duration: requires duration_cast
+    const auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+
+    // converting integral duration to integral duration of
+    // shorter divisible time unit: no duration_cast needed
+    const std::chrono::duration<long, std::micro> int_usec = int_ms;
+
+    std::cout << "f() took " << fp_ms << ", or "
+              << int_ms << " (whole milliseconds), or "
+              << int_usec << " (whole microseconds)\n";
+}
+```
+
+Possible output:
+
+```text
+f() took 1000.14ms, or 1000ms (whole milliseconds), or 1000000us (whole microseconds)
+```
+
+## See also
+
+{/* source:cpp-chrono-duration-duration-cast:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`duration`](/docs/cpp/library/chrono/duration) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>a time interval (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`time_point_cast`](/docs/cpp/library/chrono/time_point/time_point_cast) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a time point to another time point on the same clock, with a different duration (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`floor(std::chrono::duration)`](/docs/cpp/library/chrono/duration/floor) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, rounding down (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ceil(std::chrono::duration)`](/docs/cpp/library/chrono/duration/ceil) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, rounding up (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`round(std::chrono::duration)`](/docs/cpp/library/chrono/duration/round) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, rounding to nearest, ties to even (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,275 @@
+---
+title: "std::chrono::parse"
+description: "Returns an object manip of unspecified type such that, given a std::basic_istream<CharT, Traits> object is, the expression is >> manip calls from_stream (unqualified, to enable argument-dependent lookup) as follows:"
+source_url: "https://en.cppreference.com/w/cpp/chrono/parse"
+language: "C++"
+---
+
+{/* source:cpp-chrono-parse:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class CharT, class Parsable >
+/* unspecified */ parse( const CharT* fmt, Parsable& tp );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class CharT, class Traits, class Alloc, class Parsable >
+/* unspecified */ parse( const std::basic_string<CharT, Traits, Alloc>& fmt,
+                         Parsable& tp );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class CharT, class Traits, class Alloc, class Parsable >
+/* unspecified */ parse( const CharT* fmt, Parsable& tp,
+                         std::basic_string<CharT, Traits, Alloc>& abbrev );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class CharT, class Traits, class Alloc, class Parsable >
+/* unspecified */ parse( const std::basic_string<CharT, Traits, Alloc>& fmt,
+                         Parsable& tp,
+                         std::basic_string<CharT, Traits, Alloc>& abbrev );`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template< class CharT, class Parsable >
+/* unspecified */ parse( const CharT* fmt, Parsable& tp,
+                         std::chrono::minutes& offset );`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class CharT, class Traits, class Alloc, class Parsable >
+/* unspecified */ parse( const std::basic_string<CharT, Traits, Alloc>& fmt,
+                         Parsable& tp, std::chrono::minutes& offset );`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class CharT, class Traits, class Alloc, class Parsable >
+/* unspecified */ parse( const CharT* fmt, Parsable& tp,
+                         std::basic_string<CharT, Traits, Alloc>& abbrev,
+                         std::chrono::minutes& offset );`} />
+  <Declaration id="8" language="cpp" since="C++20" code={`template< class CharT, class Traits, class Alloc, class Parsable >
+/* unspecified */ parse( const std::basic_string<CharT, Traits, Alloc>& fmt,
+                         Parsable& tp,
+                         std::basic_string<CharT, Traits, Alloc>& abbrev,
+                         std::chrono::minutes& offset );`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-parse:0001 */}
+Returns an object manip of unspecified type such that, given a `std::basic_istream<CharT, Traits>` object `is`, the expression `is >> manip` calls `from_stream` (unqualified, to enable [argument-dependent lookup](/docs/cpp/language/functions/adl)) as follows:
+
+{/* source:cpp-chrono-parse:0002 */}
+1. `from_stream(is, fmt, tp)`
+
+{/* source:cpp-chrono-parse:0003 */}
+2. `from_stream(is, fmt.c_str(), tp)`
+
+{/* source:cpp-chrono-parse:0004 */}
+3. `from_stream(is, fmt, tp, std::addressof(abbrev))`
+
+{/* source:cpp-chrono-parse:0005 */}
+4. `from_stream(is, fmt.c_str(), tp, std::addressof(abbrev))`
+
+{/* source:cpp-chrono-parse:0006 */}
+5. `from_stream(is, fmt, tp,
+                static_cast<std::basic_string<CharT, Traits, Alloc>*>(nullptr), &offset)`
+
+{/* source:cpp-chrono-parse:0007 */}
+6. `from_stream(is, fmt.c_str(), tp,
+                static_cast<std::basic_string<CharT, Traits, Alloc>*>(nullptr), &offset)`
+
+{/* source:cpp-chrono-parse:0008 */}
+7. `from_stream(is, fmt, tp, std::addressof(abbrev), &offset)`
+
+{/* source:cpp-chrono-parse:0009 */}
+8. `from_stream(is, fmt.c_str(), tp, std::addressof(abbrev), &offset)`.
+
+{/* source:cpp-chrono-parse:0010 */}
+The expression `is >> manip` is an lvalue of type `std::basic_istream<CharT, Traits>` with the value `is`.
+
+{/* source:cpp-chrono-parse:0011 */}
+These overloads participate in overload resolution only if the corresponding `from_stream` expression is well-formed.
+
+{/* source:cpp-chrono-parse:0012 */}
+Implementations are recommended to make it difficult to use potentially dangling references to the format string, e.g., by making return types non-movable and preventing `operator>>` from accepting lvalues of return types.
+
+## Parameters
+
+{/* source:cpp-chrono-parse:0013 */}
+<ParameterList>
+  <Parameter name="fmt">a format string (see below)</Parameter>
+  <Parameter name="tp">object to hold the parse result</Parameter>
+  <Parameter name="abbrev">string to hold the time zone abbreviation or name corresponding to the `%Z` specifier</Parameter>
+  <Parameter name="offset">duration to represent the offset from UTC corresponding to the `%z` specifier</Parameter>
+</ParameterList>
+
+## Format string
+
+{/* source:cpp-chrono-parse:0014 */}
+The format string consists of zero or more conversion specifiers and ordinary characters. Each ordinary character, excluding whitespace characters and the terminating null character, matches one identical character from the input stream, or causes the function to fail if the next character on the stream does not compare equal.
+
+{/* source:cpp-chrono-parse:0015 */}
+Each whitespace character matches zero or more whitespace characters in the input stream.
+
+{/* source:cpp-chrono-parse:0016 */}
+Each unmodified conversion specifier begins with a `%` character followed by a character that determines the behavior of the specifier. Some conversion specifiers have a modified form in which an `E` or `O` modifier character is inserted after the `%` character. Some conversion specifiers have a modified form in which a width parameter given as a positive decimal integer (shown as `N` below) is inserted after the `%` character. Each conversion specifier causes the matched characters to be interpreted as parts of date and time types according to the table below.
+
+{/* source:cpp-chrono-parse:0017 */}
+A character sequence in the format string that begins with a `%` but does not match one of the conversion specifiers below is interpreted as ordinary characters.
+
+{/* source:cpp-chrono-parse:0018 */}
+If `from_stream` fails to parse everything specified by the format string, or if insufficient information is parsed to specify a complete result, or if parsing discloses contradictory information, `is.setstate(std::ios_base::failbit)` is called.
+
+{/* source:cpp-chrono-parse:0019 */}
+The following conversion specifiers are available:
+
+{/* source:cpp-chrono-parse:0020 */}
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%%` | Matches a literal `%` character. |
+| `%n` | Matches one whitespace character. |
+| `%t` | Matches zero or one whitespace character. |
+
+**Year**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%C` / `%NC` / `%EC` | Parses the century as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%EC` interprets the locale's alternative representation of the century. |
+| `%y` / `%Ny` / `%Ey` / `%Oy` | Parses the last two decimal digits of the year. If the century is not otherwise specified (e.g. with `%C`), values in the range [69, 99] are presumed to refer to the years 1969 to 1999, and values in the range [00, 68] are presumed to refer to the years 2000 to 2068. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified commands `%Ey` and `%Oy` interpret the locale's alternative representation. |
+| `%Y` / `%NY` / `%EY` | Parses the year as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 4. Leading zeroes are permitted but not required. The modified command `%EY` interprets the locale's alternative representation. |
+
+**Month**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%b` / `%B` / `%h` | Parses the locale's full or abbreviated case-insensitive month name. |
+| `%m` / `%Nm` / `%Om` | Parses the month as a decimal number (January is `1`). The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%Om` interprets the locale's alternative representation. |
+
+**Day**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%d` / `%Nd` / `%Od` / `%e` / `%Ne` / `%Oe` | Parses the day of month as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified commands `%Od` and `%Oe` interpret the locale's alternative representation. |
+
+**Day of the week**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%a` / `%A` | Parses the locale's full or abbreviated case-insensitive weekday name. |
+| `%u` / `%Nu` | Parses the ISO weekday as a decimal number (1-7), where Monday is `1`. The width `N` specifies the maximum number of characters to read. The default width is 1. Leading zeroes are permitted but not required. |
+| `%w` / `%Nw` / `%Ow` | Parses the weekday as a decimal number (0-6), where Sunday is `0`. The width `N` specifies the maximum number of characters to read. The default width is 1. Leading zeroes are permitted but not required. The modified command `%Ow` interprets the locale's alternative representation. |
+
+**ISO 8601 week-based year**
+
+In ISO 8601 weeks begin with Monday and the first week of the year must satisfy the following requirements:
+
+- Includes January 4
+- Includes first Thursday of the year
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%g` / `%Ng` | Parses the last two decimal digits of the ISO 8601 week-based year. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. |
+| `%G` / `%NG` | Parses the ISO 8601 week-based year as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 4. Leading zeroes are permitted but not required. |
+| `%V` / `%NV` | Parses the ISO 8601 week of the year as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. |
+
+**Week/day of the year**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%j` / `%Nj` | Parses the day of the year as a decimal number (January 1 is `1`). The width `N` specifies the maximum number of characters to read. The default width is 3. Leading zeroes are permitted but not required. |
+| `%U` / `%NU` / `%OU` | Parses the week number of the year as a decimal number. The first Sunday of the year is the first day of week 01. Days of the same year prior to that are in week 00. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%OU` interprets the locale's alternative representation. |
+| `%W` / `%NW` / `%OW` | Parses the week number of the year as a decimal number. The first Monday of the year is the first day of week 01. Days of the same year prior to that are in week 00. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%OW` interprets the locale's alternative representation. |
+
+**Date**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%D` | Equivalent to `"%m/%d/%y"`. |
+| `%F` / `%NF` | Equivalent to `"%Y-%m-%d"`. If the width is specified, it is only applied to the `%Y`. |
+| `%x` / `%Ex` | Parses the locale's date representation. The modified command `%Ex` interprets the locale's alternate date representation. |
+
+**Time of day**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%H` / `%NH` / `%OH` | Parses the hour (24-hour clock) as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%OH` interprets the locale's alternative representation. |
+| `%I` / `%NI` / `%OI` | Parses the hour (12-hour clock) as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%OI` interprets the locale's alternative representation. |
+| `%M` / `%NM` / `%OM` | Parses the minute as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%OM` interprets the locale's alternative representation. |
+| `%S` / `%NS` / `%OS` | Parses the second as a decimal number. The width `N` specifies the maximum number of characters to read. The default width is 2. Leading zeroes are permitted but not required. The modified command `%OS` interprets the locale's alternative representation. |
+| `%p` | Parses the locale's equivalent of the AM/PM designations associated with a 12-hour clock. |
+| `%R` | Equivalent to `"%H:%M"`. |
+| `%T` | Equivalent to `"%H:%M:%S"`. |
+| `%r` | Parses the locale's 12-hour clock time. |
+| `%X` / `%EX` | Parses the locale's time representation. The modified command `%EX` interprets the locale's alternate time representation. |
+
+**Miscellaneous**
+
+| Conversion specifier | Explanation |
+| --- | --- |
+| `%c` / `%Ec` | Parses the locale's date and time representation. The modified command `%Ec` interprets the locale's alternative date and time representation. |
+| `%z` / `%Ez` / `%Oz` | Parses the offset from UTC in the format `[+|-]hh[mm]`. For example `-0430` refers to 4 hours 30 minutes behind UTC and `04` refers to 4 hours ahead of UTC. The modified commands `%Ez` and `%Oz` parses the format `[+|-]h[h][:mm]` (i.e., requiring a `:` between the hours and minutes and making the leading zero for hour optional). |
+| `%Z` | Parses the time zone abbreviation or name, taken as the longest sequence of characters that only contains the characters `A` through `Z`, `a` through `z`, `0` through `9`, `-`, `+`, `_`, and `/`. |
+
+## Example
+
+{/* source:cpp-chrono-parse:0021 */}
+This section is incomplete
+Reason: no example
+
+## Defect reports
+
+{/* source:cpp-chrono-parse:0022 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-chrono-parse:0023 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3554} standard="C++20">
+    <PublishedBehavior>overloads for plain null-terminated character type sequences were missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-chrono-parse:0024 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream(std::chrono::sys_time)`](/docs/cpp/library/chrono/system_clock/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `sys_time` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream(std::chrono::utc_time)`](/docs/cpp/library/chrono/utc_clock/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `utc_time` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream(std::chrono::tai_time)`](/docs/cpp/library/chrono/tai_clock/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `tai_time` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream(std::chrono::gps_time)`](/docs/cpp/library/chrono/gps_clock/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `gps_time` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream(std::chrono::file_time)`](/docs/cpp/library/chrono/file_clock/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `file_time` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream(std::chrono::local_time)`](/docs/cpp/library/chrono/local_t/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `local_time` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/year/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `year` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/month/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `month` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/day/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `day` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/weekday/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `weekday` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/month_day/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `month_day` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/year_month/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `year_month` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_stream`](/docs/cpp/library/chrono/year_month_day/from_stream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>parses a `year_month_day` from a stream according to the provided format (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_time`](/docs/cpp/library/io/manip/get_time) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>parses a date/time value of specified format (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

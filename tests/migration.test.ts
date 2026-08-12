@@ -209,6 +209,123 @@ describe("inline revision validation", () => {
   });
 });
 
+describe("semantic MDX validation", () => {
+  const countSource = "ref/cppreference-en/reference/en/cpp/chrono/duration/count.html";
+  const countMdx = `---
+title: "std::chrono::duration<Rep,Period>::count"
+description: "Returns the number of ticks for this duration."
+source_url: "https://en.cppreference.com/w/cpp/chrono/duration/count"
+language: "C++"
+---
+
+{/* source:cpp-chrono-duration-count:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={\`constexpr rep count() const;\`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-duration-count:0001 */}
+Returns the number of ticks for this duration.
+
+## Parameters
+
+{/* source:cpp-chrono-duration-count:0002 */}
+(none)
+
+## Return value
+
+{/* source:cpp-chrono-duration-count:0003 */}
+The number of ticks for this duration.
+
+## Example
+
+{/* source:cpp-chrono-duration-count:0004 */}
+\`\`\`cpp
+#include <chrono>
+#include <iostream>
+
+int main()
+{
+    std::chrono::milliseconds ms{3}; // 3 milliseconds
+    // 6000 microseconds constructed from 3 milliseconds
+    std::chrono::microseconds us = 2 * ms;
+    // 30Hz clock using fractional ticks
+    std::chrono::duration<double, std::ratio<1, 30>> hz30(3.5);
+
+    std::cout << "3 ms duration has " << ms.count() << " ticks\\n"
+              << "6000 us duration has " << us.count() << " ticks\\n"
+              << "3.5 30Hz duration has " << hz30.count() << " ticks\\n";
+}
+\`\`\`
+
+Output:
+
+\`\`\`text
+3 ms duration has 3 ticks
+6000 us duration has 6000 ticks
+3.5 30Hz duration has 3.5 ticks
+\`\`\`
+
+## See also
+
+{/* source:cpp-chrono-duration-count:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[\`duration_cast\`](/docs/cpp/library/chrono/duration/duration_cast) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, with a different tick interval (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+`;
+
+  test("component props and inline markers satisfy visible-text and code coverage", async () => {
+    const slugMap = new Map(
+      (JSON.parse(await readFile("ref/cppdoc/migrate/slug_map.json", "utf8")) as Array<{ cppref: string; cppdoc: string | null }>).map((entry) => [entry.cppref, entry.cppdoc]),
+    );
+    const source = extractEnglishPage(await readFile(countSource, "utf8"), { sourcePath: countSource, slugMap });
+    const report = validateDirectMdx(source, countMdx);
+    expect(report.ok).toBe(true);
+    expect(report.issues).toEqual([]);
+  });
+
+  test("example control text is excluded from visible text", async () => {
+    const source = extractEnglishPage(await readFile(countSource, "utf8"), { sourcePath: countSource });
+    const example = source.sections.flatMap((section) => section.blocks).find((block) => block.classes.includes("t-example"));
+    expect(example?.visibleText).not.toContain("Run this code");
+  });
+
+  test("links inside code elements are not extracted", async () => {
+    const source = extractEnglishPage(await readFile(countSource, "utf8"), { sourcePath: countSource });
+    const example = source.sections.flatMap((section) => section.blocks).find((block) => block.classes.includes("t-example"));
+    expect(example?.immutable.links).toEqual([]);
+  });
+
+  test("defect report meta cells are excluded from visible text and links", async () => {
+    const source = extractEnglishPage(await readFile(vectorSource, "utf8"), { sourcePath: vectorSource });
+    const block = source.sections.flatMap((section) => section.blocks).find((candidate) => candidate.immutable.links.some((link) => link.text.startsWith("LWG")));
+    expect(block).toBeUndefined();
+    const report = source.sections.flatMap((section) => section.blocks).find((candidate) => candidate.visibleText.includes("Behavior as published"));
+    expect(report).toBeUndefined();
+  });
+
+  test("citation backlinks are not extracted as links", async () => {
+    const source = extractEnglishPage(await readFile("ref/cppreference-en/reference/en/cpp/chrono/c/tm.html", "utf8"), { sourcePath: "ref/cppreference-en/reference/en/cpp/chrono/c/tm.html" });
+    const citeLinks = source.sections.flatMap((section) => section.blocks).flatMap((block) => block.immutable.links.filter((link) => /cite_(?:note|ref)-/u.test(link.href)));
+    expect(citeLinks).toEqual([]);
+  });
+
+  test("hidden MathJax source spans are excluded from visible text", async () => {
+    const source = extractEnglishPage(await readFile("ref/cppreference-en/reference/en/cpp/chrono/duration/abs.html", "utf8"), { sourcePath: "ref/cppreference-en/reference/en/cpp/chrono/duration/abs.html" });
+    const texts = source.sections.flatMap((section) => section.blocks).map((block) => block.visibleText);
+    expect(texts.join("\n")).not.toContain("small");
+    expect(texts.some((text) => text.includes("|x|"))).toBe(true);
+  });
+
+  test("zero-width characters are stripped from inline revision scopes", async () => {
+    const source = extractEnglishPage(await readFile("ref/cppreference-en/reference/en/cpp/chrono/c/tm.html", "utf8"), { sourcePath: "ref/cppreference-en/reference/en/cpp/chrono/c/tm.html" });
+    const scope = source.sections.flatMap((section) => section.blocks).flatMap((block) => block.immutable.inlineRevisions).find((revision) => revision.text.includes("61"));
+    expect(scope?.text.replace(/\s+/gu, "")).toBe("[0,61]");
+  });
+});
+
 describe("deterministic rendering and coverage", () => {
   test("renders every fallback source ID exactly once", async () => {
     const source = extractEnglishPage(await readFile(cppSource, "utf8"), { sourcePath: cppSource });

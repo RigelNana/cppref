@@ -17,6 +17,7 @@ const ignoredClasses: Record<string, true> = {
   "t-navbar-sep": true,
   "t-navbar-head": true,
   "t-navbar-menu": true,
+  "t-example-live-link": true,
 };
 
 const ignoredTags: Record<string, true> = {
@@ -64,7 +65,58 @@ function attributeRecord(element: Element): Record<string, string> {
 }
 
 function hasIgnoredIdentity(element: Element): boolean {
-  return ignoredTags[element.tagName] === true || classNames(element).some((name) => ignoredClasses[name] === true);
+  const style = attributeRecord(element).style ?? "";
+  return (
+    ignoredTags[element.tagName] === true ||
+    /display\s*:\s*none/iu.test(style) ||
+    classNames(element).some((name) => ignoredClasses[name] === true)
+  );
+}
+
+/**
+ * Defect-report tables (`table.dsctable`) carry a header row and two meta
+ * columns per row (DR label, applied standard). The semantic migration
+ * re-emits those facts as `DefectReport` props (`kind`, `id`, `standard`),
+ * so the label cells are structural chrome: excluding them from visible
+ * text and links keeps the extracted evidence consistent with the
+ * registered component contract.
+ */
+function isDefectReportTable(table: Element): boolean {
+  const firstHeader = findFirstElement(table, (candidate) => candidate.tagName === "th");
+  return normalizedText(firstHeader ?? table).trim() === "DR";
+}
+
+function isDefectReportMetaCell(element: Element): boolean {
+  if (element.tagName !== "td" && element.tagName !== "th") return false;
+  const row = element.parentNode;
+  if (!row || !isElement(row) || row.tagName !== "tr") return false;
+  let table: Node | null = row.parentNode;
+  while (table) {
+    if (isElement(table) && table.tagName === "table") break;
+    table = isElement(table) ? table.parentNode : null;
+  }
+  if (!table || !isElement(table) || !classNames(table).includes("dsctable") || !isDefectReportTable(table)) return false;
+  if (element.tagName === "th") return true;
+  const cells = row.childNodes.filter(
+    (node): node is Element => isElement(node) && (node.tagName === "td" || node.tagName === "th"),
+  );
+  const index = cells.indexOf(element);
+  return index === 0 || index === 1;
+}
+
+/**
+ * Structural chrome that the migrated semantic components re-emit from props
+ * or from the row body: defect-report label cells, `t-dsc-begin` column
+ * headers (`tr.t-dsc-hitem`), and member markers such as `[static]`
+ * (`t-cmark`). Excluding these keeps extracted visible text consistent with
+ * the registered component contracts.
+ */
+function isBlockChrome(element: Element): boolean {
+  const classes = classNames(element);
+  if (classes.some((name) => name === "t-cmark" || name === "t-mark-rev")) return true;
+  const row = element.parentNode;
+  if (row && isElement(row) && row.tagName === "tr" && classNames(row).includes("t-dsc-hitem")) return true;
+  return isDefectReportMetaCell(element);
 }
 
 function findFirstElement(root: ParentNode, predicate: (element: Element) => boolean): Element | undefined {
@@ -77,10 +129,20 @@ function findFirstElement(root: ParentNode, predicate: (element: Element) => boo
   return undefined;
 }
 
-function normalizedText(root: Node): string {
+function normalizedText(root: Node, skip?: (element: Element) => boolean): string {
   if ("value" in root) return root.value.replace(/\s+/gu, " ");
-  if (!hasChildNodes(root) || (isElement(root) && hasIgnoredIdentity(root))) return "";
-  return root.childNodes.map(normalizedText).join("").replace(/\s+/gu, " ");
+  if (isElement(root) && root.tagName === "br") return " ";
+  if (!hasChildNodes(root) || (isElement(root) && (hasIgnoredIdentity(root) || skip?.(root)))) return "";
+  const texts = root.childNodes.map((node) => normalizedText(node, skip));
+  return texts
+    .map((text, index) => {
+      if (index === 0) return text;
+      const previous = root.childNodes[index - 1];
+      const current = root.childNodes[index];
+      return isElement(previous) && isElement(current) ? ` ${text}` : text;
+    })
+    .join("")
+    .replace(/\s+/gu, " ");
 }
 
 function codeText(element: Element): string[] {
@@ -173,6 +235,20 @@ export function normalizeCppreferenceLink(
 }
 
 
+function isInsideCodeElement(node: Node): boolean {
+  let current: Node | null = isElement(node) ? node.parentNode : null;
+  while (current) {
+    if (
+      isElement(current) &&
+      (current.tagName === "pre" || classNames(current).some((name) => /^(?:mw-geshi|source-cpp|source-c)$/u.test(name)))
+    ) {
+      return true;
+    }
+    current = isElement(current) ? current.parentNode : null;
+  }
+  return false;
+}
+
 function links(
   element: Element,
   currentSlug: string,
@@ -181,9 +257,11 @@ function links(
   const values: Array<{ text: string; href: string; normalizedHref: string; kind: "internal" | "fragment" | "external"; title?: string }> = [];
   const visit = (node: Node): void => {
     if (!isElement(node)) return;
+    if (isBlockChrome(node)) return;
     if (node.tagName === "a") {
+      if (hasIgnoredIdentity(node) || isInsideCodeElement(node)) return;
       const attributes = attributeRecord(node);
-      if (attributes.href) {
+      if (attributes.href && !/#cite_(?:note|ref)-/u.test(attributes.href)) {
         const normalized = normalizeCppreferenceLink(attributes.href, currentSlug, slugMap);
         values.push({
           text: normalizedText(node).trim(),
@@ -223,9 +301,9 @@ function inlineRevisions(element: Element): Array<{ text: string; html: string; 
         (candidate) => candidate !== node && classNames(candidate).includes("t-mark-rev"),
       );
       const marker = normalizedText(markerElement ?? node).trim();
-      const text = markerElement
+      const text = (markerElement
         ? normalizedText(node).replace(normalizedText(markerElement), "").trim()
-        : normalizedText(node).trim();
+        : normalizedText(node).trim()).replace(/[\u200b-\u200d\ufeff]/gu, "");
       values.push({
         text,
         html: serializeOuter(node),
@@ -392,7 +470,7 @@ export function extractEnglishPage(html: string, options: ExtractOptions): Lossl
       continue;
     }
 
-    const visibleText = normalizedText(element).trim();
+    const visibleText = normalizedText(element, isBlockChrome).trim();
     if (visibleText.length === 0 && element.tagName !== "table") continue;
     const sourceId = sourceIdFor(slug, blockOrder);
     currentSection.blocks.push({

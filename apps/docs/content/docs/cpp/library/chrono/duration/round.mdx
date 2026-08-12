@@ -1,0 +1,130 @@
+---
+title: "std::chrono::round(std::chrono::duration)"
+description: "Returns the value t representable in ToDuration that is the closest to d."
+source_url: "https://en.cppreference.com/w/cpp/chrono/duration/round"
+language: "C++"
+---
+
+{/* source:cpp-chrono-duration-round:0000 */}
+<DeclarationDoc>
+Defined in header [`<chrono>`](/docs/cpp/library/headers/chrono)
+
+  <Declaration language="cpp" since="C++17" code={`template< class ToDuration, class Rep, class Period >
+constexpr ToDuration round( const std::chrono::duration<Rep, Period>& d );`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-duration-round:0001 */}
+Returns the value `t` representable in `ToDuration` that is the closest to `d`. If there are two such values, returns the even value (that is, the value `t` such that `t % 2 == 0`).
+
+{/* source:cpp-chrono-duration-round:0002 */}
+The function does not participate in the overload resolution unless `ToDuration` is a specialization of [`std::chrono::duration`](/docs/cpp/library/chrono/duration) and `std::chrono::treat_as_floating_point_v<typename ToDuration::rep>` is `false`.
+
+## Parameters
+
+{/* source:cpp-chrono-duration-round:0003 */}
+<ParameterList>
+  <Parameter name="d">duration to convert</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-chrono-duration-round:0004 */}
+`d` rounded to the nearest duration of type `ToDuration`, rounding to even in halfway cases.
+
+## Possible implementation
+
+{/* source:cpp-chrono-duration-round:0005 */}
+```cpp
+namespace detail
+{
+    template<class> inline constexpr bool is_duration_v = false;
+    template<class Rep, class Period> inline constexpr bool is_duration_v<
+        std::chrono::duration<Rep, Period>> = true;
+}
+
+template<class To, class Rep, class Period,
+         class = std::enable_if_t<detail::is_duration_v<To> &&
+                !std::chrono::treat_as_floating_point_v<typename To::rep>>>
+constexpr To round(const std::chrono::duration<Rep, Period>& d)
+{
+    To t0 = std::chrono::floor<To>(d);
+    To t1 = t0 + To{1};
+    auto diff0 = d - t0;
+    auto diff1 = t1 - d;
+    if (diff0 == diff1)
+    {
+        if (t0.count() & 1)
+            return t1;
+        return t0;
+    }
+    else if (diff0 < diff1)
+        return t0;
+    return t1;
+}
+```
+
+## Example
+
+{/* source:cpp-chrono-duration-round:0006 */}
+```cpp
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+
+int main()
+{
+    using namespace std::chrono_literals;
+    std::cout << "Duration\tFloor\tRound\tCeil\n";
+    for (using Sec = std::chrono::seconds;
+        auto const d : {+4999ms, +5000ms, +5001ms, +5499ms, +5500ms, +5999ms,
+                        -4999ms, -5000ms, -5001ms, -5499ms, -5500ms, -5999ms})
+        std::cout << std::showpos << d << "\t\t"
+                  << std::chrono::floor<Sec>(d) << '\t'
+                  << std::chrono::round<Sec>(d) << '\t'
+                  << std::chrono::ceil <Sec>(d) << '\n';
+}
+```
+
+Output:
+
+```text
+Duration	Floor	Round	Ceil
++4999ms		+4s	+5s	+5s
++5000ms		+5s	+5s	+5s
++5001ms		+5s	+5s	+6s
++5499ms		+5s	+5s	+6s
++5500ms		+5s	+6s	+6s
++5999ms		+5s	+6s	+6s
+-4999ms		-5s	-5s	-4s
+-5000ms		-5s	-5s	-5s
+-5001ms		-6s	-5s	-5s
+-5499ms		-6s	-5s	-5s
+-5500ms		-6s	-6s	-5s
+-5999ms		-6s	-6s	-5s
+```
+
+## See also
+
+{/* source:cpp-chrono-duration-round:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`duration_cast`](/docs/cpp/library/chrono/duration/duration_cast) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, with a different tick interval (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`floor(std::chrono::duration)`](/docs/cpp/library/chrono/duration/floor) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, rounding down (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ceil(std::chrono::duration)`](/docs/cpp/library/chrono/duration/ceil) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a duration to another, rounding up (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`round(std::chrono::time_point)`](/docs/cpp/library/chrono/time_point/round) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a time_point to another, rounding to nearest, ties to even (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`round roundf roundl lround lroundf lroundl llround llroundf llroundl`](/docs/cpp/library/numeric/math/round) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>nearest integer, rounding away from zero in halfway cases (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

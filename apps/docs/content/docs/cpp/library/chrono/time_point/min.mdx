@@ -1,0 +1,71 @@
+---
+title: "std::chrono::time_point<Clock,Duration>::min"
+description: "Returns a time_point with the smallest possible duration, i.e. time_point(duration::min())."
+source_url: "https://en.cppreference.com/w/cpp/chrono/time_point/min"
+language: "C++"
+---
+
+{/* source:cpp-chrono-time-point-min:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" until="C++20" code={`static constexpr time_point min();`} />
+  <Declaration language="cpp" id="2" since="C++20" code={`static constexpr time_point min() noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-chrono-time-point-min:0001 */}
+Returns a `time_point` with the smallest possible duration, i.e. `time_point(duration::min())`.
+
+## Parameters
+
+{/* source:cpp-chrono-time-point-min:0002 */}
+(none)
+
+## Return value
+
+{/* source:cpp-chrono-time-point-min:0003 */}
+The smallest possible time_point.
+
+## Example
+
+{/* source:cpp-chrono-time-point-min:0004 */}
+```cpp
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <ratio>
+#include <string>
+
+constexpr auto steady_min = std::chrono::steady_clock::time_point::min();
+
+void animate_frame_at_time_offset(double game_time)
+{
+    std::cout << std::string(static_cast<int>(game_time) % 10 + 1, '*') << '\n';
+}
+
+int main()
+{
+    auto last_frame = steady_min;
+    std::chrono::duration<double, std::micro> game_time{0.0};
+
+    for (int n = 0; n < 5; ++n)
+    {
+        const auto current_frame = std::chrono::steady_clock::now();
+        // initialize timer if first frame ever:
+        if (last_frame == steady_min)
+            last_frame = current_frame;
+        game_time += current_frame - last_frame;
+        std::cout << "Drawing frame at " << std::setprecision(10)
+                  << std::setw(8) << game_time.count() << " μs ";
+        animate_frame_at_time_offset(game_time.count());
+    }
+}
+```
+
+Possible output:
+
+```text
+Drawing frame at        0 μs *
+Drawing frame at  134.499 μs *****
+Drawing frame at  274.337 μs *****
+Drawing frame at  416.571 μs *******
+Drawing frame at  561.124 μs **
+```
