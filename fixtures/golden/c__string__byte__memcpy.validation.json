@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "sourceCount": 14,
+  "coveredCount": 14,
+  "renderedHtml": "--- title: \"memcpy, memcpy_s\" description: \"Migrated from https://en.cppreference.com/w/c/string/byte/memcpy\" source_url: \"https://en.cppreference.com/w/c/string/byte/memcpy\" language: \"C\" --- {/* source:c-string-byte-memcpy:0000 */} \\n\\n Defined in header <string.h> \\n \\n\\n\\n\\n\\n\\n\\n(1)\\n\\n\\n\\n void * memcpy ( void * dest, const void * src, size_t count ) ; \\n \\n (until C99) \\n\\n\\n void * memcpy ( void * restrict dest, const void * restrict src, size_t count ) ; \\n \\n (since C99) \\n\\n\\n\\n errno_t memcpy_s ( void * restrict dest, rsize_t destsz, \\n const void * restrict src, rsize_t count ) ; \\n (2) \\n (since C11) \\n\\n\\n\"} /> {/* source:c-string-byte-memcpy:0001 */} 1) Copies count characters from the object pointed to by src to the object pointed to by dest . Both objects are interpreted as arrays of unsigned char .\"} /> {/* source:c-string-byte-memcpy:0002 */} The behavior is undefined if access occurs beyond the end of the dest array. If the objects overlap (which is a violation of the restrict contract) (since C99) , the behavior is undefined. The behavior is undefined if either dest or src is an invalid or null pointer.\"} /> {/* source:c-string-byte-memcpy:0003 */} 2) Same as (1) , except that the following errors are detected at runtime and cause the entire destination range [ dest, dest + destsz ) to be zeroed out (if both dest and destsz are valid), as well as call the currently installed constraint handler function:\\n dest or src is a null pointer\\n destsz or count is greater than RSIZE_MAX \\n count is greater than destsz (buffer overflow would occur)\\n the source and the destination objects overlap \"} /> {/* source:c-string-byte-memcpy:0004 */} The behavior is undefined if the size of the character array pointed to by dest < count <= destsz ; in other words, an erroneous value of destsz does not expose the impending buffer overflow.\\n As with all bounds-checked functions, memcpy_s is only guaranteed to be available if __STDC_LIB_EXT1__ is defined by the implementation and if the user defines __STDC_WANT_LIB_EXT1__ to the integer constant 1 before including <string.h> . \"} /> Parameters {/* source:c-string-byte-memcpy:0005 */} \\n\\n\\n\\n dest\\n\\n -\\n\\n pointer to the object to copy to\\n\\n\\n destsz\\n\\n -\\n\\n max number of bytes to modify in the destination (typically the size of the destination object)\\n\\n\\n src\\n\\n -\\n\\n pointer to the object to copy from\\n\\n\\n count\\n\\n -\\n\\n number of bytes to copy\\n\"} /> Return value {/* source:c-string-byte-memcpy:0006 */} 1) Returns a copy of dest \"} /> {/* source:c-string-byte-memcpy:0007 */} 2) Returns zero on success and non-zero value on error. Also on error, if dest is not a null pointer and destsz is valid, writes destsz zero bytes in to the destination array.\"} /> Notes {/* source:c-string-byte-memcpy:0008 */} memcpy may be used to set the effective type of an object obtained by an allocation function.\\n \"} /> {/* source:c-string-byte-memcpy:0009 */} memcpy is the fastest library routine for memory-to-memory copy. It is usually more efficient than strcpy , which must scan the data it copies or memmove , which must take precautions to handle overlapping inputs.\\n \"} /> {/* source:c-string-byte-memcpy:0010 */} Several C compilers transform suitable memory-copying loops to memcpy calls. {/* source:c-string-byte-memcpy:0011 */} Where strict aliasing prohibits examining the same memory as values of two different types, memcpy may be used to convert the values.\\n \"} /> Example {/* source:c-string-byte-memcpy:0012 */} Run this code \\n #define __STDC_WANT_LIB_EXT1__ 1 \\n #include <stdio.h> \\n #include <stdint.h> \\n #include <inttypes.h> \\n #include <string.h> \\n #include <stdlib.h> \\n \\n int main ( void ) \\n { \\n // simple usage \\n char source [ ] = \\\"once upon a midnight dreary...\\\" , dest [ 4 ] ; \\n memcpy ( dest, source, sizeof dest ) ; \\n for ( size_t n = 0 ; n < sizeof dest ; ++ n ) \\n putchar ( dest [ n ] ) ; \\n \\n // setting effective type of allocated memory to be int \\n int * p = malloc ( 3 * sizeof ( int ) ) ; // allocated memory has no effective type \\n int arr [ 3 ] = { 1 , 2 , 3 } ; \\n memcpy ( p,arr, 3 * sizeof ( int ) ) ; // allocated memory now has an effective type \\n \\n // reinterpreting data \\n double d = 0.1 ; \\n // int64_t n = *(int64_t*)(&d); // strict aliasing violation \\n int64_t n ; \\n memcpy ( & n, & d, sizeof d ) ; // OK \\n printf ( \\\" \\\\n %a is %\\\" PRIx64 \\\" as an int64_t \\\\n \\\" , d, n ) ; \\n \\n #ifdef __STDC_LIB_EXT1__ \\n set_constraint_handler_s ( ignore_handler_s ) ; \\n char src [ ] = \\\"aaaaaaaaaa\\\" ; \\n char dst [ ] = \\\"xyxyxyxyxy\\\" ; \\n int r = memcpy_s ( dst, sizeof dst,src, 5 ) ; \\n printf ( \\\"dst = \\\\\\\" %s \\\\\\\" , r = %d \\\\n \\\" , dst,r ) ; \\n r = memcpy_s ( dst, 5 ,src, 10 ) ; // count is greater than destsz \\n printf ( \\\"dst = \\\\\\\" \\\" ) ; \\n for ( size_t ndx = 0 ; ndx < sizeof dst ; ++ ndx ) { \\n char c = dst [ ndx ] ; \\n c ? printf ( \\\"%c\\\" , c ) : printf ( \\\" \\\\\\\\ 0\\\" ) ; \\n } \\n printf ( \\\" \\\\\\\" , r = %d \\\\n \\\" , r ) ; \\n #endif \\n } \\n Possible output:\\n \\n once\\n0x1.999999999999ap-4 is 3fb999999999999a as an int64_t\\ndst = \\\"aaaaayxyxy\\\", r = 0\\ndst = \\\"\\\\0\\\\0\\\\0\\\\0\\\\0yxyxy\\\", r = 22 \\n\"} /> References {/* source:c-string-byte-memcpy:0013 */} \\n C11 standard (ISO/IEC 9899:2011): \\n \\n 7.24.2.1 The memcpy function (p: 362)\\n \\n \\n K.3.7.1.1 The memcpy_s function (p: 614)\\n \\n \\n \\n C99 standard (ISO/IEC 9899:1999): \\n \\n 7.21.2.1 The memcpy function (p: 325)\\n \\n \\n \\n C89/C90 standard (ISO/IEC 9899:1990): \\n \\n 4.11.2.1 The memcpy function \\n \\n \\n \\n See also \\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n memccpy (C23) \\n copies one buffer to another, stopping after the specified delimiter (function) memmove memmove_s (C11) \\n moves one buffer to another (function) wmemcpy wmemcpy_s (C95) (C11) \\n copies a certain amount of wide characters between two non-overlapping arrays (function) C++ documentation for memcpy \\n \\n\"} />",
+  "issues": [
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0000",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0001",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0002",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0003",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0004",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0005",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0006",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0007",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0008",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0009",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0011",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0012",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "c-string-byte-memcpy:0013",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    }
+  ]
+}

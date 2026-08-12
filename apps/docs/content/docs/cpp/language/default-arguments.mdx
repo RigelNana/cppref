@@ -1,0 +1,311 @@
+---
+title: Default arguments
+description: Allows a function to be called without providing one or more trailing arguments.
+source_url: https://en.cppreference.com/w/cpp/language/default_arguments
+language: C++
+---
+
+Allows a function to be called without providing one or more trailing arguments.
+
+Indicated by using the following syntax for a parameter in the *parameter-list* of a [function declaration](/docs/cpp/language/functions/function).
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) decl-specifier-seq declarator = initializer" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) decl-specifier-seq abstract-declarator (optional) = initializer" />
+</DeclarationDoc>
+
+Default arguments are used in place of the missing trailing arguments in a function call:
+
+```cpp
+void point(int x = 3, int y = 4);
+
+point(1, 2); // calls point(1, 2)
+point(1);    // calls point(1, 4)
+point();     // calls point(3, 4)
+```
+
+In a function declaration, after a parameter with a default argument, all subsequent parameters must:
+
+- have a default argument supplied in this or a previous declaration from the same scope:
+
+```cpp
+int x(int = 1, int); // Error: only the trailing parameters can have default arguments
+                     // (assuming there's no previous declaration of x)
+
+void f(int n, int k = 1);
+void f(int n = 0, int k); // OK: the default argument of `k` is provided by
+                          // the previous declaration in the same scope
+
+void g(int, int = 7);
+
+void h()
+{
+    void g(int = 1, int); // Error: not the same scope
+}
+```
+
+<Revision since="C++11">
+
+- ...unless the parameter was expanded from a parameter pack:
+
+```cpp
+template<class... T>
+struct C { void f(int n = 0, T...); };
+
+C<int> c;  // OK; instantiates declaration void C::f(int n = 0, int)
+```
+
+- or be a function parameter pack:
+
+```cpp
+template<class... T>
+void h(int i = 0, T... args); // OK
+```
+
+</Revision>
+
+The ellipsis is not a parameter, and so can follow a parameter with a default argument:
+
+```cpp
+int g(int n = 0, ...); // OK
+```
+
+Default arguments are only allowed in the parameter lists of [function declarations](/docs/cpp/language/functions/function)<InlineRevision since="C++11"> and [lambda-expressions](/docs/cpp/language/functions/lambda),</InlineRevision> and are not allowed in the declarations of pointers to functions, references to functions, or in [`typedef`](/docs/cpp/language/declarations/typedef) declarations. Template parameter lists use similar syntax for their [default template arguments](/docs/cpp/language/templates/template-parameters#default-template-arguments).
+
+For non-template functions, default arguments can be added to a function that was already declared if the function is redeclared in the same scope. At the point of a function call, the default arguments are a union of the default arguments provided in all visible declarations for the function. A redeclaration cannot introduce a default argument for a parameter for which a default argument is already visible (even if the value is the same). A re-declaration in an inner scope does not acquire the default arguments from outer scopes.
+
+```cpp
+void f(int, int);     // #1
+void f(int, int = 7); // #2 OK: adds a default argument
+
+void h()
+{
+    f(3); // #1 and #2 are in scope; makes a call to f(3,7)
+    void f(int = 1, int); // Error: the default argument of the second
+                          // parameter is not acquired from outer scopes
+}
+
+void m()
+{ // new scope begins
+    void f(int, int); // inner scope declaration; has no default argument.
+    f(4); // Error: not enough arguments to call f(int, int)
+    void f(int, int = 6);
+    f(4); // OK: calls f(4, 6);
+    void f(int, int = 6); // Error: the second parameter already has a
+                          // default argument (even if the values are the same)
+}
+
+void f(int = 1, int); // #3 OK, adds a default argument to #2
+
+void n()
+{ // new scope begins
+    f(); // #1, #2, and #3 are in scope: calls f(1, 7);
+}
+```
+
+If an [`inline`](/docs/cpp/language/declarations/inline) function is declared in different translation units, the accumulated sets of default arguments must be the same at the end of each translation unit.
+
+<Revision since="C++20">
+
+If a non-inline function is declared in the same namespace scope in different translation units, the corresponding default arguments must be the same if present (but some default arguments can be absent in some TU).
+
+</Revision>
+
+If a [`friend`](/docs/cpp/language/classes/friend) declaration specifies a default argument, it must be a friend function definition, and no other declarations of this function are allowed in the translation unit.
+
+The [using-declarations](/docs/cpp/language/declarations/namespace#using-declarations) carries over the set of known default arguments, and if more default arguments are added later to the function's namespace, those default arguments are also visible anywhere the using-declaration is visible:
+
+```cpp
+namespace N
+{
+    void f(int, int = 1);
+}
+
+using N::f;
+
+void g()
+{
+    f(7); // calls f(7, 1);
+    f();  // error
+}
+
+namespace N
+{
+    void f(int = 2, int);
+}
+
+void h()
+{
+    f();  // calls f(2, 1);
+}
+```
+
+The names used in the default arguments are looked up, checked for [accessibility](/docs/cpp/language/classes/access), and bound at the point of declaration, but are executed at the point of the function call:
+
+```cpp
+int a = 1;
+
+int f(int);
+
+int g(int x = f(a)); // lookup for f finds ::f, lookup for a finds ::a
+                     // the value of ::a, which is 1 at this point, is not used
+
+void h()
+{
+    a = 2; // changes the value of ::a
+    {
+        int a = 3;
+        g(); // calls f(2), then calls g() with the result
+    }
+}
+```
+
+For a [member function](/docs/cpp/language/classes/member-functions) of a non-[templated](/docs/cpp/language/templates#templated-entity) class, the default arguments are allowed on the out-of-class definition, and are combined with the default arguments provided by the declaration inside the class body. If these out-of-class default arguments would turn a member function into a default constructor or copy<InlineRevision since="C++11">/move</InlineRevision> constructor/assignment operator (which makes the call ambiguous), the program is ill-formed. For member functions of templated classes, all default arguments must be provided in the initial declaration of the member function.
+
+```cpp
+class C
+{
+    void f(int i = 3);
+    void g(int i, int j = 99);
+    C(int arg); // non-default constructor
+};
+
+void C::f(int i = 3) {}         // error: default argument already
+                                // specified in class scope
+
+void C::g(int i = 88, int j) {} // OK: in this translation unit,
+                                // C::g can be called with no argument
+
+C::C(int arg = 1) {}            // Error: turns this into a default constructor
+```
+
+The overriders of [virtual](/docs/cpp/language/classes/virtual) functions do not acquire the default arguments from the base class declarations, and when the virtual function call is made, the default arguments are decided based on the static type of the object (note: this can be avoided with [non-virtual interface](http://www.gotw.ca/publications/mill18.htm) pattern).
+
+```cpp
+struct Base
+{
+    virtual void f(int a = 7);
+};
+
+struct Derived : Base
+{
+    void f(int a) override;
+};
+
+void m()
+{
+    Derived d;
+    Base& b = d;
+    b.f(); // OK: calls Derived::f(7)
+    d.f(); // Error: no default argument
+}
+```
+
+Local variables are not allowed in default arguments unless they are [not evaluated](/docs/cpp/language/expressions#potentially-evaluated-expressions):
+
+```cpp
+void f()
+{
+    int n = 1;
+    extern void g(int x = n);        // error: local variable cannot be a default argument
+    extern void h(int x = sizeof n); // OK as of CWG 2082
+}
+```
+
+The [`this`](/docs/cpp/language/this) pointer is not allowed in default arguments:
+
+```cpp
+class A
+{
+    void f(A* p = this) {} // error: this is not allowed
+};
+```
+
+Non-static class members are not allowed in default arguments (even if they are not evaluated), except when used to form a pointer-to-member or in a member access expression:
+
+```cpp
+int b;
+
+class X
+{
+    int a;
+    int mem1(int i = a);    // error: non-static member cannot be used
+    int mem2(int i = b);    // OK: lookup finds X::b, the static member
+    int mem3(int X::* i = &X::a); // OK: non-static member can be used
+    int mem4(int i = x.a);  // OK: in a member access expression
+
+    static X x;
+    static int b;
+};
+```
+
+A default argument is evaluated each time the function is called with no argument for the corresponding parameter. Function parameters are not allowed in default arguments except if they are [not evaluated](/docs/cpp/language/expressions#potentially-evaluated-expressions). Note that parameters that appear earlier in the parameter list are in [scope](/docs/cpp/language/basic-concepts/scope):
+
+```cpp
+int a;
+
+int f(int a, int b = a); // Error: the parameter a used in a default argument
+
+int g(int a, int b = sizeof a); // Error until resolving CWG 2082
+                                // OK after resolution: use in unevaluated context is OK
+```
+
+The default arguments are not part of the function type:
+
+```cpp
+int f(int = 0);
+
+void h()
+{
+    int j = f(1);
+    int k = f(); // calls f(0);
+}
+
+int (*p1)(int) = &f;
+int (*p2)()    = &f; // Error: the type of f is int(int)
+```
+
+Operator functions cannot have default arguments, except for the function call operator:
+
+```cpp
+class C
+{
+    int operator[](int i = 0); // ill-formed
+    int operator()(int x = 0); // OK
+};
+```
+
+<Revision since="C++23">
+
+[Explicit object parameters](/docs/cpp/language/classes/member-functions#explicit-object-parameter) cannot have default arguments:
+
+```cpp
+struct S { void f(this const S& = S{}); }; // ill-formed
+```
+
+</Revision>
+
+## Note
+
+Spaces may be necessary to avoid a compound assignment token if the parameter name is absent.
+
+```cpp
+void f1(int*=0);         // Error, '*=' is unexpected here
+void g1(const int&=0);   // Error, '&=' is unexpected here
+void f2(int* = 0);       // OK
+void g2(const int& = 0); // OK
+void h(int&&=0);         // OK even without spaces, '&&' is a token here
+```
+
+## Defect reports
+
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+| DR | Applied to | Behavior as published | Correct behavior |
+| --- | --- | --- | --- |
+| [CWG 217](https://cplusplus.github.io/CWG/issues/217.html) | C++98 | a default argument could be added to a non-template member function of a class template | prohibited |
+| [CWG 1344](https://cplusplus.github.io/CWG/issues/1344.html) | C++98 | default arguments added in the out-of-class definition of a member function could change it to a special member function | prohibited |
+| [CWG 1716](https://cplusplus.github.io/CWG/issues/1716.html) | C++98 | default arguments were evaluated each time the function is called, even if the caller provided the arguments | evaluated only if no argument is provided for the corresponding parameter |
+| [CWG 2082](https://cplusplus.github.io/CWG/issues/2082.html) | C++98 | default arguments were forbidden to use local variables and preceding parameters in unevaluated context | unevaluated context use allowed |
+| [CWG 2233](https://cplusplus.github.io/CWG/issues/2233.html) | C++11 | parameters expanded from parameter packs could not appear after parameters with default arguments | allowed |
+| [CWG 2683](https://cplusplus.github.io/CWG/issues/2683.html) | C++98 | out-of-class definitions of the member functions of class templates' nested classes could have default arguments | prohibited |

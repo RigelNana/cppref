@@ -1,0 +1,200 @@
+{
+  "ok": true,
+  "sourceCount": 42,
+  "coveredCount": 42,
+  "renderedHtml": "--- title: \"Default arguments\" description: \"Migrated from https://en.cppreference.com/w/cpp/language/default_arguments\" source_url: \"https://en.cppreference.com/w/cpp/language/default_arguments\" language: \"C++\" --- {/* source:cpp-language-default-arguments:0000 */} Allows a function to be called without providing one or more trailing arguments. {/* source:cpp-language-default-arguments:0001 */} Indicated by using the following syntax for a parameter in the parameter-list of a function declaration .\\n \"} /> {/* source:cpp-language-default-arguments:0002 */} \\n\\n\\n\\n\\n\\n attr (optional) decl-specifier-seq declarator = initializer \\n\\n (1)\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n attr (optional) decl-specifier-seq abstract-declarator (optional) = initializer \\n\\n (2)\\n\\n\\n\\n\\n\\n\\n\\n\\n\"} /> {/* source:cpp-language-default-arguments:0003 */} Default arguments are used in place of the missing trailing arguments in a function call: {/* source:cpp-language-default-arguments:0004 */} void point ( int x = 3 , int y = 4 ) ; \\n \\npoint ( 1 , 2 ) ; // calls point(1, 2) \\npoint ( 1 ) ; // calls point(1, 4) \\npoint ( ) ; // calls point(3, 4) \"} /> {/* source:cpp-language-default-arguments:0005 */} In a function declaration, after a parameter with a default argument, all subsequent parameters must: {/* source:cpp-language-default-arguments:0006 */} have a default argument supplied in this or a previous declaration from the same scope:\\n \"} /> {/* source:cpp-language-default-arguments:0007 */} int x ( int = 1 , int ) ; // Error: only the trailing parameters can have default arguments \\n // (assuming there's no previous declaration of x) \\n \\n void f ( int n, int k = 1 ) ; \\n void f ( int n = 0 , int k ) ; // OK: the default argument of `k` is provided by \\n // the previous declaration in the same scope \\n \\n void g ( int , int = 7 ) ; \\n \\n void h ( ) \\n { \\n void g ( int = 1 , int ) ; // Error: not the same scope \\n } \"} /> {/* source:cpp-language-default-arguments:0008 */} \\n\\n ...unless the parameter was expanded from a parameter pack:\\n \\n \\n template < class ... T > \\n struct C { void f ( int n = 0 , T... ) ; } ; \\n \\nC < int > c ; // OK; instantiates declaration void C::f(int n = 0, int) \\n or be a function parameter pack:\\n \\n template < class ... T > \\n void h ( int i = 0 , T... args ) ; // OK \\n\\n (since C++11) \\n\"} /> {/* source:cpp-language-default-arguments:0009 */} The ellipsis is not a parameter, and so can follow a parameter with a default argument: {/* source:cpp-language-default-arguments:0010 */} int g ( int n = 0 , ... ) ; // OK \"} /> {/* source:cpp-language-default-arguments:0011 */} Default arguments are only allowed in the parameter lists of function declarations and lambda-expressions , (since C++11) and are not allowed in the declarations of pointers to functions, references to functions, or in typedef declarations. Template parameter lists use similar syntax for their default template arguments .\\n \"} /> {/* source:cpp-language-default-arguments:0012 */} For non-template functions, default arguments can be added to a function that was already declared if the function is redeclared in the same scope. At the point of a function call, the default arguments are a union of the default arguments provided in all visible declarations for the function. A redeclaration cannot introduce a default argument for a parameter for which a default argument is already visible (even if the value is the same). A re-declaration in an inner scope does not acquire the default arguments from outer scopes. {/* source:cpp-language-default-arguments:0013 */} void f ( int , int ) ; // #1 \\n void f ( int , int = 7 ) ; // #2 OK: adds a default argument \\n \\n void h ( ) \\n { \\n f ( 3 ) ; // #1 and #2 are in scope; makes a call to f(3,7) \\n void f ( int = 1 , int ) ; // Error: the default argument of the second \\n // parameter is not acquired from outer scopes \\n } \\n \\n void m ( ) \\n { // new scope begins \\n void f ( int , int ) ; // inner scope declaration; has no default argument. \\n f ( 4 ) ; // Error: not enough arguments to call f(int, int) \\n void f ( int , int = 6 ) ; \\n f ( 4 ) ; // OK: calls f(4, 6); \\n void f ( int , int = 6 ) ; // Error: the second parameter already has a \\n // default argument (even if the values are the same) \\n } \\n \\n void f ( int = 1 , int ) ; // #3 OK, adds a default argument to #2 \\n \\n void n ( ) \\n { // new scope begins \\n f ( ) ; // #1, #2, and #3 are in scope: calls f(1, 7); \\n } \"} /> {/* source:cpp-language-default-arguments:0014 */} If an inline function is declared in different translation units, the accumulated sets of default arguments must be the same at the end of each translation unit.\\n \"} /> {/* source:cpp-language-default-arguments:0015 */} \\n\\n If a non-inline function is declared in the same namespace scope in different translation units, the corresponding default arguments must be the same if present (but some default arguments can be absent in some TU).\\n \\n\\n (since C++20) \\n\"} /> {/* source:cpp-language-default-arguments:0016 */} If a friend declaration specifies a default argument, it must be a friend function definition, and no other declarations of this function are allowed in the translation unit.\\n \"} /> {/* source:cpp-language-default-arguments:0017 */} The using-declarations carries over the set of known default arguments, and if more default arguments are added later to the function's namespace, those default arguments are also visible anywhere the using-declaration is visible:\\n \"} /> {/* source:cpp-language-default-arguments:0018 */} namespace N\\n { \\n void f ( int , int = 1 ) ; \\n } \\n \\n using N :: f ; \\n \\n void g ( ) \\n { \\n f ( 7 ) ; // calls f(7, 1); \\n f ( ) ; // error \\n } \\n \\n namespace N\\n { \\n void f ( int = 2 , int ) ; \\n } \\n \\n void h ( ) \\n { \\n f ( ) ; // calls f(2, 1); \\n } \"} /> {/* source:cpp-language-default-arguments:0019 */} The names used in the default arguments are looked up, checked for accessibility , and bound at the point of declaration, but are executed at the point of the function call:\\n \"} /> {/* source:cpp-language-default-arguments:0020 */} int a = 1 ; \\n \\n int f ( int ) ; \\n \\n int g ( int x = f ( a ) ) ; // lookup for f finds ::f, lookup for a finds ::a \\n // the value of ::a, which is 1 at this point, is not used \\n \\n void h ( ) \\n { \\n a = 2 ; // changes the value of ::a \\n { \\n int a = 3 ; \\n g ( ) ; // calls f(2), then calls g() with the result \\n } \\n } \"} /> {/* source:cpp-language-default-arguments:0021 */} For a member function of a non- templated class, the default arguments are allowed on the out-of-class definition, and are combined with the default arguments provided by the declaration inside the class body. If these out-of-class default arguments would turn a member function into a default constructor or copy /move (since C++11) constructor/assignment operator (which makes the call ambiguous), the program is ill-formed. For member functions of templated classes, all default arguments must be provided in the initial declaration of the member function.\\n \"} /> {/* source:cpp-language-default-arguments:0022 */} class C\\n { \\n void f ( int i = 3 ) ; \\n void g ( int i, int j = 99 ) ; \\n C ( int arg ) ; // non-default constructor \\n } ; \\n \\n void C :: f ( int i = 3 ) { } // error: default argument already \\n // specified in class scope \\n \\n void C :: g ( int i = 88 , int j ) { } // OK: in this translation unit, \\n // C::g can be called with no argument \\n \\nC :: C ( int arg = 1 ) { } // Error: turns this into a default constructor \"} /> {/* source:cpp-language-default-arguments:0023 */} The overriders of virtual functions do not acquire the default arguments from the base class declarations, and when the virtual function call is made, the default arguments are decided based on the static type of the object (note: this can be avoided with non-virtual interface pattern).\\n \"} /> {/* source:cpp-language-default-arguments:0024 */} struct Base\\n { \\n virtual void f ( int a = 7 ) ; \\n } ; \\n \\n struct Derived : Base\\n { \\n void f ( int a ) override ; \\n } ; \\n \\n void m ( ) \\n { \\n Derived d ; \\n Base & b = d ; \\n b. f ( ) ; // OK: calls Derived::f(7) \\n d. f ( ) ; // Error: no default argument \\n } \"} /> {/* source:cpp-language-default-arguments:0025 */} Local variables are not allowed in default arguments unless they are not evaluated :\\n \"} /> {/* source:cpp-language-default-arguments:0026 */} void f ( ) \\n { \\n int n = 1 ; \\n extern void g ( int x = n ) ; // error: local variable cannot be a default argument \\n extern void h ( int x = sizeof n ) ; // OK as of CWG 2082 \\n } \"} /> {/* source:cpp-language-default-arguments:0027 */} The this pointer is not allowed in default arguments:\\n \"} /> {/* source:cpp-language-default-arguments:0028 */} class A\\n { \\n void f ( A * p = this ) { } // error: this is not allowed \\n } ; \"} /> {/* source:cpp-language-default-arguments:0029 */} Non-static class members are not allowed in default arguments (even if they are not evaluated), except when used to form a pointer-to-member or in a member access expression: {/* source:cpp-language-default-arguments:0030 */} int b ; \\n \\n class X\\n { \\n int a ; \\n int mem1 ( int i = a ) ; // error: non-static member cannot be used \\n int mem2 ( int i = b ) ; // OK: lookup finds X::b, the static member \\n int mem3 ( int X :: * i = & X :: a ) ; // OK: non-static member can be used \\n int mem4 ( int i = x. a ) ; // OK: in a member access expression \\n \\n static X x ; \\n static int b ; \\n } ; \"} /> {/* source:cpp-language-default-arguments:0031 */} A default argument is evaluated each time the function is called with no argument for the corresponding parameter. Function parameters are not allowed in default arguments except if they are not evaluated . Note that parameters that appear earlier in the parameter list are in scope :\\n \"} /> {/* source:cpp-language-default-arguments:0032 */} int a ; \\n \\n int f ( int a, int b = a ) ; // Error: the parameter a used in a default argument \\n \\n int g ( int a, int b = sizeof a ) ; // Error until resolving CWG 2082 \\n // OK after resolution: use in unevaluated context is OK \"} /> {/* source:cpp-language-default-arguments:0033 */} The default arguments are not part of the function type: {/* source:cpp-language-default-arguments:0034 */} int f ( int = 0 ) ; \\n \\n void h ( ) \\n { \\n int j = f ( 1 ) ; \\n int k = f ( ) ; // calls f(0); \\n } \\n \\n int ( * p1 ) ( int ) = & f ; \\n int ( * p2 ) ( ) = & f ; // Error: the type of f is int(int) \"} /> {/* source:cpp-language-default-arguments:0035 */} Operator functions cannot have default arguments, except for the function call operator: {/* source:cpp-language-default-arguments:0036 */} class C\\n { \\n int operator [ ] ( int i = 0 ) ; // ill-formed \\n int operator ( ) ( int x = 0 ) ; // OK \\n } ; \"} /> {/* source:cpp-language-default-arguments:0037 */} \\n\\n Explicit object parameters cannot have default arguments:\\n \\n struct S { void f ( this const S & = S { } ) ; } ; // ill-formed \\n\\n (since C++23) \\n\"} /> Note {/* source:cpp-language-default-arguments:0038 */} Spaces may be necessary to avoid a compound assignment token if the parameter name is absent. {/* source:cpp-language-default-arguments:0039 */} void f1 ( int * = 0 ) ; // Error, '*=' is unexpected here \\n void g1 ( const int & = 0 ) ; // Error, '&=' is unexpected here \\n void f2 ( int * = 0 ) ; // OK \\n void g2 ( const int & = 0 ) ; // OK \\n void h ( int && = 0 ) ; // OK even without spaces, '&&' is a token here \"} /> Defect reports {/* source:cpp-language-default-arguments:0040 */} The following behavior-changing defect reports were applied retroactively to previously published C++ standards. {/* source:cpp-language-default-arguments:0041 */} \\n\\nDR\\n\\nApplied to\\n\\nBehavior as published\\n\\nCorrect behavior\\n\\n\\n CWG 217 \\n\\nC++98\\n\\na default argument could be added to a non- template member function of a class template\\n\\nprohibited\\n\\n\\n CWG 1344 \\n\\nC++98\\n\\ndefault arguments added in the out-of-class definition of a member function could change it to a special member function\\n\\nprohibited\\n\\n\\n CWG 1716 \\n\\nC++98\\n\\ndefault arguments were evaluated each time the function is called, even if the caller provided the arguments\\n\\nevaluated only if no argument is provided for the corresponding parameter\\n\\n\\n CWG 2082 \\n\\nC++98\\n\\ndefault arguments were forbidden to use local variables and preceding parameters in unevaluated context\\n\\nunevaluated context use allowed\\n\\n\\n CWG 2233 \\n\\nC++11\\n\\nparameters expanded from parameter packs could not appear after parameters with default arguments\\n\\nallowed\\n\\n\\n CWG 2683 \\n\\nC++98\\n\\nout-of-class definitions of the member functions of class templates' nested classes could have default arguments\\n\\nprohibited\\n\"} />",
+  "issues": [
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0001",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0002",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0004",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0006",
+      "message": "unsupported-pattern requires human review: Source element <ul> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0007",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0008",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0010",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0011",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0013",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0014",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0015",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0016",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0017",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0018",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0019",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0020",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0021",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0022",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0023",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0024",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0025",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0026",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0027",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0028",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0030",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0031",
+      "message": "unsupported-pattern requires human review: Source element <p> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0032",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0034",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0036",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0037",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0039",
+      "message": "unsupported-pattern requires human review: Source element <div> requires semantic classification."
+    },
+    {
+      "severity": "review",
+      "code": "needs-review",
+      "sourceId": "cpp-language-default-arguments:0041",
+      "message": "unsupported-pattern requires human review: Source element <table> requires semantic classification."
+    }
+  ]
+}
