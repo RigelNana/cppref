@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "bun:test";
-import { loadAgentInstructions } from "../packages/migrate/src/agent.ts";
 import { extractEnglishPage, normalizeCppreferenceLink } from "../packages/migrate/src/extract.ts";
+import { createExternalMigrationTask } from "../packages/migrate/src/external-task.ts";
 import { createFallbackSemanticPage } from "../packages/migrate/src/fallback.ts";
 import { renderSemanticPage } from "../packages/migrate/src/render.ts";
 import { validateMigration } from "../packages/migrate/src/validate.ts";
@@ -12,13 +12,23 @@ const cSource = "ref/cppreference-en/reference/en/c/string/byte/memcpy.html";
 const vectorSource = "ref/cppreference-en/reference/en/cpp/container/vector.html";
 const vectorMdx = "apps/docs/content/docs/cpp/container/vector.mdx";
 
-test("Agent calls load the repository migration rules", async () => {
-  const instructions = await loadAgentInstructions();
-  expect(instructions).toContain("This repository migrates the local cppreference HTML corpus");
-  expect(instructions).toContain("InlineRevision");
-  expect(instructions).toContain("links, revision markers");
-  expect(instructions).toContain('<rules-file path="MIGRATION_RULES.md">');
-  expect(instructions).toContain("页面提交检查表");
+test("external migration tasks expose files, rules, contracts, and deterministic validation", async () => {
+  const page = extractEnglishPage(await readFile(cppSource, "utf8"), { sourcePath: cppSource });
+  const task = createExternalMigrationTask(page, {
+    sourceHtml: cppSource,
+    sourceIr: "/tmp/default-arguments.source.json",
+    outputMdx: "/tmp/default-arguments.mdx",
+    validationReport: "/tmp/default-arguments.validation.json",
+  });
+  expect(task.kind).toBe("cppreference-external-migration");
+  expect(task.instructions.map((instruction) => instruction.split("/").at(-1))).toEqual([
+    "AGENTS.md",
+    "MIGRATION_RULES.md",
+  ]);
+  expect(task.instructions.every((instruction) => instruction.startsWith("/"))).toBe(true);
+  expect(task.componentRegistry["declaration-doc"].exportName).toBe("DeclarationDoc");
+  expect(task.validation.args).toContain("validate:mdx");
+  expect(task.validation.args).toContain(task.paths.outputMdx);
 });
 
 test("direct MDX validation enforces source coverage and rejects raw HTML escape hatches", async () => {

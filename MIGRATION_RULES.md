@@ -1,6 +1,6 @@
 # cppreference 迁移完整规则
 
-本文档是把本地英文 cppreference HTML 迁移为本项目 Fumadocs MDX 的规范性规则。它同时约束人工迁移、Agent 迁移、迁移脚本、验证器和最终页面审查。本文中的“必须”“不得”“应该”分别表示强制要求、禁止事项和默认要求。
+本文档是把本地英文 cppreference HTML 迁移为本项目 Fumadocs MDX 的规范性规则。它约束外置 Agent、人工迁移、迁移脚本、验证器和最终页面审查。仓库本身不内置模型 SDK、Provider、Agent 运行时、Prompt 循环或编排器。本文中的“必须”“不得”“应该”分别表示强制要求、禁止事项和默认要求。
 
 ## 1. 目标与适用范围
 
@@ -75,27 +75,38 @@ bun run extract \
 
 不得只阅读浏览器可见文本后直接写页面。源 HTML 的结构和 IR 中的不可变字段都必须检查。
 
-### 4.3 选择迁移路径
+### 4.3 准备外置 Agent 任务
 
-直接 MDX Agent 路径：
+仓库只准备文件化交接，不调用模型：
 
 ```bash
-DEEPSEEK_API_KEY=... \
-DEEPSEEK_BASE_URL=https://api.deepseek.com \
-DEEPSEEK_MODEL=deepseek-v4-flash \
-bun run migrate:direct \
+bun run migrate:prepare \
   ref/cppreference-en/reference/en/cpp/container/vector.html \
-  /tmp/vector.mdx \
-  /tmp/vector.validation.json
+  /tmp/cppref-vector-task \
+  apps/docs/content/docs/cpp/container/vector.mdx
 ```
 
-语义 IR 路径用于分类、结构验证和确定性渲染：
+该命令生成：
+
+- `cpp__container__vector.source.json`：外置 Agent 的 Lossless Page IR 输入；
+- `cpp__container__vector.task.json`：输入、输出、规则、组件契约和验证命令清单。
+
+外置 Agent 必须：
+
+1. 读取任务清单中 `instructions` 指向的 `AGENTS.md` 和 `MIGRATION_RULES.md`；
+2. 读取 `paths.sourceIr`，必要时对照只读的 `paths.sourceHtml`；
+3. 按 `componentRegistry` 生成完整候选 MDX 到 `paths.outputMdx`；
+4. 执行清单中的 `validation.command` 与 `validation.args`；
+5. 把 Provider、凭据、上下文管理、并发、重试、缓存和人工审批保留在仓库外。
+
+也可以让外置 Agent 生成符合 `semanticPageSchema` 的语义 IR，再使用：
 
 ```bash
-bun run golden <source.html> <output-directory> --agent
+bun run render <semantic-ir.json> <page.mdx>
+bun run packages/migrate/src/cli.ts validate <source-ir.json> <semantic-ir.json>
 ```
 
-不论走哪条路径，Agent 输出都是候选产物，不得绕过确定性验证和浏览器审查后直接发布。
+无论采用 MDX 还是语义 IR 交接，外置 Agent 输出都是候选产物，不得绕过确定性验证和浏览器审查后直接发布。
 
 ### 4.4 写入正式路径并更新导航
 
@@ -170,7 +181,7 @@ The elements are stored contiguously.
 - 表格的行列关系以及有语义意义的 `rowSpan`、`colSpan`；
 - 条目顺序和声明编号对应关系。
 
-若源 HTML 与提取 IR 对这些事实不一致，先修复提取器或标记人工复核，不得让 Agent自行选择。
+若源 HTML 与提取 IR 对这些事实不一致，先修复提取器或标记人工复核，不得让 Agent 自行选择。
 
 ## 6. Frontmatter、标题和章节
 
@@ -455,7 +466,7 @@ Member functions of `std::vector` are constexpr.
 ## 13. 代码、示例和输出
 
 - C 使用 ` ```c `，C++ 使用 ` ```cpp `，纯输出使用 ` ```text `。
-- 代码内容必须来自 `immutable.code`，不得由 Agent重新格式化或“修正”。
+代码内容必须来自 `immutable.code`，不得由 Agent 重新格式化或“修正”。
 - 保留 include、类型参数、注释、空行、标点、字符字面量和输出。
 - 示例的 “Run this code” 等源站控件文本不需要迁移；实际代码、说明和输出必须迁移。
 - 代码块使用共享语法高亮表面，无边框、无阴影。
@@ -515,19 +526,20 @@ Member functions of `std::vector` are constexpr.
 - JSX 与 Markdown 混排时必须保留必要空行，避免内容被解析为纯文本。
 - 不得在 MDX 中引入运行时代码、数据抓取或副作用。
 
-## 18. Agent 行为规则
+## 18. 外置 Agent 行为规则
 
-### 18.1 强制阅读
+### 18.1 运行边界与强制阅读
 
-任何迁移 Agent 在处理页面前必须读取：
+迁移 Agent 必须由仓库外部的工具或编排器运行。本仓库只提供：
 
-1. `AGENTS.md`；
-2. `MIGRATION_RULES.md`；
-3. `packages/migrate/src/component-registry.ts` 中由程序注入的注册契约。
+- `migrate:prepare` 生成的 Lossless Page IR 和任务清单；
+- `AGENTS.md` 与 `MIGRATION_RULES.md`；
+- `component-registry.ts` 的序列化契约；
+- `render`、`validate` 和 `validate:mdx` 确定性命令。
 
-未完成规则读取不得生成候选输出。
+任何外置 Agent 在处理页面前必须读取任务清单中的全部 `instructions`。未完成规则读取不得生成候选输出。不得把模型 SDK、Provider 凭据、Agent 会话、工具循环、重试或调度实现重新加入本仓库。
 
-### 18.2 Agent 可以做的事
+### 18.2 外置 Agent 可以做的事
 
 - 识别源 block 的语义角色；
 - 把普通 HTML 结构转换为 Markdown；
@@ -537,7 +549,7 @@ Member functions of `std::vector` are constexpr.
 - 使用规范化链接目标；
 - 在明确无法无损表示时标记人工复核。
 
-### 18.3 Agent 不得做的事
+### 18.3 外置 Agent 不得做的事
 
 - 使用模型知识补写源页面没有的内容；
 - 改写或总结技术说明；
@@ -656,7 +668,7 @@ Member functions of `std::vector` are constexpr.
 - 接口体现领域语义而不是布局；
 - 可由 Page IR 建模并由验证器核验；
 - 有响应式、可访问性和视觉契约；
-- 已更新 `component-registry.ts`、MDX 注册表、Agent 规则、渲染器和测试。
+- 已更新 `component-registry.ts`、MDX 注册表、外置 Agent 规则、渲染器和测试。
 
 不得新增 `FlexTable`、`CardGrid` 等仅描述布局的迁移组件。
 

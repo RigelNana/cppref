@@ -1,9 +1,8 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { losslessPageSchema, semanticPageSchema } from "@cppref/page-ir";
-import { migratePageWithAgent } from "./agent.ts";
+import { createExternalMigrationTask } from "./external-task.ts";
 import { extractEnglishPage } from "./extract.ts";
-import { migratePageDirectlyToMdx } from "./direct-mdx.ts";
 import { createFallbackSemanticPage } from "./fallback.ts";
 import { renderSemanticPage } from "./render.ts";
 import { validateMigration } from "./validate.ts";
@@ -50,12 +49,11 @@ async function renderCommand(args: string[]): Promise<void> {
 }
 
 async function goldenCommand(args: string[]): Promise<void> {
-  const sourcePath = requiredArg(args, 0, "bun run golden <source.html> <output-dir> [--agent]");
-  const outputDirectory = requiredArg(args, 1, "bun run golden <source.html> <output-dir> [--agent]");
-  const useAgent = args.includes("--agent");
+  const sourcePath = requiredArg(args, 0, "bun run golden <source.html> <output-dir>");
+  const outputDirectory = requiredArg(args, 1, "bun run golden <source.html> <output-dir>");
   const html = await readFile(sourcePath, "utf8");
   const source = extractEnglishPage(html, { sourcePath, slugMap: await loadSlugMap() });
-  const semantic = useAgent ? await migratePageWithAgent(source) : createFallbackSemanticPage(source);
+  const semantic = createFallbackSemanticPage(source);
   const report = validateMigration(source, semantic);
   const baseName = source.meta.slug.replaceAll("/", "__");
   await writeJson(path.join(outputDirectory, `${baseName}.source.json`), source);
@@ -68,21 +66,27 @@ async function goldenCommand(args: string[]): Promise<void> {
   if (!report.ok) process.exitCode = 1;
 }
 
-async function directCommand(args: string[]): Promise<void> {
-  const sourcePath = requiredArg(args, 0, "bun run packages/migrate/src/cli.ts direct <source.html> <page.mdx> [report.json]");
-  const outputPath = requiredArg(args, 1, "bun run packages/migrate/src/cli.ts direct <source.html> <page.mdx> [report.json]");
-  const reportPath = args[2];
+async function prepareExternalCommand(args: string[]): Promise<void> {
+  const sourcePath = requiredArg(args, 0, "bun run migrate:prepare <source.html> <task-dir> <output.mdx>");
+  const taskDirectory = requiredArg(args, 1, "bun run migrate:prepare <source.html> <task-dir> <output.mdx>");
+  const outputPath = requiredArg(args, 2, "bun run migrate:prepare <source.html> <task-dir> <output.mdx>");
   const html = await readFile(sourcePath, "utf8");
   const source = extractEnglishPage(html, { sourcePath, slugMap: await loadSlugMap() });
-  const mdx = await migratePageDirectlyToMdx(source);
-  const report = validateDirectMdx(source, mdx);
-  await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, mdx, "utf8");
-  if (reportPath) await writeJson(reportPath, report);
-  console.log(
-    `Direct ${source.meta.slug}: ${report.sourceCount} source blocks, ${report.coveredCount} covered, ${report.issues.length} issues`,
-  );
-  if (!report.ok) process.exitCode = 1;
+  const baseName = source.meta.slug.replaceAll("/", "__");
+  const sourceIrPath = path.join(taskDirectory, `${baseName}.source.json`);
+  const taskPath = path.join(taskDirectory, `${baseName}.task.json`);
+  const reportPath = path.join(taskDirectory, `${baseName}.validation.json`);
+  const task = createExternalMigrationTask(source, {
+    sourceHtml: sourcePath,
+    sourceIr: sourceIrPath,
+    outputMdx: outputPath,
+    validationReport: reportPath,
+  });
+  await writeJson(sourceIrPath, source);
+  await writeJson(taskPath, task);
+  console.log(`Prepared external migration task ${taskPath}`);
+  console.log(`External Agent writes ${task.paths.outputMdx}`);
+  console.log(`Validate with: ${task.validation.command} ${task.validation.args.join(" ")}`);
 }
 async function validateMdxCommand(args: string[]): Promise<void> {
   const sourcePath = requiredArg(args, 0, "bun run packages/migrate/src/cli.ts validate-mdx <source.html> <page.mdx> [report.json]");
@@ -123,12 +127,12 @@ switch (command) {
   case "validate":
     await validateCommand(args);
     break;
-  case "direct":
-    await directCommand(args);
+  case "prepare-external":
+    await prepareExternalCommand(args);
     break;
   case "validate-mdx":
     await validateMdxCommand(args);
     break;
   default:
-    throw new Error("Usage: cli.ts <extract|render|golden|validate|validate-mdx|direct> ...");
+    throw new Error("Usage: cli.ts <extract|prepare-external|render|golden|validate|validate-mdx> ...");
 }

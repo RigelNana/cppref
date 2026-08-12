@@ -20,23 +20,23 @@ Migrate the local English cppreference HTML corpus to structured Markdown/MDX wi
 
 ## Positioning
 
-The platform uses a lossless intermediate representation and constrained Agents to recover C/C++ documentation semantics from irregular MediaWiki HTML. Deterministic validation and source mappings make every migrated semantic object auditable instead of treating generated MDX as an opaque model response.
+The platform uses a lossless intermediate representation and deterministic validation to make every migrated semantic object auditable. Agent execution is external: this repository prepares source IR and task manifests, accepts candidate semantic IR or MDX, and validates the result without embedding any model provider or orchestration runtime.
 
 ## Operating Context
 
 - English source corpus: `ref/cppreference-en/reference/en`.
 - Chinese source corpus follows after the English pipeline is stable.
 - Cppdoc under `ref/cppdoc` provides the reference domain vocabulary and component boundaries.
-- Migration runs as durable page and section jobs, with a side-by-side source/result review surface.
-- Low-confidence classifications and validation failures enter a human review queue.
+- External orchestration runs durable page and section jobs; this repository supplies the file-based migration seam and side-by-side source/result review surface.
+- Low-confidence classifications and validation failures remain the external orchestrator's human-review responsibility.
 
 ## Capabilities and Constraints
 
 - Preserve visible technical content; do not summarize, invent, or silently omit it.
 - Preserve source IDs, code, links, standard revisions, defect report identifiers, and table structure.
-- Agent classification and semantic composition are required because HTML class combinations are not exhaustively classifiable by hand.
-- Agents emit Zod-constrained semantic IR, not final MDX.
-- Deterministic renderers produce MDX; deterministic Text, Code, and Structure gates validate it.
+- Semantic classification is performed by an external Agent because HTML class combinations are not exhaustively classifiable by hand.
+- External Agents consume Lossless Page IR and the repository migration rules, then write candidate semantic IR or MDX to declared paths.
+- Deterministic renderers produce MDX; deterministic Text, Code, and Structure gates validate external output.
 - Domain objects follow cppdoc's semantic seams: declarations, descriptions, parameters, revisions, defect reports, feature-test macros, typed references, and behavior terms.
 - Ordinary headings, paragraphs, lists, and examples remain normal document primitives.
 - The first supported corpus adapter is English MediaWiki 1.21.2 with GeSHi markup.

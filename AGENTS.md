@@ -1,13 +1,13 @@
 # AGENTS.md
 
-This repository migrates the local cppreference HTML corpus into typed semantic IR and deterministic Fumadocs MDX.
+This repository extracts the local cppreference HTML corpus into typed semantic IR and deterministically validates and renders Fumadocs MDX. Migration Agents run outside this repository.
 
-Before any migration, read and follow [`MIGRATION_RULES.md`](./MIGRATION_RULES.md). It is the complete normative migration specification; this file is only its repository-level summary.
+Before any migration, the external Agent must read and follow [`MIGRATION_RULES.md`](./MIGRATION_RULES.md). It is the complete normative migration specification; this file is only its repository-level summary.
 
 ## Content invariants
 
 - Preserve visible technical content. Never summarize, invent, or silently omit source content.
-- Agents classify and compose semantics; they do not write final MDX.
+- External Agents classify and compose semantics or author candidate MDX; this repository does not embed a model provider or Agent runtime.
 - Every semantic node must cover source IDs. Coverage must be complete, unique, ordered, and contiguous per composed node.
 - Code text, links, revision markers, defect report identifiers, and table spans are immutable source facts.
 - Return `needs_review` for ambiguity. Never guess a component boundary.
@@ -31,13 +31,14 @@ Before any migration, read and follow [`MIGRATION_RULES.md`](./MIGRATION_RULES.m
 - Inline backticks denote code identifiers and expressions. They render as flat colored text, not chips or cards. Do not use backticks merely for emphasis.
 - Fenced code blocks retain the shared rounded surface but have no border or shadow. They expand vertically and wrap long lines; never add an internal scrollbar or fixed maximum height.
 - Write literal comparison operators as MDX-safe escaped characters (`\\<`, `\\<=`) in prose. Do not expose `&lt;` or other HTML entity spellings to readers. The deterministic renderer owns this escaping for generated MDX.
-- Preserve every source anchor's visible text and destination. Normalize cppreference-internal relative or `.html` URLs to canonical documentation slugs during extraction; the renderer owns the `/docs/` route prefix. Preserve fragments and genuine external URLs unchanged. Never let the Agent invent or rewrite link targets.
+- Preserve every source anchor's visible text and destination. Normalize cppreference-internal relative or `.html` URLs to canonical documentation slugs during extraction; the renderer owns the `/docs/` route prefix. Preserve fragments and genuine external URLs unchanged. External Agents must not invent or rewrite link targets.
 - Never use `dangerouslySetInnerHTML`, `<SourceHtml>`, or raw source HTML as accepted migrated output. Unsupported source patterns must remain review failures until modeled semantically.
 - Reuse an existing component boundary before adding one. New components require a recurring C/C++ semantic role that normal Markdown and the registered components cannot express.
 
 ## Engineering
 
 - TypeScript with explicit semicolons and double quotes.
-- Zod schemas are the source of truth for Agent outputs and renderer inputs.
+- Zod schemas are the source of truth for external Agent outputs and renderer inputs.
 - Core packages must remain Node.js-compatible. Bun-only APIs belong behind adapters.
+- Keep model SDKs, provider credentials, prompt loops, retries, and orchestration outside this repository. The repository seam is file-based: Lossless Page IR/task manifest in, candidate semantic IR or MDX out.
 - Run `bun run typecheck`, `bun test`, and the relevant CLI smoke command after changes.
