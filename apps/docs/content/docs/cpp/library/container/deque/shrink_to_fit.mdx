@@ -1,0 +1,158 @@
+---
+title: "std::deque<T,Allocator>::shrink_to_fit"
+description: "Requests the removal of unused capacity."
+source_url: "https://en.cppreference.com/w/cpp/container/deque/shrink_to_fit"
+language: "C++"
+---
+
+{/* source:cpp-container-deque-shrink-to-fit:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`void shrink_to_fit();`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-deque-shrink-to-fit:0001 */}
+Requests the removal of unused capacity.
+
+{/* source:cpp-container-deque-shrink-to-fit:0002 */}
+It is a non-binding request to reduce the memory usage without changing the size of the sequence. It depends on the implementation whether the request is fulfilled.
+
+{/* source:cpp-container-deque-shrink-to-fit:0003 */}
+All iterators (including the [`end()`](/docs/cpp/library/container/deque/end) iterator) and all references to the elements are invalidated.
+
+{/* source:cpp-container-deque-shrink-to-fit:0004 */}
+<Revision since="C++11">If `T` is not [`MoveInsertable`](/docs/cpp/library/named_req/MoveInsertable) into `std::deque<T, Allocator>`, the behavior is undefined.</Revision>
+
+### Complexity
+
+{/* source:cpp-container-deque-shrink-to-fit:0005 */}
+At most linear in the size of the container.
+
+{/* source:cpp-container-deque-shrink-to-fit:0006 */}
+### Exceptions
+
+<Revision since="C++11">If an exception is thrown other than by the move constructor of a non-[`CopyInsertable`](/docs/cpp/library/named_req/CopyInsertable) `T`, there are no effects.</Revision>
+
+### Notes
+
+{/* source:cpp-container-deque-shrink-to-fit:0007 */}
+In libstdc++, `shrink_to_fit()` is [not available](https://gcc.gnu.org/onlinedocs/libstdc++/manual/strings.html#strings.string.shrink) in C++98 mode.
+
+### Example
+
+{/* source:cpp-container-deque-shrink-to-fit:0008 */}
+```cpp
+#include <cstddef>
+#include <deque>
+#include <iostream>
+#include <new>
+
+// Minimal C++11 allocator with debug output.
+template<class Tp>
+struct NAlloc
+{
+    typedef Tp value_type;
+
+    NAlloc() = default;
+
+    template<class T> NAlloc(const NAlloc<T>&) {}
+
+    Tp* allocate(std::size_t n)
+    {
+        n *= sizeof(Tp);
+        std::cout << "allocating " << n << " bytes\n";
+        return static_cast<Tp*>(::operator new(n));
+    }
+
+    void deallocate(Tp* p, std::size_t n)
+    {
+        std::cout << "deallocating " << n*sizeof*p << " bytes\n";
+        ::operator delete(p);
+    }
+};
+template<class T, class U>
+bool operator==(const NAlloc<T>&, const NAlloc<U>&) { return true; }
+template<class T, class U>
+bool operator!=(const NAlloc<T>&, const NAlloc<U>&) { return false; }
+
+int main()
+{
+    // std::queue has no capacity() function (like std::vector).
+    // Because of this, we use a custom allocator to show the
+    // working of shrink_to_fit.
+
+    std::cout << "Default-construct deque:\n";
+    std::deque<int, NAlloc<int>> deq;
+
+    std::cout << "\nAdd 300 elements:\n";
+    for (int i = 1000; i < 1300; ++i)
+        deq.push_back(i);
+
+    std::cout << "\nPop 100 elements:\n";
+    for (int i = 0; i < 100; ++i)
+        deq.pop_front();
+
+    std::cout << "\nRun shrink_to_fit:\n";
+    deq.shrink_to_fit();
+
+    std::cout << "\nDestroy deque as it goes out of scope:\n";
+}
+```
+
+Possible output:
+
+```text
+Default-construct deque:
+allocating 64 bytes
+allocating 512 bytes
+
+Add 300 elements:
+allocating 512 bytes
+allocating 512 bytes
+
+Pop 100 elements:
+
+Run shrink_to_fit:
+allocating 64 bytes
+allocating 512 bytes
+allocating 512 bytes
+deallocating 512 bytes
+deallocating 512 bytes
+deallocating 512 bytes
+deallocating 64 bytes
+
+Destroy deque as it goes out of scope:
+deallocating 512 bytes
+deallocating 512 bytes
+deallocating 64 bytes
+```
+
+### Defect reports
+
+{/* source:cpp-container-deque-shrink-to-fit:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-deque-shrink-to-fit:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={850} standard="C++98">
+    <PublishedBehavior>`std::deque` lacked explicit shrink-to-fit operations</PublishedBehavior>
+    <CorrectedBehavior>provided</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2033} standard="C++98, C++11">
+    <PublishedBehavior>1. the complexity requirement was missing (C++98) 2. `T` was not required to be [`MoveInsertable`](/docs/cpp/library/named_req/MoveInsertable) (C++11)</PublishedBehavior>
+    <CorrectedBehavior>1. added 2. required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2223} standard="C++98, C++11">
+    <PublishedBehavior>1. references, pointers, and iterators were not invalidated (C++98) 2. there was no exception safety guarantee (C++11)</PublishedBehavior>
+    <CorrectedBehavior>1. they may be invalidated 2. added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-container-deque-shrink-to-fit:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/deque/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

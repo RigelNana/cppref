@@ -1,0 +1,155 @@
+---
+title: "std::map<Key,T,Compare,Allocator>::at"
+description: "Returns a reference to the mapped value of the element with specified key."
+source_url: "https://en.cppreference.com/w/cpp/container/map/at"
+language: "C++"
+---
+
+{/* source:cpp-container-map-at:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++98" code={`T& at( const Key& key );`} />
+  <Declaration id="2" language="cpp" since="C++98" code={`const T& at( const Key& key ) const;`} />
+  <Declaration id="3" language="cpp" since="C++26" code={`template< class K >
+T& at( const K& x );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< class K >
+const T& at( const K& x ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-map-at:0001 */}
+Returns a reference to the mapped value of the element with specified `key`. If no such element exists, an exception of type [`std::out_of_range`](/docs/cpp/library/error/out_of_range) is thrown.
+
+{/* source:cpp-container-map-at:0002 */}
+- 1,2) The key is equivalent to `key`.
+
+{/* source:cpp-container-map-at:0003 */}
+- 3,4) The key compares equivalent to the value `x`. The reference to the mapped value is obtained as if by expression `this->find(x)->second`.
+
+{/* source:cpp-container-map-at:0004 */}
+- The expression `this->find(x)` must be well-formed and have well-defined behavior, otherwise the behavior is undefined.
+
+{/* source:cpp-container-map-at:0005 */}
+- These overloads participate in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type. It allows calling this function without constructing an instance of `Key`.
+
+## Parameters
+
+{/* source:cpp-container-map-at:0006 */}
+<ParameterList>
+  <Parameter name="key">the key of the element to find</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-container-map-at:0007 */}
+A reference to the mapped value of the requested element.
+
+## Exceptions
+
+{/* source:cpp-container-map-at:0008 */}
+- 1,2) [`std::out_of_range`](/docs/cpp/library/error/out_of_range) if the container does not have an element with the specified `key`.
+
+{/* source:cpp-container-map-at:0009 */}
+- 3,4) [`std::out_of_range`](/docs/cpp/library/error/out_of_range) if the container does not have the specified element, that is, if `find(x) == end()` is `true`.
+
+## Complexity
+
+{/* source:cpp-container-map-at:0010 */}
+Logarithmic in the size of the container.
+
+## Notes
+
+{/* source:cpp-container-map-at:0011 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_associative_heterogeneous_insertion`](/docs/cpp/library/feature_test#cpp_lib_associative_heterogeneous_insertion) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_associative_heterogeneous_insertion_202311L) | (C++26) | Heterogeneous overloads for the remaining member functions in [ordered](/docs/cpp/library/container#Associative_containers) and [unordered](/docs/cpp/library/container#Unordered_associative_containers) associative [containers](/docs/cpp/library/container). ([3,4](/docs/cpp/library/container/map/at#Version_3)) |
+
+## Example
+
+{/* source:cpp-container-map-at:0012 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <map>
+
+struct LightKey { int o; };
+struct HeavyKey { int o[1000]; };
+
+// The container must use std::less<> (or other transparent Comparator) to
+// access overloads (3,4). This includes standard overloads, such as
+// comparison between std::string and std::string_view.
+bool operator<(const HeavyKey& x, const LightKey& y) { return x.o[0] < y.o; }
+bool operator<(const LightKey& x, const HeavyKey& y) { return x.o < y.o[0]; }
+bool operator<(const HeavyKey& x, const HeavyKey& y) { return x.o[0] < y.o[0]; }
+
+int main()
+{
+    std::map<int, char> map{{1, 'a'}, {2, 'b'}};
+    assert(map.at(1) == 'a');
+    assert(map.at(2) == 'b');
+    try
+    {
+        map.at(13);
+    }
+    catch(const std::out_of_range& ex)
+    {
+        std::cout << "1) out_of_range::what(): " << ex.what() << '\n';
+    }
+
+#ifdef __cpp_lib_associative_heterogeneous_insertion
+    // Transparent comparison demo.
+    std::map<HeavyKey, char, std::less<>> map2{{{1}, 'a'}, {{2}, 'b'}};
+    assert(map2.at(LightKey{1}) == 'a');
+    assert(map2.at(LightKey{2}) == 'b');
+    try
+    {
+        map2.at(LightKey{13});
+    }
+    catch(const std::out_of_range& ex)
+    {
+        std::cout << "2) out_of_range::what(): " << ex.what() << '\n';
+    }
+#endif
+}
+```
+
+Possible output:
+
+```text
+1) out_of_range::what(): map::at:  key not found
+2) out_of_range::what(): map::at:  key not found
+```
+
+## Defect reports
+
+{/* source:cpp-container-map-at:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-map-at:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={464} standard="C++98">
+    <PublishedBehavior>map did not have this member function</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={703} standard="C++98">
+    <PublishedBehavior>the complexity requirement was missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2007} standard="C++98">
+    <PublishedBehavior>the return value referred to the requested element</PublishedBehavior>
+    <CorrectedBehavior>refers to its mapped value</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-container-map-at:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/container/map/find)</DescriptionTerm>
+    <DescriptionBody>finds element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

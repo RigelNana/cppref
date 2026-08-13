@@ -1,0 +1,166 @@
+---
+title: "std::set<Key,Compare,Allocator>::equal_range"
+description: "Returns a range containing all elements with the given key in the container."
+source_url: "https://en.cppreference.com/w/cpp/container/set/equal_range"
+language: "C++"
+---
+
+
+{/* source:cpp-container-set-equal-range:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++98" code={`std::pair<iterator, iterator> equal_range( const Key& key );`} />
+  <Declaration id="2" language="cpp" since="C++98" code={`std::pair<const_iterator, const_iterator> equal_range( const Key& key ) const;`} />
+  <Declaration id="3" language="cpp" since="C++14" code={`template< class K >
+std::pair<iterator, iterator> equal_range( const K& x );`} />
+  <Declaration id="4" language="cpp" since="C++14" code={`template< class K >
+std::pair<const_iterator, const_iterator> equal_range( const K& x ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-set-equal-range:0001 */}
+Returns a range containing all elements with the given key in the container. The range is defined by two iterators, one pointing to the first element that is *not less* than `key` and another pointing to the first element *greater* than `key`. Alternatively, the first iterator may be obtained with [`lower_bound()`](/docs/cpp/library/container/set/lower_bound), and the second with [`upper_bound()`](/docs/cpp/library/container/set/upper_bound).
+
+{/* source:cpp-container-set-equal-range:0002 */}
+- 1,2) Compares the keys to `key`.
+
+{/* source:cpp-container-set-equal-range:0003 */}
+- 3,4) Compares the keys to the value `x`. This overload participates in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type. It allows calling this function without constructing an instance of `Key`.
+
+### Parameters
+
+{/* source:cpp-container-set-equal-range:0004 */}
+<ParameterList>
+  <Parameter name="key">key value to compare the elements to</Parameter>
+  <Parameter name="x">alternative value that can be compared to `Key`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-set-equal-range:0005 */}
+[`std::pair`](/docs/cpp/library/utility/pair) containing a pair of iterators defining the wanted range: the first pointing to the first element that is not *less* than `key` and the second pointing to the first element *greater* than `key`.
+
+{/* source:cpp-container-set-equal-range:0006 */}
+If there are no elements *not less* than `key`, past-the-end (see [`end()`](/docs/cpp/library/container/set/end)) iterator is returned as the first element. Similarly if there are no elements *greater* than `key`, past-the-end iterator is returned as the second element.
+
+### Complexity
+
+{/* source:cpp-container-set-equal-range:0007 */}
+Logarithmic in the size of the container.
+
+### Notes
+
+{/* source:cpp-container-set-equal-range:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_generic_associative_lookup`](/docs/cpp/library/feature_test#cpp_lib_generic_associative_lookup) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_lib_generic_associative_lookup_201304L) | (C++14) | Heterogeneous comparison lookup in [associative containers](/docs/cpp/library/container#Associative_containers), for overloads ([3,4](/docs/cpp/library/container/set/equal_range#Version_3)) |
+
+### Example
+
+{/* source:cpp-container-set-equal-range:0009 */}
+```cpp
+#include <set>
+#include <functional>
+#include <print>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <tuple>
+ 
+struct Names
+{
+    std::string forename, surname;
+    friend auto operator<(const Names& lhs, const Names& rhs)
+    {
+        return std::tie(lhs.surname, lhs.forename) < std::tie(rhs.surname, rhs.forename);
+    }
+};
+ 
+struct SurnameCompare
+{
+    std::string_view surname;
+ 
+    friend bool operator<(const Names& lhs, const SurnameCompare& rhs)
+    {
+        return lhs.surname < rhs.surname;
+    }
+ 
+    friend bool operator<(const SurnameCompare& lhs, const Names& rhs)
+    {
+        return lhs.surname < rhs.surname;
+    }
+}; 
+ 
+std::set<Names, std::less<>> characters
+{
+    {"Homer", "Simpson"},
+    {"Marge", "Simpson"},
+    {"Lisa", "Simpson"},
+    {"Ned", "Flanders"},
+    {"Joe", "Quimby"}
+};
+ 
+void print_unique(const Names& names)
+{
+    auto [begin, end] = characters.equal_range(names);
+    std::print(
+        "Found {} characters with name \"{} {}\"\n", 
+        std::distance(begin, end), 
+        names.forename, names.surname
+    );
+}
+ 
+void print_by_surname(std::string_view surname)
+{
+    auto [begin, end] = characters.equal_range(SurnameCompare{surname});
+    std::print("Found {} characters with surname \"{}\":\n", std::distance(begin, end), surname);
+    for (const Names& names : std::ranges::subrange(begin, end))
+        std::print("    {} {}\n", names.forename, names.surname);
+}
+ 
+int main()
+{
+    print_unique({"Maude", "Flanders"});
+    print_unique({"Lisa", "Simpson"});
+    print_by_surname("Simpson");
+}
+```
+
+Output:
+
+```text
+Found 0 characters with name "Maude Flanders"
+Found 1 characters with name "Lisa Simpson"
+Found 3 characters with surname "Simpson":
+    Homer Simpson
+    Lisa Simpson
+    Marge Simpson
+```
+
+### See also
+
+{/* source:cpp-container-set-equal-range:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/container/set/find)</DescriptionTerm>
+    <DescriptionBody>finds element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`contains`](/docs/cpp/library/container/set/contains) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if the container contains element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count`](/docs/cpp/library/container/set/count)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements matching specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`upper_bound`](/docs/cpp/library/container/set/upper_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element *greater* than the given key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lower_bound`](/docs/cpp/library/container/set/lower_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element *not less* than the given key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/algorithm/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

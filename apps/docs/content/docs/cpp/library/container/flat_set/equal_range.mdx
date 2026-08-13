@@ -1,0 +1,162 @@
+---
+title: "std::flat_set<Key,Compare,KeyContainer>::equal_range"
+description: "Returns a range containing all elements with the given key in the container."
+source_url: "https://en.cppreference.com/w/cpp/container/flat_set/equal_range"
+language: "C++"
+---
+
+{/* source:cpp-container-flat-set-equal-range:0000 */}
+<DeclarationDoc since="C++23">
+  <Declaration id="1" language="cpp" code={`std::pair<iterator, iterator> equal_range( const Key& key );`} />
+  <Declaration id="2" language="cpp" code={`std::pair<const_iterator, const_iterator> equal_range( const Key& key ) const;`} />
+  <Declaration id="3" language="cpp" code={`template< class K >
+std::pair<iterator, iterator> equal_range( const K& x );`} />
+  <Declaration id="4" language="cpp" code={`template< class K >
+std::pair<const_iterator, const_iterator> equal_range( const K& x ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-flat-set-equal-range:0001 */}
+Returns a range containing all elements with the given key in the container. The range is defined by two iterators, one pointing to the first element that is not less than `key` and another pointing to the first element greater than `key`. Alternatively, the first iterator may be obtained with `lower_bound()`, and the second with `upper_bound()`.
+
+{/* source:cpp-container-flat-set-equal-range:0002 */}
+1. 1,2) Compares the keys to `key`.
+
+{/* source:cpp-container-flat-set-equal-range:0003 */}
+2. 3,4) Compares the keys to the value `x`. This overload participates in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type. It allows calling this function without constructing an instance of `Key`.
+
+### Parameters
+
+{/* source:cpp-container-flat-set-equal-range:0004 */}
+<ParameterList>
+  <Parameter name="key">
+    key value to compare the elements to
+  </Parameter>
+  <Parameter name="x">
+    alternative value that can be compared to `Key`
+  </Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-flat-set-equal-range:0005 */}
+[`std::pair`](/docs/cpp/library/utility/pair) containing a pair of iterators defining the wanted range: the first pointing to the first element that is not less than `key` and the second pointing to the first element greater than `key`.
+
+{/* source:cpp-container-flat-set-equal-range:0006 */}
+If there are no elements not less than `key`, past-the-end (see `end()`) iterator is returned as the first element. Similarly if there are no elements greater than `key`, past-the-end iterator is returned as the second element.
+
+### Complexity
+
+{/* source:cpp-container-flat-set-equal-range:0007 */}
+Logarithmic in the size of the container.
+
+### Example
+
+{/* source:cpp-container-flat-set-equal-range:0008 */}
+```cpp
+#include <flat_set>
+#include <functional>
+#include <print>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <tuple>
+
+struct Names
+{
+    std::string forename, surname;
+    friend auto operator<(const Names& lhs, const Names& rhs)
+    {
+        return std::tie(lhs.surname, lhs.forename) < std::tie(rhs.surname, rhs.forename);
+    }
+};
+
+struct SurnameCompare
+{
+    std::string_view surname;
+
+    friend bool operator<(const Names& lhs, const SurnameCompare& rhs)
+    {
+        return lhs.surname < rhs.surname;
+    }
+
+    friend bool operator<(const SurnameCompare& lhs, const Names& rhs)
+    {
+        return lhs.surname < rhs.surname;
+    }
+}; 
+
+std::set<Names, std::less<>> characters
+{
+    {"Homer", "Simpson"},
+    {"Marge", "Simpson"},
+    {"Lisa", "Simpson"},
+    {"Ned", "Flanders"},
+    {"Joe", "Quimby"}
+};
+
+void print_unique(const Names& names)
+{
+    auto [begin, end] = characters.equal_range(names);
+    std::print(
+        "Found {} characters with name \"{} {}\"\n", 
+        std::distance(begin, end), 
+        names.forename, names.surname
+    );
+}
+
+void print_by_surname(std::string_view surname)
+{
+    auto [begin, end] = characters.equal_range(SurnameCompare{surname});
+    std::print("Found {} characters with surname \"{}\":\n", std::distance(begin, end), surname);
+    for (const Names& names : std::ranges::subrange(begin, end))
+        std::print("    {} {}\n", names.forename, names.surname);
+}
+
+int main()
+{
+    print_unique({"Maude", "Flanders"});
+    print_unique({"Lisa", "Simpson"});
+    print_by_surname("Simpson");
+}
+```
+
+Output:
+
+```text
+Found 0 characters with name "Maude Flanders"
+Found 1 characters with name "Lisa Simpson"
+Found 3 characters with surname "Simpson":
+    Homer Simpson
+    Lisa Simpson
+    Marge Simpson
+```
+
+### See also
+
+{/* source:cpp-container-flat-set-equal-range:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/container/flat_set/find)</DescriptionTerm>
+    <DescriptionBody>finds element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`contains`](/docs/cpp/library/container/flat_set/contains)</DescriptionTerm>
+    <DescriptionBody>checks if the container contains element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count`](/docs/cpp/library/container/flat_set/count)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements matching specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`upper_bound`](/docs/cpp/library/container/flat_set/upper_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element greater than the given key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lower_bound`](/docs/cpp/library/container/flat_set/lower_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element not less than the given key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/algorithm/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

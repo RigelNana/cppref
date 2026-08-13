@@ -1,0 +1,390 @@
+---
+title: "std::inplace_vector"
+description: "inplace_vector is a dynamically-resizable array with contiguous inplace storage."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector:0000 */}
+<DeclarationDoc>
+Defined in header [`<inplace_vector>`](/docs/cpp/library/headers/inplace_vector)
+
+  <Declaration language="cpp" since="C++26" code={`template<
+    class T,
+    std::size_t N
+
+> struct inplace_vector;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector:0001 */}
+`inplace_vector` is a dynamically-resizable array with contiguous inplace storage. The elements of type `T` are stored and properly aligned within the object itself. The capacity of the internal storage is fixed at compile-time and is equal to `N`.
+
+{/* source:cpp-container-inplace-vector:0002 */}
+The elements are stored contiguously, which means that elements can be accessed not only through iterators or random-access `operator[]`, but also using offsets to regular pointers to elements. A pointer to an element of an `inplace_vector` may be passed to any function that expects a pointer to an element of a C-array.
+
+{/* source:cpp-container-inplace-vector:0003 */}
+The `inplace_vector` models [`Container`](/docs/cpp/library/named_req/Container), [`ReversibleContainer`](/docs/cpp/library/named_req/ReversibleContainer), [`ContiguousContainer`](/docs/cpp/library/named_req/ContiguousContainer), and [`SequenceContainer`](/docs/cpp/library/named_req/SequenceContainer), including most of the [optional sequence container requirements](/docs/cpp/library/named_req/SequenceContainer#Optional_operations), except that the `push_front`, `emplace_front`, `pop_front`, and `prepend_range` member functions are not provided.
+
+{/* source:cpp-container-inplace-vector:0004 */}
+For any positive `N`, `std::inplace_vector<T, N>::iterator` and `std::inplace_vector<T, N>::const_iterator` meet the [`ConstexprIterator`](/docs/cpp/library/named_req/ConstexprIterator) requirements.
+
+{/* source:cpp-container-inplace-vector:0005 */}
+For any positive `N`, if `T` is not [`TriviallyCopyable`](/docs/cpp/library/named_req/TriviallyCopyable) or `std::is_trivially_default_constructible_v<T>` is `false`, then member functions of `inplace_vector` are not [usable in constant expressions](/docs/cpp/language/expressions/constant_expression#Usable_in_constant_expressions).
+
+{/* source:cpp-container-inplace-vector:0006 */}
+The specialization `std::inplace_vector<T, 0>` is [`TriviallyCopyable`](/docs/cpp/library/named_req/TriviallyCopyable) and is empty. `std::is_trivially_default_constructible_v<std::inplace_vector<T, 0>>` is also `true`.
+
+{/* source:cpp-container-inplace-vector:0007 */}
+Any member function of `std::inplace_vector<T, N>` that would cause insertion beyond the capacity `N` throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc).
+
+{/* source:cpp-container-inplace-vector:0008 */}
+The complexity of common operations on `inplace_vector`s is as follows:
+
+{/* source:cpp-container-inplace-vector:0009 */}
+- Random access to an element via [`operator[]`](/docs/cpp/library/container/inplace_vector/operator_at) or [`at()`](/docs/cpp/library/container/inplace_vector/at) – constant: 𝓞(1).
+- Insertion or removal of an element at the end – constant: 𝓞(1).
+- Insertion or removal of elements at the end – linear in the number of elements inserted/removed: 𝓞(n).
+- Insertion or removal of elements in the beginning or in the middle – linear in the number of elements inserted/removed plus the distance to the end of the vector: 𝓞(n).
+
+### Iterator invalidation
+
+{/* source:cpp-container-inplace-vector:0010 */}
+`std::inplace_vector` iterator invalidation guarantees differ from [`std::vector`](/docs/cpp/library/container/vector):
+
+{/* source:cpp-container-inplace-vector:0011 */}
+- moving an `inplace_vector` invalidates all iterators;
+- swapping two `inplace_vector`s invalidates all iterators (during swap, the iterator will continue to point to the same array element, and may thus change its value).
+
+{/* source:cpp-container-inplace-vector:0012 */}
+The following member functions potentially invalidate iterators: [`operator=`](/docs/cpp/container/inplace-vector/operator%3D), [`assign`](/docs/cpp/library/container/inplace_vector/assign), [`assign_range`](/docs/cpp/library/container/inplace_vector/assign_range), [`clear`](/docs/cpp/library/container/inplace_vector/clear), [`emplace`](/docs/cpp/library/container/inplace_vector/emplace), [`erase`](/docs/cpp/library/container/inplace_vector/erase), [`insert`](/docs/cpp/library/container/inplace_vector/insert), [`insert_range`](/docs/cpp/library/container/inplace_vector/insert_range), [`pop_back`](/docs/cpp/library/container/inplace_vector/pop_back), [`resize`](/docs/cpp/library/container/inplace_vector/resize), and [`swap`](/docs/cpp/library/container/inplace_vector/swap).
+
+{/* source:cpp-container-inplace-vector:0013 */}
+The following member functions potentially invalidate [`end`](/docs/cpp/library/container/inplace_vector/end) iterator only: [`append_range`](/docs/cpp/library/container/inplace_vector/append_range), [`emplace_back`](/docs/cpp/library/container/inplace_vector/emplace_back), [`push_back`](/docs/cpp/library/container/inplace_vector/push_back), [`try_append_range`](/docs/cpp/library/container/inplace_vector/try_append_range), [`try_emplace_back`](/docs/cpp/library/container/inplace_vector/try_emplace_back), [`try_push_back`](/docs/cpp/library/container/inplace_vector/try_push_back), [`unchecked_emplace_back`](/docs/cpp/library/container/inplace_vector/unchecked_emplace_back), and [`unchecked_push_back`](/docs/cpp/library/container/inplace_vector/unchecked_push_back).
+
+### Template parameters
+
+{/* source:cpp-container-inplace-vector:0014 */}
+<ParameterList>
+  <Parameter name="T">
+    element type. Must be [`MoveConstructible`](/docs/cpp/library/named_req/MoveConstructible) and [`MoveAssignable`](/docs/cpp/library/named_req/MoveAssignable).
+  </Parameter>
+  <Parameter name="N">
+    capacity, i.e. the maximum number of elements in the `inplace_vector` (might be `0`).
+  </Parameter>
+</ParameterList>
+
+### Member types
+
+{/* source:cpp-container-inplace-vector:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`size_type`</DescriptionTerm>
+    <DescriptionBody>[`std::size_t`](/docs/cpp/library/utility/types/size_t)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>[`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reference`</DescriptionTerm>
+    <DescriptionBody>`const value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`value_type*`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_pointer`</DescriptionTerm>
+    <DescriptionBody>`const value_type*`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody>implementation-defined [`LegacyRandomAccessIterator`](/docs/cpp/library/named_req/RandomAccessIterator) and [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) to `value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_iterator`</DescriptionTerm>
+    <DescriptionBody>implementation-defined [`LegacyRandomAccessIterator`](/docs/cpp/library/named_req/RandomAccessIterator) and [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) to `const value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reverse_iterator`</DescriptionTerm>
+    <DescriptionBody>`std::reverse_iterator<iterator>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reverse_iterator`</DescriptionTerm>
+    <DescriptionBody>`std::reverse_iterator<const_iterator>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-container-inplace-vector:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/container/inplace_vector/inplace_vector)</DescriptionTerm>
+    <DescriptionBody>constructs the `inplace_vector` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/container/inplace_vector/~inplace_vector)</DescriptionTerm>
+    <DescriptionBody>destructs the `inplace_vector` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/container/inplace-vector/operator%3D)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/container/inplace_vector/assign)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign_range`](/docs/cpp/library/container/inplace_vector/assign_range)</DescriptionTerm>
+    <DescriptionBody>assigns a range of values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Element access
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/inplace_vector/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/inplace_vector/operator_at)</DescriptionTerm>
+    <DescriptionBody>access specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/container/inplace_vector/front)</DescriptionTerm>
+    <DescriptionBody>access the first element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/container/inplace_vector/back)</DescriptionTerm>
+    <DescriptionBody>access the last element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/container/inplace_vector/data)</DescriptionTerm>
+    <DescriptionBody>direct access to the underlying contiguous storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterators
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin` `cbegin`](/docs/cpp/library/container/inplace_vector/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end` `cend`](/docs/cpp/library/container/inplace_vector/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rbegin` `crbegin`](/docs/cpp/library/container/inplace_vector/rbegin)</DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rend` `crend`](/docs/cpp/library/container/inplace_vector/rend)</DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Size and capacity
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/container/inplace_vector/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/inplace_vector/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/container/inplace_vector/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum possible number of elements (public static member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`capacity`](/docs/cpp/library/container/inplace_vector/capacity)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements that can be held in currently allocated storage (public static member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`resize`](/docs/cpp/library/container/inplace_vector/resize)</DescriptionTerm>
+    <DescriptionBody>changes the number of elements stored (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reserve`](/docs/cpp/library/container/inplace_vector/reserve)</DescriptionTerm>
+    <DescriptionBody>reserves storage (public static member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shrink_to_fit`](/docs/cpp/library/container/inplace_vector/shrink_to_fit)</DescriptionTerm>
+    <DescriptionBody>reduces memory usage by freeing unused memory (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/inplace_vector/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/container/inplace_vector/insert_range)</DescriptionTerm>
+    <DescriptionBody>inserts a range of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/inplace_vector/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/inplace_vector/emplace_back)</DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_emplace_back`](/docs/cpp/library/container/inplace_vector/try_emplace_back)</DescriptionTerm>
+    <DescriptionBody>tries to construct an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unchecked_emplace_back`](/docs/cpp/library/container/inplace_vector/unchecked_emplace_back)</DescriptionTerm>
+    <DescriptionBody>unconditionally constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/container/inplace_vector/push_back)</DescriptionTerm>
+    <DescriptionBody>adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_push_back`](/docs/cpp/library/container/inplace_vector/try_push_back)</DescriptionTerm>
+    <DescriptionBody>tries to add an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unchecked_push_back`](/docs/cpp/library/container/inplace_vector/unchecked_push_back)</DescriptionTerm>
+    <DescriptionBody>unconditionally adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_back`](/docs/cpp/library/container/inplace_vector/pop_back)</DescriptionTerm>
+    <DescriptionBody>removes the last element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`append_range`](/docs/cpp/library/container/inplace_vector/append_range)</DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_append_range`](/docs/cpp/library/container/inplace_vector/try_append_range)</DescriptionTerm>
+    <DescriptionBody>tries to add a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/container/inplace_vector/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase`](/docs/cpp/library/container/inplace_vector/erase)</DescriptionTerm>
+    <DescriptionBody>erases elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/container/inplace_vector/swap)</DescriptionTerm>
+    <DescriptionBody>swaps the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-container-inplace-vector:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::inplace_vector)`](/docs/cpp/library/container/inplace_vector/swap2) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase(std::inplace_vector)`, `erase_if(std::inplace_vector)`](/docs/cpp/library/container/inplace_vector/erase2) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>erases all elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`, `operator<=>`](/docs/cpp/library/container/inplace_vector/operator_cmp) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares the values of two `inplace_vectors` (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-container-inplace-vector:0018 */}
+The number of elements in a `inplace_vector` may vary dynamically up to a fixed capacity because elements are stored within the object itself similarly to [`std::array`](/docs/cpp/library/container/array). However, objects are initialized as they are inserted into `inplace_vector` unlike C arrays or [`std::array`](/docs/cpp/library/container/array), which must construct all elements on instantiation.
+
+{/* source:cpp-container-inplace-vector:0019 */}
+`inplace_vector` is useful in environments where dynamic memory allocations are undesired.
+
+{/* source:cpp-container-inplace-vector:0020 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_inplace_vector`](/docs/cpp/library/feature_test#cpp_lib_inplace_vector) | [`202406L`](/docs/cpp/library/compiler_support/26#cpp_lib_inplace_vector_202406L) | (C++26) | `std::inplace_vector`: dynamically-resizable vector with fixed capacity inplace storage |
+
+### Example
+
+{/* source:cpp-container-inplace-vector:0021 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <inplace_vector>
+
+int main()
+{
+    std::inplace_vector<int, 4> v1{0, 1, 2};
+    assert(v1.max_size() == 4);
+    assert(v1.capacity() == 4);
+    assert(v1.size() == 3);
+    assert(std::ranges::equal(v1, std::array{0, 1, 2}));
+    assert(v1[0] == 0);
+    assert(v1.at(0) == 0);
+    assert(v1.front() == 0);
+    assert(*v1.begin() == 0);
+    assert(v1.back() == 2);
+    v1.push_back(3);
+    assert(v1.back() == 3);
+    assert(std::ranges::equal(v1, std::array{0, 1, 2, 3}));
+    v1.resize(3);
+    assert(std::ranges::equal(v1, std::array{0, 1, 2}));
+    assert(v1.try_push_back(3) != nullptr);
+    assert(v1.back() == 3);
+    assert(v1.size() == 4);
+    assert(v1.try_push_back(13) == nullptr); // no place
+    assert(v1.back() == 3);
+    assert(v1.size() == 4);
+    v1.clear();
+    assert(v1.size() == 0);
+    assert(v1.empty());
+}
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`vector`](/docs/cpp/library/container/vector)</DescriptionTerm>
+    <DescriptionBody>dynamic contiguous array (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`array`](/docs/cpp/library/container/array) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>fixed-sized inplace contiguous array (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`deque`](/docs/cpp/library/container/deque)</DescriptionTerm>
+    <DescriptionBody>double-ended queue (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-container-inplace-vector:0023 */}
+1. [`inplace_vector`](https://godbolt.org/z/5P78aG5xE) — A reference implementation of [P0843R14](https://wg21.link/P0843R14) (`std::inplace_vector`).
+2. [`static_vector`](https://www.boost.org/doc/libs/release/doc/html/container/non_standard_containers.html#container.non_standard_containers.static_vector) — Boost.Container implements inplace vector as a standalone type with its own guarantees.
+3. [`fixed_vector`](https://github.com/questor/eastl/blob/master/fixed_vector.h#L71) — EASTL implements inplace vector via an extra template parameter.
+4. [`small_vector`](https://github.com/facebook/folly/blob/master/folly/docs/small_vector.md) — Folly also implements inplace vector via an extra template parameter.
+5. [`stack_alloc`](https://howardhinnant.github.io/stack_alloc.html) — Howard Hinnant's Custom allocators that emulate `std::inplace_vector` on top of [`std::vector`](/docs/cpp/library/container/vector).

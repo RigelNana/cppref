@@ -1,0 +1,114 @@
+---
+title: "std::erase_if (std::flat_map)"
+description: "Erases all elements that satisfy the predicate pred from c."
+source_url: "https://en.cppreference.com/w/cpp/container/flat_map/erase_if"
+language: "C++"
+---
+
+{/* source:cpp-container-flat-map-erase-if:0000 */}
+Defined in header [`<flat_map>`](/docs/cpp/library/headers/flat_map)
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class Key, class T, class Compare, class KeyContainer, class MappedContainer,
+          class Pred >
+std::flat_map<Key, T, Compare, KeyContainer, MappedContainer>::size_type
+    erase_if( std::flat_map<Key, T, Compare, KeyContainer, MappedContainer>& c,
+
+              Pred pred );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-flat-map-erase-if:0001 */}
+Erases all elements that satisfy the predicate `pred` from `c`.
+
+{/* source:cpp-container-flat-map-erase-if:0002 */}
+The predicate `pred` is satisfied if the expression `bool(pred(std::pair<const Key&, const T&>(e)))` is `true`, where `e` is some element in `c`.
+
+{/* source:cpp-container-flat-map-erase-if:0003 */}
+`Key` and `T` must be [MoveAssignable](/docs/cpp/library/named_req/MoveAssignable). Otherwise, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-container-flat-map-erase-if:0004 */}
+<ParameterList>
+  <Parameter name="c">container adaptor from which to erase</Parameter>
+  <Parameter name="pred">predicate that returns `true` if the element should be erased</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-flat-map-erase-if:0005 */}
+The number of erased elements.
+
+### Complexity
+
+{/* source:cpp-container-flat-map-erase-if:0006 */}
+Exactly `c.size()` applications of the predicate `pred`.
+
+### Exceptions
+
+{/* source:cpp-container-flat-map-erase-if:0007 */}
+If `erase_if` throws, `c` remains in valid but unspecified (maybe empty) state.
+
+### Notes
+
+{/* source:cpp-container-flat-map-erase-if:0008 */}
+The algorithm is stable, that is, the order of elements that are not deleted remains unchanged.
+
+### Example
+
+{/* source:cpp-container-flat-map-erase-if:0009 */}
+```cpp
+#include <iostream>
+#include <flat_map>
+ 
+void println(auto rem, auto const& container)
+{
+    std::cout << rem << '{';
+    for (char sep[]{0, ' ', 0}; const auto& [key, value] : container)
+        std::cout << sep << '{' << key << ", " << value << '}', *sep = ',';
+    std::cout << "}\n";
+}
+ 
+int main()
+{
+    std::flat_map<int, char> data
+    {
+        {1, 'a'}, {2, 'b'}, {3, 'c'}, {4, 'd'},
+        {5, 'e'}, {4, 'f'}, {5, 'g'}, {5, 'g'},
+    };
+    println("Original:\n", data);
+ 
+    const auto count = std::erase_if(data, [](const auto& item)
+    {
+        auto const& [key, value] = item;
+        return (key & 1) == 1;
+    });
+ 
+    println("Erase items with odd keys:\n", data);
+    std::cout << count << " items removed.\n";
+}
+```
+
+Output:
+
+```text
+Original:
+{{1, a}, {2, b}, {3, c}, {4, d}, {5, e}}
+Erase items with odd keys:
+{{2, b}, {4, d}}
+3 items removed.
+```
+
+### See also
+
+{/* source:cpp-container-flat-map-erase-if:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove`, `remove_if`](/docs/cpp/library/algorithm/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::remove`, `ranges::remove_if`](/docs/cpp/library/algorithm/ranges/remove) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

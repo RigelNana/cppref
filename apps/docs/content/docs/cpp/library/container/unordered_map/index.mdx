@@ -1,0 +1,496 @@
+---
+title: "std::unordered_map"
+description: "std::unordered_map is an associative container that contains key-value pairs with unique keys."
+source_url: "https://en.cppreference.com/w/cpp/container/unordered_map"
+language: "C++"
+---
+
+{/* source:cpp-container-unordered-map:0000 */}
+<DeclarationDoc>
+Defined in header [`<unordered_map>`](/docs/cpp/library/headers/unordered_map)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template<
+    class Key,
+    class T,
+    class Hash = std::hash<Key>,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<std::pair<const Key, T>>
+
+> class unordered_map;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`namespace pmr {
+    template<
+        class Key,
+        class T,
+        class Hash = std::hash<Key>,
+        class KeyEqual = std::equal_to<Key>
+    > using unordered_map =
+        std::unordered_map<Key, T, Hash, KeyEqual,
+            std::pmr::polymorphic_allocator<std::pair<const Key, T>>>;
+
+}`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-unordered-map:0001 */}
+`std::unordered_map` is an associative container that contains key-value pairs with unique keys. Search, insertion, and removal of elements have average constant-time complexity.
+
+{/* source:cpp-container-unordered-map:0002 */}
+Internally, the elements are not sorted in any particular order, but organized into buckets. Which bucket an element is placed into depends entirely on the hash of its key. Keys with the same hash code appear in the same bucket. This allows fast access to individual elements, since once the hash is computed, it refers to the exact bucket the element is placed into.
+
+{/* source:cpp-container-unordered-map:0003 */}
+Two keys are considered *equivalent* if the map's key equality predicate returns true when passed those keys. If two keys are equivalent, the hash function must return the same value for both keys.
+
+{/* source:cpp-container-unordered-map:0004 */}
+`std::unordered_map` meets the requirements of [`Container`](/docs/cpp/library/named_req/Container), [`AllocatorAwareContainer`](/docs/cpp/library/named_req/AllocatorAwareContainer), [`UnorderedAssociativeContainer`](/docs/cpp/library/named_req/UnorderedAssociativeContainer).
+
+### Iterator invalidation
+
+{/* source:cpp-container-unordered-map:0005 */}
+| Operations | Invalidated |
+| --- | --- |
+| All read only operations, [`swap`](/docs/cpp/library/container/unordered_map/swap), [`std::swap`](/docs/cpp/library/algorithm/swap) | Never |
+| [`clear`](/docs/cpp/library/container/unordered_map/clear), [`rehash`](/docs/cpp/library/container/unordered_map/rehash), [`reserve`](/docs/cpp/library/container/unordered_map/reserve), [`operator=`](/docs/cpp/container/unordered-map/operator%3D) | Always |
+| [`insert`](/docs/cpp/library/container/unordered_map/insert), [`emplace`](/docs/cpp/library/container/unordered_map/emplace), [`emplace_hint`](/docs/cpp/library/container/unordered_map/emplace_hint), [`operator[]`](/docs/cpp/library/container/unordered_map/operator_at) | Only if causes rehash |
+| [`erase`](/docs/cpp/library/container/unordered_map/erase) | Only to the element erased |
+
+#### Notes
+
+{/* source:cpp-container-unordered-map:0006 */}
+- The swap functions do not invalidate any of the iterators inside the container, but they do invalidate the iterator marking the end of the swap region.
+
+{/* source:cpp-container-unordered-map:0007 */}
+- References and pointers to either key or data stored in the container are only invalidated by erasing that element, even when the corresponding iterator is invalidated.
+
+### Template parameters
+
+{/* source:cpp-container-unordered-map:0008 */}
+This section is incomplete Reason: Add descriptions of the template parameters.
+
+### Member types
+
+{/* source:cpp-container-unordered-map:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`key_type`</DescriptionTerm>
+    <DescriptionBody>`Key`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`mapped_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`std::pair<const Key, T>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`size_type`</DescriptionTerm>
+    <DescriptionBody>Unsigned integer type (usually [`std::size_t`](/docs/cpp/library/utility/types/size_t))</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>Signed integer type (usually [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t))</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`hasher`</DescriptionTerm>
+    <DescriptionBody>`Hash`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`key_equal`</DescriptionTerm>
+    <DescriptionBody>`KeyEqual`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`allocator_type`</DescriptionTerm>
+    <DescriptionBody>`Allocator`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reference`</DescriptionTerm>
+    <DescriptionBody>`const value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<Allocator>::pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<Allocator>::const_pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody>[`LegacyForwardIterator`](/docs/cpp/library/named_req/ForwardIterator) to `value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_iterator`</DescriptionTerm>
+    <DescriptionBody>[`LegacyForwardIterator`](/docs/cpp/library/named_req/ForwardIterator) to `const value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`local_iterator`</DescriptionTerm>
+    <DescriptionBody>An iterator type whose category, value, difference, pointer and reference types are the same as `iterator`. This iterator can be used to iterate through a single bucket but not across buckets</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_local_iterator`</DescriptionTerm>
+    <DescriptionBody>An iterator type whose category, value, difference, pointer and reference types are the same as `const_iterator`. This iterator can be used to iterate through a single bucket but not across buckets</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`node_type` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>a specialization of [node handle](/docs/cpp/library/container/node_handle) representing a container node</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`insert_return_type` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>
+    type describing the result of inserting a `node_type`, a specialization of
+
+    ```cpp
+    template<class Iter, class NodeType>
+    struct /*unspecified*/
+    {
+        Iter     position;
+        bool     inserted;
+        NodeType node;
+    };
+    ```
+
+    instantiated with template arguments `iterator` and `node_type`.
+    </DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-container-unordered-map:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/container/unordered_map/unordered_map)</DescriptionTerm>
+    <DescriptionBody>constructs the `unordered_map` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/container/unordered_map/~unordered_map)</DescriptionTerm>
+    <DescriptionBody>destructs the `unordered_map` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/container/unordered-map/operator%3D)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_allocator`](/docs/cpp/library/container/unordered_map/get_allocator)</DescriptionTerm>
+    <DescriptionBody>returns the associated allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterators
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin` `cbegin`](/docs/cpp/library/container/unordered_map/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end` `cend`](/docs/cpp/library/container/unordered_map/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Capacity
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/container/unordered_map/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/unordered_map/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/container/unordered_map/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum possible number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/container/unordered_map/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/unordered_map/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements <InlineRevision since="C++17">or nodes</InlineRevision> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/container/unordered_map/insert_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>inserts a range of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_or_assign`](/docs/cpp/library/container/unordered_map/insert_or_assign) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>inserts an element or assigns to the current element if the key already exists (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/unordered_map/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_hint`](/docs/cpp/library/container/unordered_map/emplace_hint)</DescriptionTerm>
+    <DescriptionBody>constructs elements in-place using a hint (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_emplace`](/docs/cpp/library/container/unordered_map/try_emplace) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>inserts in-place if the key does not exist, does nothing if the key exists (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase`](/docs/cpp/library/container/unordered_map/erase)</DescriptionTerm>
+    <DescriptionBody>erases elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/container/unordered_map/swap)</DescriptionTerm>
+    <DescriptionBody>swaps the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`extract`](/docs/cpp/library/container/unordered_map/extract) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>extracts nodes from the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`merge`](/docs/cpp/library/container/unordered_map/merge) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>splices nodes from another container (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Lookup
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/unordered_map/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/unordered_map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count`](/docs/cpp/library/container/unordered_map/count)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements matching specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/container/unordered_map/find)</DescriptionTerm>
+    <DescriptionBody>finds element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`contains`](/docs/cpp/library/container/unordered_map/contains) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if the container contains element with specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/container/unordered_map/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Bucket interface
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin(size_type)` `cbegin(size_type)`](/docs/cpp/library/container/unordered_map/begin2)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning of the specified bucket (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end(size_type)` `cend(size_type)`](/docs/cpp/library/container/unordered_map/end2)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end of the specified bucket (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bucket_count`](/docs/cpp/library/container/unordered_map/bucket_count)</DescriptionTerm>
+    <DescriptionBody>returns the number of buckets (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_bucket_count`](/docs/cpp/library/container/unordered_map/max_bucket_count)</DescriptionTerm>
+    <DescriptionBody>returns the maximum number of buckets (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bucket_size`](/docs/cpp/library/container/unordered_map/bucket_size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements in specific bucket (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bucket`](/docs/cpp/library/container/unordered_map/bucket)</DescriptionTerm>
+    <DescriptionBody>returns the bucket for specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Hash policy
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`load_factor`](/docs/cpp/library/container/unordered_map/load_factor)</DescriptionTerm>
+    <DescriptionBody>returns average number of elements per bucket (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_load_factor`](/docs/cpp/library/container/unordered_map/max_load_factor)</DescriptionTerm>
+    <DescriptionBody>manages maximum average number of elements per bucket (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rehash`](/docs/cpp/library/container/unordered_map/rehash)</DescriptionTerm>
+    <DescriptionBody>reserves at least the specified number of buckets and regenerates the hash table (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reserve`](/docs/cpp/library/container/unordered_map/reserve)</DescriptionTerm>
+    <DescriptionBody>reserves space for at least the specified number of elements and regenerates the hash table (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Observers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`hash_function`](/docs/cpp/library/container/unordered_map/hash_function)</DescriptionTerm>
+    <DescriptionBody>returns function used to hash the keys (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`key_eq`](/docs/cpp/library/container/unordered_map/key_eq)</DescriptionTerm>
+    <DescriptionBody>returns the function used to compare keys for equality (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-container-unordered-map:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`, `operator!=`](/docs/cpp/library/container/unordered_map/operator_cmp) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>compares the values in the unordered_map (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::unordered_map)`](/docs/cpp/library/container/unordered_map/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase_if(std::unordered_map)`](/docs/cpp/library/container/unordered_map/erase_if) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>erases all elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-container-unordered-map:0012 */}
+<Revision since="C++17">
+
+### [Deduction guides](/docs/cpp/library/container/unordered_map/deduction_guides)
+
+</Revision>
+
+### Notes
+
+{/* source:cpp-container-unordered-map:0013 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | Ranges construction and insertion for containers |
+
+### Example
+
+{/* source:cpp-container-unordered-map:0014 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+int main()
+{
+    // Create an unordered_map of three strings (that map to strings)
+    std::unordered_map<std::string, std::string> u =
+    {
+        {"RED", "#FF0000"},
+        {"GREEN", "#00FF00"},
+        {"BLUE", "#0000FF"}
+    };
+
+    // Helper lambda function to print key-value pairs
+    auto print_key_value = [](const auto& key, const auto& value)
+    {
+        std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
+    };
+
+    std::cout << "Iterate and print key-value pairs of unordered_map, being\n"
+                 "explicit with their types:\n";
+    for (const std::pair<const std::string, std::string>& n : u)
+        print_key_value(n.first, n.second);
+
+    std::cout << "\nIterate and print key-value pairs using C++17 structured binding:\n";
+    for (const auto& [key, value] : u)
+        print_key_value(key, value);
+
+    // Add two new entries to the unordered_map
+    u["BLACK"] = "#000000";
+    u["WHITE"] = "#FFFFFF";
+
+    std::cout << "\nOutput values by key:\n"
+                 "The HEX of color RED is:[" << u["RED"] << "]\n"
+                 "The HEX of color BLACK is:[" << u["BLACK"] << "]\n\n";
+
+    std::cout << "Use operator[] with non-existent key to insert a new key-value pair:\n";
+    print_key_value("new_key", u["new_key"]);
+
+    std::cout << "\nIterate and print key-value pairs, using `auto`;\n"
+                 "new_key is now one of the keys in the map:\n";
+    for (const auto& n : u)
+        print_key_value(n.first, n.second);
+}
+```
+
+Possible output:
+
+```text
+Iterate and print key-value pairs of unordered_map, being
+explicit with their types:
+Key:[BLUE] Value:[#0000FF]
+Key:[GREEN] Value:[#00FF00]
+Key:[RED] Value:[#FF0000]
+
+Iterate and print key-value pairs using C++17 structured binding:
+Key:[BLUE] Value:[#0000FF]
+Key:[GREEN] Value:[#00FF00]
+Key:[RED] Value:[#FF0000]
+
+Output values by key:
+The HEX of color RED is:[#FF0000]
+The HEX of color BLACK is:[#000000]
+
+Use operator[] with non-existent key to insert a new key-value pair:
+Key:[new_key] Value:[]
+
+Iterate and print key-value pairs, using `auto`;
+new_key is now one of the keys in the map:
+Key:[new_key] Value:[]
+Key:[WHITE] Value:[#FFFFFF]
+Key:[BLACK] Value:[#000000]
+Key:[BLUE] Value:[#0000FF]
+Key:[GREEN] Value:[#00FF00]
+Key:[RED] Value:[#FF0000]
+```
+
+### Defect reports
+
+{/* source:cpp-container-unordered-map:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-unordered-map:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2050} standard="C++11">
+    <PublishedBehavior>the definitions of `reference`, `const_reference`, `pointer` and `const_pointer` were based on `allocator_type`</PublishedBehavior>
+    <CorrectedBehavior>based on `value_type` and [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-container-unordered-map:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unordered_multimap`](/docs/cpp/library/container/unordered_multimap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, hashed by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`map`](/docs/cpp/library/container/map)</DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, sorted by keys, keys are unique (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`flat_map`](/docs/cpp/library/container/flat_map) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>adapts two containers to provide a collection of key-value pairs, sorted by unique keys (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

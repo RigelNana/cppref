@@ -1,0 +1,159 @@
+---
+title: "std::unordered_map<Key,T,Hash,KeyEqual,Allocator>::emplace_hint"
+description: "Inserts a new element into the container, using hint as a suggestion where the element should go."
+source_url: "https://en.cppreference.com/w/cpp/container/unordered_map/emplace_hint"
+language: "C++"
+---
+
+{/* source:cpp-container-unordered-map-emplace-hint:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`template< class... Args >
+iterator emplace_hint( const_iterator hint, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-unordered-map-emplace-hint:0001 */}
+Inserts a new element into the container, using `hint` as a suggestion where the element should go.
+
+{/* source:cpp-container-unordered-map-emplace-hint:0002 */}
+The constructor of the element type (`value_type`, that is, `std::pair<const Key, T>`) is called with exactly the same arguments as supplied to the function, forwarded with `std::forward<Args>(args)...`.
+
+{/* source:cpp-container-unordered-map-emplace-hint:0003 */}
+If after the operation the new number of elements is greater than old [`max_load_factor()`](/docs/cpp/library/container/unordered_map/max_load_factor) `*` [`bucket_count()`](/docs/cpp/library/container/unordered_map/bucket_count) a rehashing takes place. If rehashing occurs (due to the insertion), all iterators are invalidated. Otherwise (no rehashing), iterators are not invalidated.
+
+### Parameters
+
+{/* source:cpp-container-unordered-map-emplace-hint:0004 */}
+<ParameterList>
+  <Parameter name="hint">iterator, used as a suggestion as to where to insert the new element</Parameter>
+  <Parameter name="args">arguments to forward to the constructor of the element</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-unordered-map-emplace-hint:0005 */}
+An iterator to the inserted element, or to the element that prevented the insertion.
+
+### Exceptions
+
+{/* source:cpp-container-unordered-map-emplace-hint:0006 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Complexity
+
+{/* source:cpp-container-unordered-map-emplace-hint:0007 */}
+Amortized constant on average, worst case linear in the size of the container.
+
+### Example
+
+{/* source:cpp-container-unordered-map-emplace-hint:0008 */}
+```cpp
+#include <chrono>
+#include <cstddef>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <unordered_map>
+
+const int n_operations = 100'500'0;
+
+std::size_t map_emplace()
+{
+    std::unordered_map<int, char> map;
+    for (int i = 0; i < n_operations; ++i)
+        map.emplace(i, 'a');
+    return map.size();
+}
+
+std::size_t map_emplace_hint()
+{
+    std::unordered_map<int, char> map;
+    auto it = map.begin();
+    for (int i = 0; i < n_operations; ++i)
+    {
+        map.emplace_hint(it, i, 'b');
+        it = map.end();
+    }
+    return map.size();
+}
+
+std::size_t map_emplace_hint_wrong()
+{
+    std::unordered_map<int, char> map;
+    auto it = map.begin();
+    for (int i = n_operations; i > 0; --i)
+    {
+        map.emplace_hint(it, i, 'c');
+        it = map.end();
+    }
+    return map.size();
+}
+
+std::size_t map_emplace_hint_corrected()
+{
+    std::unordered_map<int, char> map;
+    auto it = map.begin();
+    for (int i = n_operations; i > 0; --i)
+    {
+        map.emplace_hint(it, i, 'd');
+        it = map.begin();
+    }
+    return map.size();
+}
+
+std::size_t map_emplace_hint_closest()
+{
+    std::unordered_map<int, char> map;
+    auto it = map.begin();
+    for (int i = 0; i < n_operations; ++i)
+        it = map.emplace_hint(it, i, 'e');
+    return map.size();
+}
+
+double time_it(std::function<std::size_t()> map_test,
+               std::string what = "", double ratio = 0.0)
+{
+    const auto start = std::chrono::system_clock::now();
+    const std::size_t map_size = map_test();
+    const auto stop = std::chrono::system_clock::now();
+    std::chrono::duration<double, std::milli> time = stop - start;
+    if (what.size() && map_size)
+        std::cout << std::setw(8) << time << " for " << what << " (ratio: "
+                  << (ratio == 0.0 ? 1.0 : ratio / time.count()) << ")\n";
+    return time.count();
+}
+
+int main()
+{
+    std::cout << std::fixed << std::setprecision(2);
+    time_it(map_emplace); // cache warmup
+    const auto x = time_it(map_emplace, "plain emplace");
+    time_it(map_emplace_hint, "emplace with correct hint", x);
+    time_it(map_emplace_hint_wrong, "emplace with wrong hint", x);
+    time_it(map_emplace_hint_corrected, "corrected emplace", x);
+    time_it(map_emplace_hint_closest, "emplace using returned iterator", x);
+}
+```
+
+Possible output:
+
+```text
+143.48ms for plain emplace (ratio: 1.00)
+164.78ms for emplace with correct hint (ratio: 0.87)
+171.22ms for emplace with wrong hint (ratio: 0.84)
+166.55ms for corrected emplace (ratio: 0.86)
+167.41ms for emplace using returned iterator (ratio: 0.86)
+```
+
+### See also
+
+{/* source:cpp-container-unordered-map-emplace-hint:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/unordered_map/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/unordered_map/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements <InlineRevision since="C++17">or nodes</InlineRevision> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

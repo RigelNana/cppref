@@ -1,0 +1,130 @@
+---
+title: "deduction guides for std::map"
+description: "These deduction guides are provided for map to allow deduction from an iterator range (overloads (1,3)) and std::initializer_list (overloads (2,4))."
+source_url: "https://en.cppreference.com/w/cpp/container/map/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-container-map-deduction-guides:0000 */}
+Defined in header [`<map>`](/docs/cpp/library/headers/map)
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class InputIt,
+          class Comp = std::less<iter_key_t<InputIt>>,
+          class Alloc = std::allocator<iter_to_alloc_t<InputIt>> >
+map( InputIt, InputIt, Comp = Comp(), Alloc = Alloc() )
+
+    -> map<iter_key_t<InputIt>, iter_val_t<InputIt>, Comp, Alloc>;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class Key,
+          class T,
+          class Comp = std::less<Key>,
+          class Alloc = std::allocator<std::pair<const Key, T>> >
+map( std::initializer_list<std::pair<Key, T>>, Comp = Comp(), Alloc = Alloc() )
+
+    -> map<Key, T, Comp, Alloc>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class InputIt, class Alloc >
+map( InputIt, InputIt, Alloc )
+    -> map<iter_key_t<InputIt>, iter_val_t<InputIt>,
+
+           std::less<iter_key_t<InputIt>>, Alloc>;`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class Key, class T, class Alloc >
+map( std::initializer_list<std::pair<Key, T>>, Alloc )
+
+    -> map<Key, T, std::less<Key>, Alloc>;`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< ranges::input_range R, class Compare = std::less<range_key_t<R>,
+          class Alloc = std::allocator<range_to_alloc_t<R>> >
+map( std::from_range_t, R&&, Compare = Compare(), Alloc = Alloc() )
+
+    -> map<range_key_t<R>, range_mapped_t<R>, Compare, Alloc>;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< ranges::input_range R, class Alloc >
+map( std::from_range_t, R&&, Alloc )
+
+    -> map<range_key_t<R>, range_mapped_t<R>, std::less<range_key_t<R>>, Alloc>;`} />
+  **Exposition-only helper type aliases**
+  <Declaration language="cpp" code={`template< class InputIter >
+using iter_val_t =
+
+    typename std::iterator_traits<InputIter>::value_type;`} />
+  (exposition only*)
+  <Declaration language="cpp" code={`template< class InputIter >
+using iter_key_t =
+
+    std::remove_const_t< std::tuple_element_t<0, iter_val_t<InputIter>>>;`} />
+  (exposition only*)
+  <Declaration language="cpp" code={`template< class InputIter >
+using iter_mapped_t =
+
+    std::tuple_element_t<1, iter_val_t<InputIter>>;`} />
+  (exposition only*)
+  <Declaration language="cpp" code={`template< class InputIter >
+using iter_to_alloc_t =
+    std::pair<std::add_const_t<tuple_element_t<0, iter_val_t<InputIter>>>,
+
+              std::tuple_element_t<1, iter_val_t<InputIter>>>;`} />
+  (exposition only*)
+  <Declaration language="cpp" since="C++23" code={`template< ranges::input_range Range >
+using range_key_t =
+
+    std::remove_const_t<typename ranges::range_value_t<Range>::first_type>;`} />
+  (exposition only*)
+  <Declaration language="cpp" since="C++23" code={`template< ranges::input_range Range >
+using range_mapped_t =
+
+    typename ranges::range_value_t<Range>::second_type;`} />
+  (exposition only*)
+  <Declaration language="cpp" since="C++23" code={`template< ranges::input_range Range >
+using range_to_alloc_t =
+    std::pair<std::add_const_t<typename ranges::range_value_t<Range>::first_type>,
+
+              typename ranges::range_value_t<Range>::second_type>;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-container-map-deduction-guides:0001 */}
+1-4. These [deduction guides](/docs/cpp/language/templates/ctad) are provided for map to allow deduction from an iterator range (overloads (1,3)) and [`std::initializer_list`](/docs/cpp/library/utility/initializer_list) (overloads (2,4)).
+
+{/* source:cpp-container-map-deduction-guides:0002 */}
+5,6. These deduction guides are provided for map to allow deduction from a [`std::from_range_t`](/docs/cpp/library/ranges/from_range) tag and an [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-container-map-deduction-guides:0003 */}
+These overloads participate in overload resolution only if `InputIt` satisfies [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator), `Alloc` satisfies [*Allocator*](/docs/cpp/library/named_req/Allocator), and `Comp` does not satisfy [*Allocator*](/docs/cpp/library/named_req/Allocator).
+
+{/* source:cpp-container-map-deduction-guides:0004 */}
+Note: the extent to which the library determines that a type does not satisfy [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) is unspecified, except that as a minimum integral types do not qualify as input iterators. Likewise, the extent to which it determines that a type does not satisfy [*Allocator*](/docs/cpp/library/named_req/Allocator) is unspecified, except that as a minimum the member type `Alloc::value_type` must exist and the expression `std::declval<Alloc&>().allocate(std::size_t{})` must be well-formed when treated as an unevaluated operand.
+
+## Notes
+
+{/* source:cpp-container-map-deduction-guides:0005 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [Ranges-aware](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion; overload (5,6) |
+
+## Example
+
+{/* source:cpp-container-map-deduction-guides:0006 */}
+```cpp
+#include <map>
+ 
+int main()
+{
+    // std::map m1 = {{"foo", 1}, {"bar", 2}};
+        // Error: braced-init-list has no type; cannot deduce
+        // pair<Key, T> from {"foo", 1} or {"bar", 2}
+ 
+    std::map m1 = {std::pair{"foo", 2}, {"bar", 3}}; // guide #2
+    std::map m2(m1.begin(), m1.end()); // guide #1
+}
+```
+
+## Defect reports
+
+{/* source:cpp-container-map-deduction-guides:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-map-deduction-guides:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3025} standard="C++17">
+    <PublishedBehavior>initializer-list guides take `std::pair<const Key, T>`</PublishedBehavior>
+    <CorrectedBehavior>use `std::pair<Key, T>`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

@@ -1,0 +1,151 @@
+---
+title: "std::deque<T,Allocator>::emplace"
+description: "Inserts a new element into the container directly before pos."
+source_url: "https://en.cppreference.com/w/cpp/container/deque/emplace"
+language: "C++"
+---
+
+{/* source:cpp-container-deque-emplace:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`template< class... Args >
+iterator emplace( const_iterator pos, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-deque-emplace:0001 */}
+Inserts a new element into the container directly before `pos`.
+
+{/* source:cpp-container-deque-emplace:0002 */}
+The element is constructed through [`std::allocator_traits::construct`](/docs/cpp/library/memory/allocator_traits/construct), which typically uses placement-new to construct the element in-place at a location provided by the container. However, if the required location has been occupied by an existing element, the inserted element is constructed at another location at first, and then move assigned into the required location.
+
+{/* source:cpp-container-deque-emplace:0003 */}
+The arguments `args...` are forwarded to the constructor as `std::forward<Args>(args)...`. `args...` may directly or indirectly refer to a value in the container.
+
+{/* source:cpp-container-deque-emplace:0004 */}
+All iterators (including the [`end()`](/docs/cpp/library/container/deque/end) iterator) are invalidated. References are invalidated too, unless `pos ==` [`begin()`](/docs/cpp/library/container/deque/begin) or `pos ==` [`end()`](/docs/cpp/library/container/deque/end), in which case they are not invalidated.
+
+### Parameters
+
+{/* source:cpp-container-deque-emplace:0005 */}
+<ParameterList>
+  <Parameter name="pos">iterator before which the new element will be constructed</Parameter>
+  <Parameter name="args">arguments to forward to the constructor of the element</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T (the container's element type)` must meet the requirements of [`MoveAssignable`](/docs/cpp/library/named_req/MoveAssignable), [`MoveInsertable`](/docs/cpp/library/named_req/MoveInsertable) and [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible).
+
+### Return value
+
+{/* source:cpp-container-deque-emplace:0006 */}
+Iterator pointing to the emplaced element.
+
+### Complexity
+
+{/* source:cpp-container-deque-emplace:0007 */}
+Linear in the lesser of the distances between `pos` and either of the ends of the container.
+
+### Exceptions
+
+{/* source:cpp-container-deque-emplace:0008 */}
+If an exception is thrown other than by the copy constructor, move constructor, assignment operator, or move assignment operator of the `T`, or if an exception is thrown while `emplace` is used to insert a single element at the either end, there are no effects (strong exception guarantee).
+
+{/* source:cpp-container-deque-emplace:0009 */}
+Otherwise, the effects are unspecified.
+
+### Example
+
+{/* source:cpp-container-deque-emplace:0010 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <deque>
+
+struct A
+{
+    std::string s;
+
+    A(std::string str) : s(std::move(str)) { std::cout << " constructed\n"; }
+
+    A(const A& o) : s(o.s) { std::cout << " copy constructed\n"; }
+
+    A(A&& o) : s(std::move(o.s)) { std::cout << " move constructed\n"; }
+
+    A& operator=(const A& other)
+    {
+        s = other.s;
+        std::cout << " copy assigned\n";
+        return *this;
+    }
+
+    A& operator=(A&& other)
+    {
+        s = std::move(other.s);
+        std::cout << " move assigned\n";
+        return *this;
+    }
+};
+
+int main()
+{
+    std::deque<A> container;
+
+    std::cout << "construct 2 times A:\n";
+    A two{"two"};
+    A three{"three"};
+
+    std::cout << "emplace:\n";
+    container.emplace(container.end(), "one");
+
+    std::cout << "emplace with A&:\n";
+    container.emplace(container.end(), two);
+
+    std::cout << "emplace with A&&:\n";
+    container.emplace(container.end(), std::move(three));
+
+    std::cout << "content:\n";
+    for (const auto& obj : container)
+        std::cout << ' ' << obj.s;
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+construct 2 times A:
+ constructed
+ constructed
+emplace:
+ constructed
+emplace with A&:
+ copy constructed
+emplace with A&&:
+ move constructed
+content:
+ one two three
+```
+
+### Defect reports
+
+{/* source:cpp-container-deque-emplace:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-deque-emplace:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2164} standard="C++11"><PublishedBehavior>it was not clear whether the arguments can refer to the container</PublishedBehavior><CorrectedBehavior>clarified</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-container-deque-emplace:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/deque/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/deque/emplace_back) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

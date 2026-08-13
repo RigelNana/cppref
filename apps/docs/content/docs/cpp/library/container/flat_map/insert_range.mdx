@@ -1,0 +1,109 @@
+---
+title: "std::flat_map<Key,T,Compare,KeyContainer,MappedContainer>::insert_range"
+description: "Inserts a copy of each element in the range rg into underlying containers c as if by:"
+source_url: "https://en.cppreference.com/w/cpp/container/flat_map/insert_range"
+language: "C++"
+---
+
+{/* source:cpp-container-flat-map-insert-range:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< container-compatible-range<value_type> R >
+void insert_range( R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-flat-map-insert-range:0001 */}
+Inserts a copy of each element in the range `rg` into underlying containers [`c`](/docs/cpp/library/container/flat_map#Member_objects) as if by:
+
+{/* source:cpp-container-flat-map-insert-range:0002 */}
+```cpp
+for (const auto& e : rg)
+{
+    c.keys.insert(c.keys.end(), e.first);
+    c.values.insert(c.values.end(), e.second);
+}
+```
+
+{/* source:cpp-container-flat-map-insert-range:0003 */}
+Then, sorts the range of newly inserted elements with respect to `value_comp()`. Merges the resulting sorted range and the sorted range of pre-existing elements into a single sorted range. Finally, erases the duplicate elements as if by:
+
+{/* source:cpp-container-flat-map-insert-range:0004 */}
+```cpp
+auto zv = views::zip(c.keys, c.values);
+auto it = ranges::unique(zv, key_equiv(compare)).begin();
+auto dist = std::distance(zv.begin(), it);
+c.keys.erase(c.keys.begin() + dist, c.keys.end());
+c.values.erase(c.values.begin() + dist, c.values.end());
+```
+
+{/* source:cpp-container-flat-map-insert-range:0005 */}
+Each iterator in the range `rg` is dereferenced exactly once. The behavior is undefined if `rg` overlaps with the container.
+
+{/* source:cpp-container-flat-map-insert-range:0006 */}
+Information on iterator invalidation is copied from [`here`](/docs/Template:cpp/container/note-iterator-invalidation).
+
+### Parameters
+
+{/* source:cpp-container-flat-map-insert-range:0007 */}
+<ParameterList>
+  <Parameter name="rg">a [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range), that is, an [`input_range`](/docs/cpp/library/ranges/input_range) whose elements are convertible to `T`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-flat-map-insert-range:0008 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-container-flat-map-insert-range:0009 */}
+`N + M·log(M)`, where `N` is `size()` before the operation and `M` is `ranges::distance(rg)`.
+
+### Notes
+
+{/* source:cpp-container-flat-map-insert-range:0010 */}
+Since `insert_range` performs an in-place merge operation, that may allocate memory.
+
+### Example
+
+{/* source:cpp-container-flat-map-insert-range:0011 */}
+```cpp
+#include <iostream>
+#include <flat_map>
+#include <utility>
+ 
+void println(auto, auto const& container)
+{
+    for (const auto& [key, value] : container)
+        std::cout << '{' << key << ',' << value << '}' << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    auto container = std::flat_map{std::pair{1, 11}, {3, 33}, {2, 22}, {4, 44}};
+    const auto rg = {std::pair{-1, -11}, {3, -33}, {-2, -22}};
+#ifdef __cpp_lib_containers_ranges
+    container.insert_range(rg);
+#else
+    container.insert(rg.begin(), rg.end());
+#endif
+    println("{}", container);
+}
+```
+
+Output:
+
+```text
+{-2,-22} {-1,-11} {1,11} {2,22} {3,33} {4,44}
+```
+
+### See also
+
+{/* source:cpp-container-flat-map-insert-range:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/flat_map/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

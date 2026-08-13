@@ -1,0 +1,100 @@
+---
+title: "std::priority_queue<T,Container,Compare>::push_range"
+description: "Inserts a copy of each element of rg in priority_queue."
+source_url: "https://en.cppreference.com/w/cpp/container/priority_queue/push_range"
+language: "C++"
+---
+{/* source:cpp-container-priority-queue-push-range:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< container-compatible-range<value_type> R >
+void push_range( R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-priority-queue-push-range:0001 */}
+Inserts a copy of each element of `rg` in priority_queue, as if by:
+
+{/* source:cpp-container-priority-queue-push-range:0002 */}
+- `c.append_range(std::forward<R>(rg))` if that is a valid expression (i.e. the underlying container `c` has an appropriate `append_range` member function), or
+- `ranges::copy(rg, std::back_inserter(c))` otherwise.
+
+{/* source:cpp-container-priority-queue-push-range:0003 */}
+Then restores the heap property as if by `ranges::make_heap(c, comp)`. After the insertion `ranges::is_heap(c, comp)` is `true`.
+
+{/* source:cpp-container-priority-queue-push-range:0004 */}
+Each iterator in the range `rg` is dereferenced exactly once.
+
+### Parameters
+
+{/* source:cpp-container-priority-queue-push-range:0005 */}
+<ParameterList>
+  <Parameter name="rg">a [`container compatible range`](/docs/cpp/library/ranges/to#container_compatible_range), that is, an [`input_range`](/docs/cpp/library/ranges/input_range) whose elements are convertible to `T`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-priority-queue-push-range:0006 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-container-priority-queue-push-range:0007 */}
+The complexity of `c.append_range` plus the complexity of `ranges::make_heap(c, comp)`.
+
+### Notes
+
+{/* source:cpp-container-priority-queue-push-range:0008 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [`Ranges-aware`](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion |
+
+### Example
+
+{/* source:cpp-container-priority-queue-push-range:0009 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <ranges>
+#include <queue>
+ 
+template<typename Adaptor>
+requires (std::ranges::input_range<typename Adaptor::container_type>)
+void println(auto, const Adaptor& adaptor)
+{
+    struct Container : Adaptor // gain access to protected Adaptor::Container c;
+    {
+        auto const& container() const { return this->c; }
+    };
+ 
+    for (auto const& elem : static_cast<const Container&>(adaptor).container())
+        std::cout << elem << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::priority_queue<int> adaptor;
+    const auto rg = {1, 3, 2, 4};
+ 
+#ifdef __cpp_lib_containers_ranges
+    adaptor.push_range(rg);
+#else
+    std::ranges::for_each(rg, [&adaptor](auto e){ adaptor.push(e); });
+#endif
+ 
+    println("{}", adaptor);
+}
+```
+Output:
+
+```text
+4 3 2 1
+```
+### See also
+
+{/* source:cpp-container-priority-queue-push-range:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`push`](/docs/cpp/library/container/priority_queue/push)</DescriptionTerm>
+    <DescriptionBody>inserts element and sorts the underlying container (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

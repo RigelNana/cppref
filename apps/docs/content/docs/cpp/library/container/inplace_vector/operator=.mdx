@@ -1,0 +1,142 @@
+---
+title: "std::inplace_vector<T,N>::operator="
+description: "Replaces the contents of the inplace_vector."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/operator="
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-operator:0000 */}
+<DeclarationDoc since="C++26">
+  <Declaration id="1" language="cpp" code={`constexpr inplace_vector& operator=( const inplace_vector& other );`} />
+  <Declaration id="2" language="cpp" code={`constexpr inplace_vector& operator=( inplace_vector&& other )
+    noexcept(/* see below */);`} />
+  <Declaration id="3" language="cpp" code={`constexpr inplace_vector& operator=( std::initializer_list<T> init );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-operator:0001 */}
+Replaces the contents of the inplace_vector.
+
+{/* source:cpp-container-inplace-vector-operator:0002 */}
+1. [Copy assignment operator](/docs/cpp/language/classes/as_operator#Copy_assignment_operator). Also a [trivial copy assignment operator](/docs/cpp/language/classes/as_operator#Trivial_copy_assignment_operator), if `std::inplace_vector<T, N>` has a [trivial destructor](/docs/cpp/language/classes/destructor#Trivial_destructor), and `std::is_trivially_copy_constructible_v<T> && std::is_trivially_copy_assignable_v<T>` is `true`. Replaces the contents with a copy of the contents of `other`.
+
+{/* source:cpp-container-inplace-vector-operator:0003 */}
+2. [Move assignment operator](/docs/cpp/language/classes/move_operator#Move_assignment_operator). Also a [trivial move assignment operator](/docs/cpp/language/classes/move_operator#Trivial_move_assignment_operator), if `std::inplace_vector<T, N>` has a [trivial destructor](/docs/cpp/language/classes/destructor#Trivial_destructor), and `std::is_trivially_move_constructible_v<T> && std::is_trivially_move_assignable_v<T>` is `true`. Replaces the contents with those of `other` using move semantics (i.e., the data in `other` is moved from `other` into this container). `other` is in a valid but unspecified state afterwards.
+
+{/* source:cpp-container-inplace-vector-operator:0004 */}
+3. Replaces the contents with those identified by initializer list `init`.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-operator:0005 */}
+<ParameterList>
+  <Parameter name="other">another inplace_vector to be used as source to initialize the elements of the container with</Parameter>
+  <Parameter name="init">initializer list to initialize the elements of the container with</Parameter>
+</ParameterList>
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-operator:0006 */}
+1,2. Linear in the size of `*this` and `other`.
+
+{/* source:cpp-container-inplace-vector-operator:0007 */}
+3. Linear in the size of `*this` and `init`.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-operator:0008 */}
+2. [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(N == 0 ||
+        (std::is_nothrow_move_assignable_v<T> &&
+
+         std::is_nothrow_move_constructible_v<T>))
+```
+
+{/* source:cpp-container-inplace-vector-operator:0009 */}
+3. Throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if `init.size() > N`.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-operator:0010 */}
+```cpp
+#include <initializer_list>
+#include <inplace_vector>
+#include <new>
+#include <print>
+#include <ranges>
+#include <string>
+
+int main()
+{
+    std::inplace_vector<int, 4> x({1, 2, 3}), y;
+    std::println("Initially:");
+    std::println("x = {}", x);
+    std::println("y = {}", y);
+
+    std::println("Copy assignment copies data from x to y:");
+    y = x; // overload (1)
+    std::println("x = {}", x);
+    std::println("y = {}", y);
+
+    std::inplace_vector<std::string, 3> z, w{"\N{CAT}", "\N{GREEN HEART}"};
+    std::println("Initially:");
+    std::println("z = {}", z);
+    std::println("w = {}", w);
+
+    std::println("Move assignment moves data from w to z:");
+    z = std::move(w); // overload (2)
+    std::println("z = {}", z);
+    std::println("w = {}", w); // w is in valid but unspecified state
+
+    auto l = {4, 5, 6, 7};
+    std::println("Assignment of initializer_list {} to x:", l);
+    x = l; // overload (3)
+    std::println("x = {}", x);
+
+    std::println("Assignment of initializer_list with size bigger than N throws:");
+    try
+    {
+        x = {1, 2, 3, 4, 5}; // throws: (initializer list size == 5) > (capacity N == 4)
+    }
+    catch(const std::bad_alloc& ex)
+    {
+        std::println("ex.what(): {}", ex.what());
+    }
+}
+```
+
+Possible output:
+
+```text
+Initially:
+x = [1, 2, 3]
+y = []
+Copy assignment copies data from x to y:
+x = [1, 2, 3]
+y = [1, 2, 3]
+Initially:
+z = []
+w = ["🐈", "💚"]
+Move assignment moves data from w to z:
+z = ["🐈", "💚"]
+w = ["", ""]
+Assignment of initializer_list [4, 5, 6, 7] to x:
+x = [4, 5, 6, 7]
+Assignment of initializer_list with size bigger than N throws:
+ex.what(): std::bad_alloc
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-operator:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[(constructor)](/docs/cpp/library/container/inplace_vector/inplace_vector)</DescriptionTerm>
+    <DescriptionBody>constructs the inplace_vector (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/container/inplace_vector/assign)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

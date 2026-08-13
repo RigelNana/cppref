@@ -1,0 +1,130 @@
+---
+title: "deduction guides for std::priority_queue"
+description: "The following deduction guides are provided for std::priority_queue."
+source_url: "https://en.cppreference.com/w/cpp/container/priority_queue/deduction_guides"
+language: "C++"
+---
+{/* source:cpp-container-priority-queue-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<queue>`](/docs/cpp/library/headers/queue)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class Comp, class Container >
+priority_queue( Comp, Container )
+
+    -> priority_queue<typename Container::value_type, Container, Comp>;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class InputIt,
+          class Comp = std::less</*iter-value-type*/<InputIt>>,
+          class Container = std::vector</*iter-value-type*/<InputIt> >
+priority_queue( InputIt, InputIt, Comp = Comp(), Container = Container() )
+
+    -> priority_queue</*iter-value-type*/<InputIt>, Container, Comp>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class Comp, class Container, class Alloc >
+priority_queue( Comp, Container, Alloc )
+
+    -> priority_queue<typename Container::value_type, Container, Comp>;`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class InputIt, class Alloc >
+priority_queue( InputIt, InputIt, Alloc )
+    -> priority_queue</*iter-value-type*/<InputIt>,
+                      std::vector</*iter-value-type*/<InputIt>, Alloc>,
+
+                      std::less</*iter-value-type*/<InputIt>>>;`} />
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class InputIt, class Comp, class Alloc >
+priority_queue( InputIt, InputIt, Comp, Alloc )
+    -> priority_queue</*iter-value-type*/<InputIt>,
+
+                      std::vector</*iter-value-type*/<InputIt>, Alloc>, Comp>;`} />
+  <Declaration id="6" language="cpp" since="C++17" code={`template< class InputIt, class Comp, class Container, class Alloc >
+priority_queue( InputIt, InputIt, Comp, Container, Alloc )
+
+    -> priority_queue<typename Container::value_type, Container, Comp>;`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< ranges::input_range R,
+          class Comp = std::less<ranges::range_value_t<R>> >
+priority_queue( std::from_range_t, R&&, Comp = Comp() )
+    -> priority_queue<ranges::range_value_t<R>,
+
+                      std::vector<ranges::range_value_t<R>>, Comp>;`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< ranges::input_range R, class Comp, class Alloc >
+priority_queue( std::from_range_t, R&&, Comp, Alloc )
+    -> priority_queue<ranges::range_value_t<R>,
+
+                      std::vector<ranges::range_value_t<R>, Alloc>, Comp>;`} />
+  <Declaration id="9" language="cpp" since="C++23" code={`template< ranges::input_range R, class Alloc >
+priority_queue( std::from_range_t, R&&, Alloc )
+    -> priority_queue<ranges::range_value_t<R>,
+
+                      std::vector<ranges::range_value_t<R>, Alloc>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-priority-queue-deduction-guides:0001 */}
+The following [`deduction guides`](/docs/cpp/language/templates/ctad) are provided for [`std::priority_queue`](/docs/cpp/library/container/priority_queue):
+
+{/* source:cpp-container-priority-queue-deduction-guides:0002 */}
+- 1-6) Allow deduction from underlying container type and from an iterator range. `/*iter-value-type*/<It>` denotes `typename std::iterator_traits<It>::value_type` for any type `It`.
+
+{/* source:cpp-container-priority-queue-deduction-guides:0003 */}
+- 7-9) Allow deduction from a [`std::from_range_t`](/docs/cpp/library/ranges/from_range) tag and an [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-container-priority-queue-deduction-guides:0004 */}
+These overloads participate in overload resolution only if
+
+{/* source:cpp-container-priority-queue-deduction-guides:0005 */}
+- `InputIt` satisfies [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator),
+- `Comp` does not satisfy [`Allocator`](/docs/cpp/library/named_req/Allocator),
+- `Container` does not satisfy [`Allocator`](/docs/cpp/library/named_req/Allocator),
+- <InlineRevision since="C++23">for overloads (4,5),</InlineRevision> `Alloc` satisfies [`Allocator`](/docs/cpp/library/named_req/Allocator), and
+- for overloads (3,6), `std::uses_allocator_v<Container, Alloc>` is `true`.
+
+{/* source:cpp-container-priority-queue-deduction-guides:0006 */}
+Note: the extent to which the library determines that a type does not satisfy [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator) is unspecified, except that as a minimum integral types do not qualify as input iterators. Likewise, the extent to which it determines that a type does not satisfy [`Allocator`](/docs/cpp/library/named_req/Allocator) is unspecified, except that as a minimum the member type `Alloc::value_type` must exist and the expression `std::declval<Alloc&>().allocate(std::size_t{})` must be well-formed when treated as an unevaluated operand.
+
+### Notes
+
+{/* source:cpp-container-priority-queue-deduction-guides:0007 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [`Ranges-aware`](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion; overloads (7-9) |
+
+### Example
+
+{/* source:cpp-container-priority-queue-deduction-guides:0008 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <queue>
+#include <vector>
+ 
+int main()
+{
+    const std::vector<int> v = {1, 2, 3, 4};
+    std::priority_queue pq1{std::greater<int>{}, v}; // deduces std::priority_queue<
+                                                     //     int, std::vector<int>,
+                                                     //     std::greater<int>>
+    for (; !pq1.empty(); pq1.pop())
+        std::cout << pq1.top() << ' ';
+    std::cout << '\n';
+ 
+    std::priority_queue pq2{v.begin(), v.end()}; // deduces std::priority_queue<int>
+ 
+    for (; !pq2.empty(); pq2.pop())
+        std::cout << pq2.top() << ' ';
+    std::cout << '\n';
+}
+```
+Output:
+
+```text
+1 2 3 4
+4 3 2 1
+```
+### Defect reports
+
+{/* source:cpp-container-priority-queue-deduction-guides:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-priority-queue-deduction-guides:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3506} standard="C++17">
+    <PublishedBehavior>deduction guides from iterator and allocator were missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

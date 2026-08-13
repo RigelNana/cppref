@@ -1,0 +1,153 @@
+---
+title: "std::unordered_map<Key,T,Hash,KeyEqual,Allocator>::erase"
+description: "Removes specified elements from the container."
+source_url: "https://en.cppreference.com/w/cpp/container/unordered_map/erase"
+language: "C++"
+---
+
+{/* source:cpp-container-unordered-map-erase:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`iterator erase( iterator pos );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`iterator erase( const_iterator pos );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`iterator erase( const_iterator first, const_iterator last );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`size_type erase( const Key& key );`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class K >
+size_type erase( K&& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-unordered-map-erase:0001 */}
+Removes specified elements from the container. The order of the remaining elements is preserved. (This makes it possible to erase individual elements while iterating through the container.)
+
+{/* source:cpp-container-unordered-map-erase:0002 */}
+- 1,2) Removes the element at `pos`.
+
+{/* source:cpp-container-unordered-map-erase:0003 */}
+- 3) Removes the elements in the range `[first, last)`, which must be a valid range in `*this`.
+
+{/* source:cpp-container-unordered-map-erase:0004 */}
+- 4) Removes the element (if one exists) with the key equivalent to `key`.
+
+{/* source:cpp-container-unordered-map-erase:0005 */}
+- 5) Removes all elements with key that compares *equivalent* to the value `x`. This overload participates in overload resolution only if `Hash::is_transparent` and `KeyEqual::is_transparent` are valid and each denotes a type, and neither `iterator` nor `const_iterator` is implicitly convertible from `K`. This assumes that such `Hash` is callable with both `K` and `Key` type, and that the `KeyEqual` is transparent, which, together, allows calling this function without constructing an instance of `Key`.
+
+{/* source:cpp-container-unordered-map-erase:0006 */}
+References and iterators to the erased elements are invalidated. Other iterators and references are not invalidated.
+
+{/* source:cpp-container-unordered-map-erase:0007 */}
+The iterator `pos` must be valid and dereferenceable. Thus the [`end()`](/docs/cpp/library/container/unordered_map/end) iterator (which is valid, but is not dereferenceable) cannot be used as a value for `pos`.
+
+### Parameters
+
+{/* source:cpp-container-unordered-map-erase:0008 */}
+<ParameterList>
+  <Parameter name="pos">iterator to the element to remove</Parameter>
+  <Parameter name="first, last">range of elements to remove</Parameter>
+  <Parameter name="key">key value of the elements to remove</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key denoting the elements to remove</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-unordered-map-erase:0009 */}
+- 1-3) Iterator following the last removed element.
+
+{/* source:cpp-container-unordered-map-erase:0010 */}
+- 4) Number of elements removed (0 or 1).
+
+{/* source:cpp-container-unordered-map-erase:0011 */}
+- 5) Number of elements removed.
+
+### Exceptions
+
+{/* source:cpp-container-unordered-map-erase:0012 */}
+- 1-3) Throws nothing.
+
+{/* source:cpp-container-unordered-map-erase:0013 */}
+- 4,5) Any exceptions thrown by the `Hash` and `KeyEqual` object.
+
+### Complexity
+
+{/* source:cpp-container-unordered-map-erase:0014 */}
+Given an instance `c` of `unordered_map`:
+
+{/* source:cpp-container-unordered-map-erase:0015 */}
+- 1,2) Average case: constant, worst case: `c.size()`.
+
+{/* source:cpp-container-unordered-map-erase:0016 */}
+- 3) Average case: `std::distance(first, last)`, worst case: `c.size()`.
+
+{/* source:cpp-container-unordered-map-erase:0017 */}
+- 4) Average case: `c.count(key)`, worst case: `c.size()`.
+
+{/* source:cpp-container-unordered-map-erase:0018 */}
+- 5) Average case: `c.count(x)`, worst case: `c.size()`.
+
+### Notes
+
+{/* source:cpp-container-unordered-map-erase:0019 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_associative_heterogeneous_erasure`](/docs/cpp/library/feature_test#cpp_lib_associative_heterogeneous_erasure) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_associative_heterogeneous_erasure_202110L) | (C++23) | Heterogeneous erasure in [associative containers](/docs/cpp/library/container#Associative_containers) and [unordered associative containers](/docs/cpp/library/container#Unordered_associative_containers); overload ([5](/docs/cpp/library/container/unordered_map/erase#Version_5)) |
+
+### Example
+
+{/* source:cpp-container-unordered-map-erase:0020 */}
+```cpp
+#include <unordered_map>
+#include <iostream>
+
+int main()
+{
+    std::unordered_map<int, std::string> c =
+    {
+        {1, "one"}, {2, "two"}, {3, "three"},
+        {4, "four"}, {5, "five"}, {6, "six"}
+    };
+
+    // erase all odd numbers from c
+    for (auto it = c.begin(); it != c.end();)
+    {
+        if (it->first % 2 != 0)
+            it = c.erase(it);
+        else
+            ++it;
+    }
+
+    for (auto& p : c)
+        std::cout << p.second << ' ';
+    std::cout << '\n';
+}
+```
+
+Possible output:
+
+```text
+two four six
+```
+
+### Defect reports
+
+{/* source:cpp-container-unordered-map-erase:0021 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-unordered-map-erase:0022 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2059} standard="C++11">
+    <PublishedBehavior>there was ambiguity for overload (2)</PublishedBehavior>
+    <CorrectedBehavior>added overload (1)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2356} standard="C++11">
+    <PublishedBehavior>the order of non-equivalent elements that are not erased was not guaranteed to be preserved</PublishedBehavior>
+    <CorrectedBehavior>required to be preserved</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-container-unordered-map-erase:0023 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/container/unordered_map/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

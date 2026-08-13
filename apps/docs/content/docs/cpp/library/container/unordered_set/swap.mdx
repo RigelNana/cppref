@@ -1,0 +1,98 @@
+---
+title: "std::unordered_set<Key,Hash,KeyEqual,Allocator>::swap"
+description: "Exchanges the contents of the container with those of other."
+source_url: "https://en.cppreference.com/w/cpp/container/unordered_set/swap"
+language: "C++"
+---
+
+{/* source:cpp-container-unordered-set-swap:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" until="C++17" code={`void swap( unordered_set& other );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`void swap( unordered_set& other ) noexcept(/* see below */);`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-unordered-set-swap:0001 */}
+Exchanges the contents of the container with those of `other`. Does not invoke any move, copy, or swap operations on individual elements.
+
+{/* source:cpp-container-unordered-set-swap:0002 */}
+All iterators and references remain valid. The [`end()`](/docs/cpp/library/container/unordered_set/end) iterator is invalidated. The `Hash` and `KeyEqual` objects must be [`Swappable`](/docs/cpp/library/named_req/Swappable), and they are exchanged using unqualified calls to non-member `swap`.
+
+{/* source:cpp-container-unordered-set-swap:0003 */}
+<Revision since="C++11">
+If `std::allocator_traits<allocator_type>::propagate_on_container_swap::value` is `true`, then the allocators are exchanged using an unqualified call to non-member `swap`. Otherwise, they are not swapped (and if `get_allocator() != other.get_allocator()`, the behavior is undefined).
+</Revision>
+
+### Parameters
+
+{/* source:cpp-container-unordered-set-swap:0004 */}
+<ParameterList>
+  <Parameter name="other">container to exchange the contents with</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-container-unordered-set-swap:0005 */}
+<Revision until="C++17">
+Any exception thrown by the swap of the `Hash` or `KeyEqual` objects.
+</Revision>
+
+<Revision since="C++17">
+[`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification: `noexcept(std::allocator_traits<Allocator>::is_always_equal::value && std::is_nothrow_swappable<Hash>::value && std::is_nothrow_swappable<key_equal>::value)`
+</Revision>
+
+### Complexity
+
+{/* source:cpp-container-unordered-set-swap:0006 */}
+Constant.
+
+### Example
+
+{/* source:cpp-container-unordered-set-swap:0007 */}
+```cpp
+#include <iostream>
+#include <unordered_set>
+ 
+template<class Os, class Co> Os& operator<<(Os& os, const Co& co)
+{
+    os << '{';
+    for (auto const& i : co)
+        os << ' ' << i;
+    return os << " } ";
+}
+ 
+int main()
+{
+    std::unordered_set<int> a1{3, 1, 3, 2}, a2{5, 4, 5};
+ 
+    auto it1 = std::next(a1.begin());
+    auto it2 = std::next(a2.begin());
+ 
+    const int& ref1 = *(a1.begin());
+    const int& ref2 = *(a2.begin());
+ 
+    std::cout << a1 << a2 << *it1 << ' ' << *it2 << ' ' << ref1 << ' ' << ref2 << '\n';
+    a1.swap(a2);
+    std::cout << a1 << a2 << *it1 << ' ' << *it2 << ' ' << ref1 << ' ' << ref2 << '\n';
+ 
+    // Note that every iterator referring to an element in one container before the swap
+    // refers to the same element in the other container after the swap. Same is true
+    // for references.
+}
+```
+
+Possible output:
+
+```text
+{ 2 1 3 } { 4 5 } 1 5 2 4
+{ 4 5 } { 2 1 3 } 1 5 2 4
+```
+
+### See also
+
+{/* source:cpp-container-unordered-set-swap:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::unordered_set)`](/docs/cpp/library/container/unordered_set/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

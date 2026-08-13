@@ -1,0 +1,104 @@
+---
+title: "std::inplace_vector<T,N>::assign_range"
+description: "Replaces elements in the container with a copy of each element in rg."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/assign_range"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-assign-range:0000 */}
+<DeclarationDoc since="C++26">
+  <Declaration language="cpp" code={`template< container-compatible-range<T> R >
+constexpr void assign_range( R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-assign-range:0001 */}
+Replaces elements in the container with a copy of each element in `rg`.
+
+{/* source:cpp-container-inplace-vector-assign-range:0002 */}
+This section is incomplete
+
+{/* source:cpp-container-inplace-vector-assign-range:0003 */}
+Each iterator in the range `rg` is dereferenced exactly once.
+
+{/* source:cpp-container-inplace-vector-assign-range:0004 */}
+The behavior is undefined if `rg` overlaps with the container.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-assign-range:0005 */}
+<ParameterList>
+  <Parameter name="rg">an [`input_range`](/docs/cpp/library/ranges/input_range) with reference type convertible to the element type of the container</Parameter>
+</ParameterList>
+
+Type requirements:
+- `std::assignable_from<T&, ranges::range_reference_t<R>>` must be modeled. Otherwise, the program is ill-formed.
+- `T` must be [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible) into the container from `*ranges::begin(rg)`. Otherwise, the behavior is undefined.
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-assign-range:0006 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-assign-range:0007 */}
+- `bad_alloc`, if `std::ranges::distance(rg) > capacity()`.
+- Any exception thrown by initialization of inserted element.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-assign-range:0008 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <initializer_list>
+#include <inplace_vector>
+#include <iostream>
+#include <new>
+
+int main()
+{
+    const auto source = {1, 2, 3};
+    std::inplace_vector<int, 4> destination{4, 5};
+    destination.assign_range(source);
+    assert(std::ranges::equal(destination, source));
+
+    try
+    {
+        const auto bad = {-1, -2, -3, -4, -5};
+        destination.assign_range(bad); // throws: bad.size() > destination.capacity()
+    }
+    catch(const std::bad_alloc& ex)
+    {
+        std::cout << ex.what() << '\n';
+    }
+}
+```
+
+Possible output:
+
+```text
+std::bad_alloc
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-assign-range:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/container/inplace_vector/insert_range)</DescriptionTerm>
+    <DescriptionBody>inserts a range of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`append_range`](/docs/cpp/library/container/inplace_vector/append_range)</DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/container/inplace_vector/assign)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/container/inplace-vector/operator%3D)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

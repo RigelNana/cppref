@@ -1,0 +1,93 @@
+---
+title: "deduction guides for std::queue"
+description: "These deduction guides are provided for queue to allow deduction from underlying container type."
+source_url: "https://en.cppreference.com/w/cpp/container/queue/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-container-queue-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<queue>`](/docs/cpp/library/headers/queue)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class Container >
+queue( Container )
+
+    -> queue<typename Container::value_type, Container>;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class Container, class Alloc >
+queue( Container, Alloc )
+
+    -> queue<typename Container::value_type, Container>;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class InputIt >
+queue( InputIt, InputIt )
+
+    -> queue<typename std::iterator_traits<InputIt>::value_type>;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class InputIt, class Alloc >
+queue( InputIt, InputIt, Alloc )
+    -> queue<typename std::iterator_traits<InputIt>::value_type,
+
+       std::deque<typename std::iterator_traits<InputIt>::value_type, Alloc>>;`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< ranges::input_range R >
+queue( std::from_range_t, R&& )
+
+    -> queue<ranges::range_value_t<R>>;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< ranges::input_range R, class Allocator >
+queue( std::from_range_t, R&&, Allocator )
+    -> queue<ranges::range_value_t<R>,
+
+       std::deque<ranges::range_value_t<R>, Allocator>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-queue-deduction-guides:0001 */}
+These [deduction guides](/docs/cpp/language/templates/ctad) are provided for `queue` to allow deduction from underlying container type.
+
+{/* source:cpp-container-queue-deduction-guides:0002 */}
+1. Deduces underlying container type from the argument.
+
+{/* source:cpp-container-queue-deduction-guides:0003 */}
+2. Same as (1), except that the allocator is provided.
+
+{/* source:cpp-container-queue-deduction-guides:0004 */}
+3. Deduces the element type from the iterator, using `std::deque<typename std::iterator_traits<InputIt>::value_type>` as the underlying container type.
+
+{/* source:cpp-container-queue-deduction-guides:0005 */}
+4. Same as (3), except that the allocator is provided.
+
+{/* source:cpp-container-queue-deduction-guides:0006 */}
+5. Deduces the element type from a [`std::from_range_t`](/docs/cpp/library/ranges/from_range) tag and an [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-container-queue-deduction-guides:0007 */}
+6. Same as (5), except that the allocator is provided.
+
+{/* source:cpp-container-queue-deduction-guides:0008 */}
+These overloads participate in overload resolution only if
+
+{/* source:cpp-container-queue-deduction-guides:0009 */}
+- `InputIt` (if exists) satisfies [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator),
+- `Container` (if exists) does not satisfy [`Allocator`](/docs/cpp/library/named_req/Allocator),
+- for <InlineRevision until="C++23">(3)</InlineRevision><InlineRevision since="C++23">(4)</InlineRevision>, `Alloc` satisfies [`Allocator`](/docs/cpp/library/named_req/Allocator), and
+- `std::uses_allocator_v<Container, Alloc>` is `true` if both `Container` and `Alloc` exist.
+
+{/* source:cpp-container-queue-deduction-guides:0010 */}
+Note: the extent to which the library determines that a type does not satisfy [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator) is unspecified, except that as a minimum integral types do not qualify as input iterators. Likewise, the extent to which it determines that a type does not satisfy [`Allocator`](/docs/cpp/library/named_req/Allocator) is unspecified, except that as a minimum the member type `Alloc::value_type` must exist and the expression `std::declval<Alloc&>().allocate(std::size_t{})` must be well-formed when treated as an unevaluated operand.
+
+### Notes
+
+{/* source:cpp-container-queue-deduction-guides:0011 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_adaptor_iterator_pair_constructor`](/docs/cpp/library/feature_test#cpp_lib_adaptor_iterator_pair_constructor) | [`202106L`](/docs/cpp/library/compiler_support/23#cpp_lib_adaptor_iterator_pair_constructor_202106L) | (C++23) | Iterator pair constructors for [`std::queue`](/docs/cpp/library/container/queue) and [`std::stack`](/docs/cpp/library/container/stack); overloads (2) and (4) |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [`Ranges-aware`](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion; overloads (5) and (6) |
+
+### Example
+
+{/* source:cpp-container-queue-deduction-guides:0012 */}
+```cpp
+#include <queue>
+#include <vector>
+
+int main()
+{
+    std::vector<int> v = {1, 2, 3, 4};
+    std::queue s{v}; // guide #1 deduces std::queue<int, vector<int>>
+}
+```

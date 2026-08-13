@@ -1,0 +1,140 @@
+---
+title: "std::vector<T,Allocator>::emplace_back"
+description: "Appends a new element to the end of the container."
+source_url: "https://en.cppreference.com/w/cpp/container/vector/emplace_back"
+language: "C++"
+---
+
+{/* source:cpp-container-vector-emplace-back:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" until="C++17" code={`template< class... Args >
+void emplace_back( Args&&... args );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class... Args >
+reference emplace_back( Args&&... args );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-container-vector-emplace-back:0001 */}
+    1. Appends a new element to the end of the container. The element is constructed through [`std::allocator_traits::construct`](/docs/cpp/library/memory/allocator_traits/construct), which typically uses placement-new to construct the element in-place at the location provided by the container. The arguments `args...` are forwarded to the constructor as `std::forward<Args>(args)...`.
+
+    2. <InlineRevision since="C++20" /> Appends a new element to the end of the container. The element is constructed through [`std::allocator_traits::construct`](/docs/cpp/library/memory/allocator_traits/construct), which typically uses placement-new to construct the element in-place at the location provided by the container. The arguments `args...` are forwarded to the constructor as `std::forward<Args>(args)...`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-container-vector-emplace-back:0002 */}
+If after the operation the new [`size()`](/docs/cpp/library/container/vector/size) is greater than old [`capacity()`](/docs/cpp/library/container/vector/capacity) a reallocation takes place, in which case all iterators (including the [`end()`](/docs/cpp/library/container/vector/end) iterator) and all references to the elements are invalidated. Otherwise only the [`end()`](/docs/cpp/library/container/vector/end) iterator is invalidated.
+
+### Parameters
+
+{/* source:cpp-container-vector-emplace-back:0003 */}
+<ParameterList>
+  <Parameter name="args">arguments to forward to the constructor of the element</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` (the container's element type) must meet the requirements of [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) and [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible).
+
+### Return value
+
+{/* source:cpp-container-vector-emplace-back:0004 */}
+<Revision until="C++17">(none)</Revision>
+
+<Revision since="C++17">A reference to the inserted element.</Revision>
+
+### Complexity
+
+{/* source:cpp-container-vector-emplace-back:0005 */}
+Amortized constant.
+
+### Exceptions
+
+{/* source:cpp-container-vector-emplace-back:0006 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)). If the move constructor of `T` is not `noexcept` and is not [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `*this`, `vector` will use the throwing move constructor. If it throws, the guarantee is waived and the effects are unspecified.
+
+### Notes
+
+{/* source:cpp-container-vector-emplace-back:0007 */}
+Since reallocation may take place, `emplace_back` requires the element type to be [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) for vectors.
+
+### Example
+
+{/* source:cpp-container-vector-emplace-back:0008 */}
+The following code uses `emplace_back` to append an object of type `President` to a [`std::vector`](/docs/cpp/library/container/vector). It demonstrates how `emplace_back` forwards parameters to the `President` constructor and shows how using `emplace_back` avoids the extra copy or move operation required when using [`push_back`](/docs/cpp/library/container/vector/push_back).
+
+```cpp
+#include <vector>
+#include <cassert>
+#include <iostream>
+#include <string>
+
+struct President
+{
+    std::string name;
+    std::string country;
+    int year;
+
+    President(std::string p_name, std::string p_country, int p_year)
+        : name(std::move(p_name)), country(std::move(p_country)), year(p_year)
+    {
+        std::cout << "I am being constructed.\n";
+    }
+
+    President(President&& other)
+        : name(std::move(other.name)), country(std::move(other.country)), year(other.year)
+    {
+        std::cout << "I am being moved.\n";
+    }
+
+    President& operator=(const President& other) = default;
+};
+
+int main()
+{
+    std::vector<President> elections;
+    std::cout << "emplace_back:\n";
+    auto& ref = elections.emplace_back("Nelson Mandela", "South Africa", 1994);
+    assert(ref.year == 1994 && "uses a reference to the created object (C++17)");
+
+    std::vector<President> reElections;
+    std::cout << "\npush_back:\n";
+    reElections.push_back(President("Franklin Delano Roosevelt", "the USA", 1936));
+
+    std::cout << "\nContents:\n";
+    for (President const& president: elections)
+        std::cout << president.name << " was elected president of "
+                  << president.country << " in " << president.year << ".\n";
+
+    for (President const& president: reElections)
+        std::cout << president.name << " was re-elected president of "
+                  << president.country << " in " << president.year << ".\n";
+}
+```
+
+Output:
+
+```text
+emplace_back:
+I am being constructed.
+
+push_back:
+I am being constructed.
+I am being moved.
+
+Contents:
+Nelson Mandela was elected president of South Africa in 1994.
+Franklin Delano Roosevelt was re-elected president of the USA in 1936.
+```
+
+### See also
+
+{/* source:cpp-container-vector-emplace-back:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/container/vector/push_back) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/vector/emplace) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

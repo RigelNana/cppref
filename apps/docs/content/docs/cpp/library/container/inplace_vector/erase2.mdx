@@ -1,0 +1,113 @@
+---
+title: "std::erase, std::erase_if(std::inplace_vector)"
+description: "1) Erases all elements that compare equal to value from the container."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/erase2"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-erase2:0000 */}
+<DeclarationDoc since="C++26">
+Defined in header [`<inplace_vector>`](/docs/cpp/library/headers/inplace_vector)
+
+  <Declaration id="1" language="cpp" code={`template< class T, std::size_t N, class U = T >
+constexpr typename std::inplace_vector<T, N>::size_type
+
+    erase( std::inplace_vector<T, N>& c, const U& value );`} />
+  <Declaration id="2" language="cpp" code={`template< class T, std::size_t N, class Pred >
+constexpr typename std::inplace_vector<T, N>::size_type
+
+    erase_if( std::inplace_vector<T, N>& c, Pred pred );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-erase2:0001 */}
+1. Erases all elements that compare equal to `value` from the container. Equivalent to
+
+```cpp
+auto it = std::remove(c.begin(), c.end(), value);
+auto r = std::distance(it, c.end());
+c.erase(it, c.end());
+return r;
+```
+
+{/* source:cpp-container-inplace-vector-erase2:0002 */}
+2. Erases all elements that satisfy the predicate `pred` from the container. Equivalent to
+
+```cpp
+auto it = std::remove_if(c.begin(), c.end(), pred);
+auto r = std::distance(it, c.end());
+c.erase(it, c.end());
+return r;
+```
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-erase2:0003 */}
+<ParameterList>
+  <Parameter name="c">container from which to erase</Parameter>
+  <Parameter name="value">value to be removed</Parameter>
+  <Parameter name="pred">unary predicate which returns `true` if the element should be erased. The expression `pred(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `T`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `T&` is not allowed<InlineRevision since="C++11">, nor is `T` unless for `T` a move is equivalent to a copy</InlineRevision>.</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-erase2:0004 */}
+The number of erased elements.
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-erase2:0005 */}
+Linear.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-erase2:0006 */}
+```cpp
+#include <cassert>
+#include <complex>
+#include <inplace_vector>
+#include <numeric>
+#include <print>
+
+int main()
+{
+    std::inplace_vector<int, 10> v(10, 0);
+    std::ranges::iota(v, 0);
+    std::println("Initially, v = {}", v);
+
+    auto erased = std::erase(v, 3);
+    std::println("After erase(v, 3), v = {}", v);
+    assert(erased == 1);
+
+    erased = std::erase_if(v, [](int x) { return x % 2 == 0; });
+    std::println("After erasing all even numbers, v = {}", v);
+    std::println("Erased even numbers: {}", erased);
+
+    std::inplace_vector<std::complex<double>> nums{{2, 2}, {4, 2}, {4, 8}, {4, 2}};
+    std::erase(nums, {4, 2}); // since U = T, the value type can be ommited
+    std::println("After erase {4, 2}, nums = {}", nums);
+}
+```
+
+Output:
+
+```text
+Initially, v = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+After erase(v, 3), v = [0, 1, 2, 4, 5, 6, 7, 8, 9]
+After erasing all even numbers, v = [1, 5, 7, 9]
+Erased even numbers: 5
+After erase {4, 2}, nums = [(2,2), (4,8)]
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-erase2:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove` `remove_if`](/docs/cpp/library/algorithm/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::remove` `ranges::remove_if`](/docs/cpp/library/algorithm/ranges/remove) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

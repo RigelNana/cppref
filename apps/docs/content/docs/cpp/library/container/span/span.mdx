@@ -1,0 +1,195 @@
+---
+title: "std::span<T,Extent>::span"
+description: "Constructs a span."
+source_url: "https://en.cppreference.com/w/cpp/container/span/span"
+language: "C++"
+---
+
+{/* source:cpp-container-span-span:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr span() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class It >
+explicit(extent != std::dynamic_extent)
+
+constexpr span( It first, size_type count );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class It, class End >
+explicit(extent != std::dynamic_extent)
+
+constexpr span( It first, End last );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< std::size_t N >
+constexpr span( std::type_identity_t<element_type> (&arr)[N] ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template< class U, std::size_t N >
+constexpr span( std::array<U, N>& arr ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class U, std::size_t N >
+constexpr span( const std::array<U, N>& arr ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class R >
+explicit(extent != std::dynamic_extent)
+
+constexpr span( R&& range );`} />
+  <Declaration id="8" language="cpp" since="C++26" code={`explicit(extent != std::dynamic_extent)
+constexpr span( std::initializer_list<value_type> il ) noexcept;`} />
+  <Declaration id="9" language="cpp" since="C++20" code={`template< class U, std::size_t N >
+explicit(extent != std::dynamic_extent && N == std::dynamic_extent)
+
+constexpr span( const std::span<U, N>& source ) noexcept;`} />
+  <Declaration id="10" language="cpp" since="C++20" code={`constexpr span( const span& other ) noexcept = default;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-span-span:0001 */}
+Constructs a `span`.
+
+{/* source:cpp-container-span-span:0002 */}
+1) Constructs an empty span whose `data() == nullptr` and `size() == 0`.
+
+- This overload participates in overload resolution only if `extent == 0 || extent == std::dynamic_extent`.
+
+{/* source:cpp-container-span-span:0003 */}
+2) Constructs a span that is a view over the range `[first, first + count)`; the resulting span has `data() == std::to_address(first)` and `size() == count`.
+
+- The behavior is undefined if `[first, first + count)` is not a valid range, if `It` does not actually model [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator), or if `extent != std::dynamic_extent && count != extent`.
+- This overload participates in overload resolution only if:
+  - `It` satisfies [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator),
+  - the conversion from `std::iter_reference_t<It>` to `element_type` is at most a qualification conversion.
+
+{/* source:cpp-container-span-span:0004 */}
+3) Constructs a span that is a view over the range `[first, last)`; the resulting span has `data() == std::to_address(first)` and `size() == last-first`.
+
+- The behavior is undefined if `[first, last)` is not a valid range, if `It` does not actually model [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator), if `End` does not actually model [`sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for) for `It`, or if `extent != std::dynamic_extent && last-first != extent`.
+- This overload participates in overload resolution only if:
+  - `It` satisfies [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator),
+  - `End` satisfies [`sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for) for `It`,
+  - the conversion from `std::iter_reference_t<It>` to `element_type` is at most a qualification conversion, and
+  - `std::is_convertible_v<End, std::size_t>` is `false`.
+
+{/* source:cpp-container-span-span:0005 */}
+4-6) Constructs a span that is a view over the array `arr`; the resulting span has `size() == N` and `data() == std::data(arr)`.
+
+- These overloads participate in overload resolution only if `extent == std::dynamic_extent || N == extent` is `true` and the conversion from `std::remove_pointer_t<decltype(data(arr))>` to `element_type` is at most a qualification conversion.
+
+{/* source:cpp-container-span-span:0006 */}
+7) Constructs a span that is a view over the range `range`; the resulting span has `size() == std::ranges::size(range)` and `data() == std::ranges::data(range)`.
+
+- The behavior is undefined if `R` does not actually model [`contiguous_range`](/docs/cpp/library/ranges/contiguous_range) and [`sized_range`](/docs/cpp/library/ranges/sized_range) or if `R` does not model [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) while `element_type` is non-const or both `extent != dynamic_extent` and `std::ranges::size(range) != extent` are `true`.
+- This overload participates in overload resolution only if:
+  - `R` satisfies [`contiguous_range`](/docs/cpp/library/ranges/contiguous_range) and [`sized_range`](/docs/cpp/library/ranges/sized_range),
+  - either `R` satisfies [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) or `std::is_const_v<element_type>` is `true`,
+  - `std::remove_cvref_t<R>` is not a specialization of `std::span`,
+  - `std::remove_cvref_t<R>` is not a specialization of [`std::array`](/docs/cpp/library/container/array),
+  - `std::is_array_v<std::remove_cvref_t<R>>` is `false`, and
+  - the conversion from `std::ranges::range_reference_t<R>` to `element_type` is at most a qualification conversion.
+
+{/* source:cpp-container-span-span:0007 */}
+8) Constructs a span that is a view over the initializer list `il`; the resulting span has `size() == il.size()` and `data() == il.begin()`.
+
+- The behavior is undefined if both `extent != dynamic_extent` and `il.size() != extent` are `true`.
+- This overload participates in overload resolution only if `std::is_const_v<element_type>` is `true`.
+
+{/* source:cpp-container-span-span:0008 */}
+9) Converting constructor from another span `source`; the resulting span has `size() == source.size()` and `data() == source.data()`.
+
+- The behavior is undefined if both `extent != dynamic_extent` and `source.size() != extent` are `true`.
+- This overload participates in overload resolution only if at least one of `extent == std::dynamic_extent`, `N == std::dynamic_extent` and `N == extent` is `true` and the conversion from `U` to `element_type` is at most a qualification conversion.
+
+{/* source:cpp-container-span-span:0009 */}
+10) Defaulted copy constructor copies the size and data pointer; the resulting span has `size() == other.size()` and `data() == other.data()`.
+
+## Parameters
+
+{/* source:cpp-container-span-span:0010 */}
+<ParameterList>
+  <Parameter name="first">iterator to the first element of the sequence</Parameter>
+  <Parameter name="count">number of elements in the sequence</Parameter>
+  <Parameter name="last">iterator past the last element of the sequence or another sentinel</Parameter>
+  <Parameter name="arr">array to construct a view for</Parameter>
+  <Parameter name="range">range to construct a view for</Parameter>
+  <Parameter name="source">another span to convert from</Parameter>
+  <Parameter name="other">another span to copy from</Parameter>
+</ParameterList>
+
+## Exceptions
+
+{/* source:cpp-container-span-span:0011 */}
+2) Throws nothing.
+
+{/* source:cpp-container-span-span:0012 */}
+3) Throws what and when `last - first` throws.
+
+{/* source:cpp-container-span-span:0013 */}
+7) Throws what and when `std::ranges::size(r)` and `std::ranges::data(r)` throw.
+
+## Notes
+
+{/* source:cpp-container-span-span:0014 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_span_initializer_list`](/docs/cpp/library/feature_test#cpp_lib_span_initializer_list) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_span_initializer_list_202311L) | (C++26) | Constructing `std::span` from a [`std::initializer_list`](/docs/cpp/library/utility/initializer_list), ([`8`](/docs/cpp/library/container/span/span#Version_8)) |
+
+## Example
+
+{/* source:cpp-container-span-span:0015 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <span>
+#include <vector>
+
+void print_span(std::span<const int> s)
+{
+    for (int n : s)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+
+int main()
+{
+    int c[]{1, 2, 3};
+    print_span(c); // constructs from array
+
+    std::array a{4, 5, 6};
+    print_span(a); // constructs from std::array
+
+    std::vector v{7, 8, 9};
+    print_span(v); // constructs from std::vector
+
+#if __cpp_lib_span_initializer_list
+    print_span({0, 1, 2}); // constructs from initializer_list
+#else
+    print_span({{0, 1, 2}}); // ditto, a workaround
+#endif
+}
+```
+
+Output:
+
+```text
+1 2 3 
+4 5 6
+7 8 9
+0 1 2
+```
+
+## See also
+
+{/* source:cpp-container-span-span:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/container/span/data)</DescriptionTerm>
+    <DescriptionBody>direct access to the underlying contiguous storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/span/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/container/span/operator%3D)</DescriptionTerm>
+    <DescriptionBody>assigns a `span` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`, `ssize`](/docs/cpp/library/iterator/size) <InlineRevision since="C++17" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the size of a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/iterator/data) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains the pointer to the underlying array (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

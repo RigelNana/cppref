@@ -1,0 +1,113 @@
+---
+title: "std::vector<T,Allocator>::operator[]"
+description: "Returns a reference to the element at specified location pos."
+source_url: "https://en.cppreference.com/w/cpp/container/vector/operator_at"
+language: "C++"
+---
+
+{/* source:cpp-container-vector-operator-at:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`reference operator[]( size_type pos );`} />
+  <Declaration id="2" language="cpp" code={`const_reference operator[]( size_type pos ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-container-vector-operator-at:0001 */}
+    1. <InlineRevision since="C++20" /> Returns a reference to the element at specified location `pos`. No bounds checking is performed.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-container-vector-operator-at:0002 */}
+<ParameterList>
+  <Parameter name="pos">position of the element to return</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-vector-operator-at:0003 */}
+Reference to the requested element.
+
+### Complexity
+
+{/* source:cpp-container-vector-operator-at:0004 */}
+Constant.
+
+### Notes
+
+{/* source:cpp-container-vector-operator-at:0005 */}
+Unlike [`std::map::operator[]`](/docs/cpp/library/container/map/operator_at), this operator never inserts a new element into the container. Accessing a nonexistent element through this operator is undefined behavior.
+
+### Example
+
+{/* source:cpp-container-vector-operator-at:0006 */}
+The following code uses `operator[]` to read from and write to a `std::vector<int>`:
+
+```cpp
+#include <vector>
+#include <iostream>
+
+int main()
+{
+    std::vector<int> numbers{2, 4, 6, 8};
+
+    std::cout << "Second element: " << numbers[1] << '\n';
+
+    numbers[0] = 5;
+
+    std::cout << "All numbers:";
+    for (auto i : numbers)
+        std::cout << ' ' << i;
+    std::cout << '\n';
+}
+
+// Since C++20 std::vector can be used in constexpr context:
+#if defined(__cpp_lib_constexpr_vector) and defined(__cpp_consteval)
+// Gets the sum of all primes in [0, N) using sieve of Eratosthenes
+consteval auto sum_of_all_primes_up_to(unsigned N)
+{
+    if (N < 2)
+        return 0ULL;
+
+    std::vector<bool> is_prime(N, true);
+    is_prime[0] = is_prime[1] = false;
+
+    auto propagate_non_primality = [&](decltype(N) n)
+    {
+        for (decltype(N) m = n + n; m < is_prime.size(); m += n)
+            is_prime[m] = false;
+    };
+
+    auto sum{0ULL};
+    for (decltype(N) n{2}; n != N; ++n)
+        if (is_prime[n])
+        {
+            sum += n;
+            propagate_non_primality(n);
+        }
+
+    return sum;
+} //< vector's memory is released here
+
+static_assert(sum_of_all_primes_up_to(42) == 0xEE);
+static_assert(sum_of_all_primes_up_to(100) == 0x424);
+static_assert(sum_of_all_primes_up_to(1001) == 76127);
+#endif
+```
+
+Output:
+
+```text
+Second element: 4
+All numbers: 5 4 6 8
+```
+
+### See also
+
+{/* source:cpp-container-vector-operator-at:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/vector/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

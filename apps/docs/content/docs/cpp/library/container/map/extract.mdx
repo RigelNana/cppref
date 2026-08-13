@@ -1,0 +1,141 @@
+---
+title: "std::map<Key,T,Compare,Allocator>::extract"
+description: "Unlinks the node that contains the element pointed to by position and returns a node handle that owns it."
+source_url: "https://en.cppreference.com/w/cpp/container/map/extract"
+language: "C++"
+---
+
+{/* source:cpp-container-map-extract:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`node_type extract( const_iterator position );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`node_type extract( const Key& k );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class K >
+node_type extract( K&& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-map-extract:0001 */}
+- 1) Unlinks the node that contains the element pointed to by `position` and returns a [node handle](/docs/cpp/library/container/node_handle) that owns it.
+
+{/* source:cpp-container-map-extract:0002 */}
+- 2) If the container has an element with key equivalent to `k`, unlinks the node that contains that element from the container and returns a [node handle](/docs/cpp/library/container/node_handle) that owns it. Otherwise, returns an empty node handle.
+
+{/* source:cpp-container-map-extract:0003 */}
+- 3) Same as (2). This overload participates in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type, and neither `iterator` nor `const_iterator` is implicitly convertible from `K`. It allows calling this function without constructing an instance of `Key`.
+
+{/* source:cpp-container-map-extract:0004 */}
+In either case, no elements are copied or moved, only the internal pointers of the container nodes are repointed (rebalancing may occur, as with [`erase()`](/docs/cpp/library/container/map/erase)).
+
+{/* source:cpp-container-map-extract:0005 */}
+Extracting a node invalidates only the iterators to the extracted element. Pointers and references to the extracted element remain valid, but cannot be used while element is owned by a node handle: they become usable if the element is inserted into a container.
+
+## Parameters
+
+{/* source:cpp-container-map-extract:0006 */}
+<ParameterList>
+  <Parameter name="position">a valid iterator into this container</Parameter>
+  <Parameter name="k">a key to identify the node to be extracted</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key identifying the node to be extracted</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-container-map-extract:0007 */}
+A [node handle](/docs/cpp/library/container/node_handle) that owns the extracted element, or empty node handle in case the element is not found in (2,3).
+
+## Exceptions
+
+{/* source:cpp-container-map-extract:0008 */}
+- 1) Throws nothing.
+
+{/* source:cpp-container-map-extract:0009 */}
+- 2,3) Any exceptions thrown by the `Compare` object.
+
+## Complexity
+
+{/* source:cpp-container-map-extract:0010 */}
+- 1) Amortized constant.
+
+{/* source:cpp-container-map-extract:0011 */}
+- 2,3) `log(`[`size()`](/docs/cpp/library/container/map/size)`)`
+
+## Notes
+
+{/* source:cpp-container-map-extract:0012 */}
+`extract` is the only way to change a key of a map element without reallocation:
+
+{/* source:cpp-container-map-extract:0013 */}
+```cpp
+std::map<int, std::string> m{{1, "mango"}, {2, "papaya"}, {3, "guava"}};
+auto nh = m.extract(2);
+nh.key() = 4;
+m.insert(std::move(nh));
+// m == {{1, "mango"}, {3, "guava"}, {4, "papaya"}}
+```
+
+{/* source:cpp-container-map-extract:0014 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_associative_heterogeneous_erasure`](/docs/cpp/library/feature_test#cpp_lib_associative_heterogeneous_erasure) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_associative_heterogeneous_erasure_202110L) | (C++23) | Heterogeneous erasure in [associative containers](/docs/cpp/library/container#Associative_containers) and [unordered associative containers](/docs/cpp/library/container#Unordered_associative_containers), ([3](/docs/cpp/library/container/map/extract#Version_3)) |
+
+## Example
+
+{/* source:cpp-container-map-extract:0015 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string_view>
+#include <map>
+
+void print(std::string_view comment, const auto& data)
+{
+    std::cout << comment;
+    for (auto [k, v] : data)
+        std::cout << ' ' << k << '(' << v << ')';
+
+    std::cout << '\n';
+}
+
+int main()
+{
+    std::map<int, char> cont{{1, 'a'}, {2, 'b'}, {3, 'c'}};
+
+    print("Start:", cont);
+
+    // Extract node handle and change key
+    auto nh = cont.extract(1);
+    nh.key() = 4;
+
+    print("After extract and before insert:", cont);
+
+    // Insert node handle back
+    cont.insert(std::move(nh));
+
+    print("End:", cont);
+}
+```
+
+Output:
+
+```text
+Start: 1(a) 2(b) 3(c)
+After extract and before insert: 2(b) 3(c)
+End: 2(b) 3(c) 4(a)
+```
+
+## See also
+
+{/* source:cpp-container-map-extract:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`merge`](/docs/cpp/library/container/map/merge)</DescriptionTerm>
+    <DescriptionBody>splices nodes from another container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/map/insert) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>inserts elements or nodes (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase`](/docs/cpp/library/container/map/erase)</DescriptionTerm>
+    <DescriptionBody>erases elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

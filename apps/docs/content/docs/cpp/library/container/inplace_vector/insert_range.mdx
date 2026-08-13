@@ -1,0 +1,98 @@
+---
+title: "std::inplace_vector<T,N>::insert_range"
+description: "Inserts, in non-reversing order, copies of elements in rg before pos."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/insert_range"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-insert-range:0000 */}
+<DeclarationDoc since="C++26">
+  <Declaration language="cpp" code={`template< container-compatible-range<T> R >
+constexpr iterator insert_range( const_iterator pos, R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-insert-range:0001 */}
+Inserts, in non-reversing order, copies of elements in `rg` before `pos`.
+
+{/* source:cpp-container-inplace-vector-insert-range:0002 */}
+Each iterator in the range `rg` is dereferenced exactly once.
+
+{/* source:cpp-container-inplace-vector-insert-range:0003 */}
+`rg` must not overlap with the container. Otherwise, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-insert-range:0004 */}
+<ParameterList>
+  <Parameter name="pos">iterator before which the content will be inserted (`pos` may be the [`end()`](/docs/cpp/library/container/inplace_vector/end) iterator)</Parameter>
+  <Parameter name="rg">a [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range), that is, an [`input_range`](/docs/cpp/library/ranges/input_range) whose elements are convertible to `T`</Parameter>
+</ParameterList>
+
+Type requirements: `T` must be [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible) into `inplace_vector` from `*ranges::begin(rg)`. Otherwise, the behavior is undefined.
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-insert-range:0005 */}
+An [`iterator`](/docs/cpp/library/container/inplace_vector#Member_types) that points at the copy of the first element inserted into `inplace_vector` or at `pos` if `rg` is empty.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-insert-range:0006 */}
+- [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc), if `ranges::distance(rg) + size() > capacity()`. The elements of `*this` are not modified.
+- Any exception thrown by insertion (i.e. by copy/move constructor, move/copy assignment operator of `T`) or by any [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator) operation. The elements of `*this` in the range [`0`, `pos`) are not modified.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-insert-range:0007 */}
+```cpp
+#include <cassert>
+#include <inplace_vector>
+#include <iterator>
+#include <new>
+#include <print>
+
+int main()
+{
+    auto v = std::inplace_vector<int, 8>{0, 1, 2, 3};
+    auto pos = std::next(v.begin(), 2);
+    assert(*pos == 2);
+    const auto rg = {-1, -2, -3};
+    v.insert_range(pos, rg);
+    std::println("{}", v);
+
+    try
+    {
+        assert(v.size() + rg.size() > v.capacity());
+        v.insert_range(pos, rg); // throws: no space
+    }
+    catch(const std::bad_alloc& ex)
+    {
+        std::println("{}", ex.what());
+    }
+}
+```
+
+Possible output:
+
+```text
+[0, 1, -1, -2, -3, 2, 3]
+std::bad_alloc
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-insert-range:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/inplace_vector/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`append_range`](/docs/cpp/library/container/inplace_vector/append_range)</DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_append_range`](/docs/cpp/library/container/inplace_vector/try_append_range)</DescriptionTerm>
+    <DescriptionBody>tries to add a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

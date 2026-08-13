@@ -1,0 +1,127 @@
+---
+title: "std::inplace_vector<T,N>::emplace_back"
+description: "Appends a new element to the end of the container."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/emplace_back"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-emplace-back:0000 */}
+<DeclarationDoc since="C++26">
+  <Declaration language="cpp" code={`template< class... Args >
+constexpr reference emplace_back( Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-emplace-back:0001 */}
+Appends a new element to the end of the container. Typically, the element is constructed using placement-`new` to construct the element in-place at the location provided by the container. The arguments `args...` are forwarded to the constructor as `std::forward<Args>(args)...`.
+
+{/* source:cpp-container-inplace-vector-emplace-back:0002 */}
+No iterators or references are invalidated, except [`end()`](/docs/cpp/library/container/inplace_vector/end), which is invalidated if the insertion occurs.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-emplace-back:0003 */}
+<ParameterList>
+  <Parameter name="args">arguments to forward to the constructor of the element</Parameter>
+</ParameterList>
+
+Type requirements: `T` must meet the requirements of [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible).
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-emplace-back:0004 */}
+[`back()`](/docs/cpp/library/container/inplace_vector/back), i.e. a reference to the inserted element.
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-emplace-back:0005 */}
+Constant.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-emplace-back:0006 */}
+- [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if `size() == capacity()` before invocation.
+- Any exception thrown by initialization of the inserted element.
+
+{/* source:cpp-container-inplace-vector-emplace-back:0007 */}
+If an exception is thrown for any reason, these functions have no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-container-inplace-vector-emplace-back:0008 */}
+```cpp
+#include <inplace_vector>
+#include <new>
+#include <print>
+#include <string>
+#include <utility>
+
+int main()
+{
+    std::inplace_vector<std::pair<std::string, std::string>, 2> fauna;
+    std::string dog{"\N{DOG}"};
+
+    fauna.emplace_back("\N{CAT}", dog);
+    fauna.emplace_back("\N{CAT}", std::move(dog));
+    std::println("fauna = {}", fauna);
+
+    try
+    {
+        fauna.emplace_back("\N{BUG}", "\N{BUG}"); // throws: there is no space
+    }
+    catch(const std::bad_alloc& ex)
+    {
+        std::println("{}", ex.what());
+    }
+    std::println("fauna = {}", fauna);
+}
+```
+
+Possible output:
+
+```text
+fauna = [("🐈", "🐕"), ("🐈", "🐕")]
+std::bad_alloc
+fauna = [("🐈", "🐕"), ("🐈", "🐕")]
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-emplace-back:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`append_range`](/docs/cpp/library/container/inplace_vector/append_range)</DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/container/inplace_vector/push_back)</DescriptionTerm>
+    <DescriptionBody>adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_push_back`](/docs/cpp/library/container/inplace_vector/try_push_back)</DescriptionTerm>
+    <DescriptionBody>tries to add an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_emplace_back`](/docs/cpp/library/container/inplace_vector/try_emplace_back)</DescriptionTerm>
+    <DescriptionBody>tries to construct an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_append_range`](/docs/cpp/library/container/inplace_vector/try_append_range)</DescriptionTerm>
+    <DescriptionBody>tries to add a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unchecked_push_back`](/docs/cpp/library/container/inplace_vector/unchecked_push_back)</DescriptionTerm>
+    <DescriptionBody>unconditionally adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unchecked_emplace_back`](/docs/cpp/library/container/inplace_vector/unchecked_emplace_back)</DescriptionTerm>
+    <DescriptionBody>unconditionally constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_back`](/docs/cpp/library/container/inplace_vector/pop_back)</DescriptionTerm>
+    <DescriptionBody>removes the last element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back_inserter`](/docs/cpp/library/iterator/back_inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

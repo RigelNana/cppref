@@ -1,0 +1,113 @@
+---
+title: "std::vector<T,Allocator>::push_back"
+description: "Appends the given element value to the end of the container."
+source_url: "https://en.cppreference.com/w/cpp/container/vector/push_back"
+language: "C++"
+---
+
+{/* source:cpp-container-vector-push-back:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`void push_back( const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`void push_back( T&& value );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-container-vector-push-back:0001 */}
+    Appends the given element `value` to the end of the container.
+
+    {/* source:cpp-container-vector-push-back:0002 */}
+    1. <InlineRevision since="C++20" /> The new element is initialized as a copy of `value`.
+
+    {/* source:cpp-container-vector-push-back:0003 */}
+    2. <InlineRevision since="C++20" /> `value` is moved into the new element.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-container-vector-push-back:0004 */}
+If after the operation the new [`size()`](/docs/cpp/library/container/vector/size) is greater than old [`capacity()`](/docs/cpp/library/container/vector/capacity) a reallocation takes place, in which case all iterators (including the [`end()`](/docs/cpp/library/container/vector/end) iterator) and all references to the elements are invalidated. Otherwise only the [`end()`](/docs/cpp/library/container/vector/end) iterator is invalidated.
+
+### Parameters
+
+{/* source:cpp-container-vector-push-back:0005 */}
+<ParameterList>
+  <Parameter name="value">the value of the element to append</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` must meet the requirements of [`CopyInsertable`](/docs/cpp/library/named_req/CopyInsertable) in order to use overload (1).
+- `T` must meet the requirements of [`MoveInsertable`](/docs/cpp/library/named_req/MoveInsertable) in order to use overload (2).
+
+### Return value
+
+{/* source:cpp-container-vector-push-back:0006 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-container-vector-push-back:0007 */}
+Amortized constant.
+
+### Exceptions
+
+{/* source:cpp-container-vector-push-back:0008 */}
+If an exception is thrown (which can be due to `Allocator::allocate()` or element copy/move constructor/assignment), this function has no effect ([strong exception guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+{/* source:cpp-container-vector-push-back:0009 */}
+<Revision since="C++11">
+If the move constructor of `T` is not `noexcept` and `T` is not [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `*this`, `vector` will use the throwing move constructor. If it throws, the guarantee is waived and the effects are unspecified.
+</Revision>
+
+### Notes
+
+{/* source:cpp-container-vector-push-back:0010 */}
+Some implementations throw [`std::length_error`](/docs/cpp/library/error/length_error) when `push_back` causes a reallocation that exceeds [`max_size`](/docs/cpp/library/container/vector/max_size) (due to an implicit call to an equivalent of [`reserve`](/docs/cpp/library/container/vector/reserve)( `size() + 1` )).
+
+### Example
+
+{/* source:cpp-container-vector-push-back:0011 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <vector>
+
+int main()
+{
+    std::vector<std::string> letters;
+
+    letters.push_back("abc");
+    std::string s{"def"};
+    letters.push_back(std::move(s));
+
+    std::cout << "std::vector letters holds: ";
+    for (auto&& e : letters)
+        std::cout << std::quoted(e) << ' ';
+
+    std::cout << "\nMoved-from string s holds: " << std::quoted(s) << '\n';
+}
+```
+
+Possible output:
+
+```text
+std::vector letters holds: "abc" "def"
+Moved-from string s holds: ""
+```
+
+### See also
+
+{/* source:cpp-container-vector-push-back:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/vector/emplace_back) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_back`](/docs/cpp/library/container/vector/pop_back)</DescriptionTerm>
+    <DescriptionBody>removes the last element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back_inserter`](/docs/cpp/library/iterator/back_inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

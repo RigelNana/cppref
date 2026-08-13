@@ -1,0 +1,140 @@
+---
+title: "std::multiset<Key,Compare,Allocator>::extract"
+description: "Unlinks the node that contains the element pointed to by position and returns a node handle that owns it."
+source_url: "https://en.cppreference.com/w/cpp/container/multiset/extract"
+language: "C++"
+---
+
+{/* source:cpp-container-multiset-extract:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`node_type extract( const_iterator position );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`node_type extract( const Key& k );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class K >
+node_type extract( K&& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-multiset-extract:0001 */}
+- 1) Unlinks the node that contains the element pointed to by `position` and returns a [node handle](/docs/cpp/library/container/node_handle) that owns it.
+
+{/* source:cpp-container-multiset-extract:0002 */}
+- 2) If the container has an element with key equivalent to `k`, unlinks the node that contains the first such element from the container and returns a [node handle](/docs/cpp/library/container/node_handle) that owns it. Otherwise, returns an empty node handle.
+
+{/* source:cpp-container-multiset-extract:0003 */}
+- 3) Same as (2). This overload participates in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type, and neither `iterator` nor `const_iterator` is implicitly convertible from `K`. It allows calling this function without constructing an instance of `Key`.
+
+{/* source:cpp-container-multiset-extract:0004 */}
+In either case, no elements are copied or moved, only the internal pointers of the container nodes are repointed (rebalancing may occur, as with [`erase()`](/docs/cpp/library/container/multiset/erase)).
+
+{/* source:cpp-container-multiset-extract:0005 */}
+Extracting a node invalidates only the iterators to the extracted element. Pointers and references to the extracted element remain valid, but cannot be used while element is owned by a node handle: they become usable if the element is inserted into a container.
+
+### Parameters
+
+{/* source:cpp-container-multiset-extract:0006 */}
+<ParameterList>
+  <Parameter name="position">a valid iterator into this container</Parameter>
+  <Parameter name="k">a key to identify the node to be extracted</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key identifying the node to be extracted</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-multiset-extract:0007 */}
+A [node handle](/docs/cpp/library/container/node_handle) that owns the extracted element, or empty node handle in case the element is not found in (2,3).
+
+### Exceptions
+
+{/* source:cpp-container-multiset-extract:0008 */}
+- 1) Throws nothing.
+
+{/* source:cpp-container-multiset-extract:0009 */}
+- 2,3) Any exceptions thrown by the `Compare` object.
+
+### Complexity
+
+{/* source:cpp-container-multiset-extract:0010 */}
+- 1) Amortized constant.
+
+{/* source:cpp-container-multiset-extract:0011 */}
+- 2,3) `log(`[`size()`](/docs/cpp/library/container/multiset/size)`)`
+
+### Notes
+
+{/* source:cpp-container-multiset-extract:0012 */}
+`extract` is the only way to take a move-only object out of a `set`:
+
+{/* source:cpp-container-multiset-extract:0013 */}
+```cpp
+std::set<move_only_type> s;
+s.emplace(...);
+move_only_type mot = std::move(s.extract(s.begin()).value());
+```
+
+{/* source:cpp-container-multiset-extract:0014 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_associative_heterogeneous_erasure`](/docs/cpp/library/feature_test#cpp_lib_associative_heterogeneous_erasure) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_associative_heterogeneous_erasure_202110L) | (C++23) | Heterogeneous erasure in [associative containers](/docs/cpp/library/container#Associative_containers) and [unordered associative containers](/docs/cpp/library/container#Unordered_associative_containers), ([3](/docs/cpp/library/container/multiset/extract#Version_3)) |
+
+### Example
+
+{/* source:cpp-container-multiset-extract:0015 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string_view>
+#include <set>
+ 
+void print(std::string_view comment, const auto& data)
+{
+    std::cout << comment;
+    for (auto datum : data)
+        std::cout << ' ' << datum;
+ 
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::multiset<int> cont{1, 2, 3};
+ 
+    print("Start:", cont);
+ 
+    // Extract node handle and change key
+    auto nh = cont.extract(1);
+    nh.value() = 4;
+ 
+    print("After extract and before insert:", cont);
+ 
+    // Insert node handle back
+    cont.insert(std::move(nh));
+ 
+    print("End:", cont);
+}
+```
+
+Output:
+
+```text
+Start: 1 2 3
+After extract and before insert: 2 3
+End: 2 3 4
+```
+
+### See also
+
+{/* source:cpp-container-multiset-extract:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`merge`](/docs/cpp/library/container/multiset/merge) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>splices nodes from another container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/multiset/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements <InlineRevision since="C++17">or nodes</InlineRevision> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase`](/docs/cpp/library/container/multiset/erase)</DescriptionTerm>
+    <DescriptionBody>erases elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

@@ -1,0 +1,98 @@
+---
+title: "std::inplace_vector<T,N>::append_range"
+description: "Inserts copies of elements from the range rg before end(), in non-reversing order."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/append_range"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-append-range:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++26" code={`template< container-compatible-range<T> R >
+constexpr void append_range( R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-append-range:0001 */}
+Inserts copies of elements from the range `rg` before [`end()`](/docs/cpp/library/container/inplace_vector/end), in non-reversing order.
+
+{/* source:cpp-container-inplace-vector-append-range:0002 */}
+Each iterator in `rg` is dereferenced exactly once.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-append-range:0003 */}
+<ParameterList>
+  <Parameter name="rg">a [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range), that is, an [`input_range`](/docs/cpp/library/ranges/input_range) whose elements are convertible to `T`</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` must be [*EmplaceConstructible*](/docs/cpp/library/named_req/EmplaceConstructible) into `inplace_vector` from `*ranges::begin(rg)`. Otherwise, the behavior is undefined.
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-append-range:0004 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-append-range:0005 */}
+Linear in size of `rg`. The number of calls to the constructor of `T` is exactly equal to the `std::ranges::size(rg))`.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-append-range:0006 */}
+Throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if `std::ranges::size(rg) > N`. If an exception is thrown other than by the copy constructor, move constructor, assignment operator, or move assignment operator of `T` or by any `InputIterator` operation, there are no effects. Otherwise, if an exception is thrown, then `size() >= n` and elements in the range `[0, n)` are not modified, where `n` is the value of [`size()`](/docs/cpp/library/container/inplace_vector/size) before this call.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-append-range:0007 */}
+```cpp
+#include <cassert>
+#include <inplace_vector>
+#include <iostream>
+ 
+int main()
+{
+    using I = std::inplace_vector<int, 8>;
+    auto head = I{1, 2, 3, 4};
+    const auto tail = {-5, -6, -7};
+    head.append_range(tail);
+    assert(head.size() == 7 and (head == I{1, 2, 3, 4, -5, -6, -7}));
+    try
+    {
+        head.append_range(tail); // throws: no space
+    }
+    catch(const std::bad_alloc&)
+    {
+        std::cout << "std::bad_alloc\n";
+    }
+}
+```
+
+Output:
+
+```text
+std::bad_alloc
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-append-range:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_append_range`](/docs/cpp/library/container/inplace_vector/try_append_range)</DescriptionTerm>
+    <DescriptionBody>tries to add a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/container/inplace_vector/insert_range)</DescriptionTerm>
+    <DescriptionBody>inserts a range of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/container/inplace_vector/push_back)</DescriptionTerm>
+    <DescriptionBody>adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/inplace_vector/emplace_back)</DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

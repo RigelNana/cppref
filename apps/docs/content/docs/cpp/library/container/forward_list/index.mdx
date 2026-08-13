@@ -1,0 +1,293 @@
+---
+title: "std::forward_list"
+description: "std::forward_list is a container that supports fast insertion and removal of elements from anywhere in the container."
+source_url: "https://en.cppreference.com/w/cpp/container/forward_list"
+language: "C++"
+---
+
+{/* source:cpp-container-forward-list:0000 */}
+<DeclarationDoc>
+Defined in header [`<forward_list>`](/docs/cpp/library/headers/forward_list)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template<
+    class T,
+    class Allocator = std::allocator<T>
+
+> class forward_list;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`namespace pmr {
+    template< class T >
+    using forward_list = std::forward_list<T, std::pmr::polymorphic_allocator<T>>;
+
+}`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-forward-list:0001 */}
+`std::forward_list` is a container that supports fast insertion and removal of elements from anywhere in the container. Fast random access is not supported. It is implemented as a singly-linked list. Compared to [`std::list`](/docs/cpp/library/container/list) this container provides more space efficient storage when bidirectional iteration is not needed.
+
+{/* source:cpp-container-forward-list:0002 */}
+Adding, removing and moving the elements within the list, or across several lists, does not invalidate the iterators currently referring to other elements in the list. However, an iterator or reference referring to an element is invalidated when the corresponding element is removed (via [`erase_after`](/docs/cpp/library/container/forward_list/erase_after)) from the list.
+
+{/* source:cpp-container-forward-list:0003 */}
+`std::forward_list` meets the requirements of [`Container`](/docs/cpp/library/named_req/Container) (except for the `size` member function and that `operator==`'s complexity is always linear), [`AllocatorAwareContainer`](/docs/cpp/library/named_req/AllocatorAwareContainer) and [`SequenceContainer`](/docs/cpp/library/named_req/SequenceContainer).
+
+### Template parameters
+
+{/* source:cpp-container-forward-list:0004 */}
+<ParameterList>
+  <Parameter name="T">
+    The type of the elements.
+    <Revision until="C++17">
+    The requirements that are imposed on the elements depend on the actual operations performed on the container. Generally, it is required that element type is a complete type and meets the requirements of [`Erasable`](/docs/cpp/library/named_req/Erasable), but many member functions impose stricter requirements.
+    </Revision>
+    <Revision since="C++17">
+    The requirements that are imposed on the elements depend on the actual operations performed on the container. Generally, it is required that element type meets the requirements of [`Erasable`](/docs/cpp/library/named_req/Erasable), but many member functions impose stricter requirements. This container (but not its members) can be instantiated with an incomplete element type if the allocator satisfies the [allocator completeness requirements](/docs/cpp/library/named_req/Allocator#Allocator_completeness_requirements).
+
+    | [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+    | --- | --- | --- | --- |
+    | [`__cpp_lib_incomplete_container_elements`](/docs/cpp/library/feature_test#cpp_lib_incomplete_container_elements) | [`201505L`](/docs/cpp/library/compiler_support/17#cpp_lib_incomplete_container_elements_201505L) | (C++17) | Minimal incomplete type support |
+    </Revision>
+  </Parameter>
+  <Parameter name="Allocator">
+    An allocator that is used to acquire/release memory and to construct/destroy the elements in that memory. The type must meet the requirements of [`Allocator`](/docs/cpp/library/named_req/Allocator). <InlineRevision until="C++20">The behavior is undefined</InlineRevision> <InlineRevision since="C++20">The program is ill-formed</InlineRevision> if `Allocator::value_type` is not the same as `T`.
+  </Parameter>
+</ParameterList>
+
+### Member types
+
+{/* source:cpp-container-forward-list:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`allocator_type`</DescriptionTerm>
+    <DescriptionBody>`Allocator`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`size_type`</DescriptionTerm>
+    <DescriptionBody>Unsigned integer type (usually [`std::size_t`](/docs/cpp/library/utility/types/size_t))</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>Signed integer type (usually [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t))</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reference`</DescriptionTerm>
+    <DescriptionBody>`const value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<Allocator>::pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<Allocator>::const_pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody>[`LegacyForwardIterator`](/docs/cpp/library/named_req/ForwardIterator) to `value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_iterator`</DescriptionTerm>
+    <DescriptionBody>[`LegacyForwardIterator`](/docs/cpp/library/named_req/ForwardIterator) to `const value_type`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-container-forward-list:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/container/forward_list/forward_list)</DescriptionTerm>
+    <DescriptionBody>constructs the `forward_list` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/container/forward_list/~forward_list)</DescriptionTerm>
+    <DescriptionBody>destructs the `forward_list` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/container/forward-list/operator%3D)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/container/forward_list/assign)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign_range`](/docs/cpp/library/container/forward_list/assign_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_allocator`](/docs/cpp/library/container/forward_list/get_allocator)</DescriptionTerm>
+    <DescriptionBody>returns the associated allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Element access
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/container/forward_list/front)</DescriptionTerm>
+    <DescriptionBody>access the first element (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterators
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`before_begin` `cbefore_begin`](/docs/cpp/library/container/forward_list/before_begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the element before beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin` `cbegin`](/docs/cpp/library/container/forward_list/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end` `cend`](/docs/cpp/library/container/forward_list/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Capacity
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/container/forward_list/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/container/forward_list/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum possible number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/container/forward_list/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_after`](/docs/cpp/library/container/forward_list/insert_after)</DescriptionTerm>
+    <DescriptionBody>inserts elements after an element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_after`](/docs/cpp/library/container/forward_list/emplace_after)</DescriptionTerm>
+    <DescriptionBody>constructs elements in-place after an element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range_after`](/docs/cpp/library/container/forward_list/insert_range_after) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>inserts a range of elements after an element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase_after`](/docs/cpp/library/container/forward_list/erase_after)</DescriptionTerm>
+    <DescriptionBody>erases an element after an element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_front`](/docs/cpp/library/container/forward_list/push_front)</DescriptionTerm>
+    <DescriptionBody>inserts an element to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_front`](/docs/cpp/library/container/forward_list/emplace_front)</DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prepend_range`](/docs/cpp/library/container/forward_list/prepend_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_front`](/docs/cpp/library/container/forward_list/pop_front)</DescriptionTerm>
+    <DescriptionBody>removes the first element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`resize`](/docs/cpp/library/container/forward_list/resize)</DescriptionTerm>
+    <DescriptionBody>changes the number of elements stored (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/container/forward_list/swap)</DescriptionTerm>
+    <DescriptionBody>swaps the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Operations
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`merge`](/docs/cpp/library/container/forward_list/merge)</DescriptionTerm>
+    <DescriptionBody>merges two sorted lists (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`splice_after`](/docs/cpp/library/container/forward_list/splice_after)</DescriptionTerm>
+    <DescriptionBody>moves elements from another `forward_list` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove` `remove_if`](/docs/cpp/library/container/forward_list/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reverse`](/docs/cpp/library/container/forward_list/reverse)</DescriptionTerm>
+    <DescriptionBody>reverses the order of the elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/container/forward_list/unique)</DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sort`](/docs/cpp/library/container/forward_list/sort)</DescriptionTerm>
+    <DescriptionBody>sorts the elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-container-forward-list:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`, `operator!=`, `operator<`, `operator<=`, `operator>`, `operator>=`, `operator<=>`](/docs/cpp/library/container/forward_list/operator_cmp) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares the values of two `forward_lists` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::forward_list)`](/docs/cpp/library/container/forward_list/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase(std::forward_list)`, `erase_if(std::forward_list)`](/docs/cpp/library/container/forward_list/erase2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>erases all elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-container-forward-list:0008 */}
+<Revision since="C++17">
+
+### [Deduction guides](/docs/cpp/library/container/forward_list/deduction_guides)
+
+</Revision>
+
+### Notes
+
+{/* source:cpp-container-forward-list:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | Ranges construction and insertion for containers |
+
+### Example
+
+{/* source:cpp-container-forward-list:0010 */}
+This section is incomplete Reason: no example
+
+### See also
+
+{/* source:cpp-container-forward-list:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`list`](/docs/cpp/library/container/list)</DescriptionTerm>
+    <DescriptionBody>doubly-linked list (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

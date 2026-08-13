@@ -1,0 +1,96 @@
+---
+title: "std::vector<T,Allocator>::append_range"
+description: "Inserts copies of elements from the range rg before end(), in non-reversing order."
+source_url: "https://en.cppreference.com/w/cpp/container/vector/append_range"
+language: "C++"
+---
+
+{/* source:cpp-container-vector-append-range:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< container-compatible-range<T> R >
+constexpr void append_range( R&& rg );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-container-vector-append-range:0001 */}
+    1. Inserts copies of elements from the range `rg` before [`end()`](/docs/cpp/library/container/vector/end), in non-reversing order.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-container-vector-append-range:0002 */}
+If after the operation the new [`size()`](/docs/cpp/library/container/vector/size) is greater than old [`capacity()`](/docs/cpp/library/container/vector/capacity) a reallocation takes place, in which case all iterators (including the [`end()`](/docs/cpp/library/container/vector/end) iterator) and all references to the elements are invalidated. Otherwise only the [`end()`](/docs/cpp/library/container/vector/end) iterator is invalidated.
+
+{/* source:cpp-container-vector-append-range:0003 */}
+Each iterator in `rg` is dereferenced exactly once.
+
+### Parameters
+
+{/* source:cpp-container-vector-append-range:0004 */}
+<ParameterList>
+  <Parameter name="rg">a [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range), that is, an [`input_range`](/docs/cpp/library/ranges/input_range) whose elements are convertible to `T`</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` must be [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible) into `vector` from `*ranges::begin(rg)`. Also, `T` must be [`MoveInsertable`](/docs/cpp/library/named_req/MoveInsertable) into `vector`. Otherwise, the behavior is undefined.
+
+### Return value
+
+{/* source:cpp-container-vector-append-range:0005 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-container-vector-append-range:0006 */}
+If reallocation happens, linear in the number of elements of the resulting `vector`; otherwise, linear in the number of elements inserted plus the distance to the [`end()`](/docs/cpp/library/container/vector/end).
+
+### Exceptions
+
+{/* source:cpp-container-vector-append-range:0007 */}
+If an exception is thrown other than by the copy constructor, move constructor, assignment operator, or move assignment operator of `T` or by any `InputIterator` operation there are no effects. If an exception is thrown while inserting a single element at the end and `T` is [`CopyInsertable`](/docs/cpp/library/named_req/CopyInsertable) or [`std::is_nothrow_move_constructible_v`](/docs/cpp/library/meta/is_move_constructible)`<T>` is `true`, there are no effects. Otherwise, if an exception is thrown by the move constructor of a non-CopyInsertable `T`, the effects are unspecified.
+
+### Notes
+
+{/* source:cpp-container-vector-append-range:0008 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [Ranges-aware](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion |
+
+### Example
+
+{/* source:cpp-container-vector-append-range:0009 */}
+```cpp
+#include <cassert>
+#include <vector>
+#include <list>
+
+int main()
+{
+    auto head = std::vector{1, 2, 3, 4};
+    const auto tail = std::list{-5, -6, -7};
+
+#ifdef __cpp_lib_containers_ranges
+    head.append_range(tail);
+#else
+    head.insert(head.end(), tail.cbegin(), tail.cend());
+#endif
+    assert((head == std::vector{1, 2, 3, 4, -5, -6, -7}));
+}
+```
+
+### See also
+
+{/* source:cpp-container-vector-append-range:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/container/vector/insert_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>inserts a range of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/container/vector/push_back)</DescriptionTerm>
+    <DescriptionBody>adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/vector/emplace_back) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

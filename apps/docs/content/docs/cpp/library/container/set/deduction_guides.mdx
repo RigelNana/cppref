@@ -1,0 +1,79 @@
+---
+title: "deduction guides for std::set"
+description: "These deduction guides are provided for set to allow deduction from an iterator range (overloads (1,3)) and std::initializer_list (overloads (2,4))."
+source_url: "https://en.cppreference.com/w/cpp/container/set/deduction_guides"
+language: "C++"
+---
+
+
+{/* source:cpp-container-set-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<set>`](/docs/cpp/library/headers/set)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template<
+    class InputIt,
+    class Comp = std::less<typename std::iterator_traits<InputIt>::value_type>,
+    class Alloc = std::allocator<typename std::iterator_traits<InputIt>::value_type>>
+set( InputIt, InputIt, Comp = Comp(), Alloc = Alloc() )
+
+    -> set<typename std::iterator_traits<InputIt>::value_type, Comp, Alloc>;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template<
+    class Key, class Comp = std::less<Key>,
+    class Alloc = std::allocator<Key> >
+set( std::initializer_list<Key>, Comp = Comp(), Alloc = Alloc() )
+
+    -> set<Key, Comp, Alloc>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class InputIt, class Alloc >
+set( InputIt, InputIt, Alloc )
+    -> set<typename std::iterator_traits<InputIt>::value_type,
+
+           std::less<typename std::iterator_traits<InputIt>::value_type>, Alloc>;`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class Key, class Alloc >
+set( std::initializer_list<Key>, Alloc )
+
+    -> set<Key, std::less<Key>, Alloc>;`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< ranges::input_range R, class Compare = less<ranges::range_value_t<R>>,
+          class Alloc = std::allocator<ranges::range_value_t<R>> >
+set( std::from_range_t, R&&, Compare = Compare(), Alloc = Alloc() )
+
+    -> set<ranges::range_value_t<R>, Compare, Alloc>;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< ranges::input_range R, class Alloc >
+set( std::from_range_t, R&&, Alloc )
+
+    -> set<ranges::range_value_t<R>, std::less<ranges::range_value_t<R>>, Alloc>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-set-deduction-guides:0001 */}
+- 1-4) These [deduction guides](/docs/cpp/language/templates/ctad) are provided for `set` to allow deduction from an iterator range (overloads (1,3)) and [`std::initializer_list`](/docs/cpp/library/utility/initializer_list) (overloads (2,4)).
+
+{/* source:cpp-container-set-deduction-guides:0002 */}
+- 5,6) These deduction guides are provided for `set` to allow deduction from a [`std::from_range_t`](/docs/cpp/library/ranges/from_range) tag and an [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-container-set-deduction-guides:0003 */}
+These overloads participate in overload resolution only if `InputIt` satisfies [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator), `Alloc` satisfies [*Allocator*](/docs/cpp/library/named_req/Allocator), and `Comp` does not satisfy [*Allocator*](/docs/cpp/library/named_req/Allocator).
+
+{/* source:cpp-container-set-deduction-guides:0004 */}
+Note: the extent to which the library determines that a type does not satisfy [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) is unspecified, except that as a minimum integral types do not qualify as input iterators. Likewise, the extent to which it determines that a type does not satisfy [*Allocator*](/docs/cpp/library/named_req/Allocator) is unspecified, except that as a minimum the member type `Alloc::value_type` must exist and the expression `std::declval<Alloc&>().allocate(std::size_t{})` must be well-formed when treated as an unevaluated operand.
+
+### Notes
+
+{/* source:cpp-container-set-deduction-guides:0005 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [Ranges-aware](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion; overload (5,6) |
+
+### Example
+
+{/* source:cpp-container-set-deduction-guides:0006 */}
+```cpp
+#include <set>
+ 
+int main()
+{
+    // guide #2 deduces std::set<int>
+    std::set s = {1, 2, 3, 4};
+ 
+    // guide #1 deduces std::set<int>
+    std::set s2(s.begin(), s.end());
+}
+```

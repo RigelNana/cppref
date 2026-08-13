@@ -1,0 +1,61 @@
+---
+title: "deduction guides for std::forward_list"
+description: "This deduction guide is provided for forward_list to allow deduction from an iterator range."
+source_url: "https://en.cppreference.com/w/cpp/container/forward_list/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-container-forward-list-deduction-guides:0000 */}
+Defined in header [`<forward_list>`](/docs/cpp/library/headers/forward_list)
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class InputIt,
+          class Alloc = std::allocator<
+              typename std::iterator_traits<InputIt>::value_type> >
+forward_list( InputIt, InputIt, Alloc = Alloc() )
+
+    -> forward_list<typename std::iterator_traits<InputIt>::value_type, Alloc>;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< ranges::input_range R,
+          class Alloc = std::allocator<ranges::range_value_t<R>> >
+forward_list( std::from_range_t, R&&, Alloc = Alloc() )
+
+    -> forward_list<ranges::range_value_t<R>, Alloc>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-forward-list-deduction-guides:0001 */}
+1. This [deduction guide](/docs/cpp/language/templates/ctad) is provided for forward_list to allow deduction from an iterator range. This overload participates in overload resolution only if `InputIt` satisfies [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) and `Alloc` satisfies [*Allocator*](/docs/cpp/library/named_req/Allocator).
+
+{/* source:cpp-container-forward-list-deduction-guides:0002 */}
+2. This deduction guide is provided for forward_list to allow deduction from a [`std::from_range_t`](/docs/cpp/library/ranges/from_range) tag and an [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-container-forward-list-deduction-guides:0003 */}
+Note: the extent to which the library determines that a type does not satisfy [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) is unspecified, except that as a minimum integral types do not qualify as input iterators. Likewise, the extent to which it determines that a type does not satisfy [*Allocator*](/docs/cpp/library/named_req/Allocator) is unspecified, except that as a minimum the member type `Alloc::value_type` must exist and the expression `std::declval<Alloc&>().allocate(std::size_t{})` must be well-formed when treated as an unevaluated operand.
+
+### Notes
+
+{/* source:cpp-container-forward-list-deduction-guides:0004 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [`Ranges-aware`](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion; overload (2) |
+
+### Example
+
+{/* source:cpp-container-forward-list-deduction-guides:0005 */}
+```cpp
+#include <forward_list>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v = {1, 2, 3, 4};
+ 
+    // uses explicit deduction guide to deduce std::forward_list<int>
+    std::forward_list x(v.begin(), v.end());
+ 
+    // deduces std::forward_list<std::vector<int>::iterator>
+    // first phase of overload resolution for list-initialization selects the candidate
+    // synthesized from the initializer-list constructor; second phase is not performed
+    // and deduction guide has no effect
+    std::forward_list y{v.begin(), v.end()};
+}
+```

@@ -1,0 +1,210 @@
+---
+title: "std::flat_map<Key,T,Compare,KeyContainer,MappedContainer>::insert"
+description: "Inserts element(s) into the container, if the container does not already contain an element with an equivalent key."
+source_url: "https://en.cppreference.com/w/cpp/container/flat_map/insert"
+language: "C++"
+---
+
+{/* source:cpp-container-flat-map-insert:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`std::pair<iterator, bool> insert( const value_type& value );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`std::pair<iterator, bool> insert( value_type&& value );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`iterator insert( const_iterator pos, const value_type& value );`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`iterator insert( const_iterator pos, value_type&& value );`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class P >
+std::pair<iterator, bool> insert( P&& x );`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< class P >
+iterator insert( const_iterator pos, P&& x );`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< class InputIt >
+void insert( InputIt first, InputIt last );`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class InputIt >
+void insert( std::sorted_unique_t, InputIt first, InputIt last );`} />
+  <Declaration id="9" language="cpp" since="C++23" code={`void insert( std::initializer_list<key_type> ilist );`} />
+  <Declaration id="10" language="cpp" since="C++23" code={`void insert( std::sorted_unique_t s, std::initializer_list<key_type> ilist );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-container-flat-map-insert:0001 */}
+    Inserts element(s) into the container, if the container does not already contain an element with an equivalent key.
+
+    {/* source:cpp-container-flat-map-insert:0002 */}
+    1) Inserts `value`. Equivalent to `return emplace(value);`.
+
+    {/* source:cpp-container-flat-map-insert:0003 */}
+    2) Inserts `value`. Equivalent to `return emplace(std::move(value));`.
+
+    {/* source:cpp-container-flat-map-insert:0004 */}
+    3) Inserts `value` in the position as close as possible to the position just prior to `pos`. Equivalent to `return emplace_hint(pos, value);`.
+
+    {/* source:cpp-container-flat-map-insert:0005 */}
+    4) Inserts `value` in the position as close as possible to the position just prior to `pos`. Equivalent to `return emplace_hint(pos, std::move(value));`.
+
+    {/* source:cpp-container-flat-map-insert:0006 */}
+    5) If `*this` already contains an element which transparently compares equivalent to `x`, does nothing. Otherwise, inserts `x` into `*this` as if by `emplace(std::forward<P>(x));`. This overload participates in overload resolution only if `std::is_constructible_v<pair<key_type, mapped_type>, P>` is `true`.
+
+    {/* source:cpp-container-flat-map-insert:0007 */}
+    6) If `*this` already contains an element which transparently compares equivalent to `x`, does nothing. Otherwise, inserts `x` into `*this` in the position as close as possible to the position just prior to `pos`. Equivalent to `return emplace_hint(position, std::forward<P>(x));`. This overload participates in overload resolution only if `std::is_constructible_v<pair<key_type, mapped_type>, P>` is `true`.
+
+    {/* source:cpp-container-flat-map-insert:0008 */}
+    7) Inserts elements from range [`first`, `last`) as if performing the following operations sequentially: Adds elements to [`c`](/docs/cpp/library/container/flat_map#Member_objects) as if by
+
+    ```cpp
+    for (; first != last; ++first)
+    {
+        value_type value = *first;
+        c.keys.insert(c.keys.end(), std::move(value.first));
+        c.values.insert(c.values.end(), std::move(value.second));
+    }
+    ```
+
+    Sorts the range of newly inserted elements with respect to [`value_comp`](/docs/cpp/library/container/flat_map/value_comp). Merges the resulting sorted range and the sorted range of pre-existing elements into a single sorted range. Erases the duplicate elements as if by:
+
+    ```cpp
+    auto zv = std::views::zip(c.keys, c.values);
+    auto it = ranges::unique(zv, key_equiv(compare)).begin();
+    auto dist = std::distance(zv.begin(), it);
+    c.keys.erase(c.keys.begin() + dist, c.keys.end());
+    c.values.erase(c.values.begin() + dist, c.values.end());
+    ```
+
+    {/* source:cpp-container-flat-map-insert:0009 */}
+    May allocate memory during the in-place merge operation.
+
+    {/* source:cpp-container-flat-map-insert:0010 */}
+    If multiple elements in the range have keys that compare equivalent, it is unspecified which element is inserted (pending [LWG2844](https://cplusplus.github.io/LWG/issue2844)).
+
+    {/* source:cpp-container-flat-map-insert:0011 */}
+    8) Inserts elements from range [`first`, `last`) as if performing the following operations sequentially: Adds elements to [`c`](/docs/cpp/library/container/flat_map#Member_objects) as if by
+
+    ```cpp
+    for (; first != last; ++first)
+    {
+        value_type value = *first;
+        c.keys.insert(c.keys.end(), std::move(value.first));
+        c.values.insert(c.values.end(), std::move(value.second));
+    }
+    ```
+
+    Merges the sorted range of newly added elements and the sorted range of pre-existing elements into a single sorted range. Erases the duplicate elements as if by:
+
+    ```cpp
+    auto zv = std::views::zip(c.keys, c.values);
+    auto it = ranges::unique(zv, key_equiv(compare)).begin();
+    auto dist = std::distance(zv.begin(), it);
+    c.keys.erase(c.keys.begin() + dist, c.keys.end());
+    c.values.erase(c.values.begin() + dist, c.values.end());
+    ```
+
+    {/* source:cpp-container-flat-map-insert:0012 */}
+    May allocate memory during the in-place merge operation.
+
+    {/* source:cpp-container-flat-map-insert:0013 */}
+    If multiple elements in the range have keys that compare equivalent, it is unspecified which element is inserted (pending [LWG2844](https://cplusplus.github.io/LWG/issue2844)).
+
+    {/* source:cpp-container-flat-map-insert:0014 */}
+    9) Inserts elements from initializer list `ilist`. Equivalent to `insert(ilist.begin(), ilist.end());`.
+
+    {/* source:cpp-container-flat-map-insert:0015 */}
+    If multiple elements in the range have keys that compare equivalent, it is unspecified which element is inserted (pending [LWG2844](https://cplusplus.github.io/LWG/issue2844)).
+
+    {/* source:cpp-container-flat-map-insert:0016 */}
+    10) Inserts elements from initializer list `ilist`. Equivalent to `insert(s, ilist.begin(), ilist.end());`.
+
+    {/* source:cpp-container-flat-map-insert:0017 */}
+    If multiple elements in the range have keys that compare equivalent, it is unspecified which element is inserted (pending [LWG2844](https://cplusplus.github.io/LWG/issue2844)).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-container-flat-map-insert:0018 */}
+Information on iterator invalidation is copied from [here](/docs/Template:cpp/container/note-iterator-invalidation)
+
+### Parameters
+
+{/* source:cpp-container-flat-map-insert:0019 */}
+<ParameterList>
+  <Parameter name="pos">an iterator to the position before which the new element will be inserted</Parameter>
+  <Parameter name="value">an element value to insert</Parameter>
+  <Parameter name="first, last">a range of elements to insert</Parameter>
+  <Parameter name="ilist">an initializer list to insert the values from</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key</Parameter>
+  <Parameter name="s">a disambiguation tag indicating that the input sequence is sorted (with respect to [`value_comp()`](/docs/cpp/library/container/flat_map/value_comp)) and contains only unique elements</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `InputIt` must meet the requirements of [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator).
+
+### Return value
+
+{/* source:cpp-container-flat-map-insert:0020 */}
+1,2) A pair consisting of an iterator to the inserted element (or to the element that prevented the insertion) and a `bool` value set to `true` if and only if the insertion took place.
+
+{/* source:cpp-container-flat-map-insert:0021 */}
+3,4) An iterator to the inserted element, or to the element that prevented the insertion.
+
+{/* source:cpp-container-flat-map-insert:0022 */}
+5) A pair consisting of an iterator to the inserted element (or to the element that prevented the insertion) and a `bool` value set to `true` if and only if the insertion took place.
+
+{/* source:cpp-container-flat-map-insert:0023 */}
+6) An iterator to the inserted element, or to the element that prevented the insertion.
+
+{/* source:cpp-container-flat-map-insert:0024 */}
+7-10) (none)
+
+### Exceptions
+
+{/* source:cpp-container-flat-map-insert:0025 */}
+1-6) If an exception is thrown by any operation, the insertion has no effect.
+
+{/* source:cpp-container-flat-map-insert:0026 */}
+This section is incomplete  
+Reason: cases 7-10
+
+### Complexity
+
+{/* source:cpp-container-flat-map-insert:0027 */}
+1-6) Linear in [`size()`](/docs/cpp/library/container/flat_map/size).
+
+{/* source:cpp-container-flat-map-insert:0028 */}
+7) `N + M·log(M)`, where `N` is the [`size()`](/docs/cpp/library/container/flat_map/size) before the operation and `M` is `std::distance(first, last)`.
+
+{/* source:cpp-container-flat-map-insert:0029 */}
+8) Linear in [`size()`](/docs/cpp/library/container/flat_map/size).
+
+{/* source:cpp-container-flat-map-insert:0030 */}
+9) `N + M·log(M)`, where `N` is the [`size()`](/docs/cpp/library/container/flat_map/size) before the operation and `M` is `ilist.size()`.
+
+{/* source:cpp-container-flat-map-insert:0031 */}
+10) Linear in `N`, where `N` is [`size()`](/docs/cpp/library/container/flat_map/size) after the operation.
+
+### Notes
+
+{/* source:cpp-container-flat-map-insert:0032 */}
+The hinted insert (3,4,6) does not return a boolean in order to be signature-compatible with positional insert on sequential containers, such as [`std::vector::insert`](/docs/cpp/library/container/vector/insert). This makes it possible to create generic inserters such as [`std::inserter`](/docs/cpp/library/iterator/inserter). One way to check success of a hinted insert is to compare [`size()`](/docs/cpp/library/container/flat_map/size) before and after.
+
+### Example
+
+{/* source:cpp-container-flat-map-insert:0033 */}
+This section is incomplete  
+Reason: no example
+
+### See also
+
+{/* source:cpp-container-flat-map-insert:0034 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/flat_map/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_hint`](/docs/cpp/library/container/flat_map/emplace_hint)</DescriptionTerm>
+    <DescriptionBody>constructs elements in-place using a hint (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_or_assign`](/docs/cpp/library/container/flat_map/insert_or_assign)</DescriptionTerm>
+    <DescriptionBody>inserts an element or assigns to the current element if the key already exists (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inserter`](/docs/cpp/library/iterator/inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::insert_iterator`](/docs/cpp/library/iterator/insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

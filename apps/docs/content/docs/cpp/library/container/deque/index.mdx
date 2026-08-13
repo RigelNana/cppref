@@ -1,0 +1,372 @@
+---
+title: "std::deque"
+description: "std::deque (double-ended queue) is an indexed sequence container that allows fast insertion and deletion at both its beginning and its end. In addition, insertion and deletion at either end of a deque never invalidates pointers or references to the rest of the elements."
+source_url: "https://en.cppreference.com/w/cpp/container/deque"
+language: "C++"
+---
+
+{/* source:cpp-container-deque:0000 */}
+<DeclarationDoc>
+Defined in header [`<deque>`](/docs/cpp/library/headers/deque)
+
+  <Declaration id="1" language="cpp" code={`template<
+    class T,
+    class Allocator = std::allocator<T>
+
+> class deque;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`namespace pmr {
+    template< class T >
+    using deque = std::deque<T, std::pmr::polymorphic_allocator<T>>;
+
+}`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-deque:0001 */}
+`std::deque` (double-ended queue) is an indexed sequence container that allows fast insertion and deletion at both its beginning and its end. In addition, insertion and deletion at either end of a deque never invalidates pointers or references to the rest of the elements.
+
+{/* source:cpp-container-deque:0002 */}
+As opposed to [`std::vector`](/docs/cpp/library/container/vector), the elements of a deque are not stored contiguously: typical implementations use a sequence of individually allocated fixed-size arrays, with additional bookkeeping, which means indexed access to deque must perform two pointer dereferences, compared to vector's indexed access which performs only one.
+
+{/* source:cpp-container-deque:0003 */}
+The storage of a deque is automatically expanded and contracted as needed. Expansion of a deque is cheaper than the expansion of a [`std::vector`](/docs/cpp/library/container/vector) because it does not involve copying of the existing elements to a new memory location. On the other hand, deques typically have large minimal memory cost; a deque holding just one element has to allocate its full internal array (e.g. 8 times the object size on 64-bit libstdc++; 16 times the object size or 4096 bytes, whichever is larger, on 64-bit libc++).
+
+{/* source:cpp-container-deque:0004 */}
+The complexity (efficiency) of common operations on deques is as follows:
+
+{/* source:cpp-container-deque:0005 */}
+- Random access - constant `O(1)`.
+- Insertion or removal of elements at the end or beginning - constant `O(1)`.
+- Insertion or removal of elements - linear `O(n)`.
+
+{/* source:cpp-container-deque:0006 */}
+`std::deque` meets the requirements of [`Container`](/docs/cpp/library/named_req/Container), [`AllocatorAwareContainer`](/docs/cpp/library/named_req/AllocatorAwareContainer), [`SequenceContainer`](/docs/cpp/library/named_req/SequenceContainer) and [`ReversibleContainer`](/docs/cpp/library/named_req/ReversibleContainer).
+
+### Template parameters
+
+{/* source:cpp-container-deque:0007 */}
+<ParameterList>
+  <Parameter name="T">The type of the elements.<br />
+<Revision until="C++11">`T` must meet the requirements of [`CopyAssignable`](/docs/cpp/library/named_req/CopyAssignable) and [`CopyConstructible`](/docs/cpp/library/named_req/CopyConstructible).</Revision>
+<Revision since="C++11">The requirements that are imposed on the elements depend on the actual operations performed on the container. Generally, it is required that element type is a complete type and meets the requirements of [`Erasable`](/docs/cpp/library/named_req/Erasable), but many member functions impose stricter requirements.</Revision></Parameter>
+  <Parameter name="Allocator">An allocator that is used to acquire/release memory and to construct/destroy the elements in that memory. The type must meet the requirements of [`Allocator`](/docs/cpp/library/named_req/Allocator). <InlineRevision until="C++20">The behavior is undefined</InlineRevision><InlineRevision since="C++20">The program is ill-formed</InlineRevision> if `Allocator::value_type` is not the same as `T`.</Parameter>
+</ParameterList>
+
+### Iterator invalidation
+
+{/* source:cpp-container-deque:0008 */}
+This section is incomplete
+
+Reason: There are still a few inaccuracies in this section, refer to individual member function pages for more detail
+
+{/* source:cpp-container-deque:0009 */}
+| Operations | Invalidated |
+| --- | --- |
+| All read only operations. | Never. |
+| [`swap`](/docs/cpp/library/container/deque/swap), [`std::swap`](/docs/cpp/library/algorithm/swap) | The past-the-end iterator may be invalidated (implementation defined). |
+| [`shrink_to_fit`](/docs/cpp/library/container/deque/shrink_to_fit), [`clear`](/docs/cpp/library/container/deque/clear), [`insert`](/docs/cpp/library/container/deque/insert), [`emplace`](/docs/cpp/library/container/deque/emplace), [`push_front`](/docs/cpp/library/container/deque/push_front), [`push_back`](/docs/cpp/library/container/deque/push_back), [`emplace_front`](/docs/cpp/library/container/deque/emplace_front), [`emplace_back`](/docs/cpp/library/container/deque/emplace_back) | Always. |
+| [`erase`](/docs/cpp/library/container/deque/erase) | If erasing at begin - only erased elements.<br />If erasing at end - only erased elements and the past-the-end iterator.<br />Otherwise - all iterators are invalidated.<br /><br /><InlineRevision until="C++11">It is unspecified when the past-the-end iterator is invalidated.</InlineRevision><br /><br /><InlineRevision since="C++11">The past-the-end iterator is also invalidated unless the erased elements are at the beginning of the container and the last element is not erased.</InlineRevision> |
+| [`resize`](/docs/cpp/library/container/deque/resize) | If the new size is smaller than the old one - only erased elements and the past-the-end iterator.<br />If the new size is bigger than the old one - all iterators are invalidated.<br />Otherwise - none iterators are invalidated. |
+| [`pop_front`](/docs/cpp/library/container/deque/pop_front), [`pop_back`](/docs/cpp/library/container/deque/pop_back) | To the element erased.<br />The past-the-end iterator<br /><InlineRevision until="C++11">may be invalidated (implementation defined)</InlineRevision><br /><InlineRevision since="C++11">is also invalidated.</InlineRevision> |
+
+#### Invalidation notes
+
+{/* source:cpp-container-deque:0010 */}
+- When inserting at either end of the deque, references are not invalidated by [`insert`](/docs/cpp/library/container/deque/insert) and [`emplace`](/docs/cpp/library/container/deque/emplace).
+- [`push_front`](/docs/cpp/library/container/deque/push_front), [`push_back`](/docs/cpp/library/container/deque/push_back), [`emplace_front`](/docs/cpp/library/container/deque/emplace_front) and [`emplace_back`](/docs/cpp/library/container/deque/emplace_back) do not invalidate any references to elements of the deque.
+- When erasing at either end of the deque, references to non-erased elements are not invalidated by [`erase`](/docs/cpp/library/container/deque/erase), [`pop_front`](/docs/cpp/library/container/deque/pop_front) and [`pop_back`](/docs/cpp/library/container/deque/pop_back).
+- A call to [`resize`](/docs/cpp/library/container/deque/resize) with a smaller size does not invalidate any references to non-erased elements.
+- A call to [`resize`](/docs/cpp/library/container/deque/resize) with a bigger size does not invalidate any references to elements of the deque.
+
+### Member types
+
+{/* source:cpp-container-deque:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`allocator_type`</DescriptionTerm>
+    <DescriptionBody>`Allocator`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`size_type`</DescriptionTerm>
+    <DescriptionBody>Unsigned integer type (usually [`std::size_t`](/docs/cpp/library/utility/types/size_t))</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>Signed integer type (usually [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t))</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reference`</DescriptionTerm>
+    <DescriptionBody>`const value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody><Revision until="C++11">`Allocator::pointer`</Revision>
+<Revision since="C++11">`std::allocator_traits<Allocator>::pointer`</Revision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_pointer`</DescriptionTerm>
+    <DescriptionBody><Revision until="C++11">`Allocator::const_pointer`</Revision>
+<Revision since="C++11">`std::allocator_traits<Allocator>::const_pointer`</Revision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody>[`LegacyRandomAccessIterator`](/docs/cpp/library/named_req/RandomAccessIterator) to `value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_iterator`</DescriptionTerm>
+    <DescriptionBody>[`LegacyRandomAccessIterator`](/docs/cpp/library/named_req/RandomAccessIterator) to `const value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reverse_iterator`</DescriptionTerm>
+    <DescriptionBody>`std::reverse_iterator<iterator>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reverse_iterator`</DescriptionTerm>
+    <DescriptionBody>`std::reverse_iterator<const_iterator>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-container-deque:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/container/deque/deque)</DescriptionTerm>
+    <DescriptionBody>constructs the `deque` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/container/deque/~deque)</DescriptionTerm>
+    <DescriptionBody>destructs the `deque` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/container/deque/operator%3D)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/container/deque/assign)</DescriptionTerm>
+    <DescriptionBody>assigns values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign_range`](/docs/cpp/library/container/deque/assign_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of values to the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_allocator`](/docs/cpp/library/container/deque/get_allocator)</DescriptionTerm>
+    <DescriptionBody>returns the associated allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Element access
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/deque/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/deque/operator_at)</DescriptionTerm>
+    <DescriptionBody>access specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/container/deque/front)</DescriptionTerm>
+    <DescriptionBody>access the first element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/container/deque/back)</DescriptionTerm>
+    <DescriptionBody>access the last element (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterators
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`, `cbegin`](/docs/cpp/library/container/deque/begin) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`, `cend`](/docs/cpp/library/container/deque/end) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rbegin`, `crbegin`](/docs/cpp/library/container/deque/rbegin) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rend`, `crend`](/docs/cpp/library/container/deque/rend) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Capacity
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/container/deque/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/deque/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/container/deque/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum possible number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shrink_to_fit`](/docs/cpp/library/container/deque/shrink_to_fit) (DR*)</DescriptionTerm>
+    <DescriptionBody>reduces memory usage by freeing unused memory (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/container/deque/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/deque/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/container/deque/insert_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>inserts a range of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/deque/emplace) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase`](/docs/cpp/library/container/deque/erase)</DescriptionTerm>
+    <DescriptionBody>erases elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/container/deque/push_back)</DescriptionTerm>
+    <DescriptionBody>adds an element to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/deque/emplace_back) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`append_range`](/docs/cpp/library/container/deque/append_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_back`](/docs/cpp/library/container/deque/pop_back)</DescriptionTerm>
+    <DescriptionBody>removes the last element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_front`](/docs/cpp/library/container/deque/push_front)</DescriptionTerm>
+    <DescriptionBody>inserts an element to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_front`](/docs/cpp/library/container/deque/emplace_front) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prepend_range`](/docs/cpp/library/container/deque/prepend_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>adds a range of elements to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_front`](/docs/cpp/library/container/deque/pop_front)</DescriptionTerm>
+    <DescriptionBody>removes the first element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`resize`](/docs/cpp/library/container/deque/resize)</DescriptionTerm>
+    <DescriptionBody>changes the number of elements stored (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/container/deque/swap)</DescriptionTerm>
+    <DescriptionBody>swaps the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-container-deque:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`, `operator!=`, `operator<`, `operator<=`, `operator>`, `operator>=`, `operator<=>`](/docs/cpp/library/container/deque/operator_cmp) <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares the values of two `deques` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::deque)`](/docs/cpp/library/container/deque/swap2)</DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase(std::deque)`, `erase_if(std::deque)`](/docs/cpp/library/container/deque/erase2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>erases all elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-container-deque:0014 */}
+### [Deduction guides](/docs/cpp/library/container/deque/deduction_guides)
+
+<InlineRevision since="C++17" />
+
+### Notes
+
+{/* source:cpp-container-deque:0015 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | C++23 | Ranges construction and insertion for containers |
+
+### Example
+
+{/* source:cpp-container-deque:0016 */}
+```cpp
+#include <deque>
+#include <iostream>
+ 
+int main()
+{
+    // Create a deque containing integers
+    std::deque<int> d = {7, 5, 16, 8};
+ 
+    // Add an integer to the beginning and end of the deque
+    d.push_front(13);
+    d.push_back(25);
+ 
+    // Iterate and print values of deque
+    for (int n : d)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}```
+
+Output:
+
+```text
+13 7 5 16 8 25```
+
+### Defect reports
+
+{/* source:cpp-container-deque:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-deque:0018 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={230} standard="C++98">
+    <PublishedBehavior>`T` was not required to be [`CopyConstructible`](/docs/cpp/library/named_req/CopyConstructible) (an element of type `T` might not be able to be constructed)</PublishedBehavior>
+    <CorrectedBehavior>`T` is also required to be [`CopyConstructible`](/docs/cpp/library/named_req/CopyConstructible)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-container-deque:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`queue`](/docs/cpp/library/container/queue)</DescriptionTerm>
+    <DescriptionBody>adapts a container to provide queue (FIFO data structure) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

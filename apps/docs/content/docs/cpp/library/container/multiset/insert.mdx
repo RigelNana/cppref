@@ -1,0 +1,136 @@
+---
+title: "std::multiset<Key,Compare,Allocator>::insert"
+description: "Inserts element(s) into the container."
+source_url: "https://en.cppreference.com/w/cpp/container/multiset/insert"
+language: "C++"
+---
+
+{/* source:cpp-container-multiset-insert:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`iterator insert( const value_type& value );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`iterator insert( value_type&& value );`} />
+  <Declaration id="3" language="cpp" until="C++11" code={`iterator insert( iterator pos, const value_type& value );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`iterator insert( const_iterator pos, const value_type& value );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`iterator insert( const_iterator pos, value_type&& value );`} />
+  <Declaration id="5" language="cpp" code={`template< class InputIt >
+void insert( InputIt first, InputIt last );`} />
+  <Declaration id="6" language="cpp" since="C++11" code={`void insert( std::initializer_list<value_type> ilist );`} />
+  <Declaration id="7" language="cpp" since="C++17" code={`iterator insert( node_type&& nh );`} />
+  <Declaration id="8" language="cpp" since="C++17" code={`iterator insert( const_iterator pos, node_type&& nh );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-multiset-insert:0001 */}
+Inserts element(s) into the container. The order of the remaining equivalent elements is preserved.
+
+{/* source:cpp-container-multiset-insert:0002 */}
+- 1,2) Inserts `value`. If the container has elements with equivalent key, inserts at the upper bound of that range.
+
+{/* source:cpp-container-multiset-insert:0003 */}
+- 3,4) Inserts `value` in the position as close as possible to the position just prior to `pos`.
+
+{/* source:cpp-container-multiset-insert:0004 */}
+- 5) Inserts elements from range `[first, last)`.
+
+{/* source:cpp-container-multiset-insert:0005 */}
+- 6) Inserts elements from initializer list `ilist`.
+
+{/* source:cpp-container-multiset-insert:0006 */}
+- 7) If `nh` is an empty [node handle](/docs/cpp/library/container/node_handle), does nothing. Otherwise, inserts the element owned by `nh` into the container and returns an iterator pointing at the inserted element. If a range containing elements with keys equivalent to `nh.key()` exists in the container, the element is inserted at the end of that range. The behavior is undefined if `nh` is not empty and `get_allocator() != nh.get_allocator()`.
+
+{/* source:cpp-container-multiset-insert:0007 */}
+- 8) If `nh` is an empty [node handle](/docs/cpp/library/container/node_handle), does nothing and returns the end iterator. Otherwise, inserts the element owned by `nh` into the container, and returns the iterator pointing to the element with key equivalent to `nh.key()`. The element is inserted as close as possible to the position just prior to `pos`. The behavior is undefined if `nh` is not empty and `get_allocator() != nh.get_allocator()`.
+
+{/* source:cpp-container-multiset-insert:0008 */}
+No iterators or references are invalidated. <InlineRevision since="C++17">If the insertion is successful, pointers and references to the element obtained while it is held in the node handle are invalidated, and pointers and references obtained to that element before it was extracted become valid.</InlineRevision>
+
+### Parameters
+
+{/* source:cpp-container-multiset-insert:0009 */}
+<ParameterList>
+  <Parameter name="pos">iterator to the position before which the new element will be inserted</Parameter>
+  <Parameter name="value">element value to insert</Parameter>
+  <Parameter name="first, last">range of elements to insert</Parameter>
+  <Parameter name="ilist">initializer list to insert the values from</Parameter>
+  <Parameter name="nh">a compatible [node handle](/docs/cpp/library/container/node_handle)</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator).
+
+### Return value
+
+{/* source:cpp-container-multiset-insert:0010 */}
+- 1-4) An iterator to the inserted element.
+
+{/* source:cpp-container-multiset-insert:0011 */}
+- 5,6) (none)
+
+{/* source:cpp-container-multiset-insert:0012 */}
+- 7,8) End iterator if `nh` was empty, iterator pointing to the inserted element otherwise.
+
+### Exceptions
+
+{/* source:cpp-container-multiset-insert:0013 */}
+- 1-4,7,8) If an exception is thrown by any operation, the insertion has no effect.
+
+{/* source:cpp-container-multiset-insert:0014 */}
+- 5,6) No exception safety guarantee.
+
+### Complexity
+
+{/* source:cpp-container-multiset-insert:0015 */}
+- 1,2,7) `O(log(size()))`
+
+{/* source:cpp-container-multiset-insert:0016 */}
+- 3,4,8) Amortized constant if the insertion happens in the position just before `pos`, `O(log(size()))` otherwise.
+
+{/* source:cpp-container-multiset-insert:0017 */}
+- 5,6) `O(N·log(size() + N))`, where `N` is the number of elements to insert.
+
+### Example
+
+{/* source:cpp-container-multiset-insert:0018 */}
+This section is incomplete
+
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-container-multiset-insert:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-multiset-insert:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={233} standard="C++98">
+    <PublishedBehavior>`pos` was just a hint, it could be totally ignored</PublishedBehavior>
+    <CorrectedBehavior>the insertion is required to be as close as possible to the position just prior to `pos`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={264} standard="C++98">
+    <PublishedBehavior>the complexity of overload (5) was required to be linear if the range `[first, last)` is sorted according to `Compare`</PublishedBehavior>
+    <CorrectedBehavior>removed the linear requirement in this special case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={371} standard="C++98">
+    <PublishedBehavior>the order of equivalent elements was not guaranteed to be preserved</PublishedBehavior>
+    <CorrectedBehavior>required to be preserved</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-container-multiset-insert:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/multiset/emplace) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_hint`](/docs/cpp/library/container/multiset/emplace_hint) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs elements in-place using a hint (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inserter`](/docs/cpp/library/iterator/inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::insert_iterator`](/docs/cpp/library/iterator/insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

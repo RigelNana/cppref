@@ -1,0 +1,140 @@
+---
+title: "std::map<Key,T,Compare,Allocator>::insert_or_assign"
+description: "If a key equivalent to k already exists in the container, assigns std::forward<M>(obj) to the mapped_type corresponding to the key k."
+source_url: "https://en.cppreference.com/w/cpp/container/map/insert_or_assign"
+language: "C++"
+---
+
+{/* source:cpp-container-map-insert-or-assign:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class M >
+std::pair<iterator, bool> insert_or_assign( const Key& k, M&& obj );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class M >
+std::pair<iterator, bool> insert_or_assign( Key&& k, M&& obj );`} />
+  <Declaration id="3" language="cpp" since="C++26" code={`template< class K, class M >
+std::pair<iterator, bool> insert_or_assign( K&& k, M&& obj );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class M >
+iterator insert_or_assign( const_iterator hint, const Key& k, M&& obj );`} />
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class M >
+iterator insert_or_assign( const_iterator hint, Key&& k, M&& obj );`} />
+  <Declaration id="6" language="cpp" since="C++26" code={`template< class K, class M >
+iterator insert_or_assign( const_iterator hint, K&& k, M&& obj );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-map-insert-or-assign:0001 */}
+- 1,4) If a key equivalent to `k` already exists in the container, assigns `std::forward<M>(obj)` to the [`mapped_type`](/docs/cpp/library/container/map#Member_types) corresponding to the key `k`. If the key does not exist, inserts the new value as if by [`insert`](/docs/cpp/library/container/map/insert), constructing it from `value_type(k, std::forward<M>(obj))`.
+
+{/* source:cpp-container-map-insert-or-assign:0002 */}
+- 2,5) Same as (1,4), except the mapped value is constructed from `value_type(std::move(k), std::forward<M>(obj))`.
+
+{/* source:cpp-container-map-insert-or-assign:0003 */}
+- 3,6) If a key equivalent to `k` already exists in the container, assigns `std::forward<M>(obj)` to the [`mapped_type`](/docs/cpp/library/container/map#Member_types) corresponding to the key `k`. If the key does not exist, constructs an object `u` of `value_type` with `std::forward<K>(k), std::forward<M>(obj))`, then inserts `u` into `*this`. If `equal_range(u.first) == equal_range(k)` is `false`, the behavior is undefined. The `value_type` must be [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible) into map from `std::forward<K>(k), std::forward<M>(obj)`. This overload participates in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type. It allows calling this function without constructing an instance of `Key`.
+
+{/* source:cpp-container-map-insert-or-assign:0004 */}
+<InlineRevision until="C++20">The behavior is undefined</InlineRevision> <InlineRevision since="C++20">The program is ill-formed</InlineRevision> if `std::is_assignable_v<mapped_type&, M&&>` is `false`.
+
+{/* source:cpp-container-map-insert-or-assign:0005 */}
+No iterators or references are invalidated.
+
+## Parameters
+
+{/* source:cpp-container-map-insert-or-assign:0006 */}
+<ParameterList>
+  <Parameter name="k">the key used both to look up and to insert if not found</Parameter>
+  <Parameter name="hint">iterator to the position before which the new element will be inserted</Parameter>
+  <Parameter name="obj">the value to insert or assign</Parameter>
+</ParameterList>
+
+## Return value
+
+{/* source:cpp-container-map-insert-or-assign:0007 */}
+- 1-3) The `bool` component is `true` if the insertion took place and `false` if the assignment took place. The iterator component is pointing at the element that was inserted or updated.
+
+{/* source:cpp-container-map-insert-or-assign:0008 */}
+- 4-6) Iterator pointing at the element that was inserted or updated.
+
+## Complexity
+
+{/* source:cpp-container-map-insert-or-assign:0009 */}
+- 1-3) Same as for [`emplace`](/docs/cpp/library/container/map/emplace).
+
+{/* source:cpp-container-map-insert-or-assign:0010 */}
+- 4-6) Same as for [`emplace_hint`](/docs/cpp/library/container/map/emplace_hint).
+
+## Notes
+
+{/* source:cpp-container-map-insert-or-assign:0011 */}
+[`insert_or_assign`](/docs/cpp/library/container/map/operator_at) returns more information than `operator[]` and does not require default-constructibility of the mapped type.
+
+{/* source:cpp-container-map-insert-or-assign:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_map_try_emplace`](/docs/cpp/library/feature_test#cpp_lib_map_try_emplace) | [`201411L`](/docs/cpp/library/compiler_support/17#cpp_lib_map_try_emplace_201411L) | (C++17) | [`std::map::try_emplace`](/docs/cpp/library/container/map/try_emplace), `std::map::insert_or_assign` |
+| [`__cpp_lib_associative_heterogeneous_insertion`](/docs/cpp/library/feature_test#cpp_lib_associative_heterogeneous_insertion) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_associative_heterogeneous_insertion_202311L) | (C++26) | Heterogeneous overloads for the remaining member functions in [ordered](/docs/cpp/library/container#Associative_containers) and [unordered](/docs/cpp/library/container#Unordered_associative_containers) associative [containers](/docs/cpp/library/container). Overloads ([3](/docs/cpp/library/container/map/insert_or_assign#Version_3)) and ([6](/docs/cpp/library/container/map/insert_or_assign#Version_6)). |
+
+## Example
+
+{/* source:cpp-container-map-insert-or-assign:0013 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <map>
+
+void print_node(const auto& node)
+{
+    std::cout << '[' << node.first << "] = " << node.second << '\n';
+}
+
+void print_result(auto const& pair)
+{
+    std::cout << (pair.second ? "inserted: " : "assigned: ");
+    print_node(*pair.first);
+}
+
+int main()
+{
+    std::map<std::string, std::string> myMap;
+
+    print_result(myMap.insert_or_assign("a", "apple"));
+    print_result(myMap.insert_or_assign("b", "banana"));
+    print_result(myMap.insert_or_assign("c", "cherry"));
+    print_result(myMap.insert_or_assign("c", "clementine"));
+
+    for (const auto& node : myMap)
+        print_node(node);
+}
+```
+
+Output:
+
+```text
+inserted: [a] = apple
+inserted: [b] = banana
+inserted: [c] = cherry
+assigned: [c] = clementine
+[a] = apple
+[b] = banana
+[c] = clementine
+```
+
+## See also
+
+{/* source:cpp-container-map-insert-or-assign:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/map/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/map/insert) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>inserts elements or nodes (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/map/emplace) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

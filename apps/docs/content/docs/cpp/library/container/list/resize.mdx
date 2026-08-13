@@ -1,0 +1,128 @@
+---
+title: "std::list<T,Allocator>::resize"
+description: "Resizes the container to contain count elements, does nothing if count == size()."
+source_url: "https://en.cppreference.com/w/cpp/container/list/resize"
+language: "C++"
+---
+
+{/* source:cpp-container-list-resize:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`void resize( size_type count );`} />
+  <Declaration id="2" language="cpp" code={`void resize( size_type count, const value_type& value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-list-resize:0001 */}
+Resizes the container to contain `count` elements, does nothing if `count == size()`.
+
+{/* source:cpp-container-list-resize:0002 */}
+If the current size is greater than `count`, the container is reduced to its first `count` elements.
+
+{/* source:cpp-container-list-resize:0003 */}
+If the current size is less than `count`, then:
+
+{/* source:cpp-container-list-resize:0004 */}
+1. Additional [default-inserted](/docs/cpp/library/named_req/DefaultInsertable) elements are appended.
+
+{/* source:cpp-container-list-resize:0005 */}
+2. Additional copies of `value` are appended.
+
+## Parameters
+
+{/* source:cpp-container-list-resize:0006 */}
+<ParameterList>
+  <Parameter name="count">new size of the container</Parameter>
+  <Parameter name="value">the value to initialize the new elements with</Parameter>
+</ParameterList>
+
+Type requirements:
+
+- `T` must meet the requirements of [`DefaultInsertable`](/docs/cpp/library/named_req/DefaultInsertable) in order to use overload (1).
+- `T` must meet the requirements of [`CopyInsertable`](/docs/cpp/library/named_req/CopyInsertable) in order to use overload (2).
+
+## Complexity
+
+{/* source:cpp-container-list-resize:0007 */}
+Linear in the difference between the current size and `count`.
+
+## Notes
+
+{/* source:cpp-container-list-resize:0008 */}
+If value-initialization in overload [`1`](/docs/cpp/library/container/list/resize#Version_1) is undesirable, for example, if the elements are of non-class type and zeroing out is not needed, it can be avoided by providing a [custom `Allocator::construct`](https://stackoverflow.com/a/21028912/273767).
+
+## Example
+
+{/* source:cpp-container-list-resize:0009 */}
+```cpp
+#include <list>
+#include <iostream>
+
+void print(auto rem, const std::list<int>& c)
+{
+    for (std::cout << rem; const int el : c)
+        std::cout << el << ' ';
+    std::cout << '\n';
+}
+
+int main()
+{
+    std::list<int> c = {1, 2, 3};
+    print("The list holds: ", c);
+
+    c.resize(5);
+    print("After resize up to 5: ", c);
+
+    c.resize(2);
+    print("After resize down to 2: ", c);
+
+    c.resize(6, 4);
+    print("After resize up to 6 (initializer = 4): ", c);
+}
+```
+
+Output:
+
+```text
+The list holds: 1 2 3
+After resize up to 5: 1 2 3 0 0
+After resize down to 2: 1 2
+After resize up to 6 (initializer = 4): 1 2 4 4 4 4
+```
+
+## Defect reports
+
+{/* source:cpp-container-list-resize:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-list-resize:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={132} standard="C++98">
+    <PublishedBehavior>random-access iterators were used to determine the erase range</PublishedBehavior>
+    <CorrectedBehavior>use bidirectional iterators</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={679} standard="C++98">
+    <PublishedBehavior>`resize()` passed `value` by value</PublishedBehavior>
+    <CorrectedBehavior>passes by const reference</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1420} standard="C++98">
+    <PublishedBehavior>the behavior of `resize(size())` was not specified</PublishedBehavior>
+    <CorrectedBehavior>specified</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-container-list-resize:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/container/list/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum possible number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/list/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/container/list/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

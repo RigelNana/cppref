@@ -1,0 +1,129 @@
+---
+title: "std::erase, std::erase_if(std::list)"
+description: "Erases all elements that compare equal to value from the container."
+source_url: "https://en.cppreference.com/w/cpp/container/list/erase2"
+language: "C++"
+---
+
+{/* source:cpp-container-list-erase2:0000 */}
+<DeclarationDoc>
+Defined in header [`<list>`](/docs/cpp/library/headers/list)
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< class T, class Alloc, class U >
+std::list<T, Alloc>::size_type
+
+    erase( std::list<T, Alloc>& c, const U& value );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class T, class Alloc, class U = T >
+std::list<T, Alloc>::size_type
+
+    erase( std::list<T, Alloc>& c, const U& value );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T, class Alloc, class Pred >
+std::list<T, Alloc>::size_type
+
+    erase_if( std::list<T, Alloc>& c, Pred pred );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-list-erase2:0001 */}
+1) Erases all elements that compare equal to `value` from the container. Equivalent to `return c.remove_if([&](const auto& elem) -> bool { return elem == value; });`
+
+{/* source:cpp-container-list-erase2:0002 */}
+2) Erases all elements that satisfy the predicate `pred` from the container. Equivalent to `return c.remove_if(pred);`
+
+### Parameters
+
+{/* source:cpp-container-list-erase2:0003 */}
+<ParameterList>
+  <Parameter name="c">container from which to erase</Parameter>
+  <Parameter name="value">value to be removed</Parameter>
+  <Parameter name="pred">unary predicate which returns `true` if the element should be erased. The expression `pred(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `T`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `T&` is not allowed<InlineRevision since="C++11">, nor is `T` unless for `T` a move is equivalent to a copy</InlineRevision>.</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-list-erase2:0004 */}
+The number of erased elements.
+
+### Complexity
+
+{/* source:cpp-container-list-erase2:0005 */}
+Linear.
+
+### Notes
+
+{/* source:cpp-container-list-erase2:0006 */}
+Unlike [`std::list::remove`](/docs/cpp/library/container/list/remove), `erase` accepts heterogeneous types and does not force a conversion to the container's value type before invoking the `==` operator.
+
+{/* source:cpp-container-list-erase2:0007 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | C++26 | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithm ([1](/docs/cpp/library/container/list/erase2#Version_1)) |
+
+### Example
+
+{/* source:cpp-container-list-erase2:0008 */}
+```cpp
+#include <complex>
+#include <iostream>
+#include <numeric>
+#include <string_view>
+#include <list>
+
+void println(std::string_view comment, const auto& c)
+{
+    std::cout << comment << '[';
+    bool first{true};
+    for (const auto& x : c)
+        std::cout << (first ? first = false, "" : ", ") << x;
+    std::cout << "]\n";
+}
+
+int main()
+{
+    std::list<char> cnt(10);
+    std::iota(cnt.begin(), cnt.end(), '0');
+    println("Initially, cnt = ", cnt);
+
+    std::erase(cnt, '3');
+    println("After erase '3', cnt = ", cnt);
+
+    auto erased = std::erase_if(cnt, [](char x) { return (x - '0') % 2 == 0; });
+    println("After erase all even numbers, cnt = ", cnt);
+    std::cout << "Erased even numbers: " << erased << '\n';
+
+    std::list<std::complex<double>> nums{{2, 2}, {4, 2}, {4, 8}, {4, 2}};
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::erase(nums, {4, 2});
+    #else
+        std::erase(nums, std::complex<double>{4, 2});
+    #endif
+    println("After erase {4, 2}, nums = ", nums);
+}
+```
+
+Output:
+
+```text
+Initially, cnt = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+After erase '3', cnt = [0, 1, 2, 4, 5, 6, 7, 8, 9]
+After erase all even numbers, cnt = [1, 5, 7, 9]
+Erased even numbers: 5
+After erase {4, 2}, nums = [(2,2), (4,8)]
+```
+
+### See also
+
+{/* source:cpp-container-list-erase2:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove`, `remove_if`](/docs/cpp/library/algorithm/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::remove`, `ranges::remove_if`](/docs/cpp/library/algorithm/ranges/remove) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove`, `remove_if`](/docs/cpp/library/container/list/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

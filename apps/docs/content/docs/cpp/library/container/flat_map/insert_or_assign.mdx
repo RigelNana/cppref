@@ -1,0 +1,146 @@
+---
+title: "std::flat_map<Key,T,Compare,KeyContainer,MappedContainer>::insert_or_assign"
+description: "If a key equivalent to k already exists in the container, assigns std::forward<M>(obj) to the mapped_type corresponding to the key k."
+source_url: "https://en.cppreference.com/w/cpp/container/flat_map/insert_or_assign"
+language: "C++"
+---
+
+{/* source:cpp-container-flat-map-insert-or-assign:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class M >
+std::pair<iterator, bool> insert_or_assign( const key_type& k, M&& obj );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class M >
+std::pair<iterator, bool> insert_or_assign( key_type&& k, M&& obj );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class K, class M >
+std::pair<iterator, bool> insert_or_assign( K&& k, M&& obj );`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class M >
+iterator insert_or_assign( const_iterator hint, const key_type& k, M&& obj );`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class M >
+iterator insert_or_assign( const_iterator hint, key_type&& k, M&& obj );`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< class K, class M >
+iterator insert_or_assign( const_iterator hint, K&& k, M&& obj );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-flat-map-insert-or-assign:0001 */}
+- 1,2) If a key equivalent to `k` already exists in the container, assigns `std::forward<M>(obj)` to the [`mapped_type`](/docs/cpp/library/container/flat_map#Member_types) corresponding to the key `k`. If the key does not exist, inserts the new value as if by `(1,2)` `try_emplace(std::forward<decltype(k)>(k), std::forward<M>(obj))`, `(4,5)` `try_emplace(hint, std::forward<decltype(k)>(k), std::forward<M>(obj))`.
+
+{/* source:cpp-container-flat-map-insert-or-assign:0002 */}
+The program is ill-formed if either `std::is_assignable_v<mapped_type&, M>` or `std::is_constructible_v<mapped_type, M>` is `false`.
+
+{/* source:cpp-container-flat-map-insert-or-assign:0003 */}
+- 3,6) If a key equivalent to `k` already exists in the container, assigns `std::forward<M>(obj)` to the [`mapped_type`](/docs/cpp/library/container/flat_map#Member_types) corresponding to the key `k`. Otherwise, equivalent to `(3)` `try_emplace(std::forward<K>(k), std::forward<M>(obj))`, `(6)` `try_emplace(hint, std::forward<K>(k), std::forward<M>(obj))`.
+
+{/* source:cpp-container-flat-map-insert-or-assign:0004 */}
+The conversion from `k` into `key_type` must construct an object `u`, for which `find(k) == find(u)` is `true`. Otherwise, the behavior is undefined.
+
+{/* source:cpp-container-flat-map-insert-or-assign:0005 */}
+These overloads participate in overload resolution only if:
+
+- The qualified-id `Compare::is_transparent` is valid and denotes a type.
+- `std::is_constructible_v<key_type, K>` is `true`.
+- `std::is_assignable_v<mapped_type&, M>` is `true`.
+- `std::is_constructible_v<mapped_type, M>` is `true`.
+
+{/* source:cpp-container-flat-map-insert-or-assign:0006 */}
+Information on iterator invalidation is copied from [here](/docs/Template:cpp/container/note-iterator-invalidation)
+
+### Parameters
+
+{/* source:cpp-container-flat-map-insert-or-assign:0007 */}
+<ParameterList>
+  <Parameter name="k">the key used both to look up and to insert if not found</Parameter>
+  <Parameter name="hint">iterator to the position before which the new element will be inserted</Parameter>
+  <Parameter name="obj">the value to insert or assign</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-flat-map-insert-or-assign:0008 */}
+- 1-3) The `bool` component is `true` if the insertion took place and `false` if the assignment took place. The iterator component is pointing at the element that was inserted or updated.
+
+{/* source:cpp-container-flat-map-insert-or-assign:0009 */}
+- 4-6) Iterator pointing at the element that was inserted or updated.
+
+### Complexity
+
+{/* source:cpp-container-flat-map-insert-or-assign:0010 */}
+- 1-3) Same as for [`emplace`](/docs/cpp/library/container/flat_map/emplace).
+
+{/* source:cpp-container-flat-map-insert-or-assign:0011 */}
+- 4-6) Same as for [`emplace_hint`](/docs/cpp/library/container/flat_map/emplace_hint).
+
+### Notes
+
+{/* source:cpp-container-flat-map-insert-or-assign:0012 */}
+`insert_or_assign` returns more information than [`operator`](/docs/cpp/library/container/flat_map/operator_at)`[]` and does not require default-constructibility of the mapped type.
+
+### Example
+
+{/* source:cpp-container-flat-map-insert-or-assign:0013 */}
+```cpp
+#include <flat_map>
+#include <iostream>
+#include <string>
+ 
+void print_node(const auto& node)
+{
+    std::cout << '[' << node.first << "] = " << node.second << '\n';
+}
+ 
+void print_result(auto const& pair)
+{
+    std::cout << (pair.second ? "inserted: " : "assigned: ");
+    print_node(*pair.first);
+}
+ 
+int main()
+{
+    std::flat_map<std::string, std::string> map;
+ 
+    print_result(map.insert_or_assign("a", "apple"));
+    print_result(map.insert_or_assign("b", "banana"));
+    print_result(map.insert_or_assign("c", "cherry"));
+    print_result(map.insert_or_assign("c", "clementine"));
+ 
+    for (const auto& node : map)
+        print_node(node);
+}
+```
+
+Output:
+
+```text
+inserted: [a] = apple
+inserted: [b] = banana
+inserted: [c] = cherry
+assigned: [c] = clementine
+[a] = apple
+[b] = banana
+[c] = clementine
+```
+
+### See also
+
+{/* source:cpp-container-flat-map-insert-or-assign:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/flat_map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/flat_map/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/flat_map/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/flat_map/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_emplace`](/docs/cpp/library/container/flat_map/try_emplace)</DescriptionTerm>
+    <DescriptionBody>inserts in-place if the key does not exist, does nothing if the key exists (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

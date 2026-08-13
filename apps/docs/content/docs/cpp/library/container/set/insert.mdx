@@ -1,0 +1,205 @@
+---
+title: "std::set<Key,Compare,Allocator>::insert"
+description: "Inserts element(s) into the container, if the container doesn't already contain an element with an equivalent key."
+source_url: "https://en.cppreference.com/w/cpp/container/set/insert"
+language: "C++"
+---
+
+{/* source:cpp-container-set-insert:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`std::pair<iterator, bool> insert( const value_type& value );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`std::pair<iterator, bool> insert( value_type&& value );`} />
+  <Declaration id="3" language="cpp" until="C++11" code={`iterator insert( iterator pos, const value_type& value );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`iterator insert( const_iterator pos, const value_type& value );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`iterator insert( const_iterator pos, value_type&& value );`} />
+  <Declaration id="5" language="cpp" code={`template< class InputIt >
+void insert( InputIt first, InputIt last );`} />
+  <Declaration id="6" language="cpp" since="C++11" code={`void insert( std::initializer_list<value_type> ilist );`} />
+  <Declaration id="7" language="cpp" since="C++17" code={`insert_return_type insert( node_type&& nh );`} />
+  <Declaration id="8" language="cpp" since="C++17" code={`iterator insert( const_iterator pos, node_type&& nh );`} />
+  <Declaration id="9" language="cpp" since="C++23" code={`template< class K >
+std::pair<iterator, bool> insert( K&& x );`} />
+  <Declaration id="10" language="cpp" since="C++23" code={`template< class K >
+iterator insert( const_iterator pos, K&& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-set-insert:0001 */}
+Inserts element(s) into the container, if the container doesn't already contain an element with an equivalent key.
+
+{/* source:cpp-container-set-insert:0002 */}
+1,2. Inserts `value`.
+
+{/* source:cpp-container-set-insert:0003 */}
+3,4. Inserts `value` in the position as close as possible to the position just prior to `pos`.
+
+{/* source:cpp-container-set-insert:0004 */}
+5. Inserts elements from range `[first, last)`. If multiple elements in the range have keys that compare equivalent, it is unspecified which element is inserted (pending [LWG2844](https://cplusplus.github.io/LWG/issue2844)).
+
+{/* source:cpp-container-set-insert:0005 */}
+6. Inserts elements from initializer list `ilist`. If multiple elements in the range have keys that compare equivalent, it is unspecified which element is inserted (pending [LWG2844](https://cplusplus.github.io/LWG/issue2844)).
+
+{/* source:cpp-container-set-insert:0006 */}
+7. If `nh` is an empty [`node handle`](/docs/cpp/library/container/node_handle), does nothing. Otherwise, inserts the element owned by `nh` into the container, if the container doesn't already contain an element with a key equivalent to `nh.key()`. The behavior is undefined if `nh` is not empty and `get_allocator() != nh.get_allocator()`.
+
+{/* source:cpp-container-set-insert:0007 */}
+8. If `nh` is an empty [`node handle`](/docs/cpp/library/container/node_handle), does nothing and returns the end iterator. Otherwise, inserts the element owned by `nh` into the container, if the container doesn't already contain an element with a key equivalent to `nh.key()`, and returns the iterator pointing to the element with key equivalent to `nh.key()`(regardless of whether the insert succeeded or failed). If the insertion succeeds, `nh` is moved from, otherwise it retains ownership of the element. The element is inserted as close as possible to the position just prior to `pos`. The behavior is undefined if `nh` is not empty and `get_allocator() != nh.get_allocator()`.
+
+{/* source:cpp-container-set-insert:0008 */}
+9. If `*this` already contains an element which transparently compares *equivalent* to `x`, does nothing. Otherwise, constructs an object `u` of the [`value_type`](/docs/cpp/library/container/set#Member_types) with `std::forward<K>(x)` and then inserts `u` into `*this`. If `equal_range(u) == equal_range(x)` is false, the behavior is undefined. The `value_type` must be [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible) into `set` from `std::forward<K>(x)`. This overload participates in overload resolution only if the qualified-id `Compare::is_transparent` is valid and denotes a type. It allows calling this function without constructing an instance of `Key`.
+
+{/* source:cpp-container-set-insert:0009 */}
+10. If `*this` already contains an element which transparently compares *equivalent* to `x`, does nothing. Otherwise, constructs an object `u` of the [`value_type`](/docs/cpp/library/container/set#Member_types) with `std::forward<K>(x)` and then inserts `u` into `*this` in the position as close as possible to the position just prior to `pos`. If `equal_range(u) == equal_range(x)` is false, the behavior is undefined. The `value_type` must be [`EmplaceConstructible`](/docs/cpp/library/named_req/EmplaceConstructible) into `set` from `std::forward<K>(x)`. This overload participates in overload resolution only if: `std::is_convertible_v<K&&, const_iterator>` and `std::is_convertible_v<K&&, iterator>` are both false, and the qualified-id `Compare::is_transparent` is valid and denotes a type, which together allows calling this function without constructing an instance of `Key`.
+
+{/* source:cpp-container-set-insert:0010 */}
+No iterators or references are invalidated. <InlineRevision since="C++17">If the insertion is successful, pointers and references to the element obtained while it is held in the node handle are invalidated, and pointers and references obtained to that element before it was extracted become valid.</InlineRevision>
+
+## Parameters
+
+{/* source:cpp-container-set-insert:0011 */}
+<ParameterList>
+  <Parameter name="pos">iterator to the position before which the new element will be inserted</Parameter>
+  <Parameter name="value">element value to insert</Parameter>
+  <Parameter name="first, last">range of elements to insert</Parameter>
+  <Parameter name="ilist">initializer list to insert the values from</Parameter>
+  <Parameter name="nh">a compatible [`node handle`](/docs/cpp/library/container/node_handle)</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key</Parameter>
+</ParameterList>
+
+#### Type requirements
+
+- `InputIt` must meet the requirements of [`LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator).
+
+## Return value
+
+{/* source:cpp-container-set-insert:0012 */}
+1,2. A pair consisting of an iterator to the inserted element (or to the element that prevented the insertion) and a `bool` value set to `true` if and only if the insertion took place.
+
+{/* source:cpp-container-set-insert:0013 */}
+3,4. An iterator to the inserted element, or to the element that prevented the insertion.
+
+{/* source:cpp-container-set-insert:0014 */}
+5,6. (none)
+
+{/* source:cpp-container-set-insert:0015 */}
+7. An object of [`insert_return_type`](/docs/cpp/library/container/set#Member_types) with the members initialized as follows:
+- If `nh` is empty, `inserted` is `false`, `position` is `end()`, and `node` is empty.
+- Otherwise if the insertion took place, `inserted` is `true`, `position` points to the inserted element, and `node` is empty.
+- If the insertion failed, `inserted` is `false`, `node` has the previous value of `nh`, and `position` points to an element with a key equivalent to `nh.key()`.
+
+{/* source:cpp-container-set-insert:0016 */}
+8. End iterator if `nh` was empty, iterator pointing to the inserted element if insertion took place, and iterator pointing to an element with a key equivalent to `nh.key()` if it failed.
+
+{/* source:cpp-container-set-insert:0017 */}
+9. A pair consisting of an iterator to the inserted element (or to the element that prevented the insertion) and a `bool` value set to `true` if and only if the insertion took place.
+
+{/* source:cpp-container-set-insert:0018 */}
+10. An iterator to the inserted element, or to the element that prevented the insertion.
+
+## Exceptions
+
+{/* source:cpp-container-set-insert:0019 */}
+1-4. If an exception is thrown by any operation, the insertion has no effect.
+
+{/* source:cpp-container-set-insert:0020 */}
+This section is incomplete
+
+Reason: cases 5-8, 9, 10
+
+## Complexity
+
+{/* source:cpp-container-set-insert:0021 */}
+1,2. Logarithmic in the size of the container, O(log(size())).
+
+{/* source:cpp-container-set-insert:0022 */}
+3,4. Amortized constant if the insertion happens in the position just <InlineRevision until="C++11">*after*</InlineRevision> <InlineRevision since="C++11">*before*</InlineRevision> `pos`, logarithmic in the size of the container otherwise.
+
+{/* source:cpp-container-set-insert:0023 */}
+5,6. O(N·log(size() + N)), where `N` is the number of elements to insert.
+
+{/* source:cpp-container-set-insert:0024 */}
+7. Logarithmic in the size of the container, O(log(size())).
+
+{/* source:cpp-container-set-insert:0025 */}
+8. Amortized constant if the insertion happens in the position just before `pos`, logarithmic in the size of the container otherwise.
+
+{/* source:cpp-container-set-insert:0026 */}
+9. Logarithmic in the size of the container, O(log(size())).
+
+{/* source:cpp-container-set-insert:0027 */}
+10. Amortized constant if the insertion happens in the position just before `pos`, logarithmic in the size of the container otherwise.
+
+## Notes
+
+{/* source:cpp-container-set-insert:0028 */}
+The hinted insert (3,4) does not return a boolean in order to be signature-compatible with positional insert on sequential containers, such as [`std::vector::insert`](/docs/cpp/library/container/vector/insert). This makes it possible to create generic inserters such as [`std::inserter`](/docs/cpp/library/iterator/inserter). One way to check success of a hinted insert is to compare [`size()`](/docs/cpp/library/container/set/size) before and after.
+
+{/* source:cpp-container-set-insert:0029 */}
+The overloads ([5,6](/docs/cpp/library/container/set/insert#Version_5)) are often implemented as a loop that calls the overload ([3](/docs/cpp/library/container/set/insert#Version_3)) with [`end()`](/docs/cpp/library/container/set/end) as the hint; they are optimized for appending a sorted sequence (such as another [`std::set`](/docs/cpp/library/container/set)) whose smallest element is greater than the last element in `*this`.
+
+{/* source:cpp-container-set-insert:0030 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_associative_heterogeneous_insertion`](/docs/cpp/library/feature_test#cpp_lib_associative_heterogeneous_insertion) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_associative_heterogeneous_insertion_202311L) | (C++26) | Heterogeneous overloads for the remaining member functions in [`ordered`](/docs/cpp/library/container#Associative_containers) and [`unordered`](/docs/cpp/library/container#Unordered_associative_containers) associative containers. ([9,10](/docs/cpp/library/container/set/insert#Version_9)) |
+
+## Example
+
+{/* source:cpp-container-set-insert:0031 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <set>
+
+int main()
+{
+    std::set<int> set;
+
+    auto result_1 = set.insert(3);
+    assert(result_1.first != set.end()); // it is a valid iterator
+    assert(*result_1.first == 3);
+    if (result_1.second)
+        std::cout << "insert done\n";
+
+    auto result_2 = set.insert(3);
+    assert(result_2.first == result_1.first); // same iterator
+    assert(*result_2.first == 3);
+    if (!result_2.second)
+        std::cout << "no insertion\n";
+}
+```
+
+Output:
+
+```text
+insert done
+no insertion
+```
+
+## Defect reports
+
+{/* source:cpp-container-set-insert:0032 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-container-set-insert:0033 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={233} standard="C++98"><PublishedBehavior>`pos` was just a hint, it could be totally ignored</PublishedBehavior><CorrectedBehavior>the insertion is required to be as close as possible to the position just prior to `pos`</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={264} standard="C++98"><PublishedBehavior>the complexity of overload (5) was required to be linear if the range `[first, last)` is sorted according to `Compare`</PublishedBehavior><CorrectedBehavior>removed the linear requirement in this special case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={316} standard="C++98"><PublishedBehavior>in the return value of overload (1), it was not specified which `bool` value indicates a successful insertion</PublishedBehavior><CorrectedBehavior>success is indicated by `true`</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-container-set-insert:0034 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/container/set/emplace) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs element in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_hint`](/docs/cpp/library/container/set/emplace_hint) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>constructs elements in-place using a hint (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inserter`](/docs/cpp/library/iterator/inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::insert_iterator`](/docs/cpp/library/iterator/insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

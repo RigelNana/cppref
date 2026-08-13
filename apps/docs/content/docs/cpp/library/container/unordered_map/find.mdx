@@ -1,0 +1,120 @@
+---
+title: "std::unordered_map<Key,T,Hash,KeyEqual,Allocator>::find"
+description: "Finds an element with key equivalent to key."
+source_url: "https://en.cppreference.com/w/cpp/container/unordered_map/find"
+language: "C++"
+---
+
+{/* source:cpp-container-unordered-map-find:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`iterator find( const Key& key );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`const_iterator find( const Key& key ) const;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class K >
+iterator find( const K& x );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class K >
+const_iterator find( const K& x ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-unordered-map-find:0001 */}
+- 1,2) Finds an element with key equivalent to `key`.
+
+{/* source:cpp-container-unordered-map-find:0002 */}
+- 3,4) Finds an element with key that compares *equivalent* to the value `x`. This overload participates in overload resolution only if `Hash::is_transparent` and `KeyEqual::is_transparent` are valid and each denotes a type. This assumes that such `Hash` is callable with both `K` and `Key` type, and that the `KeyEqual` is transparent, which, together, allows calling this function without constructing an instance of `Key`.
+
+### Parameters
+
+{/* source:cpp-container-unordered-map-find:0003 */}
+<ParameterList>
+  <Parameter name="key">key value of the element to search for</Parameter>
+  <Parameter name="x">a value of any type that can be transparently compared with a key</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-unordered-map-find:0004 */}
+An iterator to the requested element. If no such element is found, past-the-end (see [`end()`](/docs/cpp/library/container/unordered_map/end)) iterator is returned.
+
+### Complexity
+
+{/* source:cpp-container-unordered-map-find:0005 */}
+Constant on average, worst case linear in the size of the container.
+
+### Notes
+
+{/* source:cpp-container-unordered-map-find:0006 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_generic_unordered_lookup`](/docs/cpp/library/feature_test#cpp_lib_generic_unordered_lookup) | [`201811L`](/docs/cpp/library/compiler_support/20#cpp_lib_generic_unordered_lookup_201811L) | (C++20) | Heterogeneous comparison lookup in [unordered associative containers](/docs/cpp/library/container#Unordered_associative_containers); overloads ([3,4](/docs/cpp/library/container/unordered_map/find#Version_3)) |
+
+### Example
+
+{/* source:cpp-container-unordered-map-find:0007 */}
+```cpp
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+
+using namespace std::literals;
+
+struct string_hash
+{
+    using hash_type = std::hash<std::string_view>;
+    using is_transparent = void;
+
+    std::size_t operator()(const char* str) const        { return hash_type{}(str); }
+    std::size_t operator()(std::string_view str) const   { return hash_type{}(str); }
+    std::size_t operator()(std::string const& str) const { return hash_type{}(str); }
+};
+
+int main()
+{
+    // simple comparison demo
+    std::unordered_map<int, char> example{{1, 'a'}, {2, 'b'}};
+
+    if (auto search = example.find(2); search != example.end())
+        std::cout << "Found " << search->first << ' ' << search->second << '\n';
+    else
+        std::cout << "Not found\n";
+
+    // C++20 demo: Heterogeneous lookup for unordered containers (transparent hashing)
+    std::unordered_map<std::string, size_t, string_hash, std::equal_to<>> map{{"one"s, 1}};
+    std::cout << std::boolalpha
+        << (map.find("one")   != map.end()) << '\n'
+        << (map.find("one"s)  != map.end()) << '\n'
+        << (map.find("one"sv) != map.end()) << '\n';
+}
+```
+
+Output:
+
+```text
+Found 2 b
+true
+true
+true
+```
+
+### See also
+
+{/* source:cpp-container-unordered-map-find:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/container/unordered_map/at)</DescriptionTerm>
+    <DescriptionBody>access specified element with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/unordered_map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count`](/docs/cpp/library/container/unordered_map/count)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements matching specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/container/unordered_map/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

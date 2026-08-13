@@ -1,0 +1,109 @@
+---
+title: "std::unordered_multimap<Key,T,Hash,KeyEqual,Allocator>::merge"
+description: "Attempts to extract (\"splice\") each element in source and insert it into *this using the hash function and key equality predicate of *this."
+source_url: "https://en.cppreference.com/w/cpp/container/unordered_multimap/merge"
+language: "C++"
+---
+
+{/* source:cpp-container-unordered-multimap-merge:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class H2, class P2 >
+void merge( std::unordered_map<Key, T, H2, P2, Allocator>& source );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class H2, class P2 >
+void merge( std::unordered_map<Key, T, H2, P2, Allocator>&& source );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class H2, class P2 >
+void merge( std::unordered_multimap<Key, T, H2, P2, Allocator>& source );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class H2, class P2 >
+void merge( std::unordered_multimap<Key, T, H2, P2, Allocator>&& source );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-unordered-multimap-merge:0001 */}
+Attempts to extract ("splice") each element in `source` and insert it into `*this` using the hash function and key equality predicate of `*this`.
+
+{/* source:cpp-container-unordered-multimap-merge:0002 */}
+No elements are copied or moved, only the internal pointers of the container nodes are repointed. All pointers and references to the transferred elements remain valid, but now refer into `*this`, not into `source`. Iterators referring to the transferred elements and all iterators referring to `*this` are invalidated.
+
+{/* source:cpp-container-unordered-multimap-merge:0003 */}
+The behavior is undefined if `get_allocator() != source.get_allocator()`.
+
+### Parameters
+
+{/* source:cpp-container-unordered-multimap-merge:0004 */}
+<ParameterList>
+  <Parameter name="source">compatible container to transfer the nodes from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-unordered-multimap-merge:0005 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-container-unordered-multimap-merge:0006 */}
+Average case O(N), worst case O(N * size() + N), where N is `source.size()`.
+
+### Example
+
+{/* source:cpp-container-unordered-multimap-merge:0007 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+ 
+// print out a std::pair
+template<class Os, class U, class V>
+Os& operator<<(Os& os, const std::pair<U,V>& p)
+{
+    return os << '{' << p.first << ", " << p.second << '}';
+}
+ 
+// print out an associative container
+template<class Os, class K, class V>
+Os& operator<<(Os& os, const std::unordered_multimap<K, V>& v)
+{
+    os << '[' << v.size() << "] {";
+    bool o{};
+    for (const auto& e : v)
+        os << (o ? ", " : (o = 1, "")) << e;
+    return os << "}\n";
+}
+ 
+int main()
+{
+    std::unordered_multimap<std::string, int>
+        p{{"C", 3}, {"B", 2}, {"A", 1}, {"A", 0}},
+        q{{"E", 6}, {"E", 7}, {"D", 5}, {"A", 4}};
+ 
+    std::cout << "p: " << p << "q: " << q;
+ 
+    p.merge(q);
+ 
+    std::cout << "p.merge(q);\n" << "p: " << p << "q: " << q;
+}
+```
+
+Possible output:
+
+```text
+p: [4] {{A, 1}, {A, 0}, {B, 2}, {C, 3}}
+q: [4] {{A, 4}, {D, 5}, {E, 6}, {E, 7}}
+p.merge(q);
+p: [8] {{E, 6}, {E, 7}, {C, 3}, {A, 1}, {A, 0}, {A, 4}, {D, 5}, {B, 2}}
+q: [0] {}
+```
+
+### See also
+
+{/* source:cpp-container-unordered-multimap-merge:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`extract`](/docs/cpp/library/container/unordered_multimap/extract)</DescriptionTerm>
+    <DescriptionBody>extracts nodes from the container (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/unordered_multimap/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements <InlineRevision since="C++17">or nodes</InlineRevision> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

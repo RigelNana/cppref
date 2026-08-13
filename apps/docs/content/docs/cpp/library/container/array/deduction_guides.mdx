@@ -1,0 +1,44 @@
+---
+title: "deduction guides for std::array"
+description: "One deduction guide is provided for std::array to provide an equivalent of std::experimental::make_array for construction of std::array from a variadic parameter pack."
+source_url: "https://en.cppreference.com/w/cpp/container/array/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-container-array-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<array>`](/docs/cpp/library/headers/array)
+
+  <Declaration language="cpp" since="C++17" code={`template< class T, class... U >
+array( T, U... ) -> array<T, 1 + sizeof...(U)>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-array-deduction-guides:0001 */}
+One [deduction guide](/docs/cpp/language/templates/ctad) is provided for [`std::array`](/docs/cpp/library/container/array) to provide an equivalent of [`std::experimental::make_array`](/docs/cpp/library/experimental/lib_extensions_2/make_array) for construction of `std::array` from a [variadic parameter pack](/docs/cpp/language/templates/parameter_pack).
+
+{/* source:cpp-container-array-deduction-guides:0002 */}
+The program is ill-formed if `(std::is_same_v<T, U> && ...)` is not true. Note that `(std::is_same_v<T, U> && ...)` is true when `sizeof...(U)` is zero.
+
+### Example
+
+{/* source:cpp-container-array-deduction-guides:0003 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <type_traits>
+
+int main()
+{
+    const int x = 10;
+    std::array a{1, 2, 3, 5, x}; // OK, creates std::array<int, 5>
+    assert(a.back() == x);
+
+//  std::array b{1, 2u}; // Error, all arguments must have the same type
+
+//  std::array<short> c{3, 2, 1}; // Error, wrong number of template args
+    std::array c{std::to_array<short>({3, 2, 1})}; // C++20 facility
+    assert(std::ranges::equal(c, std::array{3, 2, 1}));
+    static_assert(std::is_same_v<short, decltype(c)::value_type>);
+}
+```

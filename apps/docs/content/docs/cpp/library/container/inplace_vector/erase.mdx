@@ -1,0 +1,118 @@
+---
+title: "std::inplace_vector<T,N>::erase"
+description: "Erases the specified elements from the container."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/erase"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-erase:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`constexpr iterator erase( const_iterator pos );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`constexpr iterator erase( const_iterator first, const_iterator last );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-erase:0001 */}
+Erases the specified elements from the container.
+
+{/* source:cpp-container-inplace-vector-erase:0002 */}
+1. Removes the element at `pos`.
+
+{/* source:cpp-container-inplace-vector-erase:0003 */}
+2. Removes the elements in the range `[first, last)`.
+
+{/* source:cpp-container-inplace-vector-erase:0004 */}
+Iterators (including the [`end()`](/docs/cpp/library/container/inplace_vector/end) iterator) and references to the elements at or after the point of the erase are invalidated.
+
+{/* source:cpp-container-inplace-vector-erase:0005 */}
+The iterator `pos` must be valid and dereferenceable. Thus the `end()` iterator (which is valid, but is not dereferenceable) cannot be used as a value for `pos`.
+
+{/* source:cpp-container-inplace-vector-erase:0006 */}
+The iterator `first` does not need to be dereferenceable if `first == last`: erasing an empty range is a no-op.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-erase:0007 */}
+<ParameterList>
+  <Parameter name="pos">iterator to the element to remove</Parameter>
+  <Parameter name="first, last">range of elements to remove</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-erase:0008 */}
+Iterator following the last removed element.
+
+{/* source:cpp-container-inplace-vector-erase:0009 */}
+1. If `pos` refers to the last element, then the `end()` iterator is returned.
+
+{/* source:cpp-container-inplace-vector-erase:0010 */}
+2. If `last == end()` prior to removal, then the updated `end()` iterator is returned.
+
+{/* source:cpp-container-inplace-vector-erase:0011 */}
+- If `[first, last)` is an empty range, then `last` is returned.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-erase:0012 */}
+Does not throw unless an exception is thrown by the assignment operator of `T`.
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-erase:0013 */}
+Linear: the number of calls to the destructor of `T` is the same as the number of elements erased, the assignment operator of `T` is called the number of times equal to the number of elements in the vector after the erased elements.
+
+### Notes
+
+{/* source:cpp-container-inplace-vector-erase:0014 */}
+When container elements need to be erased based on a predicate, rather than iterating the container and calling unary `erase`, the iterator range overload is generally used with [`std::remove()/std::remove_if()`](/docs/cpp/library/algorithm/remove) to minimise the number of moves of the remaining (non-removed) elements, — this is the erase-remove idiom. [`std::erase_if()`](/docs/cpp/library/container/inplace_vector/erase2) replaces the erase-remove idiom.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-erase:0015 */}
+```cpp
+#include <inplace_vector>
+#include <print>
+ 
+int main()
+{
+    std::inplace_vector<int, 10> v{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::println("{}", v);
+ 
+    v.erase(v.begin());
+    std::println("{}", v);
+ 
+    v.erase(v.begin() + 2, v.begin() + 5);
+    std::println("{}", v);
+ 
+    // Erase all even numbers
+    for (std::inplace_vector<int, 10>::iterator it{v.begin()}; it != v.end();)
+        if (*it % 2 == 0)
+            it = v.erase(it);
+        else
+            ++it;
+    std::println("{}", v);
+}
+```
+
+Output:
+
+```text
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+[1, 2, 3, 4, 5, 6, 7, 8, 9]
+[1, 2, 6, 7, 8, 9]
+[1, 7, 9]
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-erase:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase(std::inplace_vector)`, `erase_if(std::inplace_vector)`](/docs/cpp/library/container/inplace_vector/erase2) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>erases all elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/container/inplace_vector/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

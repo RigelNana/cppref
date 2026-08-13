@@ -1,0 +1,93 @@
+---
+title: "std::inplace_vector<T,N>::emplace"
+description: "Inserts a new element into the container directly before pos."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/emplace"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-emplace:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++26" code={`template< class... Args >
+constexpr iterator emplace( const_iterator position, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-emplace:0001 */}
+Inserts a new element into the container directly before `pos`. Typically, the element is constructed uses placement-`new` to construct the element in-place at the location provided by the container. The arguments `args...` are forwarded to the constructor as `std::forward<Args>(args)...`.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-emplace:0002 */}
+<ParameterList>
+  <Parameter name="pos">iterator before which the new element will be constructed</Parameter>
+  <Parameter name="args">arguments to forward to the constructor of the element</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` must meet the requirements of [*EmplaceConstructible*](/docs/cpp/library/named_req/EmplaceConstructible).
+
+### Return value
+
+{/* source:cpp-container-inplace-vector-emplace:0003 */}
+An iterator to the inserted element.
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-emplace:0004 */}
+Linear: the distance between `pos` and end of the container + 1.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-emplace:0005 */}
+- Throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if before the invocation `size() == capacity()`. The function has no effects ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+- Any exception thrown by initialization of inserted element or by any [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) operation. Elements in `[0, pos)` are not modified.
+
+### Example
+
+{/* source:cpp-container-inplace-vector-emplace:0006 */}
+```cpp
+#include <cassert>
+#include <inplace_vector>
+#include <new>
+#include <utility>
+ 
+int main()
+{
+    using P = std::pair<int, int>;
+    using I = std::inplace_vector<P, 3>;
+    auto nums = I{{0, 1}, {2, 3}};
+ 
+    auto it = nums.emplace(nums.begin() + 1, -1, -2);
+    assert((*it == P{-1, -2}));
+    assert((nums == I{P{0, 1}, {-1, -2}, {2, 3}}));
+ 
+    try
+    {
+        nums.emplace(nums.begin(), 1, 3); // throws: no space
+    }
+    catch(const std::bad_alloc& ex)
+    {
+        std::cout << ex.what() << '\n';
+    }
+}
+```
+
+Possible output:
+
+```text
+std::bad_alloc
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-emplace:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/container/inplace_vector/insert)</DescriptionTerm>
+    <DescriptionBody>inserts elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace_back`](/docs/cpp/library/container/inplace_vector/emplace_back)</DescriptionTerm>
+    <DescriptionBody>constructs an element in-place at the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

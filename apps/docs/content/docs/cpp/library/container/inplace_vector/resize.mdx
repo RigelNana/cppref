@@ -1,0 +1,120 @@
+---
+title: "std::inplace_vector<T,N>::resize"
+description: "Resizes the container to contain count elements, does nothing if count == size()."
+source_url: "https://en.cppreference.com/w/cpp/container/inplace_vector/resize"
+language: "C++"
+---
+
+{/* source:cpp-container-inplace-vector-resize:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`constexpr void resize( size_type count );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`constexpr void resize( size_type count, const value_type& value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-container-inplace-vector-resize:0001 */}
+Resizes the container to contain `count` elements, does nothing if `count == size()`.
+
+{/* source:cpp-container-inplace-vector-resize:0002 */}
+If the current size is greater than `count`, the container is reduced to its first `count` elements.
+
+{/* source:cpp-container-inplace-vector-resize:0003 */}
+If the current size is less than `count`, then:
+
+{/* source:cpp-container-inplace-vector-resize:0004 */}
+1. Additional [default-inserted](/docs/cpp/library/named_req/DefaultInsertable) elements are appended.
+
+{/* source:cpp-container-inplace-vector-resize:0005 */}
+2. Additional copies of `value` are appended.
+
+### Parameters
+
+{/* source:cpp-container-inplace-vector-resize:0006 */}
+<ParameterList>
+  <Parameter name="count">new size of the container</Parameter>
+  <Parameter name="value">the value to initialize the new elements with</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` must meet the requirements of [`DefaultInsertable`](/docs/cpp/library/named_req/DefaultInsertable) in order to use overload (1).
+- `T` must meet the requirements of [`CopyInsertable`](/docs/cpp/library/named_req/CopyInsertable) in order to use overload (2).
+
+### Complexity
+
+{/* source:cpp-container-inplace-vector-resize:0007 */}
+Linear in the difference between the current size and `count`.
+
+### Exceptions
+
+{/* source:cpp-container-inplace-vector-resize:0008 */}
+1,2. Throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if `count > N`.
+
+{/* source:cpp-container-inplace-vector-resize:0009 */}
+If an exception is thrown for any reason, these functions have no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-container-inplace-vector-resize:0010 */}
+```cpp
+#include <inplace_vector>
+#include <print>
+ 
+int main()
+{
+    std::inplace_vector<int, 6> v(6, 9);
+    std::println("Initially, v = {}", v);
+ 
+    v.resize(2);
+    std::println("After resize(2), v = {}", v);
+ 
+    v.resize(4);
+    std::println("After resize(4), v = {}", v);
+ 
+    v.resize(6, -1);
+    std::println("After resize(6, -1), v = {}", v);
+ 
+    try
+    {
+        std::print("Trying resize(13): ");
+        v.resize(13); // throws, because count > N; v is left unchanged
+    }
+    catch(const std::bad_alloc& ex)
+    {
+        std::println("ex.what(): {}", ex.what());
+    }
+    std::println("After exception, v = {}", v);
+}
+```
+
+Possible output:
+
+```text
+Initially, v = [9, 9, 9, 9, 9, 9]
+After resize(2), v = [9, 9]
+After resize(4), v = [9, 9, 0, 0]
+After resize(6, -1), v = [9, 9, 0, 0, -1, -1]
+Trying resize(13): ex.what(): std::bad_alloc
+After exception, v = [9, 9, 0, 0, -1, -1]
+```
+
+### See also
+
+{/* source:cpp-container-inplace-vector-resize:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/container/inplace_vector/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum possible number of elements (public static member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/container/inplace_vector/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`capacity`](/docs/cpp/library/container/inplace_vector/capacity)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements that can be held in currently allocated storage (public static member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/container/inplace_vector/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
