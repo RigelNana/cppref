@@ -1,0 +1,308 @@
+---
+title: "std::find, std::find_if, std::find_if_not"
+description: "Returns an iterator to the first element in the range [first, last) that satisfies specific criteria (or last if there is no such iterator)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/find"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-find:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" until="C++26" code={`template< class InputIt, class T >
+InputIt find( InputIt first, InputIt last, const T& value );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class InputIt, class T = typename std::iterator_traits
+                                       <InputIt>::value_type >
+
+constexpr InputIt find( InputIt first, InputIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy, class ForwardIt, class T >
+ForwardIt find( ExecutionPolicy&& policy,
+
+                ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+ForwardIt find( ExecutionPolicy&& policy,
+
+                ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt, class UnaryPred >
+InputIt find_if( InputIt first, InputIt last, UnaryPred p );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+ForwardIt find_if( ExecutionPolicy&& policy,
+
+                   ForwardIt first, ForwardIt last, UnaryPred p );`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class InputIt, class UnaryPred >
+InputIt find_if_not( InputIt first, InputIt last, UnaryPred q );`} />
+  <Declaration id="6" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+ForwardIt find_if_not( ExecutionPolicy&& policy,
+
+                       ForwardIt first, ForwardIt last, UnaryPred q );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-find:0001 */}
+Returns an iterator to the first element in the range [`first`, `last`) that satisfies specific criteria (or `last` if there is no such iterator).
+
+{/* source:cpp-algorithm-find:0002 */}
+1. 1) `find` searches for an element equal to `value` (using `operator==`).
+
+{/* source:cpp-algorithm-find:0003 */}
+2. 3) `find_if` searches for an element for which predicate `p` returns `true`.
+
+{/* source:cpp-algorithm-find:0004 */}
+3. 5) `find_if_not` searches for an element for which predicate `q` returns `false`.
+
+{/* source:cpp-algorithm-find:0005 */}
+4. 2,4,6) Same as (1,3,5), but executed according to `policy`.
+
+{/* source:cpp-algorithm-find:0006 */}
+5. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">
+   `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+   <Revision since="C++20">
+   `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-find:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="value">value to compare the elements to</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+unary predicate which returns `true` for the required element.
+
+The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `InputIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.
+  </Parameter>
+  <Parameter name="q">
+unary predicate which returns `false` for the required element.
+
+The expression `q(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `InputIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `UnaryPredicate` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+### Return value
+
+{/* source:cpp-algorithm-find:0008 */}
+The first iterator `it` in the [range](/docs/cpp/library/iterator#Ranges) [`first`, `last`) satisfying the following condition or `last` if there is no such iterator:
+
+{/* source:cpp-algorithm-find:0009 */}
+1. 1,2) `*it == value` is `true`.
+
+{/* source:cpp-algorithm-find:0010 */}
+2. 3,4) `p(*it)` is `true`.
+
+{/* source:cpp-algorithm-find:0011 */}
+3. 5,6) `q(*it)` is `false`.
+
+### Complexity
+
+{/* source:cpp-algorithm-find:0012 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-find:0013 */}
+1. 1,2) At most `N` comparisons with `value` using `operator==`.
+
+{/* source:cpp-algorithm-find:0014 */}
+2. 3,4) At most `N` applications of the predicate `p`.
+
+{/* source:cpp-algorithm-find:0015 */}
+3. 5,6) At most `N` applications of the predicate `q`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-find:0016 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-find:0017 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-find:0018 */}
+[`find (1)`](/docs/cpp/library/algorithm/find#Version_1)
+
+```cpp
+template<class InputIt, class T = typename std::iterator_traits<InputIt>::value_type>
+constexpr InputIt find(InputIt first, InputIt last, const T& value)
+{
+    for (; first != last; ++first)
+        if (*first == value)
+            return first;
+ 
+    return last;
+}
+```
+
+[`find_if (3)`](/docs/cpp/library/algorithm/find#Version_3)
+
+```cpp
+template<class InputIt, class UnaryPred>
+constexpr InputIt find_if(InputIt first, InputIt last, UnaryPred p)
+{
+    for (; first != last; ++first)
+        if (p(*first))
+            return first;
+ 
+    return last;
+}
+```
+
+[`find_if_not (5)`](/docs/cpp/library/algorithm/find#Version_5)
+
+```cpp
+template<class InputIt, class UnaryPred>
+constexpr InputIt find_if_not(InputIt first, InputIt last, UnaryPred q)
+{
+    for (; first != last; ++first)
+        if (!q(*first))
+            return first;
+ 
+    return last;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-find:0019 */}
+If C++11 is not available, an equivalent to `std::find_if_not` is to use `std::find_if` with the negated predicate.
+
+{/* source:cpp-algorithm-find:0020 */}
+```cpp
+template<class InputIt, class UnaryPred>
+InputIt find_if_not(InputIt first, InputIt last, UnaryPred q)
+{
+    return std::find_if(first, last, std::not1(q));
+}
+```
+
+{/* source:cpp-algorithm-find:0021 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/find#Version_1)) |
+
+### Example
+
+{/* source:cpp-algorithm-find:0022 */}
+The following example finds numbers in given sequences.
+
+```cpp
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <complex>
+#include <initializer_list>
+#include <iostream>
+#include <vector>
+ 
+bool is_even(int i)
+{
+    return i % 2 == 0;
+}
+ 
+void example_contains()
+{
+    const auto haystack = {1, 2, 3, 4};
+ 
+    for (const int needle : {3, 5})
+        if (std::find(haystack.begin(), haystack.end(), needle) == haystack.end())
+            std::cout << "haystack does not contain " << needle << '\n';
+        else
+            std::cout << "haystack contains " << needle << '\n';
+}
+ 
+void example_predicate()
+{
+    for (const auto& haystack : {std::array{3, 1, 4}, {1, 3, 5}})
+    {
+        const auto it = std::find_if(haystack.begin(), haystack.end(), is_even);
+        if (it != haystack.end())
+            std::cout << "haystack contains an even number " << *it << '\n';
+        else
+            std::cout << "haystack does not contain even numbers\n";
+    }
+}
+ 
+void example_list_init()
+{
+    std::vector<std::complex<double>> haystack{{4.0, 2.0}};
+#ifdef __cpp_lib_algorithm_default_value_type
+    // T gets deduced making list-initialization possible
+    const auto it = std::find(haystack.begin(), haystack.end(), {4.0, 2.0});
+#else
+    const auto it = std::find(haystack.begin(), haystack.end(), std::complex{4.0, 2.0});
+#endif
+    assert(it == haystack.begin());  
+}
+ 
+int main()
+{
+    example_contains();
+    example_predicate();
+    example_list_init();
+}
+```
+
+Output:
+
+```text
+haystack contains 3
+haystack does not contain 5
+haystack contains an even number 4
+haystack does not contain even numbers
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-find:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-find:0024 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*EqualityComparable*](/docs/cpp/library/named_req/EqualityComparable), but<br />the value type of `InputIt` might not be `T`</PublishedBehavior>
+    <CorrectedBehavior>removed the requirement</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-find:0025 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`adjacent_find`](/docs/cpp/library/algorithm/adjacent_find)</DescriptionTerm>
+    <DescriptionBody>finds the first two adjacent items that are equal (or satisfy a given predicate) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_end`](/docs/cpp/library/algorithm/find_end)</DescriptionTerm>
+    <DescriptionBody>finds the last sequence of elements in a certain range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_of`](/docs/cpp/library/algorithm/find_first_of)</DescriptionTerm>
+    <DescriptionBody>searches for any one of a set of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mismatch`](/docs/cpp/library/algorithm/mismatch)</DescriptionTerm>
+    <DescriptionBody>finds the first position where two ranges differ (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`search`](/docs/cpp/library/algorithm/search)</DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find`, `ranges::find_if`, `ranges::find_if_not`](/docs/cpp/library/algorithm/ranges/find) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

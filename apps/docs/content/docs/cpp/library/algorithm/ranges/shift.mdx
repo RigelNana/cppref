@@ -1,0 +1,201 @@
+---
+title: "std::ranges::shift_left, std::ranges::shift_right"
+description: "Shifts the elements in the range [first, last) or r by n positions."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/shift"
+language: "C++"
+---
+{/* source:cpp-algorithm-ranges-shift:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< std::permutable I, std::sentinel_for<I> S >
+constexpr ranges::subrange<I>
+
+    shift_left( I first, S last, std::iter_difference_t<I> n );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< ranges::forward_range R >
+requires std::permutable<ranges::iterator_t<R>>
+constexpr ranges::borrowed_subrange_t<R>
+
+    shift_left( R&& r, ranges::range_difference_t<R> n );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< std::permutable I, std::sentinel_for<I> S >
+constexpr ranges::subrange<I>
+
+    shift_right( I first, S last, std::iter_difference_t<I> n );`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< ranges::forward_range R >
+requires std::permutable<ranges::iterator_t<R>>
+constexpr ranges::borrowed_subrange_t<R>
+
+    shift_right( R&& r, ranges::range_difference_t<R> n );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-shift:0001 */}
+Shifts the elements in the range `[first, last)` or `r` by `n` positions. The behavior is undefined if `[first, last)` is not a valid range.
+
+{/* source:cpp-algorithm-ranges-shift:0002 */}
+1. 1) Shifts the elements towards the beginning of the range: If `n == 0 || n >= last - first`, there are no effects. If `n < 0`, the behavior is undefined. Otherwise, for every integer `i` in `[0, last - first - n)`, moves the element originally at position `first + n + i` to position `first + i`. The moves are performed in increasing order of `i` starting from `0`.
+
+{/* source:cpp-algorithm-ranges-shift:0003 */}
+2. 3) Shifts the elements towards the end of the range: If `n == 0 || n >= last - first`, there are no effects. If `n < 0`, the behavior is undefined. Otherwise, for every integer `i` in `[0, last - first - n)`, moves the element originally at position `first + i` to position `first + n + i`. If `I` models [`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator), then the moves are performed in decreasing order of `i` starting from `last - first - n - 1`.
+
+{/* source:cpp-algorithm-ranges-shift:0004 */}
+3. 2,4) Same as (1) or (3) respectively, but uses `r` as the range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-shift:0005 */}
+Elements that are in the original range but not the new range are left in a valid but unspecified state.
+
+{/* source:cpp-algorithm-ranges-shift:0006 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-shift:0007 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-shift:0008 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the original range</Parameter>
+  <Parameter name="last">the end of the original range</Parameter>
+  <Parameter name="r">the range of elements to shift</Parameter>
+  <Parameter name="n">the number of positions to shift</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-shift:0009 */}
+1. 1,2) `{first, /*NEW_LAST*/}`, where `NEW_LAST` is the end of the resulting range and equivalent to: `first + (last - first - n)`, if `n` is less than `last - first`; `first` otherwise.
+
+{/* source:cpp-algorithm-ranges-shift:0010 */}
+2. 3,4) `{/*NEW_FIRST*/, last}`, where `NEW_FIRST` is the beginning of the resulting range and equivalent to: `first + n`, if `n` is less than `last - first`; `last` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-shift:0011 */}
+1. 1,2) At most `ranges::distance(first, last) - n` assignments.
+
+{/* source:cpp-algorithm-ranges-shift:0012 */}
+2. 3,4) At most `ranges::distance(first, last) - n` assignment or swaps.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-shift:0013 */}
+`ranges::shift_left` / `ranges::shift_right` has better efficiency on common implementations if `I` models [`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator) or (better) [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator).
+
+{/* source:cpp-algorithm-ranges-shift:0014 */}
+Implementations (e.g. [MSVC STL](https://github.com/microsoft/STL/blob/main/stl/src/vector_algorithms.cpp)) may enable vectorization when the iterator type models [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator) and swapping its value type calls neither non-trivial special member function nor [ADL](/docs/cpp/language/functions/adl)-found `swap`.
+
+{/* source:cpp-algorithm-ranges-shift:0015 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_shift`](/docs/cpp/library/feature_test#cpp_lib_shift) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_shift_202202L) | C++23 | [`std::ranges::shift_left`](/docs/cpp/library/algorithm/ranges/shift#Top) and [`std::ranges::shift_right`](/docs/cpp/library/algorithm/ranges/shift#Top) |
+
+### Example
+
+{/* source:cpp-algorithm-ranges-shift:0016 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <type_traits>
+#include <vector>
+ 
+struct S
+{
+    int value{0};
+    bool specified_state{true};
+ 
+    S(int v = 0) : value{v} {}
+    S(S const& rhs) = default;
+    S(S&& rhs) { *this = std::move(rhs); }
+    S& operator=(S const& rhs) = default;
+    S& operator=(S&& rhs)
+    {
+        if (this != &rhs)
+        {
+            value = rhs.value;
+            specified_state = rhs.specified_state;
+            rhs.specified_state = false;
+        }
+        return *this;
+    }
+};
+ 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, std::vector<T> const& v)
+{
+    for (const auto& s : v)
+    {
+        if constexpr (std::is_same_v<T, S>)
+            s.specified_state ? os << s.value << ' ' : os << ". ";
+        else if constexpr (std::is_same_v<T, std::string>)
+            os << (s.empty() ? "." : s) << ' ';
+        else
+            os << s << ' ';
+    }
+    return os;
+}
+ 
+int main()
+{
+    std::cout << std::left;
+ 
+    std::vector<S> a{1, 2, 3, 4, 5, 6, 7};
+    std::vector<int> b{1, 2, 3, 4, 5, 6, 7};
+    std::vector<std::string> c{"α", "β", "γ", "δ", "ε", "ζ", "η"};
+ 
+    std::cout << "vector<S> \tvector<int> \tvector<string>\n";
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+    std::ranges::shift_left(a, 3);
+    std::ranges::shift_left(b, 3);
+    std::ranges::shift_left(c, 3);
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+    std::ranges::shift_right(a, 2);
+    std::ranges::shift_right(b, 2);
+    std::ranges::shift_right(c, 2);
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+    std::ranges::shift_left(a, 8); // has no effect: n >= last - first
+    std::ranges::shift_left(b, 8); // ditto
+    std::ranges::shift_left(c, 8); // ditto
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+//  std::ranges::shift_left(a, -3); // UB
+}
+```
+
+Possible output:
+
+```text
+vector<S>       vector<int>     vector<string>
+1 2 3 4 5 6 7   1 2 3 4 5 6 7   α β γ δ ε ζ η
+4 5 6 7 . . .   4 5 6 7 5 6 7   δ ε ζ η . . .
+. . 4 5 6 7 .   4 5 4 5 6 7 5   . . δ ε ζ η .
+. . 4 5 6 7 .   4 5 4 5 6 7 5   . . δ ε ζ η .
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-shift:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::move`](/docs/cpp/library/algorithm/ranges/move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::move_backward`](/docs/cpp/library/algorithm/ranges/move_backward) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location in backwards order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::rotate`](/docs/cpp/library/algorithm/ranges/rotate) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>rotates the order of elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shift_left`, `shift_right`](/docs/cpp/library/algorithm/shift) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>shifts elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

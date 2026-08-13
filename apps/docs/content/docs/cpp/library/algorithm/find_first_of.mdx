@@ -1,0 +1,238 @@
+---
+title: "std::find_first_of"
+description: "Searches the range [first, last) for any of the elements in the range [s_first, s_last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/find_first_of"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-find-first-of:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class ForwardIt >
+InputIt find_first_of( InputIt first, InputIt last,
+
+                       ForwardIt s_first, ForwardIt s_last );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2 >
+ForwardIt1 find_first_of( ExecutionPolicy&& policy,
+                          ForwardIt1 first, ForwardIt1 last,
+
+                          ForwardIt2 s_first, ForwardIt2 s_last );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt, class ForwardIt, class BinaryPred >
+InputIt find_first_of( InputIt first, InputIt last,
+                       ForwardIt s_first, ForwardIt s_last,
+
+                       BinaryPred p );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2, class BinaryPred >
+ForwardIt1 find_first_of( ExecutionPolicy&& policy,
+                          ForwardIt1 first, ForwardIt last,
+                          ForwardIt2 s_first, ForwardIt2 s_last,
+
+                          BinaryPred p );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-find-first-of:0001 */}
+Searches the range [`first`, `last`) for any of the elements in the range [`s_first`, `s_last`).
+
+{/* source:cpp-algorithm-find-first-of:0002 */}
+1. 1) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-find-first-of:0003 */}
+2. 3) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-find-first-of:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-find-first-of:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">
+   `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+   <Revision since="C++20">
+   `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-find-first-of:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="s_first, s_last">the range of elements to search for</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that objects of types `ForwardIt1` and `ForwardIt2` can be dereferenced and then implicitly converted to `Type1` and `Type2` respectively.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `ForwardIt1` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `BinaryPred` must meet the requirements of [*BinaryPredicate*](/docs/cpp/library/named_req/BinaryPredicate).
+
+### Return value
+
+{/* source:cpp-algorithm-find-first-of:0007 */}
+Iterator to the first element in the range [`first`, `last`) that is equal to an element from the range [`s_first`, `s_last`).
+
+{/* source:cpp-algorithm-find-first-of:0008 */}
+If [`s_first`, `s_last`) is empty or if no such element is found, `last` is returned.
+
+### Complexity
+
+{/* source:cpp-algorithm-find-first-of:0009 */}
+Given `N` as `std::distance(first, last)` and `S` as `std::distance(s_first, s_last)`:
+
+{/* source:cpp-algorithm-find-first-of:0010 */}
+1. 1,2) At most N·S comparisons using `operator==`.
+
+{/* source:cpp-algorithm-find-first-of:0011 */}
+2. 3,4) At most N·S applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-find-first-of:0012 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-find-first-of:0013 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-find-first-of:0014 */}
+[`find_first_of (1)`](/docs/cpp/library/algorithm/find_first_of#Version_1)
+
+```cpp
+template<class InputIt, class ForwardIt>
+InputIt find_first_of(InputIt first, InputIt last,
+                      ForwardIt s_first, ForwardIt s_last)
+{
+    for (; first != last; ++first)
+        for (ForwardIt it = s_first; it != s_last; ++it)
+            if (*first == *it)
+                return first;
+    return last;
+}
+```
+
+[`find_first_of (3)`](/docs/cpp/library/algorithm/find_first_of#Version_3)
+
+```cpp
+template<class InputIt, class ForwardIt, class BinaryPred>
+InputIt find_first_of(InputIt first, InputIt last,
+                      ForwardIt s_first, ForwardIt s_last,
+                      BinaryPred p)
+{
+    for (; first != last; ++first)
+        for (ForwardIt it = s_first; it != s_last; ++it)
+            if (p(*first, *it))
+                return first;
+    return last;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-find-first-of:0015 */}
+The following code searches for any of specified integers in a vector of integers:
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+auto print_sequence = [](const auto id, const auto& seq, int pos = -1)
+{
+    std::cout << id << "{ ";
+    for (int i{}; auto const& e : seq)
+    {
+        const bool mark{i == pos};
+        std::cout << (i++ ? ", " : "");
+        std::cout << (mark ? "[ " : "") << e << (mark ? " ]" : "");
+    }
+    std::cout << " }\n";
+};
+ 
+int main()
+{
+    const std::vector<int> v{0, 2, 3, 25, 5};
+    const auto t1 = {19, 10, 3, 4};
+    const auto t2 = {1, 6, 7, 9};
+ 
+    auto find_any_of = [](const auto& v, const auto& t)
+    {
+        const auto result = std::find_first_of(v.begin(), v.end(),
+                                               t.begin(), t.end());
+        if (result == v.end())
+        {
+            std::cout << "No elements of v are equal to any element of ";
+            print_sequence("t = ", t);
+            print_sequence("v = ", v);
+        }
+        else
+        {
+            const auto pos = std::distance(v.begin(), result);
+            std::cout << "Found a match (" << *result << ") at position " << pos;
+            print_sequence(", where t = ", t);
+            print_sequence("v = ", v, pos);
+        }
+    };
+ 
+    find_any_of(v, t1);
+    find_any_of(v, t2);
+}
+```
+
+Output:
+
+```text
+Found a match (3) at position 2, where t = { 19, 10, 3, 4 }
+v = { 0, 2, [ 3 ], 25, 5 }
+No elements of v are equal to any element of t = { 1, 6, 7, 9 }
+v = { 0, 2, 3, 25, 5 }
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-find-first-of:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-find-first-of:0017 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={576} standard="C++98">
+    <PublishedBehavior>`first` and `last` needed to be [*LegacyForwardIterators*](/docs/cpp/library/named_req/ForwardIterator)</PublishedBehavior>
+    <CorrectedBehavior>they only need to be<br />[*LegacyInputIterators*](/docs/cpp/library/named_req/InputIterator)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1205} standard="C++98">
+    <PublishedBehavior>the return value was unclear if [`s_first`, `s_last`) is empty</PublishedBehavior>
+    <CorrectedBehavior>returns `last` in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-find-first-of:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`, `find_if`, `find_if_not`](/docs/cpp/library/algorithm/find) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find_first_of`](/docs/cpp/library/algorithm/ranges/find_first_of) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>searches for any one of a set of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

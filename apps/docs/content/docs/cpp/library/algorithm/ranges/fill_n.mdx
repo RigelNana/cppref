@@ -1,0 +1,153 @@
+---
+title: "std::ranges::fill_n"
+description: "Assigns the given value to all elements in the range [first, first + n)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/fill_n"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-fill-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" until="C++26" code={`template< class T, std::output_iterator<const T&> O >
+constexpr O fill_n( O first, std::iter_difference_t<O> n, const T& value );`} />
+  <Declaration language="cpp" since="C++26" code={`template< class O, class T = std::iter_value_t<O> >
+requires std::output_iterator<O, const T&>
+
+constexpr O fill_n( O first, std::iter_difference_t<O> n, const T& value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-fill-n:0001 */}
+Assigns the given `value` to all elements in the range `[first, first + n)`.
+
+{/* source:cpp-algorithm-ranges-fill-n:0002 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-fill-n:0003 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-fill-n:0004 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of elements to modify</Parameter>
+  <Parameter name="n">number of elements to modify</Parameter>
+  <Parameter name="value">the value to be assigned</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-fill-n:0005 */}
+An output iterator that compares equal to `first + n`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-fill-n:0006 */}
+Exactly `n` assignments.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-fill-n:0007 */}
+```cpp
+struct fill_n_fn
+{
+    template<class O, class T = std::iter_value_t<O>>
+    requires std::output_iterator<O, const T&>
+    constexpr O operator()(O first, std::iter_difference_t<O> n, const T& value) const
+    {
+        for (std::iter_difference_t<O> i {}; i != n; ++first, ++i)
+            *first = value;
+        return first;
+    }
+};
+ 
+inline constexpr fill_n_fn fill_n {};
+```
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-fill-n:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | C++26 | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms |
+
+### Example
+
+{/* source:cpp-algorithm-ranges-fill-n:0009 */}
+```cpp
+#include <algorithm>
+#include <complex>
+#include <iostream>
+#include <string>
+#include <vector>
+ 
+void println(const auto& v)
+{
+    for (const auto& elem : v)
+        std::cout << ' ' << elem;
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    constexpr auto n{8};
+ 
+    std::vector<std::string> v(n, "▓▓░░");
+    println(v);
+ 
+    std::ranges::fill_n(v.begin(), n, "░░▓▓");
+    println(v);
+ 
+    std::vector<std::complex<double>> nums{{1, 3}, {2, 2}, {4, 8}};
+    println(nums);
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::ranges::fill_n(nums.begin(), 2, {4, 2});
+    #else
+        std::ranges::fill_n(nums.begin(), 2, std::complex<double>{4, 2});
+    #endif
+    println(nums);
+}
+```
+
+Output:
+
+```text
+ ▓▓░░ ▓▓░░ ▓▓░░ ▓▓░░ ▓▓░░ ▓▓░░ ▓▓░░ ▓▓░░
+ ░░▓▓ ░░▓▓ ░░▓▓ ░░▓▓ ░░▓▓ ░░▓▓ ░░▓▓ ░░▓▓
+ (1,3) (2,2) (4,8)
+ (4,2) (4,2) (4,8)
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-fill-n:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of elements a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_n`](/docs/cpp/library/algorithm/ranges/copy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a number of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::generate`](/docs/cpp/library/algorithm/ranges/generate) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>saves the result of a function in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform`](/docs/cpp/library/algorithm/ranges/transform) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::generate_random`](/docs/cpp/library/algorithm/ranges/generate_random) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>fills a range with random numbers from a uniform random bit generator (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fill_n`](/docs/cpp/library/algorithm/fill_n)</DescriptionTerm>
+    <DescriptionBody>copy-assigns the given value to N elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

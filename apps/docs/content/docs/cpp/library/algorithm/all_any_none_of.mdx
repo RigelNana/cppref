@@ -1,0 +1,192 @@
+---
+title: "std::all_of, std::any_of, std::none_of"
+description: "Checks if unary predicate p returns false for at least one element in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/all_any_none_of"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-all-any-none-of:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class InputIt, class UnaryPred >
+bool all_of( InputIt first, InputIt last, UnaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+bool all_of( ExecutionPolicy&& policy,
+
+             ForwardIt first, ForwardIt last, UnaryPred p );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class InputIt, class UnaryPred >
+bool any_of( InputIt first, InputIt last, UnaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+bool any_of( ExecutionPolicy&& policy,
+
+             ForwardIt first, ForwardIt last, UnaryPred p );`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class InputIt, class UnaryPred >
+bool none_of( InputIt first, InputIt last, UnaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="6" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+bool none_of( ExecutionPolicy&& policy,
+
+              ForwardIt first, ForwardIt last, UnaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-all-any-none-of:0001 */}
+1. 1) Checks if unary predicate `p` returns `false` for at least one element in the range `[first, last)`.
+
+{/* source:cpp-algorithm-all-any-none-of:0002 */}
+2. 3) Checks if unary predicate `p` returns `true` for at least one element in the range `[first, last)`.
+
+{/* source:cpp-algorithm-all-any-none-of:0003 */}
+3. 5) Checks if unary predicate `p` returns `true` for none of the elements in the range `[first, last)`.
+
+{/* source:cpp-algorithm-all-any-none-of:0004 */}
+4. 2,4,6) Same as (1,3,5), but executed according to `policy`.
+
+{/* source:cpp-algorithm-all-any-none-of:0005 */}
+5. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-all-any-none-of:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">unary predicate. The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `InputIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `UnaryPred` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+### Return value
+
+{/* source:cpp-algorithm-all-any-none-of:0007 */}
+| Has `true` element | Yes | Yes | No | No |
+|---|---|---|---|---|
+| Has `false` element | Yes | No | Yes | No[[1]](/docs/cpp/library/algorithm/all_any_none_of#cite_note-1) |
+| [`all_of`](/docs/cpp/library/algorithm/all_any_none_of#Version_1) | `false` | `true` | `false` | `true` |
+| [`any_of`](/docs/cpp/library/algorithm/all_any_none_of#Version_3) | `true` | `true` | `false` | `false` |
+| [`none_of`](/docs/cpp/library/algorithm/all_any_none_of#Version_5) | `false` | `false` | `true` | `true` |
+
+{/* source:cpp-algorithm-all-any-none-of:0008 */}
+↑ The range is empty in this case.
+
+### Complexity
+
+{/* source:cpp-algorithm-all-any-none-of:0009 */}
+1. 1-6) At most `std::distance(first, last)` applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-all-any-none-of:0010 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-all-any-none-of:0011 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-all-any-none-of:0012 */}
+See also the implementations of
+
+{/* source:cpp-algorithm-all-any-none-of:0013 */}
+- `all_of` in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L508) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L838).
+- `any_of` in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L541) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L852).
+- `none_of` in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L523) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L866).
+
+{/* source:cpp-algorithm-all-any-none-of:0014 */}
+[`all_of`](/docs/cpp/library/algorithm/all_any_none_of#Version_1)
+
+```cpp
+template<class InputIt, class UnaryPred>
+constexpr bool all_of(InputIt first, InputIt last, UnaryPred p)
+{
+    return std::find_if_not(first, last, p) == last;
+}
+```
+
+[`any_of`](/docs/cpp/library/algorithm/all_any_none_of#Version_3)
+
+```cpp
+template<class InputIt, class UnaryPred>
+constexpr bool any_of(InputIt first, InputIt last, UnaryPred p)
+{
+    return std::find_if(first, last, p) != last;
+}
+```
+
+[`none_of`](/docs/cpp/library/algorithm/all_any_none_of#Version_5)
+
+```cpp
+template<class InputIt, class UnaryPred>
+constexpr bool none_of(InputIt first, InputIt last, UnaryPred p)
+{
+    return std::find_if(first, last, p) == last;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-all-any-none-of:0015 */}
+```cpp
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v(10, 2);
+    std::partial_sum(v.cbegin(), v.cend(), v.begin());
+    std::cout << "Among the numbers: ";
+    std::copy(v.cbegin(), v.cend(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+ 
+    if (std::all_of(v.cbegin(), v.cend(), [](int i) { return i % 2 == 0; }))
+        std::cout << "All numbers are even\n";
+ 
+    if (std::none_of(v.cbegin(), v.cend(), std::bind(std::modulus<>(),
+                                                     std::placeholders::_1, 2)))
+        std::cout << "None of them are odd\n";
+ 
+    struct DivisibleBy
+    {
+        const int d;
+        DivisibleBy(int n) : d(n) {}
+        bool operator()(int n) const { return n % d == 0; }
+    };
+ 
+    if (std::any_of(v.cbegin(), v.cend(), DivisibleBy(7)))
+        std::cout << "At least one number is divisible by 7\n";
+}
+```
+
+Output:
+
+```text
+Among the numbers: 2 4 6 8 10 12 14 16 18 20
+All numbers are even
+None of them are odd
+At least one number is divisible by 7
+```
+
+### See also
+
+{/* source:cpp-algorithm-all-any-none-of:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::all_of`, `ranges::any_of`, `ranges::none_of`](/docs/cpp/library/algorithm/ranges/all_any_none_of) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if a predicate is `true` for all, any or none of the elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,159 @@
+---
+title: "std::is_heap_until"
+description: "Examines the range [ first , last ) and finds the largest range beginning at first which is a heap."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/is_heap_until"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-is-heap-until:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class RandomIt >
+RandomIt is_heap_until( RandomIt first, RandomIt last );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class RandomIt >
+RandomIt is_heap_until( ExecutionPolicy&& policy,
+
+                        RandomIt first, RandomIt last );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class RandomIt, class Compare >
+RandomIt is_heap_until( RandomIt first, RandomIt last, Compare comp );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class RandomIt, class Compare >
+RandomIt is_heap_until( ExecutionPolicy&& policy,
+
+                        RandomIt first, RandomIt last, Compare comp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-is-heap-until:0001 */}
+Examines the range `[first, last)` and finds the largest range beginning at `first` which is a [heap](/docs/cpp/library/algorithm#Heap_operations).
+
+{/* source:cpp-algorithm-is-heap-until:0002 */}
+1. 1) The heap property to be checked is with respect to <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-is-heap-until:0003 */}
+2. 3) The heap property to be checked is with respect to `comp`.
+
+{/* source:cpp-algorithm-is-heap-until:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-is-heap-until:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+   - `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`. <InlineRevision until="C++20" />
+   - `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`. <InlineRevision since="C++20" />
+
+### Parameters
+
+{/* source:cpp-algorithm-is-heap-until:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is *less* than the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>).
+
+The types `Type1` and `Type2` must be such that an object of type `RandomIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+- `RandomIt` must meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Return value
+
+{/* source:cpp-algorithm-is-heap-until:0007 */}
+The last iterator `it` for which range `[first, it)` is a heap.
+
+### Complexity
+
+{/* source:cpp-algorithm-is-heap-until:0008 */}
+Given N as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-is-heap-until:0009 */}
+1. 1,2) O(N) comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-is-heap-until:0010 */}
+2. 3,4) O(N) applications of the comparison function `comp`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-is-heap-until:0011 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-is-heap-until:0012 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Example
+
+{/* source:cpp-algorithm-is-heap-until:0013 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v{3, 1, 4, 1, 5, 9};
+ 
+    std::make_heap(v.begin(), v.end());
+ 
+    // probably mess up the heap
+    v.push_back(2);
+    v.push_back(6);
+ 
+    auto heap_end = std::is_heap_until(v.begin(), v.end());
+ 
+    std::cout << "all of v:  ";
+    for (const auto& i : v)
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    std::cout << "only heap: ";
+    for (auto i = v.begin(); i != heap_end; ++i)
+        std::cout << *i << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+all of v:  9 5 4 1 1 3 2 6
+only heap: 9 5 4 1 1 3 2
+```
+
+### See also
+
+{/* source:cpp-algorithm-is-heap-until:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_heap`](/docs/cpp/library/algorithm/is_heap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the given range is a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_heap`](/docs/cpp/library/algorithm/make_heap)</DescriptionTerm>
+    <DescriptionBody>creates a max heap out of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_heap`](/docs/cpp/library/algorithm/push_heap)</DescriptionTerm>
+    <DescriptionBody>adds an element to a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_heap`](/docs/cpp/library/algorithm/pop_heap)</DescriptionTerm>
+    <DescriptionBody>removes the largest element from a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sort_heap`](/docs/cpp/library/algorithm/sort_heap)</DescriptionTerm>
+    <DescriptionBody>turns a max heap into a range of elements sorted in ascending order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::is_heap_until`](/docs/cpp/library/algorithm/ranges/is_heap_until) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the largest subrange that is a max heap (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

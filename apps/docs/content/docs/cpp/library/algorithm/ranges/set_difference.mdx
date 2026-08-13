@@ -1,0 +1,238 @@
+---
+title: "std::ranges::set_difference, std::ranges::set_difference_result"
+description: "Copies the elements from the sorted input range [first1, last1) which are not found in the sorted input range [first2, last2) to the output range beginning at result."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/set_difference"
+language: "C++"
+---
+{/* source:cpp-algorithm-ranges-set-difference:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I1, std::sentinel_for<I1> S1,
+          std::input_iterator I2, std::sentinel_for<I2> S2,
+          std::weakly_incrementable O, class Comp = ranges::less,
+          class Proj1 = std::identity, class Proj2 = std::identity >
+requires std::mergeable<I1, I2, O, Comp, Proj1, Proj2>
+constexpr set_difference_result<I1, O>
+    set_difference( I1 first1, S1 last1, I2 first2, S2 last2,
+                    O result, Comp comp = {},
+
+                    Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R1, ranges::input_range R2,
+          std::weakly_incrementable O, class Comp = ranges::less,
+          class Proj1 = std::identity, class Proj2 = std::identity >
+requires std::mergeable<ranges::iterator_t<R1>, ranges::iterator_t<R2>,
+                        O, Comp, Proj1, Proj2>
+constexpr set_difference_result<ranges::borrowed_iterator_t<R1>, O>
+    set_difference( R1&& r1, R2&& r2, O result, Comp comp = {},
+
+                    Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I, class O >
+using set_difference_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-set-difference:0001 */}
+Copies the elements from the sorted input range `[first1, last1)` which are not found in the sorted input range `[first2, last2)` to the output range beginning at `result`.
+
+{/* source:cpp-algorithm-ranges-set-difference:0002 */}
+The behavior is undefined if
+
+{/* source:cpp-algorithm-ranges-set-difference:0003 */}
+- the input ranges are not sorted with respect to `comp` and `proj1` or `proj2`, respectively, or the resulting range overlaps with either of the input ranges.
+
+{/* source:cpp-algorithm-ranges-set-difference:0004 */}
+1. 1) Elements are compared using the given binary comparison function `comp`.
+
+{/* source:cpp-algorithm-ranges-set-difference:0005 */}
+2. 2) Same as (1), but uses `r1` as the first range and `r2` as the second range, as if using `ranges::begin(r1)` as `first1`, `ranges::end(r1)` as `last1`, `ranges::begin(r2)` as `first2`, and `ranges::end(r2)` as `last2`.
+
+{/* source:cpp-algorithm-ranges-set-difference:0006 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-set-difference:0007 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-set-difference:0008 */}
+<ParameterList>
+  <Parameter name="first1, last1">iterator-sentinel pair denoting the first sorted input range</Parameter>
+  <Parameter name="first2, last2">iterator-sentinel pair denoting the second sorted input range</Parameter>
+  <Parameter name="r1">the first sorted input range</Parameter>
+  <Parameter name="r2">the second sorted input range</Parameter>
+  <Parameter name="result">the beginning of the output range</Parameter>
+  <Parameter name="comp">comparator to apply to the projected elements</Parameter>
+  <Parameter name="proj1">projection to apply to the elements in the first range</Parameter>
+  <Parameter name="proj2">projection to apply to the elements in the second range</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-set-difference:0009 */}
+`{last1, result_last}`, where `result_last` is the end of the constructed range.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-set-difference:0010 */}
+At most `2·(N1+N2)-1` comparisons and applications of each projection, where `N1` and `N2` are `ranges::distance(first1, last1)` and `ranges::distance(first2, last2)`, respectively.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-set-difference:0011 */}
+```cpp
+struct set_difference_fn
+{
+    template<std::input_iterator I1, std::sentinel_for<I1> S1,
+             std::input_iterator I2, std::sentinel_for<I2> S2,
+             std::weakly_incrementable O, class Comp = ranges::less,
+             class Proj1 = std::identity, class Proj2 = std::identity>
+    requires std::mergeable<I1, I2, O, Comp, Proj1, Proj2>
+    constexpr ranges::set_difference_result<I1, O>
+        operator()(I1 first1, S1 last1, I2 first2, S2 last2,
+                   O result, Comp comp = {},
+                   Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        while (!(first1 == last1 or first2 == last2))
+        {
+            if (std::invoke(comp, std::invoke(proj1, *first1), std::invoke(proj2, *first2)))
+            {
+                *result = *first1;
+                ++first1;
+                ++result;
+            }
+            else if (std::invoke(comp, std::invoke(proj2, *first2),
+                                 std::invoke(proj1, *first1)))
+                ++first2;
+            else
+            {
+                ++first1;
+                ++first2;
+            }
+        }
+        return ranges::copy(std::move(first1), std::move(last1), std::move(result));
+    }
+ 
+    template<ranges::input_range R1, ranges::input_range R2,
+             std::weakly_incrementable O, class Comp = ranges::less,
+             class Proj1 = std::identity, class Proj2 = std::identity>
+    requires std::mergeable<ranges::iterator_t<R1>, ranges::iterator_t<R2>,
+                            O, Comp, Proj1, Proj2>
+    constexpr ranges::set_difference_result<ranges::borrowed_iterator_t<R1>, O>
+        operator()(R1&& r1, R2&& r2, O result, Comp comp = {},
+                   Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        return (*this)(ranges::begin(r1), ranges::end(r1),
+                       ranges::begin(r2), ranges::end(r2),
+                       std::move(result), std::move(comp),
+                       std::move(proj1), std::move(proj2));
+    }
+};
+ 
+inline constexpr set_difference_fn set_difference {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-set-difference:0012 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <string_view>
+#include <vector>
+ 
+auto print = [](const auto& v, std::string_view end = "")
+{
+    std::cout << "{ ";
+    for (auto n{v.size()}; auto i : v)
+        std::cout << i << (--n ? ", " : " ");
+    std::cout << "} " << end;
+};
+ 
+struct Order // a struct with some very interesting data
+{
+    int order_id{};
+ 
+    friend std::ostream& operator<<(std::ostream& os, const Order& ord)
+    {
+        return os << '{' << ord.order_id << '}';
+    }
+};
+ 
+int main()
+{
+    const auto v1 = {1, 2, 5, 5, 5, 9};
+    const auto v2 = {2, 5, 7};
+    std::vector<int> diff{};
+ 
+    std::ranges::set_difference(v1, v2, std::back_inserter(diff));
+    print(v1, "∖ ");
+    print(v2, "= ");
+    print(diff, "\n\n");
+ 
+    // We want to know which orders "cut" between old and new states:
+    const std::vector<Order> old_orders{{1}, {2}, {5}, {9}};
+    const std::vector<Order> new_orders{{2}, {5}, {7}};
+    std::vector<Order> cut_orders(old_orders.size() + new_orders.size());
+ 
+    auto [old_orders_end, cut_orders_last] =
+        std::ranges::set_difference(old_orders, new_orders,
+                                    cut_orders.begin(), {},
+                                    &Order::order_id, &Order::order_id);
+    assert(old_orders_end == old_orders.end());
+ 
+    std::cout << "old orders = ";
+    print(old_orders, "\n");
+    std::cout << "new orders = ";
+    print(new_orders, "\n");
+    std::cout << "cut orders = ";
+    print(cut_orders, "\n");
+    cut_orders.erase(cut_orders_last, end(cut_orders));
+    std::cout << "cut orders = ";
+    print(cut_orders, "\n");
+}
+```
+
+Output:
+
+```text
+{ 1, 2, 5, 5, 5, 9 } ∖ { 2, 5, 7 } = { 1, 5, 5, 9 } 
+ 
+old orders = { {1}, {2}, {5}, {9} } 
+new orders = { {2}, {5}, {7} } 
+cut orders = { {1}, {9}, {0}, {0}, {0}, {0}, {0} } 
+cut orders = { {1}, {9} }
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-set-difference:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::set_union`](/docs/cpp/library/algorithm/ranges/set_union) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the union of two sets (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::set_intersection`](/docs/cpp/library/algorithm/ranges/set_intersection) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the intersection of two sets (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::set_symmetric_difference`](/docs/cpp/library/algorithm/ranges/set_symmetric_difference) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the symmetric difference between two sets (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::includes`](/docs/cpp/library/algorithm/ranges/includes) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns `true` if one sequence is a subsequence of another (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_difference`](/docs/cpp/library/algorithm/set_difference)</DescriptionTerm>
+    <DescriptionBody>computes the difference between two sets (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,144 @@
+---
+title: "std::ranges::generate_n"
+description: "Assigns the result of successive invocations of the function object gen to each element in the range [first, first + n), if 0 < n. Does nothing otherwise."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/generate_n"
+language: "C++"
+---
+
+
+{/* source:cpp-algorithm-ranges-generate-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< std::input_or_output_iterator O, std::copy_constructible F >
+requires std::invocable<F&> && std::indirectly_writable<O, std::invoke_result_t<F&>>
+constexpr O
+
+    generate_n( O first, std::iter_difference_t<O> n, F gen );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-generate-n:0001 */}
+Assigns the result of successive invocations of the function object `gen` to each element in the range [`first`, `first + n`), if `0 < n`. Does nothing otherwise.
+
+{/* source:cpp-algorithm-ranges-generate-n:0002 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-generate-n:0003 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-generate-n:0004 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of elements to modify</Parameter>
+  <Parameter name="n">number of elements to modify</Parameter>
+  <Parameter name="gen">the generator function object.</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-generate-n:0005 */}
+Iterator one past the last element assigned if `0 < count`, `first` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-generate-n:0006 */}
+Exactly `n` invocations of `gen()` and assignments.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-generate-n:0007 */}
+```cpp
+struct generate_n_fn
+{
+    template<std::input_or_output_iterator O, std::copy_constructible F>
+    requires std::invocable<F&> && std::indirectly_writable<O, std::invoke_result_t<F&>>
+    constexpr O operator()(O first, std::iter_difference_t<O> n, F gen) const
+    {
+        for (; n-- > 0; *first = std::invoke(gen), ++first)
+        {}
+        return first;
+    }
+};
+ 
+inline constexpr generate_n_fn generate_n {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-generate-n:0008 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <random>
+#include <string_view>
+ 
+auto dice()
+{
+    static std::uniform_int_distribution<int> distr {1, 6};
+    static std::random_device engine;
+    static std::mt19937 noise {engine()};
+    return distr(noise);
+}
+ 
+void print(const auto& v, std::string_view comment)
+{
+    for (int i : v)
+        std::cout << i << ' ';
+    std::cout << '(' << comment << ")\n";
+}
+ 
+int main()
+{
+    std::array<int, 8> v;
+ 
+    std::ranges::generate_n(v.begin(), v.size(), dice);
+    print(v, "dice");
+ 
+    std::ranges::generate_n(v.begin(), v.size(), [n {0}] mutable { return n++; });
+    // same effect as std::iota(v.begin(), v.end(), 0);
+    print(v, "iota");
+}
+```
+
+Possible output:
+
+```text
+5 5 2 2 6 6 3 5 (dice)
+0 1 2 3 4 5 6 7 (iota)
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-generate-n:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::generate`](/docs/cpp/library/algorithm/ranges/generate) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>saves the result of a function in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::generate_random`](/docs/cpp/library/algorithm/ranges/generate_random) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>fills a range with random numbers from a uniform random bit generator (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of elements a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill_n`](/docs/cpp/library/algorithm/ranges/fill_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a value to a number of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform`](/docs/cpp/library/algorithm/ranges/transform) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`generate_n`](/docs/cpp/library/algorithm/generate_n)</DescriptionTerm>
+    <DescriptionBody>assigns the results of successive function calls to `N` elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

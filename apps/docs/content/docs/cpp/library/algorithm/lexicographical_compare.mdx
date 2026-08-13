@@ -1,0 +1,232 @@
+---
+title: "std::lexicographical_compare"
+description: "Checks if the first range [ first1 , last1 ) is lexicographically less than the second range [ first2 , last2 )."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/lexicographical_compare"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-lexicographical-compare:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+  <Declaration id="1" language="cpp" code={`template< class InputIt1, class InputIt2 >
+bool lexicographical_compare( InputIt1 first1, InputIt1 last1,
+
+                              InputIt2 first2, InputIt2 last2 );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2 >
+bool lexicographical_compare( ExecutionPolicy&& policy,
+                              ForwardIt1 first1, ForwardIt1 last1,
+
+                              ForwardIt2 first2, ForwardIt2 last2 );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt1, class InputIt2, class Compare >
+bool lexicographical_compare( InputIt1 first1, InputIt1 last1,
+                              InputIt2 first2, InputIt2 last2,
+
+                              Compare comp );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2, class Compare >
+bool lexicographical_compare( ExecutionPolicy&& policy,
+                              ForwardIt1 first1, ForwardIt1 last1,
+                              ForwardIt2 first2, ForwardIt2 last2,
+
+                              Compare comp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-lexicographical-compare:0001 */}
+Checks if the first range `[first1, last1)` is lexicographically *less* than the second range `[first2, last2)`.
+
+{/* source:cpp-algorithm-lexicographical-compare:0002 */}
+1. 1) Elements are compared using `operator<`.
+
+{/* source:cpp-algorithm-lexicographical-compare:0003 */}
+2. 3) Elements are compared using the given binary comparison function `comp`.
+
+{/* source:cpp-algorithm-lexicographical-compare:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`. These overloads participate in overload resolution only if all following conditions are satisfied:
+   - `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`. <InlineRevision until="C++20" />
+   - `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`. <InlineRevision since="C++20" />
+
+{/* source:cpp-algorithm-lexicographical-compare:0005 */}
+Lexicographical comparison is an operation with the following properties:
+
+{/* source:cpp-algorithm-lexicographical-compare:0006 */}
+- Two ranges are compared element by element.
+- The first mismatching element defines which range is lexicographically *less* or *greater* than the other.
+- If one range is a prefix of another, the shorter range is lexicographically *less* than the other.
+- If two ranges have equivalent elements and are of the same length, then the ranges are lexicographically *equal*.
+- An empty range is lexicographically *less* than any non-empty range.
+- Two empty ranges are lexicographically *equal*.
+
+### Parameters
+
+{/* source:cpp-algorithm-lexicographical-compare:0007 */}
+<ParameterList>
+  <Parameter name="first1, last1">the first range of elements to examine</Parameter>
+  <Parameter name="first2, last2">the second range of elements to examine</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is *less* than the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>).
+
+The types `Type1` and `Type2` must be such that objects of types `InputIt1` and `InputIt2` can be dereferenced and then implicitly converted to both `Type1` and `Type2`.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+- `InputIt1, InputIt2` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt1, ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Return value
+
+{/* source:cpp-algorithm-lexicographical-compare:0008 */}
+`true` if the first range is lexicographically *less* than the second, otherwise `false`.
+
+### Complexity
+
+{/* source:cpp-algorithm-lexicographical-compare:0009 */}
+Given N1 as `std::distance(first1, last1)` and N2 as `std::distance(first2, last2)`:
+
+{/* source:cpp-algorithm-lexicographical-compare:0010 */}
+1. 1,2) At most 2min(1,N2) comparisons using `operator<`.
+
+{/* source:cpp-algorithm-lexicographical-compare:0011 */}
+2. 3,4) At most 2min(N1,N2) applications of the comparison function `comp`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-lexicographical-compare:0012 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-lexicographical-compare:0013 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-lexicographical-compare:0014 */}
+[`lexicographical_compare (1)`](/docs/cpp/library/algorithm/lexicographical_compare#Version_1)
+
+```cpp
+template<class InputIt1, class InputIt2>
+bool lexicographical_compare(InputIt1 first1, InputIt1 last1,
+                             InputIt2 first2, InputIt2 last2)
+{
+    for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2)
+    {
+        if (*first1 < *first2)
+            return true;
+        if (*first2 < *first1)
+            return false;
+    }
+ 
+    return (first1 == last1) && (first2 != last2);
+}
+```
+
+[`lexicographical_compare (3)`](/docs/cpp/library/algorithm/lexicographical_compare#Version_3)
+
+```cpp
+template<class InputIt1, class InputIt2, class Compare>
+bool lexicographical_compare(InputIt1 first1, InputIt1 last1,
+                             InputIt2 first2, InputIt2 last2, Compare comp)
+{
+    for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2)
+    {
+        if (comp(*first1, *first2))
+            return true;
+        if (comp(*first2, *first1))
+            return false;
+    }
+ 
+    return (first1 == last1) && (first2 != last2);
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-lexicographical-compare:0015 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <random>
+#include <vector>
+ 
+void print(const std::vector<char>& v, auto suffix)
+{
+    for (char c : v)
+        std::cout << c << ' ';
+    std::cout << suffix;
+}
+ 
+int main()
+{
+    std::vector<char> v1{'a', 'b', 'c', 'd'};
+    std::vector<char> v2{'a', 'b', 'c', 'd'};
+ 
+    for (std::mt19937 g{std::random_device{}()};
+         !std::lexicographical_compare(v1.begin(), v1.end(),
+                                       v2.begin(), v2.end());)
+    {
+        print(v1, ">= ");
+        print(v2, '\n');
+ 
+        std::shuffle(v1.begin(), v1.end(), g);
+        std::shuffle(v2.begin(), v2.end(), g);
+    }
+ 
+    print(v1, "<  ");
+    print(v2, '\n');
+}
+```
+
+Possible output:
+
+```text
+a b c d >= a b c d 
+d a b c >= c b d a 
+b d a c >= a d c b 
+a c d b <  c d a b
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-lexicographical-compare:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-lexicographical-compare:0017 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={142} standard="C++98">
+    <PublishedBehavior>at most min(N1,N2) comparisons were allowed, but that<br />is not possible (equivalence is determined by 2 comparisons)</PublishedBehavior>
+    <CorrectedBehavior>doubled the limit</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1205} standard="C++98">
+    <PublishedBehavior>the results of lexicographical comparisons involving empty ranges were unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-lexicographical-compare:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal`](/docs/cpp/library/algorithm/equal)</DescriptionTerm>
+    <DescriptionBody>determines if two sets of elements are the same (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lexicographical_compare_three_way`](/docs/cpp/library/algorithm/lexicographical_compare_three_way) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>compares two ranges using three-way comparison (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lexicographical_compare`](/docs/cpp/library/algorithm/ranges/lexicographical_compare) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns `true` if one range is lexicographically less than another (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

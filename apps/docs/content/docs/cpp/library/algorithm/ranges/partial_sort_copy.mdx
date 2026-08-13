@@ -1,0 +1,246 @@
+---
+title: "std::ranges::partial_sort_copy, std::ranges::partial_sort_copy_result"
+description: "Copies the first N elements from the source range [first, last), as if it was partially sorted with respect to comp and proj1, into the destination range [result_first, result_first + N), where N = min(L₁, L₂), L₁ is equal to ranges::distance(first, last), and L₂ is equal to ranges::distance(result_first, result_last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/partial_sort_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I1, std::sentinel_for<I1> S1,
+          std::random_access_iterator I2, std::sentinel_for<I2> S2,
+          class Comp = ranges::less, class Proj1 = std::identity,
+          class Proj2 = std::identity >
+requires std::indirectly_copyable<I1, I2> &&
+         std::sortable<I2, Comp, Proj2> &&
+         std::indirect_strict_weak_order<Comp, std::projected<I1, Proj1>,
+             std::projected<I2, Proj2>>
+constexpr partial_sort_copy_result<I1, I2>
+    partial_sort_copy( I1 first, S1 last, I2 result_first, S2 result_last,
+
+                       Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R1, ranges::random_access_range R2,
+          class Comp = ranges::less, class Proj1 = std::identity,
+          class Proj2 = std::identity >
+requires std::indirectly_copyable<ranges::iterator_t<R1>, ranges::iterator_t<R2>> &&
+         std::sortable<ranges::iterator_t<R2>, Comp, Proj2> &&
+         std::indirect_strict_weak_order<Comp, std::projected<ranges::iterator_t<R1>,
+             Proj1>, std::projected<ranges::iterator_t<R2>, Proj2>>
+constexpr partial_sort_copy_result<ranges::borrowed_iterator_t<R1>,
+                                   ranges::borrowed_iterator_t<R2>>
+    partial_sort_copy( R1&& r, R2&& result_r,
+
+                       Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I, class O >
+using partial_sort_copy_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0001 */}
+Copies the first `N` elements from the source range `[first, last)`, as if it was partially sorted with respect to `comp` and `proj1`, into the destination range `[result_first, result_first + N)`, where `N` = min(L₁, L₂), `L₁` is equal to `ranges::distance(first, last)`, and `L₂` is equal to `ranges::distance(result_first, result_last)`.
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0002 */}
+The order of equal elements is not guaranteed to be preserved.
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0003 */}
+1. 1) The source range elements are projected using the function object `proj1`, and the destination elements are projected using the function object `proj2`.
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0004 */}
+2. 2) Same as (1), but uses `r` as the source range and `result_r` as the destination range, as if using `ranges::begin(r)` as `first`, `ranges::end(r)` as `last`, `ranges::begin(result_r)` as `result_first`, and `ranges::end(result_r)` as `result_last`.
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0006 */}
+Explicit template argument lists cannot be specified when calling any of them.
+None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0007 */}
+<ParameterList>
+  <Parameter name="first, last">iterator-sentinel defining the source range to copy from</Parameter>
+  <Parameter name="r">the source range to copy from</Parameter>
+  <Parameter name="result_first, result_last">iterator-sentinel defining the destination range</Parameter>
+  <Parameter name="result_r">the destination range</Parameter>
+  <Parameter name="comp">comparison to apply to the projected elements</Parameter>
+  <Parameter name="proj1">projection to apply to the elements of source range</Parameter>
+  <Parameter name="proj2">projection to apply to the elements of destination range</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0008 */}
+An object equal to `{last, result_first + N}`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0009 */}
+At most L₁•log(N) comparisons and 2•L₁•log(N) projections.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0010 */}
+```cpp
+struct partial_sort_copy_fn
+{
+    template<std::input_iterator I1, std::sentinel_for<I1> S1,
+             std::random_access_iterator I2, std::sentinel_for<I2> S2,
+             class Comp = ranges::less, class Proj1 = std::identity,
+             class Proj2 = std::identity>
+    requires std::indirectly_copyable<I1, I2> && std::sortable<I2, Comp, Proj2> &&
+             std::indirect_strict_weak_order<Comp, std::projected<I1, Proj1>,
+             std::projected<I2, Proj2>>
+    constexpr ranges::partial_sort_copy_result<I1, I2>
+        operator()(I1 first, S1 last, I2 result_first, S2 result_last,
+                   Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        if (result_first == result_last)
+            return {std::move(ranges::next(std::move(first), std::move(last))),
+                    std::move(result_first)};
+ 
+        auto out_last{result_first};
+        // copy first N elements
+        for (; !(first == last or out_last == result_last); ++out_last, ++first)
+            *out_last = *first;
+ 
+        // convert N copied elements into a max-heap
+        ranges::make_heap(result_first, out_last, comp, proj2);
+ 
+        // process the rest of the input range (if any), preserving the heap property
+        for (; first != last; ++first)
+        {
+            if (std::invoke(comp, std::invoke(proj1, *first),
+                                  std::invoke(proj2, *result_first)))
+            {
+                // pop out the biggest item and push in a newly found smaller one
+                ranges::pop_heap(result_first, out_last, comp, proj2);
+                *(out_last - 1) = *first;
+                ranges::push_heap(result_first, out_last, comp, proj2);
+            }
+        }
+ 
+        // first N elements in the output range is still
+        // a heap - convert it into a sorted range
+        ranges::sort_heap(result_first, out_last, comp, proj2);
+ 
+        return {std::move(first), std::move(out_last)};
+    }
+ 
+    template<ranges::input_range R1, ranges::random_access_range R2,
+             class Comp = ranges::less, class Proj1 = std::identity,
+             class Proj2 = std::identity>
+    requires std::indirectly_copyable<ranges::iterator_t<R1>, ranges::iterator_t<R2>> &&
+             std::sortable<ranges::iterator_t<R2>, Comp, Proj2> &&
+             std::indirect_strict_weak_order<Comp, std::projected<ranges::iterator_t<R1>,
+             Proj1>, std::projected<ranges::iterator_t<R2>, Proj2>>
+    constexpr ranges::partial_sort_copy_result<ranges::borrowed_iterator_t<R1>,
+              ranges::borrowed_iterator_t<R2>>
+        operator()(R1&& r, R2&& result_r, Comp comp = {},
+                   Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r),
+                       ranges::begin(result_r), ranges::end(result_r),
+                       std::move(comp), std::move(proj1), std::move(proj2));
+    }
+};
+ 
+inline constexpr partial_sort_copy_fn partial_sort_copy {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0011 */}
+```cpp
+#include <algorithm>
+#include <forward_list>
+#include <functional>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+#include <vector>
+ 
+void print(std::string_view rem, std::ranges::input_range auto const& v)
+{
+    for (std::cout << rem; const auto& e : v)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    const std::forward_list source{4, 2, 5, 1, 3};
+ 
+    print("Write to the smaller vector in ascending order: ", "");
+ 
+    std::vector dest1{10, 11, 12};
+    print("const source list: ", source);
+    print("destination range: ", dest1);
+    std::ranges::partial_sort_copy(source, dest1);
+    print("partial_sort_copy: ", dest1);
+ 
+    print("Write to the larger vector in descending order:", "");
+ 
+    std::vector dest2{10, 11, 12, 13, 14, 15, 16};
+    print("const source list: ", source);
+    print("destination range: ", dest2);
+    std::ranges::partial_sort_copy(source, dest2, std::greater{});
+    print("partial_sort_copy: ", dest2);
+}
+```
+Output:
+```text
+Write to the smaller vector in ascending order:
+const source list: 4 2 5 1 3
+destination range: 10 11 12
+partial_sort_copy: 1 2 3
+Write to the larger vector in descending order:
+const source list: 4 2 5 1 3
+destination range: 10 11 12 13 14 15 16
+partial_sort_copy: 5 4 3 2 1 15 16
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-partial-sort-copy:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partial_sort`](/docs/cpp/library/algorithm/ranges/partial_sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts the first `N` elements of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sort`](/docs/cpp/library/algorithm/ranges/sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts a range into ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::stable_sort`](/docs/cpp/library/algorithm/ranges/stable_sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts a range of elements while preserving order between equal elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sort_heap`](/docs/cpp/library/algorithm/ranges/sort_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>turns a max heap into a range of elements sorted in ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::make_heap`](/docs/cpp/library/algorithm/ranges/make_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a max heap out of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::push_heap`](/docs/cpp/library/algorithm/ranges/push_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>adds an element to a max heap (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::pop_heap`](/docs/cpp/library/algorithm/ranges/pop_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes the largest element from a max heap (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_sort_copy`](/docs/cpp/library/algorithm/partial_sort_copy)</DescriptionTerm>
+    <DescriptionBody>copies and partially sorts a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

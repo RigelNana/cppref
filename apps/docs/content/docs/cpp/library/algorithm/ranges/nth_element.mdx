@@ -1,0 +1,169 @@
+---
+title: "std::ranges::nth_element"
+description: "Reorders the elements in [first, last) such that:"
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/nth_element"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-nth-element:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::random_access_iterator I, std::sentinel_for<I> S,
+          class Comp = ranges::less, class Proj = std::identity >
+requires std::sortable<I, Comp, Proj>
+constexpr I
+
+    nth_element( I first, I nth, S last, Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::random_access_range R,
+          class Comp = ranges::less, class Proj = std::identity >
+requires std::sortable<iterator_t<R>, Comp, Proj>
+constexpr ranges::borrowed_iterator_t<R>
+
+    nth_element( R&& r, iterator_t<R> nth, Comp comp = {}, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-nth-element:0001 */}
+Reorders the elements in `[first, last)` such that:
+
+{/* source:cpp-algorithm-ranges-nth-element:0002 */}
+- The element pointed at by `nth` is changed to whatever element would occur in that position if `[first, last)` were sorted with respect to `comp` and `proj`.
+- All of the elements before this new `nth` element are *less than or equal to* the elements after the new `nth` element. That is, for every iterator `i`, `j` in the ranges `[first, nth)`, `[nth, last)` respectively, the expression `std::invoke(comp, std::invoke(proj, *j), std::invoke(proj, *i))` evaluates to `false`.
+- If `nth == last` then the function has no effect.
+
+{/* source:cpp-algorithm-ranges-nth-element:0003 */}
+1. 1) Elements are compared using the given binary comparison function object `comp` and projection object `proj`.
+
+{/* source:cpp-algorithm-ranges-nth-element:0004 */}
+2. 2) Same as (1), but uses `r` as the range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-nth-element:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-nth-element:0006 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-nth-element:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to reorder</Parameter>
+  <Parameter name="r">the range of elements to reorder</Parameter>
+  <Parameter name="nth">the iterator defining the partition point</Parameter>
+  <Parameter name="comp">comparator used to compare the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-nth-element:0008 */}
+1. 1) An iterator equal to `last`.
+
+{/* source:cpp-algorithm-ranges-nth-element:0009 */}
+2. 2) Same as (1) if `r` is an lvalue or of a [*borrowed_range*](/docs/cpp/library/ranges/borrowed_range) type. Otherwise returns [`std::ranges::dangling`](/docs/cpp/library/ranges/dangling).
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-nth-element:0010 */}
+Linear in `ranges::distance(first, last)` on average.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-nth-element:0011 */}
+The algorithm used is typically [introselect](https://en.wikipedia.org/wiki/Introselect) although other [selection algorithms](https://en.wikipedia.org/wiki/Selection_algorithm) with suitable average-case complexity are allowed.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-nth-element:0012 */}
+See also the implementation in [msvc stl](https://github.com/microsoft/STL/blob/e97bb2b50a12816ce68cc5147b7a3a21fb68bfa3/stl/inc/algorithm#L8896-L8969), [libstdc++](https://github.com/gcc-mirror/gcc/blob/a87819b8f1b890d36a3f05bd9de80be20e9525dd/libstdc%2B%2B-v3/include/bits/ranges_algo.h#L2016-L2044), and libc++: [(1)](https://github.com/llvm/llvm-project/blob/ed2d3644abee9535eb07333beb1562a651001281/libcxx/include/__algorithm/ranges_nth_element.h) / [(2)](https://github.com/llvm/llvm-project/blob/ed2d364/libcxx/include/__algorithm/nth_element.h).
+
+### Example
+
+{/* source:cpp-algorithm-ranges-nth-element:0013 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+ 
+void print(std::string_view rem, std::ranges::input_range auto const& a)
+{
+    for (std::cout << rem; const auto e : a)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::array v{5, 6, 4, 3, 2, 6, 7, 9, 3};
+    print("Before nth_element: ", v);
+ 
+    std::ranges::nth_element(v, v.begin() + v.size() / 2);
+    print("After nth_element:  ", v);
+    std::cout << "The median is: " << v[v.size() / 2] << '\n';
+ 
+    std::ranges::nth_element(v, v.begin() + 1, std::greater<int>());
+    print("After nth_element:  ", v);
+    std::cout << "The second largest element is: " << v[1] << '\n';
+    std::cout << "The largest element is: " << v[0] << "\n\n";
+ 
+    using namespace std::literals;
+    std::array names
+    {
+        "Diva"sv, "Cornelius"sv, "Munro"sv, "Rhod"sv,
+        "Zorg"sv, "Korben"sv, "Bender"sv, "Leeloo"sv,
+    };
+    print("Before nth_element: ", names);
+    auto fifth_element{std::ranges::next(names.begin(), 4)};
+    std::ranges::nth_element(names, fifth_element);
+    print("After nth_element:  ", names);
+    std::cout << "The 5th element is: " << *fifth_element << '\n';
+}
+```
+
+Output:
+
+```text
+Before nth_element: 5 6 4 3 2 6 7 9 3 
+After nth_element:  2 3 3 4 5 6 6 7 9 
+The median is: 5
+After nth_element:  9 7 6 6 5 4 3 3 2 
+The second largest element is: 7
+The largest element is: 9
+ 
+Before nth_element: Diva Cornelius Munro Rhod Zorg Korben Bender Leeloo 
+After nth_element:  Diva Cornelius Bender Korben Leeloo Rhod Munro Zorg 
+The 5th element is: Leeloo
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-nth-element:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::max_element`](/docs/cpp/library/algorithm/ranges/max_element) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the largest element in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::min_element`](/docs/cpp/library/algorithm/ranges/min_element) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the smallest element in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partition`](/docs/cpp/library/algorithm/ranges/partition) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>divides a range of elements into two groups (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partial_sort`](/docs/cpp/library/algorithm/ranges/partial_sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts the first `N` elements of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`nth_element`](/docs/cpp/library/algorithm/nth_element)</DescriptionTerm>
+    <DescriptionBody>partially sorts the given range making sure that it is partitioned by the given element (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

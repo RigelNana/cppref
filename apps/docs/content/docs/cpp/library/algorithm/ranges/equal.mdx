@@ -1,0 +1,209 @@
+---
+title: "std::ranges::equal"
+description: "Returns true if the projected values of the range [first1, last1) are equal to the projected values of the range [first2, last2), and false otherwise."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/equal"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-equal:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I1, std::sentinel_for<I1> S1,
+          std::input_iterator I2, std::sentinel_for<I2> S2,
+          class Pred = ranges::equal_to,
+          class Proj1 = std::identity, class Proj2 = std::identity >
+requires std::indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+constexpr bool
+    equal( I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+
+           Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R1, ranges::input_range R2,
+          class Pred = ranges::equal_to,
+          class Proj1 = std::identity, class Proj2 = std::identity >
+requires std::indirectly_comparable<ranges::iterator_t<R1>, ranges::iterator_t<R2>,
+                                    Pred, Proj1, Proj2>
+constexpr bool
+
+    equal( R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-equal:0001 */}
+1. 1) Returns `true` if the projected values of the range `[first1, last1)` are equal to the projected values of the range `[first2, last2)`, and `false` otherwise.
+
+{/* source:cpp-algorithm-ranges-equal:0002 */}
+2. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-equal:0003 */}
+Two ranges are considered equal if they have the same number of elements and every pair of corresponding projected elements satisfies `pred`. That is, `std::invoke(pred, std::invoke(proj1, *first1), std::invoke(proj2, *first2))` returns `true` for all pairs of corresponding elements in both ranges.
+
+{/* source:cpp-algorithm-ranges-equal:0004 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-equal:0005 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-equal:0006 */}
+<ParameterList>
+  <Parameter name="first1, last1">an iterator-sentinel pair denoting the first range of the elements to compare</Parameter>
+  <Parameter name="r1">the first range of the elements to compare</Parameter>
+  <Parameter name="first2, last2">an iterator-sentinel pair denoting the second range of the elements to compare</Parameter>
+  <Parameter name="r2">the second range of the elements to compare</Parameter>
+  <Parameter name="pred">predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj1">projection to apply to the first range of elements</Parameter>
+  <Parameter name="proj2">projection to apply to the second range of elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-equal:0007 */}
+If the length of the range `[first1, last1)` does not equal the length of the range `[first2, last2)`, returns `false`.
+
+{/* source:cpp-algorithm-ranges-equal:0008 */}
+If the elements in the two ranges are equal after projection, returns `true`.
+
+{/* source:cpp-algorithm-ranges-equal:0009 */}
+Otherwise returns `false`.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-equal:0010 */}
+`ranges::equal` should not be used to compare the ranges formed by the iterators from [`std::unordered_set`](/docs/cpp/library/container/unordered_set), [`std::unordered_multiset`](/docs/cpp/library/container/unordered_multiset), [`std::unordered_map`](/docs/cpp/library/container/unordered_map), or [`std::unordered_multimap`](/docs/cpp/library/container/unordered_multimap) because the order in which the elements are stored in those containers may be different even if the two containers store the same elements.
+
+{/* source:cpp-algorithm-ranges-equal:0011 */}
+When comparing entire containers or string views for equality, `operator==` for the corresponding type are usually preferred.
+
+{/* source:cpp-algorithm-ranges-equal:0012 */}
+`ranges::equal` is not guaranteed to be short-circuit. E.g. if the first pair elements of both ranges do not compare equal, the rest of elements may also be compared. Non-short-circuit comparison may happen when the ranges are compared with [`std::memcmp`](/docs/cpp/library/text/byte/memcmp) or implementation-specific vectorized algorithms.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-equal:0013 */}
+At most `min(last1 - first1, last2 - first2)` applications of the predicate and corresponding projections.
+
+{/* source:cpp-algorithm-ranges-equal:0014 */}
+However, if `S1` and `S2` both model [`std::sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for) their respective iterators, and `last1 - first1 != last2 - first2` then no applications of the predicate are made (size mismatch is detected without looking at any elements).
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-equal:0015 */}
+```cpp
+struct equal_fn
+{
+  template<std::input_iterator I1, std::sentinel_for<I1> S1,
+           std::input_iterator I2, std::sentinel_for<I2> S2,
+           class Pred = ranges::equal_to,
+           class Proj1 = std::identity, class Proj2 = std::identity>
+  requires std::indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+  constexpr bool
+      operator()(I1 first1, S1 last1, I2 first2, S2 last2,
+                 Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+  {
+      if constexpr (std::sized_sentinel_for<S1, I1> and std::sized_sentinel_for<S2, I2>)
+          if (std::ranges::distance(first1, last1) != std::ranges::distance(first2, last2))
+              return false;
+ 
+      for (; first1 != last1; ++first1, (void)++first2)
+          if (!std::invoke(pred, std::invoke(proj1, *first1), std::invoke(proj2, *first2)))
+              return false;
+      return true;
+  }
+ 
+  template<ranges::input_range R1, ranges::input_range R2,
+           class Pred = ranges::equal_to,
+           class Proj1 = std::identity, class Proj2 = std::identity>
+  requires std::indirectly_comparable<ranges::iterator_t<R1>, ranges::iterator_t<R2>,
+                                      Pred, Proj1, Proj2>
+  constexpr bool
+      operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+  {
+      return (*this)(ranges::begin(r1), ranges::end(r1),
+                     ranges::begin(r2), ranges::end(r2),
+                     std::ref(pred), std::ref(proj1), std::ref(proj2));
+  }
+};
+ 
+inline constexpr equal_fn equal;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-equal:0016 */}
+The following code uses `ranges::equal` to test if a string is a palindrome.
+
+```cpp
+#include <algorithm>
+#include <iomanip>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+ 
+constexpr bool is_palindrome(const std::string_view s)
+{
+    namespace views = std::views;
+    auto forward = s | views::take(s.size() / 2);
+    auto backward = s | views::reverse | views::take(s.size() / 2);
+    return std::ranges::equal(forward, backward);
+}
+ 
+void test(const std::string_view s)
+{
+    std::cout << std::quoted(s) << " is "
+              << (is_palindrome(s) ? "" : "not ")
+              << "a palindrome\n";
+}
+ 
+int main()
+{
+    test("radar");
+    test("hello");
+    static_assert(is_palindrome("ABBA") and not is_palindrome("AC/DC"));
+}
+```
+
+Output:
+
+```text
+"radar" is a palindrome
+"hello" is not a palindrome
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-equal:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find ranges::find_if ranges::find_if_not`](/docs/cpp/library/algorithm/ranges/find) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lexicographical_compare`](/docs/cpp/library/algorithm/ranges/lexicographical_compare) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns `true` if one range is lexicographically less than another (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::mismatch`](/docs/cpp/library/algorithm/ranges/mismatch) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first position where two ranges differ (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::search`](/docs/cpp/library/algorithm/ranges/search) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal_range`](/docs/cpp/library/algorithm/ranges/equal_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_to`](/docs/cpp/library/utility/functional/equal_to)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x == y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal`](/docs/cpp/library/algorithm/equal)</DescriptionTerm>
+    <DescriptionBody>determines if two sets of elements are the same (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

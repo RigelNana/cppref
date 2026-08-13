@@ -1,0 +1,268 @@
+---
+title: "std::find_end"
+description: "Searches for the last occurrence of the sequence [s_first, s_last) in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/find_end"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-find-end:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class ForwardIt1, class ForwardIt2 >
+ForwardIt1 find_end( ForwardIt1 first, ForwardIt1 last,
+
+                     ForwardIt2 s_first, ForwardIt2 s_last );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2 >
+ForwardIt1 find_end( ExecutionPolicy&& policy,
+                     ForwardIt1 first, ForwardIt1 last,
+
+                     ForwardIt2 s_first, ForwardIt2 s_last );`} />
+  <Declaration id="3" language="cpp" code={`template< class ForwardIt1, class ForwardIt2, class BinaryPred >
+ForwardIt1 find_end( ForwardIt1 first, ForwardIt1 last,
+                     ForwardIt2 s_first, ForwardIt2 s_last,
+
+                     BinaryPred p );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2, class BinaryPred >
+ForwardIt1 find_end( ExecutionPolicy&& policy,
+                     ForwardIt1 first, ForwardIt1 last,
+                     ForwardIt2 s_first, ForwardIt2 s_last,
+
+                     BinaryPred p );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-find-end:0001 */}
+Searches for the last occurrence of the sequence [`s_first`, `s_last`) in the range [`first`, `last`).
+
+{/* source:cpp-algorithm-find-end:0002 */}
+1. 1) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-find-end:0003 */}
+2. 3) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-find-end:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-find-end:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">
+   `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+   <Revision since="C++20">
+   `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-find-end:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="s_first, s_last">the range of elements to search for</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that objects of types `ForwardIt1` and `ForwardIt2` can be dereferenced and then implicitly converted to `Type1` and `Type2` respectively.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `ForwardIt1` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-find-end:0007 */}
+Iterator to the beginning of last occurrence of the sequence [`s_first`, `s_last`) in range [`first`, `last`).
+
+{/* source:cpp-algorithm-find-end:0008 */}
+If [`s_first`, `s_last`) is empty or if no such sequence is found, `last` is returned.
+
+### Complexity
+
+{/* source:cpp-algorithm-find-end:0009 */}
+Given `N` as `std::distance(first, last)` and `S` as `std::distance(s_first, s_last)`:
+
+{/* source:cpp-algorithm-find-end:0010 */}
+1. 1,2) At most S·(N-S+1) comparisons using `operator==`.
+
+{/* source:cpp-algorithm-find-end:0011 */}
+2. 3,4) At most S·(N-S+1) applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-find-end:0012 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-find-end:0013 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-find-end:0014 */}
+[`find_end (1)`](/docs/cpp/library/algorithm/find_end#Version_1)
+
+```cpp
+template<class ForwardIt1, class ForwardIt2>
+constexpr //< since C++20
+ForwardIt1 find_end(ForwardIt1 first, ForwardIt1 last,
+                    ForwardIt2 s_first, ForwardIt2 s_last)
+{
+    if (s_first == s_last)
+        return last;
+ 
+    ForwardIt1 result = last;
+    while (true)
+    {
+        ForwardIt1 new_result = std::search(first, last, s_first, s_last);
+        if (new_result == last)
+            break;
+        else
+        {
+            result = new_result;
+            first = result;
+            ++first;
+        }
+    }
+    return result;
+}
+```
+
+[`find_end (3)`](/docs/cpp/library/algorithm/find_end#Version_3)
+
+```cpp
+template<class ForwardIt1, class ForwardIt2, class BinaryPred>
+constexpr //< since C++20
+ForwardIt1 find_end(ForwardIt1 first, ForwardIt1 last,
+                    ForwardIt2 s_first, ForwardIt2 s_last,
+                    BinaryPred p)
+{
+    if (s_first == s_last)
+        return last;
+ 
+    ForwardIt1 result = last;
+    while (true)
+    {
+        ForwardIt1 new_result = std::search(first, last, s_first, s_last, p);
+        if (new_result == last)
+            break;
+        else
+        {
+            result = new_result;
+            first = result;
+            ++first;
+        }
+    }
+    return result;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-find-end:0015 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <iostream>
+ 
+auto print_result = [](auto result, const auto& v)
+{
+    result == v.end()
+        ? std::cout << "Sequence not found\n"
+        : std::cout << "Last occurrence is at: " << std::distance(v.begin(), result)
+                    << '\n';
+};
+ 
+int main()
+{
+    const auto v = {1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4};
+ 
+    for (auto const& x : {std::array{1, 2, 3}, {4, 5, 6}})
+    {
+        auto iter = std::find_end(v.begin(), v.end(), x.begin(), x.end()); // overload (1)
+        print_result(iter, v);
+    }
+ 
+    for (auto const& x : {std::array{-1, -2, -3}, {-4, -5, -6}})
+    {
+        auto iter = std::find_end(v.begin(), v.end(), x.begin(), x.end(), // overload (3)
+                                  [](int x, int y)
+                                  {
+                                      return std::abs(x) == std::abs(y);
+                                  });
+        print_result(iter, v);
+    }
+}
+```
+
+Output:
+
+```text
+Last occurrence is at: 8
+Sequence not found
+Last occurrence is at: 8
+Sequence not found
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-find-end:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-find-end:0017 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={1205} standard="C++98">
+    <PublishedBehavior>the return value was unclear if [`s_first`, `s_last`) is empty</PublishedBehavior>
+    <CorrectedBehavior>returns `last` in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2150} standard="C++98">
+    <PublishedBehavior>the condition of “sequence occurence” was incorrect</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-find-end:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`search`](/docs/cpp/library/algorithm/search)</DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`includes`](/docs/cpp/library/algorithm/includes)</DescriptionTerm>
+    <DescriptionBody>returns `true` if one sequence is a subsequence of another (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`adjacent_find`](/docs/cpp/library/algorithm/adjacent_find)</DescriptionTerm>
+    <DescriptionBody>finds the first two adjacent items that are equal (or satisfy a given predicate) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`, `find_if`, `find_if_not`](/docs/cpp/library/algorithm/find)</DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_of`](/docs/cpp/library/algorithm/find_first_of)</DescriptionTerm>
+    <DescriptionBody>searches for any one of a set of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`search_n`](/docs/cpp/library/algorithm/search_n) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a number consecutive copies of an element in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find_end`](/docs/cpp/library/algorithm/ranges/find_end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the last sequence of elements in a certain range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

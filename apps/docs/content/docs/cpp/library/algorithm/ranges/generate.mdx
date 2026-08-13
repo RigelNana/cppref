@@ -1,0 +1,168 @@
+---
+title: "std::ranges::generate"
+description: "Assigns the result of successive invocations of the function object gen to each element in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/generate"
+language: "C++"
+---
+
+
+{/* source:cpp-algorithm-ranges-generate:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_or_output_iterator O, std::sentinel_for<O> S,
+          std::copy_constructible F >
+requires std::invocable<F&> && std::indirectly_writable<O, std::invoke_result_t<F&>>
+constexpr O
+
+    generate( O first, S last, F gen );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class R, std::copy_constructible F >
+requires std::invocable<F&> && ranges::output_range<R, std::invoke_result_t<F&>>
+constexpr ranges::borrowed_iterator_t<R>
+
+    generate( R&& r, F gen );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-generate:0001 */}
+1. 1) Assigns the result of successive invocations of the function object `gen` to each element in the range [`first`, `last`).
+
+{/* source:cpp-algorithm-ranges-generate:0002 */}
+2. 2) Same as (1), but uses `r` as the range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-generate:0003 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-generate:0004 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-generate:0005 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to modify</Parameter>
+  <Parameter name="r">the range of elements to modify</Parameter>
+  <Parameter name="gen">the generator function object</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-generate:0006 */}
+An output iterator that compares equal to `last`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-generate:0007 */}
+Exactly `ranges::distance(first, last)` invocations of `gen()` and assignments.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-generate:0008 */}
+```cpp
+struct generate_fn
+{
+    template<std::input_or_output_iterator O, std::sentinel_for<O> S,
+             std::copy_constructible F>
+    requires std::invocable<F&> && std::indirectly_writable<O, std::invoke_result_t<F&>>
+    constexpr O operator()(O first, S last, F gen) const
+    {
+        for (; first != last; *first = std::invoke(gen), ++first)
+        {}
+        return first;
+    }
+ 
+    template<class R, std::copy_constructible F>
+    requires std::invocable<F&> && ranges::output_range<R, std::invoke_result_t<F&>>
+    constexpr ranges::borrowed_iterator_t<R> operator()(R&& r, F gen) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(gen));
+    }
+};
+ 
+inline constexpr generate_fn generate {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-generate:0009 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <random>
+#include <string_view>
+ 
+auto dice()
+{
+    static std::uniform_int_distribution<int> distr{1, 6};
+    static std::random_device device;
+    static std::mt19937 engine {device()};
+    return distr(engine);
+}
+ 
+void iota(auto& r, int init)
+{
+    std::ranges::generate(r, [init] mutable { return init++; });
+}
+ 
+void print(std::string_view comment, const auto& v)
+{
+    for (std::cout << comment; int i : v)
+        std::cout << i << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::array<int, 8> v;
+ 
+    std::ranges::generate(v.begin(), v.end(), dice);
+    print("dice: ", v);
+    std::ranges::generate(v, dice);
+    print("dice: ", v);
+ 
+    iota(v, 1);
+    print("iota: ", v);
+}
+```
+
+Possible output:
+
+```text
+dice: 4 3 1 6 6 4 5 5
+dice: 4 2 5 3 6 2 6 2
+iota: 1 2 3 4 5 6 7 8
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-generate:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::generate_n`](/docs/cpp/library/algorithm/ranges/generate_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>saves the result of `N` applications of a function (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of elements a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill_n`](/docs/cpp/library/algorithm/ranges/fill_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a value to a number of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform`](/docs/cpp/library/algorithm/ranges/transform) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::generate_random`](/docs/cpp/library/algorithm/ranges/generate_random) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>fills a range with random numbers from a uniform random bit generator (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`generate`](/docs/cpp/library/algorithm/generate)</DescriptionTerm>
+    <DescriptionBody>assigns the results of successive function calls to every element in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

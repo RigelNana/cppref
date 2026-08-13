@@ -1,0 +1,274 @@
+---
+title: "std::remove, std::remove_if"
+description: "Removes all elements satisfying specific criteria from the range [first, last) and returns a past-the-end iterator for the new end of the range."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/remove"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-remove:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" until="C++26" code={`template< class ForwardIt, class T >
+ForwardIt remove( ForwardIt first, ForwardIt last, const T& value );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+constexpr ForwardIt remove( ForwardIt first, ForwardIt last,
+
+                            const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy, class ForwardIt, class T >
+ForwardIt remove( ExecutionPolicy&& policy,
+
+                  ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class ExecutionPolicy, class ForwardIt,
+          class T = typename std::iterator_traits
+                        <ForwardIt>::value_type >
+ForwardIt remove( ExecutionPolicy&& policy,
+
+                  ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="3" language="cpp" code={`template< class ForwardIt, class UnaryPred >
+ForwardIt remove_if( ForwardIt first, ForwardIt last, UnaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+ForwardIt remove_if( ExecutionPolicy&& policy,
+
+                     ForwardIt first, ForwardIt last, UnaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-remove:0001 */}
+Removes all elements satisfying specific criteria from the range `[first, last)` and returns a past-the-end iterator for the new end of the range.
+
+{/* source:cpp-algorithm-remove:0002 */}
+1. 1) Removes all elements that are equal to `value` (using `operator==`).
+
+{/* source:cpp-algorithm-remove:0003 */}
+2. 3) Removes all elements for which predicate `p` returns `true`.
+
+{/* source:cpp-algorithm-remove:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-remove:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+{/* source:cpp-algorithm-remove:0006 */}
+<Revision until="C++11">
+If the [value type](/docs/cpp/library/iterator#Types_and_writability) of `ForwardIt` is not [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable), the behavior is undefined.
+</Revision>
+
+<Revision since="C++11">
+If the type of `*first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable), the behavior is undefined.
+</Revision>
+
+### Explanation
+
+{/* source:cpp-algorithm-remove:0007 */}
+Removing is done by shifting the elements in the range in such a way that the elements that are not to be removed appear in the beginning of the range.
+
+{/* source:cpp-algorithm-remove:0008 */}
+- Shifting is done by <InlineRevision until="C++11">[copy assignment](/docs/cpp/language/classes/as_operator)</InlineRevision><InlineRevision since="C++11">[move assignment](/docs/cpp/language/classes/move_operator)</InlineRevision>.
+- The removing operation is stable: the relative order of the elements not to be removed stays the same.
+- The underlying sequence of `[first, last)` is not shortened by the removing operation. Given `result` as the returned iterator:
+
+{/* source:cpp-algorithm-remove:0009 */}
+- All iterators in `[result, last)` are still [dereferenceable](/docs/cpp/library/iterator#Dereferenceability_and_validity).
+
+{/* source:cpp-algorithm-remove:0010 */}
+<Revision since="C++11">
+- Each element of `[result, last)` has a valid but unspecified state, because move assignment can eliminate elements by moving from elements that were originally in that range.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-remove:0011 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to process</Parameter>
+  <Parameter name="value">the value of elements to remove</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">unary predicate which returns `true` if the element should be removed. The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `ForwardIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `UnaryPredicate` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+### Return value
+
+{/* source:cpp-algorithm-remove:0012 */}
+Past-the-end iterator for the new range of values (if this is not `end`, then it points to an unspecified value, and so do iterators to any values between this iterator and `end`).
+
+### Complexity
+
+{/* source:cpp-algorithm-remove:0013 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-remove:0014 */}
+1. 1,2) Exactly `N` comparisons using `operator==`.
+
+{/* source:cpp-algorithm-remove:0015 */}
+2. 3,4) Exactly `N` applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-remove:0016 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-remove:0017 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-remove:0018 */}
+[`remove (1)`](/docs/cpp/library/algorithm/remove#Version_1)
+
+```cpp
+template<class ForwardIt, class T = typename std::iterator_traits<ForwardIt>::value_type>
+ForwardIt remove(ForwardIt first, ForwardIt last, const T& value)
+{
+    first = std::find(first, last, value);
+    if (first != last)
+        for (ForwardIt i = first; ++i != last;)
+            if (!(*i == value))
+                *first++ = std::move(*i);
+    return first;
+}
+```
+
+[`remove_if (3)`](/docs/cpp/library/algorithm/remove#Version_3)
+
+```cpp
+template<class ForwardIt, class UnaryPred>
+ForwardIt remove_if(ForwardIt first, ForwardIt last, UnaryPred p)
+{
+    first = std::find_if(first, last, p);
+    if (first != last)
+        for (ForwardIt i = first; ++i != last;)
+            if (!p(*i))
+                *first++ = std::move(*i);
+    return first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-remove:0019 */}
+A call to `remove` is typically followed by a call to a container's `erase` member function to actually remove elements from the container. These two invocations together constitute a so-called [Erase-remove idiom](https://en.wikipedia.org/wiki/Erase-remove_idiom).
+
+{/* source:cpp-algorithm-remove:0020 */}
+<Revision since="C++20">
+The same effect can also be achieved by the following non-member functions:
+
+- [`std::erase`](/docs/cpp/library/container/vector/erase2), which has [overloads](/docs/cpp/library/container#Non-member_function_table) for all standard sequence containers.
+- [`std::erase_if`](/docs/cpp/library/container/vector/erase2), which has [overloads](/docs/cpp/library/container#Non-member_function_table) for all standard containers.
+</Revision>
+
+{/* source:cpp-algorithm-remove:0021 */}
+The similarly-named container [member functions](/docs/cpp/library/container#Member_function_table) [`list::remove`](/docs/cpp/library/container/list/remove), [`list::remove_if`](/docs/cpp/library/container/list/remove), [`forward_list::remove`](/docs/cpp/library/container/forward_list/remove), and [`forward_list::remove_if`](/docs/cpp/library/container/forward_list/remove) erase the removed elements.
+
+{/* source:cpp-algorithm-remove:0022 */}
+These algorithms cannot be used with associative containers such as [`std::set`](/docs/cpp/library/container/set) and [`std::map`](/docs/cpp/library/container/map) because their iterator types do not dereference to [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable) types (the keys in these containers are not modifiable).
+
+{/* source:cpp-algorithm-remove:0023 */}
+The standard library also defines an overload of [`std::remove`](/docs/cpp/library/io/c/remove) in [`<cstdio>`](/docs/cpp/library/headers/cstdio), which takes a `const char*` and is used to delete files.
+
+{/* source:cpp-algorithm-remove:0024 */}
+Because `std::remove` takes `value` by reference, it can have unexpected behavior if it is a reference to an element of the range `[first, last)`.
+
+{/* source:cpp-algorithm-remove:0025 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/remove#Version_1)) |
+
+### Example
+
+{/* source:cpp-algorithm-remove:0026 */}
+The following code removes all spaces from a string by shifting all non-space characters to the left and then erasing the extra. This is an example of [Erase-remove idiom](https://en.wikipedia.org/wiki/Erase-remove_idiom).
+
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <cctype>
+#include <complex>
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <vector>
+ 
+int main()
+{
+    std::string str1{"Text with some   spaces"};
+ 
+    auto noSpaceEnd = std::remove(str1.begin(), str1.end(), ' ');
+ 
+    // The spaces are removed from the string only logically.
+    // Note, we use view, the original string is still not shrunk:
+    std::cout << std::string_view(str1.begin(), noSpaceEnd) 
+              << " size: " << str1.size() << '\n';
+ 
+    str1.erase(noSpaceEnd, str1.end());
+ 
+    // The spaces are removed from the string physically.
+    std::cout << str1 << " size: " << str1.size() << '\n';
+ 
+    std::string str2 = "Text\n with\tsome \t  whitespaces\n\n";
+    str2.erase(std::remove_if(str2.begin(), 
+                              str2.end(),
+                              [](unsigned char x) { return std::isspace(x); }),
+               str2.end());
+    std::cout << str2 << '\n';
+ 
+    std::vector<std::complex<double>> nums{{2, 2}, {1, 3}, {4, 8}};
+    #ifdef __cpp_lib_algorithm_default_value_type
+        nums.erase(std::remove(nums.begin(), nums.end(), {1, 3}), nums.end());
+    #else
+        nums.erase(std::remove(nums.begin(), nums.end(), std::complex<double>{1, 3}),
+                   nums.end());
+    #endif
+    assert((nums == std::vector<std::complex<double>>{{2, 2}, {4, 8}}));
+}
+```
+
+Output:
+
+```text
+Textwithsomespaces size: 23
+Textwithsomespaces size: 18
+Textwithsomewhitespaces
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-remove:0027 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-remove:0028 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*EqualityComparable*](/docs/cpp/library/named_req/EqualityComparable), but<br />the value type of `ForwardIt` is not always `T`</PublishedBehavior>
+    <CorrectedBehavior>required the value type of `ForwardIt`<br />to be [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable) instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-remove:0029 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_copy`, `remove_copy_if`](/docs/cpp/library/algorithm/remove_copy)</DescriptionTerm>
+    <DescriptionBody>copies a range of elements omitting those that satisfy specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/algorithm/unique)</DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::remove`, `ranges::remove_if`](/docs/cpp/library/algorithm/ranges/remove) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

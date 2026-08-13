@@ -1,0 +1,174 @@
+---
+title: "std::stable_partition"
+description: "Reorders the elements in the range [first, last) in such a way that all elements for which the predicate p returns true precede the elements for which predicate p returns false. Relative order of the elements is preserved."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/stable_partition"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-stable-partition:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class BidirIt, class UnaryPred >
+BidirIt stable_partition( BidirIt first, BidirIt last, UnaryPred p );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class BidirIt, class UnaryPred >
+BidirIt stable_partition( ExecutionPolicy&& policy,
+
+                          BidirIt first, BidirIt last, UnaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-stable-partition:0001 */}
+1. 1) Reorders the elements in the range `[first, last)` in such a way that all elements for which the predicate `p` returns `true` precede the elements for which predicate `p` returns `false`. Relative order of the elements is preserved.
+
+{/* source:cpp-algorithm-stable-partition:0002 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-stable-partition:0003 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+
+<Revision until="C++20">
+
+`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+<Revision since="C++20">
+
+`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+{/* source:cpp-algorithm-stable-partition:0004 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-stable-partition:0005 */}
+<Revision until="C++11">
+
+- The type of `*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable).
+
+</Revision>
+
+<Revision since="C++11">
+
+- `BidirIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable).
+- The type of `*first` is not [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible).
+- The type of `*first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-stable-partition:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to reorder</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+
+unary predicate which returns `true` if the element should be ordered before other elements.
+
+The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `BidirIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.
+
+Type requirements:
+
+- `BidirIt` must meet the requirements of [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator).
+- `UnaryPred` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-stable-partition:0007 */}
+Iterator to the first element of the second group.
+
+### Complexity
+
+{/* source:cpp-algorithm-stable-partition:0008 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-stable-partition:0009 */}
+1. 1) Exactly `N` applications of `p`.
+
+{/* source:cpp-algorithm-stable-partition:0010 */}
+2. O(N) swaps if there is enough extra memory, otherwise at most N⋅log2(N) swaps.
+
+{/* source:cpp-algorithm-stable-partition:0011 */}
+3. 2) O(N) applications of `p`.
+
+{/* source:cpp-algorithm-stable-partition:0012 */}
+4. N⋅log(N) swaps.
+
+### Exceptions
+
+{/* source:cpp-algorithm-stable-partition:0013 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-stable-partition:0014 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Notes
+
+{/* source:cpp-algorithm-stable-partition:0015 */}
+This function attempts to allocate a temporary buffer. If the allocation fails, the less efficient algorithm is chosen.
+
+{/* source:cpp-algorithm-stable-partition:0016 */}
+Implementations in [libc++](https://github.com/llvm/llvm-project/blob/eda14ebf6a43d9ada6a2be3d1b06b8b6036eb774/libcxx/include/__algorithm/stable_partition.h#L316) and [libstdc++](https://github.com/gcc-mirror/gcc/blob/d2a499a9881c7c079d2a722b57c7fcf022a864dd/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1608) also accept ranges denoted by [*LegacyForwardIterators*](/docs/cpp/library/named_req/ForwardIterator) as an extension.
+
+{/* source:cpp-algorithm-stable-partition:0017 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_constexpr_algorithms`](/docs/cpp/library/feature_test#cpp_lib_constexpr_algorithms) | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_algorithms_202306L) | (C++26) | `constexpr` stable sorting ([1](/docs/cpp/library/algorithm/stable_partition#Version_1)) |
+
+### Example
+
+{/* source:cpp-algorithm-stable-partition:0018 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v{0, 0, 3, -1, 2, 4, 5, 0, 7};
+    std::stable_partition(v.begin(), v.end(), [](int n) { return n > 0; });
+    for (int n : v)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+3 2 4 5 7 0 0 -1 0
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-stable-partition:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-stable-partition:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2150} standard="C++98">
+    <PublishedBehavior>`std::stable_partition` was only required to place one element satisfying `p` before one element not satisfying `p`</PublishedBehavior>
+    <CorrectedBehavior>corrected the requirement</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-stable-partition:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`partition`](/docs/cpp/library/algorithm/partition)</DescriptionTerm>
+    <DescriptionBody>divides a range of elements into two groups (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::stable_partition`](/docs/cpp/library/algorithm/ranges/stable_partition) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>divides elements into two groups while preserving their relative order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

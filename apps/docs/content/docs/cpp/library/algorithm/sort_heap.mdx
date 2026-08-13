@@ -1,0 +1,185 @@
+---
+title: "std::sort_heap"
+description: "Converts the heap [first, last) into a sorted range."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/sort_heap"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-sort-heap:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class RandomIt >
+void sort_heap( RandomIt first, RandomIt last );`} />
+  <Declaration id="2" language="cpp" code={`template< class RandomIt, class Compare >
+void sort_heap( RandomIt first, RandomIt last, Compare comp );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-sort-heap:0001 */}
+Converts the [heap](/docs/cpp/library/algorithm#Heap_operations) `[first, last)` into a sorted range. The heap property is no longer maintained.
+
+{/* source:cpp-algorithm-sort-heap:0002 */}
+1. 1) The heap is with respect to <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>, and will be sorted with respect to <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-sort-heap:0003 */}
+2. 2) The heap is with respect to `comp`, and will be sorted with respect to `comp`.
+
+{/* source:cpp-algorithm-sort-heap:0004 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-sort-heap:0005 */}
+- `[first, last)` is not a heap.
+
+{/* source:cpp-algorithm-sort-heap:0006 */}
+<Revision until="C++11">
+
+- The type of `*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable).
+
+</Revision>
+
+<Revision since="C++11">
+
+- `RandomIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable).
+- The type of `*first` is not [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible).
+- The type of `*first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-sort-heap:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the heap to be sorted</Parameter>
+  <Parameter name="comp">
+
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is *less* than the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `RandomIt` can be dereferenced and then implicitly converted to both of them.
+
+Type requirements:
+
+- `RandomIt` must meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+</Parameter>
+</ParameterList>
+
+### Complexity
+
+{/* source:cpp-algorithm-sort-heap:0008 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-sort-heap:0009 */}
+1. 1) At most 2N⋅log(N) comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-sort-heap:0010 */}
+2. 2) At most 2N⋅log(N) applications of the comparison function `comp`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-sort-heap:0011 */}
+[`sort_heap (1)`](/docs/cpp/library/algorithm/sort_heap#Version_1)
+
+```cpp
+template<class RandomIt>
+void sort_heap(RandomIt first, RandomIt last)
+{
+    while (first != last)
+        std::pop_heap(first, last--);
+}
+```
+
+[`sort_heap (2)`](/docs/cpp/library/algorithm/sort_heap#Version_2)
+
+```cpp
+template<class RandomIt, class Compare>
+void sort_heap(RandomIt first, RandomIt last, Compare comp)
+{
+    while (first != last)
+        std::pop_heap(first, last--, comp);
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-sort-heap:0012 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string_view>
+#include <vector>
+ 
+void println(std::string_view fmt, const auto& v)
+{
+    for (std::cout << fmt; const auto &i : v)
+        std::cout << i << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::vector<int> v{3, 1, 4, 1, 5, 9};
+ 
+    std::make_heap(v.begin(), v.end());
+    println("after make_heap, v: ", v);
+ 
+    std::sort_heap(v.begin(), v.end());
+    println("after sort_heap, v: ", v);
+}
+```
+
+Output:
+
+```text
+after make_heap, v: 9 4 5 1 1 3
+after sort_heap, v: 1 1 3 4 5 9
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-sort-heap:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-sort-heap:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2444} standard="C++98">
+    <PublishedBehavior>at most N⋅log(N) comparisons were allowed</PublishedBehavior>
+    <CorrectedBehavior>increased to 2N⋅log(N)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-sort-heap:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_heap`](/docs/cpp/library/algorithm/is_heap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the given range is a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_heap_until`](/docs/cpp/library/algorithm/is_heap_until) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>finds the largest subrange that is a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_heap`](/docs/cpp/library/algorithm/make_heap)</DescriptionTerm>
+    <DescriptionBody>creates a max heap out of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_heap`](/docs/cpp/library/algorithm/pop_heap)</DescriptionTerm>
+    <DescriptionBody>removes the largest element from a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_heap`](/docs/cpp/library/algorithm/push_heap)</DescriptionTerm>
+    <DescriptionBody>adds an element to a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sort_heap`](/docs/cpp/library/algorithm/ranges/sort_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>turns a max heap into a range of elements sorted in ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

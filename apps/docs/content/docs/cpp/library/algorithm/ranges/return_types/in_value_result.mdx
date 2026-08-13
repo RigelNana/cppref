@@ -1,0 +1,159 @@
+---
+title: "std::ranges::in_value_result"
+description: "ranges::in_value_result is a class template that provides a way to store an iterator and a value as a single unit."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/return_types/in_value_result"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration language="cpp" since="C++23" code={`template< class I, class T >
+struct in_value_result;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0001 */}
+`ranges::in_value_result` is a class template that provides a way to store an iterator and a value as a single unit.
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0002 */}
+This class template has no base classes or declared members other than those shown below. Thus it is suitable for use with [structured bindings](/docs/cpp/language/declarations/structured_binding).
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0003 */}
+All special member functions of this class template are implicitly declared, which makes specializations be [aggregate classes](/docs/cpp/language/initialization/aggregate_initialization), and propagate triviality, potentially-throwing-ness, and constexpr-ness of corresponding operations on data members.
+
+### Template parameters
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0004 */}
+<ParameterList>
+  <Parameter name="I, T">the types of the objects that the `ranges::in_value_result` stores.</Parameter>
+</ParameterList>
+
+### Data members
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`in`</DescriptionTerm>
+    <DescriptionBody>a value (that is supposed to be an iterator) of type `I`. (public member object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value`</DescriptionTerm>
+    <DescriptionBody>a value (that is supposed to be a stored value) of type `T`. (public member object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0006 */}
+All these members are declared with [`[[no_unique_address]]`](/docs/cpp/language/declarations/attributes/no_unique_address) attribute.
+
+### Member functions
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0007 */}
+#### `std::ranges::in_value_result::operator in_value_result<I2, T2>`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`template<class I2, class T2>
+requires convertible_to<const I&, I2> && convertible_to<const T&, T2>
+
+constexpr operator in_value_result<I2, T2>() const &;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template<class I2, class T2>
+requires convertible_to<I, I2> && convertible_to<T, T2>
+
+constexpr operator in_value_result<I2, T2>() &&;`} />
+</DeclarationDoc>
+
+Converts `*this` to the result by constructing every data member of the result from the corresponding member of `*this`.
+
+1. 1) Equivalent to `return {in, value};`.
+
+2. 2) Equivalent to `return {std::move(in), std::move(value)};`.
+
+### Standard library
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0008 */}
+The following standard library functions use `ranges::in_value_result` as the return type:
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0009 */}
+**Algorithm functions**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fold_left_with_iter`](/docs/cpp/library/algorithm/ranges/fold_left_with_iter) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>left-folds a range of elements, and returns a pair (iterator, value) (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fold_left_first_with_iter`](/docs/cpp/library/algorithm/ranges/fold_left_first_with_iter) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>left-folds a range of elements using the first element as an initial value, and returns a pair (iterator, [`optional`](/docs/cpp/library/utility/optional)) (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Synopsis
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0010 */}
+```cpp
+namespace std::ranges
+{
+    template<class I, class T>
+    struct in_value_result
+    {
+        [[no_unique_address]] I in;
+        [[no_unique_address]] T value;
+
+        template<class I2, class T2>
+        requires convertible_to<const I&, I2> && convertible_to<const T&, T2>
+        constexpr operator in_value_result<I2, T2>() const &
+        {
+            return {in, value};
+        }
+
+        template<class I2, class T2>
+        requires convertible_to<I, I2> && convertible_to<T, T2>
+        constexpr operator in_value_result<I2, T2>() &&
+        {
+            return {std::move(in), std::move(value)};
+        }
+    };
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0011 */}
+Each standard library algorithm that uses this family of return types declares a new [alias type](/docs/cpp/language/declarations/type_alias), e.g. `using merge_result = in_in_out_result<I1, I2, O>;`.
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0012 */}
+The names for such aliases are formed by adding the suffix `_result` to the algorithm's name. So, the return type of `std::ranges::merge` can be named as `std::ranges::merge_result`.
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0013 */}
+Unlike [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), this class template has data members of meaningful names.
+
+### Example
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0014 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <functional>
+
+int main()
+{
+    const auto v = {1, 2, 3};
+    const auto ret = std::ranges::fold_left_with_iter(v, 4, std::plus<>());
+    assert(ret.in == v.end());
+    assert(ret.value == 1 + 2 + 3 + 4);
+}
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-return-types-in-value-result:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pair`](/docs/cpp/library/utility/pair) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements binary tuple, i.e. a pair of values (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple`](/docs/cpp/library/utility/tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements fixed size container, which holds elements of possibly different types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

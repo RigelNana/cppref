@@ -1,0 +1,212 @@
+---
+title: "std::adjacent_find"
+description: "Searches the range [first, last) for two consecutive equal elements."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/adjacent_find"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-adjacent-find:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class ForwardIt >
+ForwardIt adjacent_find( ForwardIt first, ForwardIt last );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt >
+ForwardIt adjacent_find( ExecutionPolicy&& policy,
+
+                         ForwardIt first, ForwardIt last );`} />
+  <Declaration id="3" language="cpp" code={`template< class ForwardIt, class BinaryPred >
+ForwardIt adjacent_find( ForwardIt first, ForwardIt last,
+
+                         BinaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class BinaryPred >
+ForwardIt adjacent_find( ExecutionPolicy&& policy,
+                         ForwardIt first, ForwardIt last,
+
+                         BinaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-adjacent-find:0001 */}
+Searches the range `[first, last)` for two consecutive equal elements.
+
+{/* source:cpp-algorithm-adjacent-find:0002 */}
+1. 1) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-adjacent-find:0003 */}
+2. 3) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-adjacent-find:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-adjacent-find:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-adjacent-find:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `ForwardIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `BinaryPred` must meet the requirements of [*BinaryPredicate*](/docs/cpp/library/named_req/BinaryPredicate).
+
+### Return value
+
+{/* source:cpp-algorithm-adjacent-find:0007 */}
+An iterator to the first of the first pair of identical elements, that is, the first iterator `it` such that `*it == *(it + 1)` for (1,2) or `p(*it, *(it + 1)) != false` for (3,4).
+
+{/* source:cpp-algorithm-adjacent-find:0008 */}
+If no such elements are found, `last` is returned.
+
+### Complexity
+
+{/* source:cpp-algorithm-adjacent-find:0009 */}
+Given `result` as the return value of `adjacent_find`, `M` as `std::distance(first, result)` and `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-adjacent-find:0010 */}
+1. 1) Exactly `min(M+1,N-1)` comparisons using `operator==`.
+
+{/* source:cpp-algorithm-adjacent-find:0011 */}
+2. 2) O(N) comparisons using `operator==`.
+
+{/* source:cpp-algorithm-adjacent-find:0012 */}
+3. 3) Exactly `min(M+1,N-1)` applications of the predicate `p`.
+
+{/* source:cpp-algorithm-adjacent-find:0013 */}
+4. 4) O(N) applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-adjacent-find:0014 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-adjacent-find:0015 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-adjacent-find:0016 */}
+[`adjacent_find (1)`](/docs/cpp/library/algorithm/adjacent_find#Version_1)
+
+```cpp
+template<class ForwardIt>
+ForwardIt adjacent_find(ForwardIt first, ForwardIt last)
+{
+    if (first == last)
+        return last;
+ 
+    ForwardIt next = first;
+    ++next;
+ 
+    for (; next != last; ++next, ++first)
+        if (*first == *next)
+            return first;
+ 
+    return last;
+}
+```
+
+[`adjacent_find (3)`](/docs/cpp/library/algorithm/adjacent_find#Version_3)
+
+```cpp
+template<class ForwardIt, class BinaryPred>
+ForwardIt adjacent_find(ForwardIt first, ForwardIt last, BinaryPred p)
+{
+    if (first == last)
+        return last;
+ 
+    ForwardIt next = first;
+    ++next;
+ 
+    for (; next != last; ++next, ++first)
+        if (p(*first, *next))
+            return first;
+ 
+    return last;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-adjacent-find:0017 */}
+```cpp
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v1{0, 1, 2, 3, 40, 40, 41, 41, 5};
+ 
+    auto i1 = std::adjacent_find(v1.begin(), v1.end());
+ 
+    if (i1 == v1.end())
+        std::cout << "No matching adjacent elements\n";
+    else
+        std::cout << "The first adjacent pair of equal elements is at "
+                  << std::distance(v1.begin(), i1) << ", *i1 = "
+                  << *i1 << '\n';
+ 
+    auto i2 = std::adjacent_find(v1.begin(), v1.end(), std::greater<int>());
+    if (i2 == v1.end())
+        std::cout << "The entire vector is sorted in ascending order\n";
+    else
+        std::cout << "The last element in the non-decreasing subsequence is at "
+                  << std::distance(v1.begin(), i2) << ", *i2 = " << *i2 << '\n';
+}
+```
+
+Output:
+
+```text
+The first adjacent pair of equal elements is at 4, *i1 = 40
+The last element in the non-decreasing subsequence is at 7, *i2 = 41
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-adjacent-find:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-adjacent-find:0019 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={240} standard="C++98">
+    <PublishedBehavior>the predicate was applied [`std::find`](/docs/cpp/library/algorithm/find)`(first, last, value) - first` times for (1,3), where `value` was never defined</PublishedBehavior>
+    <CorrectedBehavior>applied [`std::min`](/docs/cpp/library/algorithm/min)`((result - first) + 1, (last - first) - 1)` times</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-adjacent-find:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/algorithm/unique)</DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::adjacent_find`](/docs/cpp/library/algorithm/ranges/adjacent_find) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first two adjacent items that are equal (or satisfy a given predicate) (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,199 @@
+---
+title: "std::sort"
+description: "Sorts the elements in the range [first, last) in non-descending order."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/sort"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-sort:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class RandomIt >
+void sort( RandomIt first, RandomIt last );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class RandomIt >
+void sort( ExecutionPolicy&& policy,
+
+           RandomIt first, RandomIt last );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class RandomIt, class Compare >
+void sort( RandomIt first, RandomIt last, Compare comp );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class RandomIt, class Compare >
+void sort( ExecutionPolicy&& policy,
+
+           RandomIt first, RandomIt last, Compare comp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-sort:0001 */}
+Sorts the elements in the range `[first, last)` in non-descending order. The order of equal elements is not guaranteed to be preserved.
+
+{/* source:cpp-algorithm-sort:0002 */}
+1. 1) Elements are [sorted](/docs/cpp/library/algorithm#Requirements) with respect to <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-sort:0003 */}
+2. 3) Elements are sorted with respect to `comp`.
+
+{/* source:cpp-algorithm-sort:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-sort:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-sort:0006 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-sort:0007 */}
+<Revision until="C++11">
+- The type of `*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable).
+</Revision>
+
+<Revision since="C++11">
+- `RandomIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable).
+- The type of `*first` is not [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible).
+- The type of `*first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-sort:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to sort</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is less than (i.e. is ordered before) the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `RandomIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `RandomIt` must meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Complexity
+
+{/* source:cpp-algorithm-sort:0009 */}
+Given `N` as `last - first`:
+
+{/* source:cpp-algorithm-sort:0010 */}
+1. 1,2) `O(N·log(N))` comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-sort:0011 */}
+2. 3,4) `O(N·log(N))` applications of the comparator `comp`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-sort:0012 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-sort:0013 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-sort:0014 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1950) and [libc++](https://github.com/llvm/llvm-project/blob/e7fc254875ca9e82b899d5354fae9b5b779ff485/libcxx/include/__algorithm/sort.h#L264).
+
+### Notes
+
+{/* source:cpp-algorithm-sort:0015 */}
+Before [LWG713](https://cplusplus.github.io/LWG/issue713), the complexity requirement allowed `sort()` to be implemented using only [Quicksort](https://en.wikipedia.org/wiki/Quicksort), which may need `O(N²)` comparisons in the worst case.
+
+{/* source:cpp-algorithm-sort:0016 */}
+[Introsort](https://en.wikipedia.org/wiki/Introsort) can handle all cases with `O(N·log(N))` comparisons (without incurring additional overhead in the average case), and thus is usually used for implementing `sort()`.
+
+{/* source:cpp-algorithm-sort:0017 */}
+`libc++` has not implemented the corrected time complexity requirement [until LLVM 14](https://reviews.llvm.org/D113413).
+
+### Example
+
+{/* source:cpp-algorithm-sort:0018 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <iostream>
+#include <string_view>
+ 
+int main()
+{
+    std::array<int, 10> s{5, 7, 4, 2, 8, 6, 1, 9, 0, 3};
+ 
+    auto print = [&s](std::string_view const rem)
+    {
+        for (auto a : s)
+            std::cout << a << ' ';
+        std::cout << ": " << rem << '\n';
+    };
+ 
+    std::sort(s.begin(), s.end());
+    print("sorted with the default operator<");
+ 
+    std::sort(s.begin(), s.end(), std::greater<int>());
+    print("sorted with the standard library compare function object");
+ 
+    struct
+    {
+        bool operator()(int a, int b) const { return a < b; }
+    }
+    customLess;
+ 
+    std::sort(s.begin(), s.end(), customLess);
+    print("sorted with a custom function object");
+ 
+    std::sort(s.begin(), s.end(), [](int a, int b)
+                                  {
+                                      return a > b;
+                                  });
+    print("sorted with a lambda expression");
+}
+```
+
+Output:
+
+```text
+0 1 2 3 4 5 6 7 8 9 : sorted with the default operator<
+9 8 7 6 5 4 3 2 1 0 : sorted with the standard library compare function object
+0 1 2 3 4 5 6 7 8 9 : sorted with a custom function object
+9 8 7 6 5 4 3 2 1 0 : sorted with a lambda expression
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-sort:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-sort:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={713} standard="C++98">
+    <PublishedBehavior>the `O(N·log(N))` time complexity was only required on the average</PublishedBehavior>
+    <CorrectedBehavior>it is required for the worst case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-sort:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_sort`](/docs/cpp/library/algorithm/partial_sort)</DescriptionTerm>
+    <DescriptionBody>sorts the first `N` elements of a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stable_sort`](/docs/cpp/library/algorithm/stable_sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range of elements while preserving order between equal elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sort`](/docs/cpp/library/algorithm/ranges/sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts a range into ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

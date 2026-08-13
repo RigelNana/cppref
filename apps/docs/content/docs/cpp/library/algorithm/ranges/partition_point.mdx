@@ -1,0 +1,124 @@
+---
+title: "std::ranges::partition_point"
+description: "Examines the partitioned (as if by ranges::partition) range [first, last) or r and locates the end of the first partition, that is, the projected element that does not satisfy pred or last if all projected elements satisfy pred."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/partition_point"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-partition-point:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr I
+
+    partition_point( I first, S last, Pred pred, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::forward_range R,
+          class Proj = std::identity,
+          std::indirect_unary_predicate<
+              std::projected<ranges::iterator_t<R>, Proj>> Pred >
+constexpr ranges::borrowed_iterator_t<R>
+
+    partition_point( R&& r, Pred pred, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-partition-point:0001 */}
+Examines the partitioned (as if by [`ranges::partition`](/docs/cpp/library/algorithm/ranges/partition)) range `[first, last)` or `r` and locates the end of the first partition, that is, the projected element that does not satisfy `pred` or `last` if all projected elements satisfy `pred`.
+
+{/* source:cpp-algorithm-ranges-partition-point:0002 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-partition-point:0003 */}
+Explicit template argument lists cannot be specified when calling any of them.
+None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-partition-point:0004 */}
+<ParameterList>
+  <Parameter name="first, last">iterator-sentinel defining the partially-ordered range to examine</Parameter>
+  <Parameter name="r">the partially-ordered range to examine</Parameter>
+  <Parameter name="pred">predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-partition-point:0005 */}
+The iterator past the end of the first partition within `[first, last)` or the iterator equal to `last` if all projected elements satisfy `pred`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-partition-point:0006 */}
+Given `N = ranges::distance(first, last)`, performs O(log N) applications of the predicate `pred` and projection `proj`.
+
+{/* source:cpp-algorithm-ranges-partition-point:0007 */}
+However, if sentinels don't model `std::sized_sentinel_for<I>`, the number of iterator increments is O(N).
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-partition-point:0008 */}
+This algorithm is a more general form of `ranges::lower_bound`, which can be expressed in terms of `ranges::partition_point` with the predicate `[&](auto const& e) { return std::invoke(pred, e, value); });`.
+
+### Example
+
+{/* source:cpp-algorithm-ranges-partition-point:0009 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <iterator>
+ 
+auto print_seq = [](auto rem, auto first, auto last)
+{
+    for (std::cout << rem; first != last; std::cout << *first++ << ' ') {}
+    std::cout << '\n';
+};
+ 
+int main()
+{
+    std::array v {1, 2, 3, 4, 5, 6, 7, 8, 9};
+ 
+    auto is_even = [](int i) { return i % 2 == 0; };
+ 
+    std::ranges::partition(v, is_even);
+    print_seq("After partitioning, v: ", v.cbegin(), v.cend());
+ 
+    const auto pp = std::ranges::partition_point(v, is_even);
+    const auto i = std::ranges::distance(v.cbegin(), pp);
+    std::cout << "Partition point is at " << i << "; v[" << i << "] = " << *pp << '\n';
+ 
+    print_seq("First partition (all even elements): ", v.cbegin(), pp);
+    print_seq("Second partition (all odd elements): ", pp, v.cend());
+}
+```
+Possible output:
+```text
+After partitioning, v: 2 4 6 8 5 3 7 1 9
+Partition point is at 4; v[4] = 5
+First partition (all even elements): 2 4 6 8
+Second partition (all odd elements): 5 3 7 1 9
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-partition-point:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::is_sorted`](/docs/cpp/library/algorithm/ranges/is_sorted) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks whether a range is sorted into ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lower_bound`](/docs/cpp/library/algorithm/ranges/lower_bound) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element not less than the given value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partition_point`](/docs/cpp/library/algorithm/partition_point) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>locates the partition point of a partitioned range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

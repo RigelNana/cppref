@@ -1,0 +1,229 @@
+---
+title: "std::ranges::lower_bound"
+description: "Returns an iterator pointing to the first element in the range [first, last) that is not less than (i.e. greater or equal to) value, or last if no such element is found."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/lower_bound"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-lower-bound:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class T, class Proj = std::identity,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<I, Proj>> Comp = ranges::less >
+constexpr I lower_bound( I first, S last, const T& value,
+
+                         Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          class T = std::projected_value_t<I, Proj>,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<I, Proj>> Comp = ranges::less >
+constexpr I lower_bound( I first, S last, const T& value,
+
+                         Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" until="C++26" code={`template< ranges::forward_range R,
+          class T, class Proj = std::identity,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<ranges::iterator_t<R>,
+                                        Proj>> Comp = ranges::less >
+constexpr ranges::borrowed_iterator_t<R>
+
+    lower_bound( R&& r, const T& value, Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< ranges::forward_range R,
+          class Proj = std::identity,
+          class T = std::projected_value_t<ranges::iterator_t<R>, Proj>
+          std::indirect_strict_weak_order
+              <const T*, std::projected<ranges::iterator_t<R>,
+                                        Proj>> Comp = ranges::less >
+constexpr ranges::borrowed_iterator_t<R>
+
+    lower_bound( R&& r, const T& value, Comp comp = {}, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-lower-bound:0001 */}
+1. 1) Returns an iterator pointing to the first element in the range `[first, last)` that is not less than (i.e. greater or equal to) `value`, or `last` if no such element is found. The range `[first, last)` must be partitioned with respect to the expression `std::invoke(comp, std::invoke(proj, element), value)`, i.e., all elements for which the expression is `true` must precede all elements for which the expression is `false`. A fully-sorted range meets this criterion.
+
+{/* source:cpp-algorithm-ranges-lower-bound:0002 */}
+2. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-lower-bound:0003 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-lower-bound:0004 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-lower-bound:0005 */}
+<ParameterList>
+  <Parameter name="first, last">iterator-sentinel pair defining the partially-ordered range to examine</Parameter>
+  <Parameter name="r">the partially-ordered range to examine</Parameter>
+  <Parameter name="value">value to compare the projected elements to</Parameter>
+  <Parameter name="comp">comparison predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-lower-bound:0006 */}
+Iterator pointing to the first element that is not less than `value`, or `last` if no such element is found.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-lower-bound:0007 */}
+The number of comparisons and applications of the projection performed are logarithmic in the distance between `first` and `last` (at most log2(last - first) + O(1) comparisons and applications of the projection). However, for an iterator that does not model [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator), the number of iterator increments is linear.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-lower-bound:0008 */}
+On a range that's fully sorted (or more generally, partially ordered with respect to `value`) after projection, `std::ranges::lower_bound` implements the binary search algorithm. Therefore, [`std::ranges::binary_search`](/docs/cpp/library/algorithm/ranges/binary_search) can be implemented in terms of it.
+
+{/* source:cpp-algorithm-ranges-lower-bound:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/ranges/lower_bound#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-lower-bound:0010 */}
+```cpp
+struct lower_bound_fn
+{
+    template<std::forward_iterator I, std::sentinel_for<I> S, class Proj = std::identity,
+             class T = std::projected_value_t<I, Proj>,
+             std::indirect_strict_weak_order
+                 <const T*, std::projected<I, Proj>> Comp = ranges::less>
+    constexpr I operator()(I first, S last, const T& value,
+                           Comp comp = {}, Proj proj = {}) const
+    {
+        I it;
+        std::iter_difference_t<I> count, step;
+        count = std::ranges::distance(first, last);
+ 
+        while (count > 0)
+        {
+            it = first;
+            step = count / 2;
+            ranges::advance(it, step, last);
+            if (comp(std::invoke(proj, *it), value))
+            {
+                first = ++it;
+                count -= step + 1;
+            }
+            else
+                count = step;
+        }
+        return first;
+    }
+ 
+    template<ranges::forward_range R, class Proj = std::identity,
+          class T = std::projected_value_t<ranges::iterator_t<R>, Proj>
+          std::indirect_strict_weak_order
+              <const T*, std::projected<ranges::iterator_t<R>,
+                                        Proj>> Comp = ranges::less>
+    constexpr ranges::borrowed_iterator_t<R>
+        operator()(R&& r, const T& value, Comp comp = {}, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), value,
+                       std::ref(comp), std::ref(proj));
+    }
+};
+ 
+inline constexpr lower_bound_fn lower_bound;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-lower-bound:0011 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <complex>
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+namespace ranges = std::ranges;
+ 
+template<std::forward_iterator I, std::sentinel_for<I> S, class T,
+         class Proj = std::identity,
+         std::indirect_strict_weak_order
+             <const T*, std::projected<I, Proj>> Comp = ranges::less>
+constexpr I binary_find(I first, S last, const T& value, Comp comp = {}, Proj proj = {})
+{
+    first = ranges::lower_bound(first, last, value, comp, proj);
+    return first != last && !comp(value, proj(*first)) ? first : last;
+}
+ 
+int main()
+{
+    std::vector data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
+    //                                 ^^^^^^^^^^
+    auto lower = ranges::lower_bound(data, 4);
+    auto upper = ranges::upper_bound(data, 4);
+ 
+    std::cout << "found a range [" << ranges::distance(data.cbegin(), lower)
+              << ", " << ranges::distance(data.cbegin(), upper) << ") = { ";
+    ranges::copy(lower, upper, std::ostream_iterator<int>(std::cout, " "));
+    std::cout << "}\n";
+ 
+    // classic binary search, returning a value only if it is present
+ 
+    data = {1, 2, 4, 8, 16};
+    //               ^
+    auto it = binary_find(data.cbegin(), data.cend(), 8); // '5' would return end()
+ 
+    if (it != data.cend())
+        std::cout << *it << " found at index "<< ranges::distance(data.cbegin(), it);
+ 
+    using CD = std::complex<double>;
+    std::vector<CD> nums{{1, 0}, {2, 2}, {2, 1}, {3, 0}};
+    auto cmpz = [](CD x, CD y) { return x.real() < y.real(); };
+    #ifdef __cpp_lib_algorithm_default_value_type
+        auto it2 = ranges::lower_bound(nums, {2, 0}, cmpz);
+    #else
+        auto it2 = ranges::lower_bound(nums, CD{2, 0}, cmpz);
+    #endif
+    assert((*it2 == CD{2, 2}));
+}
+```
+
+Output:
+
+```text
+found a range [6, 10) = { 4 4 4 4 }
+8 found at index 3
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-lower-bound:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal_range`](/docs/cpp/library/algorithm/ranges/equal_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partition`](/docs/cpp/library/algorithm/ranges/partition) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>divides a range of elements into two groups (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partition_point`](/docs/cpp/library/algorithm/ranges/partition_point) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>locates the partition point of a partitioned range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::upper_bound`](/docs/cpp/library/algorithm/ranges/upper_bound) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element greater than a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lower_bound`](/docs/cpp/library/algorithm/lower_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element not less than the given value (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

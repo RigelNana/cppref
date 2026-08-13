@@ -1,0 +1,319 @@
+---
+title: "std::search"
+description: "Searches for the first occurrence of the sequence of elements [s_first, s_last) in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/search"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-search:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class ForwardIt1, class ForwardIt2 >
+ForwardIt1 search( ForwardIt1 first, ForwardIt1 last,
+
+                   ForwardIt2 s_first, ForwardIt2 s_last );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2 >
+ForwardIt1 search( ExecutionPolicy&& policy,
+                   ForwardIt1 first, ForwardIt1 last,
+
+                   ForwardIt2 s_first, ForwardIt2 s_last );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class ForwardIt1, class ForwardIt2, class BinaryPred >
+ForwardIt1 search( ForwardIt1 first, ForwardIt1 last,
+                   ForwardIt2 s_first, ForwardIt2 s_last,
+
+                   BinaryPred p );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2, class BinaryPred >
+ForwardIt1 search( ExecutionPolicy&& policy,
+                   ForwardIt1 first, ForwardIt1 last,
+                   ForwardIt2 s_first, ForwardIt2 s_last,
+
+                   BinaryPred p );`} />
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class ForwardIt, class Searcher >
+ForwardIt search( ForwardIt first, ForwardIt last,
+
+                  const Searcher& searcher );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-search:0001 */}
+1. 1-4) Searches for the first occurrence of the sequence of elements `[s_first, s_last)` in the range `[first, last)`.
+
+{/* source:cpp-algorithm-search:0002 */}
+2. 1) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-search:0003 */}
+3. 3) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-search:0004 */}
+4. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-search:0005 */}
+5. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-search:0006 */}
+6. 5) Searches the range `[first, last)` for the pattern specified in the constructor of `searcher`.
+
+{/* source:cpp-algorithm-search:0007 */}
+<Revision since="C++17">
+The standard library provides the following searchers:
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`default_searcher`](/docs/cpp/library/utility/functional/default_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>standard C++ library search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`boyer_moore_searcher`](/docs/cpp/library/utility/functional/boyer_moore_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>Boyer-Moore search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`boyer_moore_horspool_searcher`](/docs/cpp/library/utility/functional/boyer_moore_horspool_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>Boyer-Moore-Horspool search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-search:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="s_first, s_last">the range of elements to search for</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="searcher">the searcher encapsulating the search algorithm and the pattern to look for</Parameter>
+  <Parameter name="p">
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that objects of types `ForwardIt1` and `ForwardIt2` can be dereferenced and then implicitly converted to `Type1` and `Type2` respectively.
+  </Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `ForwardIt1`, `ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `BinaryPred` must meet the requirements of [*BinaryPredicate*](/docs/cpp/library/named_req/BinaryPredicate).
+
+### Return value
+
+{/* source:cpp-algorithm-search:0009 */}
+1. 1-4) Iterator to the beginning of first occurrence of the sequence `[s_first, s_last)` in the range `[first, last)`. If no such occurrence is found, `last` is returned.
+
+{/* source:cpp-algorithm-search:0010 */}
+2. If `[s_first, s_last)` is empty, `first` is returned.
+
+{/* source:cpp-algorithm-search:0011 */}
+3. 5) `searcher(first, last).first`.
+
+### Complexity
+
+{/* source:cpp-algorithm-search:0012 */}
+1. 1-4) Given `N` as `std::distance(first, last)` and `S` as `std::distance(s_first, s_last)`:
+
+{/* source:cpp-algorithm-search:0013 */}
+2. 1,2) At most `N·S` comparisons using `operator==`.
+
+{/* source:cpp-algorithm-search:0014 */}
+3. 3,4) At most `N·S` applications of the predicate `p`.
+
+{/* source:cpp-algorithm-search:0015 */}
+4. 5) Depends on `searcher`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-search:0016 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-search:0017 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-search:0018 */}
+[`search (1)`](/docs/cpp/library/algorithm/search#Version_1)
+
+```cpp
+template<class ForwardIt1, class ForwardIt2>
+constexpr //< since C++20
+ForwardIt1 search(ForwardIt1 first, ForwardIt1 last,
+                  ForwardIt2 s_first, ForwardIt2 s_last)
+{
+    while (true)
+    {
+        ForwardIt1 it = first;
+        for (ForwardIt2 s_it = s_first; ; ++it, ++s_it)
+        {
+            if (s_it == s_last)
+                return first;
+            if (it == last)
+                return last;
+            if (!(*it == *s_it))
+                break;
+        }
+        ++first;
+    }
+}
+```
+
+[`search (3)`](/docs/cpp/library/algorithm/search#Version_3)
+
+```cpp
+template<class ForwardIt1, class ForwardIt2, class BinaryPred>
+constexpr //< since C++20
+ForwardIt1 search(ForwardIt1 first, ForwardIt1 last,
+                  ForwardIt2 s_first, ForwardIt2 s_last, BinaryPred p)
+{
+    while (true)
+    {
+        ForwardIt1 it = first;
+        for (ForwardIt2 s_it = s_first; ; ++it, ++s_it)
+        {
+            if (s_it == s_last)
+                return first;
+            if (it == last)
+                return last;
+            if (!p(*it, *s_it))
+                break;
+        }
+        ++first;
+    }
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-search:0019 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <string_view>
+#include <vector>
+ 
+using namespace std::literals;
+ 
+bool contains(const auto& cont, std::string_view s)
+{
+    // str.find() (or str.contains(), since C++23) can be used as well
+    return std::search(cont.begin(), cont.end(), s.begin(), s.end()) != cont.end();
+}
+ 
+int main()
+{
+    const auto str{"why waste time learning, when ignorance is instantaneous?"sv};
+    assert(contains(str, "learning"));
+    assert(not contains(str, "lemming"));
+ 
+    const std::vector vec(str.begin(), str.end());
+    assert(contains(vec, "learning"));
+    assert(not contains(vec, "leaning"));
+ 
+    // The C++17 overload with searchers demo:
+    constexpr auto quote
+    {
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
+        "do eiusmod tempor incididunt ut labore et dolore magna aliqua"sv
+    };
+ 
+    for (const auto word : {"pisci"sv, "Pisci"sv})
+    {
+        std::cout << "The string " << std::quoted(word) << ' ';
+        const std::boyer_moore_searcher searcher(word.begin(), word.end());
+        const auto it = std::search(quote.begin(), quote.end(), searcher);
+        if (it == quote.end())
+            std::cout << "not found\n";
+        else
+            std::cout << "found at offset " << std::distance(quote.begin(), it) << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+The string "pisci" found at offset 43
+The string "Pisci" not found
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-search:0020 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-search:0021 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={1205} standard="C++98">
+    <PublishedBehavior>the return value was unclear if `[s_first, s_last)` is empty</PublishedBehavior>
+    <CorrectedBehavior>returns `first` in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1338} standard="C++98">
+    <PublishedBehavior>the resolution of [LWG issue 1205](https://cplusplus.github.io/LWG/issue1205) was incorrectly applied,<br />making `first` to be returned if no occurence is found</PublishedBehavior>
+    <CorrectedBehavior>returns `last` in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2150} standard="C++98">
+    <PublishedBehavior>the condition of “sequence occurence” was incorrect</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-search:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_end`](/docs/cpp/library/algorithm/find_end)</DescriptionTerm>
+    <DescriptionBody>finds the last sequence of elements in a certain range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`includes`](/docs/cpp/library/algorithm/includes)</DescriptionTerm>
+    <DescriptionBody>returns `true` if one sequence is a subsequence of another (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal`](/docs/cpp/library/algorithm/equal)</DescriptionTerm>
+    <DescriptionBody>determines if two sets of elements are the same (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`, `find_if`, `find_if_not`](/docs/cpp/library/algorithm/find) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lexicographical_compare`](/docs/cpp/library/algorithm/lexicographical_compare)</DescriptionTerm>
+    <DescriptionBody>returns `true` if one range is lexicographically less than another (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mismatch`](/docs/cpp/library/algorithm/mismatch)</DescriptionTerm>
+    <DescriptionBody>finds the first position where two ranges differ (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`search_n`](/docs/cpp/library/algorithm/search_n)</DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a number consecutive copies of an element in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`default_searcher`](/docs/cpp/library/utility/functional/default_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>standard C++ library search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`boyer_moore_searcher`](/docs/cpp/library/utility/functional/boyer_moore_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>Boyer-Moore search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`boyer_moore_horspool_searcher`](/docs/cpp/library/utility/functional/boyer_moore_horspool_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>Boyer-Moore-Horspool search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::search`](/docs/cpp/library/algorithm/ranges/search) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

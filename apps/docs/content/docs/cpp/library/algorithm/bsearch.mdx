@@ -1,0 +1,128 @@
+---
+title: "std::bsearch"
+description: "Finds an element equal to element pointed to by key in an array pointed to by ptr."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/bsearch"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-bsearch:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration id="1" language="cpp" code={`void* bsearch( const void* key, const void* ptr, std::size_t count,
+               std::size_t size, /* c-compare-pred */* comp );
+void* bsearch( const void* key, const void* ptr, std::size_t count,
+
+               std::size_t size, /* compare-pred */* comp );`} />
+  <Declaration id="2" language="cpp" code={`extern "C" using /* c-compare-pred */ = int(const void*, const void*);
+extern "C++" using /* compare-pred */ = int(const void*, const void*);`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-bsearch:0001 */}
+Finds an element equal to element pointed to by `key` in an array pointed to by `ptr`. The array contains `count` elements of `size` bytes each and must be partitioned with respect to the object pointed to by `key`, that is, all the elements that compare less than must appear before all the elements that compare equal to, and those must appear before all the elements that compare greater than the key object. A fully sorted array satisfies these requirements. The elements are compared using function pointed to by `comp`.
+
+{/* source:cpp-algorithm-bsearch:0002 */}
+The behavior is undefined if the array is not already partitioned in ascending order with respect to key, according to the same criterion that `comp` uses.
+
+{/* source:cpp-algorithm-bsearch:0003 */}
+If the array contains several elements that `comp` would indicate as equal to the element searched for, then it is unspecified which element the function will return as the result.
+
+### Parameters
+
+{/* source:cpp-algorithm-bsearch:0004 */}
+<ParameterList>
+  <Parameter name="key">pointer to the element to search for</Parameter>
+  <Parameter name="ptr">pointer to the array to examine</Parameter>
+  <Parameter name="count">number of element in the array</Parameter>
+  <Parameter name="size">size of each element in the array in bytes</Parameter>
+  <Parameter name="comp">
+comparison function which returns a negative integer value if the first argument is *less* than the second, a positive integer value if the first argument is *greater* than the second and zero if the arguments are equivalent. `key` is passed as the first argument, an element from the array as the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`int cmp(const void *a, const void *b);`
+
+The function must not modify the objects passed to it and must return consistent results when called for the same objects, regardless of their positions in the array.
+  </Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-bsearch:0005 */}
+Pointer to the found element or null pointer if the element has not been found.
+
+### Notes
+
+{/* source:cpp-algorithm-bsearch:0006 */}
+Despite the name, neither C nor POSIX standards require this function to be implemented using binary search or make any complexity guarantees.
+
+{/* source:cpp-algorithm-bsearch:0007 */}
+The two overloads provided by the C++ standard library are distinct because the types of the parameter `comp` are distinct ([language linkage](/docs/cpp/language#language_linkage) is part of its type).
+
+### Example
+
+{/* source:cpp-algorithm-bsearch:0008 */}
+```cpp
+#include <array>
+#include <cstdlib>
+#include <iostream>
+ 
+template<typename T>
+int compare(const void *a, const void *b)
+{
+    const auto &arg1 = *(static_cast<const T*>(a));
+    const auto &arg2 = *(static_cast<const T*>(b));
+    const auto cmp = arg1 <=> arg2;
+    return cmp < 0 ? -1
+        :  cmp > 0 ? +1
+        :  0;
+}
+ 
+int main()
+{
+    std::array arr{1, 2, 3, 4, 5, 6, 7, 8};
+ 
+    for (const int key : {4, 8, 9})
+    {
+        const int* p = static_cast<int*>(
+            std::bsearch(&key,
+                arr.data(),
+                arr.size(),
+                sizeof(decltype(arr)::value_type),
+                compare<int>));
+ 
+        std::cout << "value " << key;
+        if (p)
+            std::cout << " found at position " << (p - arr.data()) << '\n';
+        else
+            std::cout << " not found\n";
+    }
+}
+```
+
+Output:
+
+```text
+value 4 found at position 3
+value 8 found at position 7
+value 9 not found
+```
+
+### See also
+
+{/* source:cpp-algorithm-bsearch:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`qsort`](/docs/cpp/library/algorithm/qsort)</DescriptionTerm>
+    <DescriptionBody>sorts a range of elements with unspecified type (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/algorithm/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/algorithm/bsearch)</DescriptionTerm>
+    <DescriptionBody>for `bsearch`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

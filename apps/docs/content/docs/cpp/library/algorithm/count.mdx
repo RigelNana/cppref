@@ -1,0 +1,246 @@
+---
+title: "std::count, std::count_if"
+description: "Returns the number of elements in the range [first, last) satisfying specific criteria."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/count"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-count:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< class InputIt, class T >
+typename std::iterator_traits<InputIt>::difference_type
+
+    count( InputIt first, InputIt last, const T& value );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class InputIt, class T = typename std::iterator_traits
+                                       <InputIt>::value_type >
+constexpr typename std::iterator_traits<InputIt>::difference_type
+
+    count( InputIt first, InputIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy, class ForwardIt, class T >
+typename std::iterator_traits<ForwardIt>::difference_type
+    count( ExecutionPolicy&& policy,
+
+           ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+typename std::iterator_traits<ForwardIt>::difference_type
+    count( ExecutionPolicy&& policy,
+
+           ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt, class UnaryPred >
+typename std::iterator_traits<InputIt>::difference_type
+
+    count_if( InputIt first, InputIt last, UnaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+typename std::iterator_traits<ForwardIt>::difference_type
+    count_if( ExecutionPolicy&& policy,
+
+              ForwardIt first, ForwardIt last, UnaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-count:0001 */}
+Returns the number of elements in the range `[first, last)` satisfying specific criteria.
+
+{/* source:cpp-algorithm-count:0002 */}
+1. 1) Counts the elements that are equal to `value` (using `operator==`).
+
+{/* source:cpp-algorithm-count:0003 */}
+2. 3) Counts elements for which predicate `p` returns `true`.
+
+{/* source:cpp-algorithm-count:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-count:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-count:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="value">the value to search for</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+unary predicate which returns `true` for the required elements.
+
+The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `InputIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.
+  </Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `UnaryPred` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+### Return value
+
+{/* source:cpp-algorithm-count:0007 */}
+The number of iterators `it` in the [range](/docs/cpp/library/iterator#Ranges) `[first, last)` satisfying the following condition:
+
+{/* source:cpp-algorithm-count:0008 */}
+1. 1,2) `*it == value` is `true`.
+
+{/* source:cpp-algorithm-count:0009 */}
+2. 3,4) `p(*it) != false` is `true`.
+
+### Complexity
+
+{/* source:cpp-algorithm-count:0010 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-count:0011 */}
+1. 1,2) Exactly `N` comparisons with `value` using `operator==`.
+
+{/* source:cpp-algorithm-count:0012 */}
+2. 3,4) Exactly `N` applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-count:0013 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-count:0014 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Notes
+
+{/* source:cpp-algorithm-count:0015 */}
+For the number of elements in the range `[first, last)` without any additional criteria, see [`std::distance`](/docs/cpp/library/iterator/distance).
+
+{/* source:cpp-algorithm-count:0016 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [202403](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/count#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-count:0017 */}
+See also the implementations of count in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L4056) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L1171).
+
+{/* source:cpp-algorithm-count:0018 */}
+See also the implementations of count_if in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L4079) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L1186).
+
+{/* source:cpp-algorithm-count:0019 */}
+[`count`](/docs/cpp/library/algorithm/count#Version_1)
+
+```cpp
+template<class InputIt, class T = typename std::iterator_traits<InputIt>::value_type>
+typename std::iterator_traits<InputIt>::difference_type
+    count(InputIt first, InputIt last, const T& value)
+{
+    typename std::iterator_traits<InputIt>::difference_type ret = 0;
+    for (; first != last; ++first)
+        if (*first == value)
+            ++ret;
+    return ret;
+}
+```
+
+[`count_if`](/docs/cpp/library/algorithm/count#Version_3)
+
+```cpp
+template<class InputIt, class UnaryPred>
+typename std::iterator_traits<InputIt>::difference_type
+    count_if(InputIt first, InputIt last, UnaryPred p)
+{
+    typename std::iterator_traits<InputIt>::difference_type ret = 0;
+    for (; first != last; ++first)
+        if (p(*first))
+            ++ret;
+    return ret;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-count:0020 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <complex>
+#include <iostream>
+#include <iterator>
+ 
+int main()
+{
+    constexpr std::array v{1, 2, 3, 4, 4, 3, 7, 8, 9, 10};
+    std::cout << "v: ";
+    std::copy(v.cbegin(), v.cend(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+ 
+    // Determine how many integers match a target value.
+    for (const int target : {3, 4, 5})
+    {
+        const int num_items = std::count(v.cbegin(), v.cend(), target);
+        std::cout << "number: " << target << ", count: " << num_items << '\n';
+    }
+ 
+    // Use a lambda expression to count elements divisible by 4.
+    int count_div4 = std::count_if(v.begin(), v.end(), [](int i) { return i % 4 == 0; });
+    std::cout << "numbers divisible by four: " << count_div4 << '\n';
+ 
+    // A simplified version of `distance` with O(N) complexity:
+    auto distance = [](auto first, auto last)
+    {
+        return std::count_if(first, last, [](auto) { return true; });
+    };
+    static_assert(distance(v.begin(), v.end()) == 10);
+ 
+    std::array<std::complex<double>, 3> nums{{{4, 2}, {1, 3}, {4, 2}}};
+    #ifdef __cpp_lib_algorithm_default_value_type
+        // T gets deduced making list-initialization possible
+        auto c = std::count(nums.cbegin(), nums.cend(), {4, 2});
+    #else
+        auto c = std::count(nums.cbegin(), nums.cend(), std::complex<double>{4, 2});
+    #endif
+    assert(c == 2);
+}
+```
+
+Output:
+
+```text
+v: 1 2 3 4 4 3 7 8 9 10
+number: 3, count: 2
+number: 4, count: 2
+number: 5, count: 0
+numbers divisible by four: 3
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-count:0021 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-count:0022 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*EqualityComparable*](/docs/cpp/library/named_req/EqualityComparable), but<br />the value type of `InputIt` is not always `T`</PublishedBehavior>
+    <CorrectedBehavior>removed the requirement</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-count:0023 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`distance`](/docs/cpp/library/iterator/distance)</DescriptionTerm>
+    <DescriptionBody>returns the distance between two iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::count`, `ranges::count_if`](/docs/cpp/library/algorithm/ranges/count) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the number of elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

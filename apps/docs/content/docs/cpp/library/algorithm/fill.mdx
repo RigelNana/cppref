@@ -1,0 +1,178 @@
+---
+title: "std::fill"
+description: "Assigns the given value to all elements in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/fill"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-fill:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< class ForwardIt, class T >
+void fill( ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+constexpr void fill( ForwardIt first, ForwardIt last,
+
+                     const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy, class ForwardIt, class T >
+void fill( ExecutionPolicy&& policy,
+
+           ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+void fill( ExecutionPolicy&& policy,
+
+           ForwardIt first, ForwardIt last, const T& value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-fill:0001 */}
+1. 1) Assigns the given `value` to all elements in the range `[first, last)`.
+
+{/* source:cpp-algorithm-fill:0002 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-fill:0003 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-fill:0004 */}
+If `value` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `first`, the program is ill-formed.
+
+### Parameters
+
+{/* source:cpp-algorithm-fill:0005 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to modify</Parameter>
+  <Parameter name="value">the value to be assigned</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Complexity
+
+{/* source:cpp-algorithm-fill:0006 */}
+Exactly `std::distance(first, last)` assignments.
+
+### Exceptions
+
+{/* source:cpp-algorithm-fill:0007 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-fill:0008 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-fill:0009 */}
+[`fill`](/docs/cpp/library/algorithm/fill#Version_1)
+
+```cpp
+template<class ForwardIt,
+         class T = typename std::iterator_traits<ForwardIt>::value_type>
+void fill(ForwardIt first, ForwardIt last, const T& value)
+{
+    for (; first != last; ++first)
+        *first = value;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-fill:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [202403](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/fill#Version_1)) |
+
+### Example
+
+{/* source:cpp-algorithm-fill:0011 */}
+```cpp
+#include <algorithm>
+#include <complex>
+#include <iostream>
+#include <vector>
+ 
+void println(const auto& seq)
+{
+    for (const auto& e : seq)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::vector<int> v{0, 1, 2, 3, 4, 5, 6, 7, 8};
+    println(v);
+ 
+    // set all of the elements to 8
+    std::fill(v.begin(), v.end(), 8);
+    println(v);
+ 
+    std::vector<std::complex<double>> nums{{1, 3}, {2, 2}, {4, 8}};
+    println(nums);
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::fill(nums.begin(), nums.end(), {4, 2});
+    #else
+        std::fill(nums.begin(), nums.end(), std::complex<double>{4, 2});
+    #endif
+    println(nums);
+}
+```
+
+Output:
+
+```text
+0 1 2 3 4 5 6 7 8
+8 8 8 8 8 8 8 8 8
+(1,3) (2,2) (4,8) 
+(4,2) (4,2) (4,2)
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-fill:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-fill:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable), but<br />`T` is not always writable to `ForwardIt`</PublishedBehavior>
+    <CorrectedBehavior>required to be writable instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-fill:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fill_n`](/docs/cpp/library/algorithm/fill_n)</DescriptionTerm>
+    <DescriptionBody>copy-assigns the given value to N elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`, `copy_if`](/docs/cpp/library/algorithm/copy) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`generate`](/docs/cpp/library/algorithm/generate)</DescriptionTerm>
+    <DescriptionBody>assigns the results of successive function calls to every element in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform`](/docs/cpp/library/algorithm/transform)</DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements, storing results in a destination range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of elements a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

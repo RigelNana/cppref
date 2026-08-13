@@ -1,0 +1,150 @@
+---
+title: "std::move"
+description: "Moves the elements in the range [first, last), to another range beginning at d_first, starting from first and proceeding to last."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/move"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-move:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class InputIt, class OutputIt >
+OutputIt move( InputIt first, InputIt last,
+
+               OutputIt d_first );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2 >
+ForwardIt2 move( ExecutionPolicy&& policy,
+                 ForwardIt1 first, ForwardIt1 last,
+
+                 ForwardIt2 d_first );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-move:0001 */}
+1. 1) Moves the elements in the range `[first, last)`, to another range beginning at `d_first`, starting from `first` and proceeding to `last`. After this operation the elements in the moved-from range will still contain valid values of the appropriate type, but not necessarily the same values as before the move.
+
+{/* source:cpp-algorithm-move:0002 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-move:0003 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-move:0004 */}
+If `d_first` is within the range `[first, last)`, the behavior is undefined. In this case, [`std::move_backward`](/docs/cpp/library/algorithm/move_backward) may be used instead.
+
+### Parameters
+
+{/* source:cpp-algorithm-move:0005 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to move</Parameter>
+  <Parameter name="d_first">the beginning of the destination range</Parameter>
+  <Parameter name="policy">the execution policy to use</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- `ForwardIt1`, `ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-move:0006 */}
+The iterator to the element past the last element moved.
+
+### Complexity
+
+{/* source:cpp-algorithm-move:0007 */}
+Exactly `std::distance(first, last)` move assignments.
+
+### Exceptions
+
+{/* source:cpp-algorithm-move:0008 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-move:0009 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined. If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-move:0010 */}
+```cpp
+template<class InputIt, class OutputIt>
+OutputIt move(InputIt first, InputIt last, OutputIt d_first)
+{
+    for (; first != last; ++d_first, ++first)
+        *d_first = std::move(*first);
+ 
+    return d_first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-move:0011 */}
+When moving overlapping ranges, `std::move` is appropriate when moving to the left (beginning of the destination range is outside the source range) while [`std::move_backward`](/docs/cpp/library/algorithm/move_backward) is appropriate when moving to the right (end of the destination range is outside the source range).
+
+### Example
+
+{/* source:cpp-algorithm-move:0012 */}
+The following code moves thread objects (which themselves are not copyable) from one container to another.
+
+{/* source:cpp-algorithm-move:0013 */}
+```cpp
+#include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <thread>
+#include <vector>
+ 
+void f(int n)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(n));
+    std::cout << "thread " << n << " ended" << std::endl;
+}
+ 
+int main()
+{
+    std::vector<std::jthread> v;
+    v.emplace_back(f, 1);
+    v.emplace_back(f, 2);
+    v.emplace_back(f, 3);
+    std::list<std::jthread> l;
+ 
+    // copy() would not compile, because std::jthread is noncopyable
+    std::move(v.begin(), v.end(), std::back_inserter(l));
+}
+```
+
+Output:
+
+```text
+thread 1 ended
+thread 2 ended
+thread 3 ended
+```
+
+### See also
+
+{/* source:cpp-algorithm-move:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_backward`](/docs/cpp/library/algorithm/move_backward)</DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location in backwards order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move`](/docs/cpp/library/utility/move) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts the argument to an xvalue (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::move`](/docs/cpp/library/algorithm/ranges/move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

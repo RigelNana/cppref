@@ -1,0 +1,242 @@
+---
+title: "std::unique_copy"
+description: "Copies the elements from the range [first, last), to another range beginning at d_first in such a way that there are no consecutive equal elements. Only the first element of each group of equal elements is copied."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/unique_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-unique-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class OutputIt >
+OutputIt unique_copy( InputIt first, InputIt last, OutputIt d_first );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2 >
+ForwardIt2 unique_copy( ExecutionPolicy&& policy, ForwardIt1 first,
+
+                        ForwardIt1 last, ForwardIt2 d_first );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt, class OutputIt, class BinaryPred >
+OutputIt unique_copy( InputIt first, InputIt last,
+
+                      OutputIt d_first, BinaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt1,
+          class ForwardIt2, class BinaryPred >
+ForwardIt2 unique_copy( ExecutionPolicy&& policy,
+                        ForwardIt1 first, ForwardIt1 last,
+
+                        ForwardIt2 d_first, BinaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-unique-copy:0001 */}
+Copies the elements from the range `[first, last)`, to another range beginning at `d_first` in such a way that there are no consecutive equal elements. Only the first element of each group of equal elements is copied.
+
+{/* source:cpp-algorithm-unique-copy:0002 */}
+1. 1) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-unique-copy:0003 */}
+2. If `operator==` does not establish an [equivalence relation](https://en.wikipedia.org/wiki/equivalence_relation), the behavior is undefined.
+
+{/* source:cpp-algorithm-unique-copy:0004 */}
+3. 3) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-unique-copy:0005 */}
+4. If `p` does not establish an equivalence relation, the behavior is undefined.
+
+{/* source:cpp-algorithm-unique-copy:0006 */}
+5. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-unique-copy:0007 */}
+6. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+<Revision until="C++20">
+
+`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+<Revision since="C++20">
+
+`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+{/* source:cpp-algorithm-unique-copy:0008 */}
+If <InlineRevision until="C++20">`*d_first = *first` is invalid</InlineRevision><InlineRevision since="C++20">`*first` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `d_first`</InlineRevision>, the program is ill-formed.
+
+{/* source:cpp-algorithm-unique-copy:0009 */}
+If source and destination ranges overlap, the behavior is undefined.
+
+{/* source:cpp-algorithm-unique-copy:0010 */}
+Given `T` as the value type of `InputIt`, if overload (1) or (3) does not satisfy all of the following conditions, the behavior is undefined:
+
+{/* source:cpp-algorithm-unique-copy:0011 */}
+<Revision until="C++20">
+
+- `InputIt` meets the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+</Revision>
+
+<Revision since="C++20">
+
+- `InputIt` models [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator).
+
+</Revision>
+
+{/* source:cpp-algorithm-unique-copy:0012 */}
+- `T` is both [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) and [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable).
+- All following conditions are satisfied:
+
+{/* source:cpp-algorithm-unique-copy:0013 */}
+- `OutputIt` meets the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- The value type of `OutputIt` is also `T`.
+- `T` is [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable).
+
+### Parameters
+
+{/* source:cpp-algorithm-unique-copy:0014 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to process</Parameter>
+  <Parameter name="d_first">the beginning of the destination range</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `InputIt` can be dereferenced and then implicitly converted to both of them.
+
+</Parameter>
+</ParameterList>
+
+Type requirements:
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- `ForwardIt1`, `ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-unique-copy:0015 */}
+Output iterator to the element past the last written element.
+
+### Complexity
+
+{/* source:cpp-algorithm-unique-copy:0016 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-unique-copy:0017 */}
+1. 1,2) Exactly max(0,N-1) comparisons using `operator==`.
+
+{/* source:cpp-algorithm-unique-copy:0018 */}
+2. 3,4) Exactly max(0,N-1) applications of the predicate `p`.
+
+{/* source:cpp-algorithm-unique-copy:0019 */}
+For overloads (2,4), there may be a performance cost if the value type of `ForwardIt1` is not both [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) and [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable).
+
+### Exceptions
+
+{/* source:cpp-algorithm-unique-copy:0020 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-unique-copy:0021 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-unique-copy:0022 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1046) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L2177).
+
+### Notes
+
+{/* source:cpp-algorithm-unique-copy:0023 */}
+If `InputIt` satisfies [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator), this function rereads the input in order to detect duplicates.
+
+{/* source:cpp-algorithm-unique-copy:0024 */}
+Otherwise, if `OutputIt` satisfies [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator), and the value type of `InputIt` is the same as that of `OutputIt`, this function compare `*d_first` to `*first`.
+
+{/* source:cpp-algorithm-unique-copy:0025 */}
+Otherwise, this function compares `*first` to a local element copy.
+
+### Example
+
+{/* source:cpp-algorithm-unique-copy:0026 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <string>
+ 
+int main()
+{
+    std::string s1 {"A string with mmmany letters!"};
+    std::cout << "Before: " << s1 << '\n';
+ 
+    std::string s2;
+    std::unique_copy(s1.begin(), s1.end(), std::back_inserter(s2),
+                     [](char c1, char c2) { return c1 == 'm' && 'm' == c2; });
+ 
+    std::cout << "After:  " << s2 << '\n';
+}
+```
+
+Output:
+
+```text
+Before: A string with mmmany letters!
+After:  A string with many letters!
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-unique-copy:0027 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-unique-copy:0028 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={239} standard="C++98">
+    <PublishedBehavior>the predicate was applied `std::distance(first, last)` times</PublishedBehavior>
+    <CorrectedBehavior>applied one time fewer (for non-empty ranges)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={241} standard="C++98">
+    <PublishedBehavior>the value type of `InputIt` was not required to be [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible)</PublishedBehavior>
+    <CorrectedBehavior>conditionally required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={538} standard="C++98">
+    <PublishedBehavior>the value type of `InputIt` was not required to be [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable)</PublishedBehavior>
+    <CorrectedBehavior>conditionally required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2439} standard="C++98">
+    <PublishedBehavior>the value type of `InputIt` was not required to be [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) if `OutputIt` is a [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator)</PublishedBehavior>
+    <CorrectedBehavior>conditionally required</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-unique-copy:0029 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`adjacent_find`](/docs/cpp/library/algorithm/adjacent_find)</DescriptionTerm>
+    <DescriptionBody>finds the first two adjacent items that are equal (or satisfy a given predicate) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/algorithm/unique)</DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`, `copy_if`](/docs/cpp/library/algorithm/copy) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::unique_copy`](/docs/cpp/library/algorithm/ranges/unique_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a copy of some range of elements that contains no consecutive duplicates (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

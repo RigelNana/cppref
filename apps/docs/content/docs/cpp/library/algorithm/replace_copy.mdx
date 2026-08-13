@@ -1,0 +1,246 @@
+---
+title: "std::replace_copy, std::replace_copy_if"
+description: "Copies the elements from the range [first, last) to another range beginning at d_first, while replacing all elements satisfying specific criteria with new_value."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/replace_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-replace-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class OutputIt, class T >
+OutputIt replace_copy( InputIt first, InputIt last, OutputIt d_first,
+
+                       const T& old_value, const T& new_value );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2, class T >
+ForwardIt2 replace_copy
+    ( ExecutionPolicy&& policy,
+      ForwardIt1 first, ForwardIt1 last, ForwardIt2 d_first,
+
+      const T& old_value, const T& new_value );`} />
+  <Declaration id="3" language="cpp" until="C++26" code={`template< class InputIt, class OutputIt, class UnaryPred, class T >
+OutputIt replace_copy_if
+    ( InputIt first, InputIt last, OutputIt d_first,
+
+      UnaryPred p, const T& new_value );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="3" language="cpp" since="C++26" code={`template< class InputIt, class OutputIt, class UnaryPred,
+          class T = typename std::iterator_traits
+                        <OutputIt>::value_type >
+constexpr OutputIt replace_copy_if
+    ( InputIt first, InputIt last, OutputIt d_first,
+
+      UnaryPred p, const T& new_value );`} />
+  <Declaration id="4" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2,
+          class UnaryPred, class T >
+ForwardIt2 replace_copy_if
+    ( ExecutionPolicy&& policy,
+      ForwardIt1 first, ForwardIt1 last, ForwardIt2 d_first,
+
+      UnaryPred p, const T& new_value );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< class ExecutionPolicy, class ForwardIt1, class ForwardIt2,
+          class UnaryPred, class T = typename std::iterator_traits
+                                         <ForwardIt2>::value_type >
+ForwardIt2 replace_copy_if
+    ( ExecutionPolicy&& policy,
+      ForwardIt1 first, ForwardIt1 last, ForwardIt2 d_first,
+
+      UnaryPred p, const T& new_value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-replace-copy:0001 */}
+Copies the elements from the range `[first, last)` to another range beginning at `d_first`, while replacing all elements satisfying specific criteria with `new_value`.
+
+{/* source:cpp-algorithm-replace-copy:0002 */}
+1. 1) Replaces all elements that are equal to `old_value` (using `operator==`).
+
+{/* source:cpp-algorithm-replace-copy:0003 */}
+2. 3) Replaces all elements for which predicate `p` returns `true`.
+
+{/* source:cpp-algorithm-replace-copy:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-replace-copy:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+{/* source:cpp-algorithm-replace-copy:0006 */}
+If any of the results of the expressions `*first` and `new_value` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `d_first`, the program is ill-formed.
+
+{/* source:cpp-algorithm-replace-copy:0007 */}
+If the source and destination ranges overlap, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-algorithm-replace-copy:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to copy</Parameter>
+  <Parameter name="d_first">the beginning of the destination range</Parameter>
+  <Parameter name="old_value">the value of elements to replace</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">unary predicate which returns `true` if the element value should be replaced. The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `InputIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.</Parameter>
+  <Parameter name="new_value">the value to use as replacement</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- `ForwardIt1, ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-replace-copy:0009 */}
+Iterator to the element past the last element copied.
+
+### Complexity
+
+{/* source:cpp-algorithm-replace-copy:0010 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-replace-copy:0011 */}
+1. 1,2) Exactly `N` comparisons using `operator==`.
+
+{/* source:cpp-algorithm-replace-copy:0012 */}
+2. 3,4) Exactly `N` applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-replace-copy:0013 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-replace-copy:0014 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-replace-copy:0015 */}
+[`replace_copy`](/docs/cpp/library/algorithm/replace_copy#Version_1)
+
+```cpp
+template<class InputIt, class OutputIt, class T>
+OutputIt replace_copy(InputIt first, InputIt last, OutputIt d_first,
+                      const T& old_value, const T& new_value)
+{
+    for (; first != last; ++first)
+        *d_first++ = (*first == old_value) ? new_value : *first;
+    return d_first;
+}
+```
+
+[`replace_copy_if`](/docs/cpp/library/algorithm/replace_copy#Version_3)
+
+```cpp
+template<class InputIt, class OutputIt, class UnaryPred,
+         class T = typename std::iterator_traits<ForwardIt>::value_type>
+OutputIt replace_copy_if(InputIt first, InputIt last, OutputIt d_first,
+                         UnaryPred p, const T& new_value)
+{
+    for (; first != last; ++first)
+        *d_first++ = p(*first) ? new_value : *first;
+    return d_first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-replace-copy:0016 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([3,4](/docs/cpp/library/algorithm/replace_copy#Version_3)) |
+
+### Example
+
+{/* source:cpp-algorithm-replace-copy:0017 */}
+```cpp
+#include <algorithm>
+#include <complex>
+#include <iostream>
+#include <vector>
+ 
+void println(const auto& seq)
+{
+    for (const auto& e : seq)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::vector<short> src{3, 1, 4, 1, 5, 9, 2, 6, 5};
+    println(src);
+    std::vector<int> dst(src.size());
+    std::replace_copy_if(src.cbegin(), src.cend(),
+                         dst.begin(),
+                         [](short n){ return n > 5; }, 0);
+    println(dst);
+ 
+    std::vector<std::complex<double>> src2{{1, 3}, {2, 4}, {3, 5}},
+                                      dst2(src2.size());
+    println(src2);
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::replace_copy_if(src2.cbegin(), src2.cend(), dst2.begin(),
+            [](std::complex<double> z){ return std::abs(z) < 5; },
+            {4, 2}); // Possible, since the T is deduced.
+    #else
+        std::replace_copy_if(src2.cbegin(), src2.cend(), dst2.begin(),
+            [](std::complex<double> z){ return std::abs(z) < 5; },
+            std::complex<double>{4, 2});
+    #endif
+    println(dst2);
+}
+```
+
+Output:
+
+```text
+3 1 4 1 5 9 2 6 5 
+3 1 4 1 5 0 2 0 5 
+(1,3) (2,4) (3,5) 
+(4,2) (4,2) (3,5)
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-replace-copy:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-replace-copy:0019 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable) (and [*EqualityComparable*](/docs/cpp/library/named_req/EqualityComparable) for<br />`replace_copy`), but the value type of `InputIt` is not always `T`</PublishedBehavior>
+    <CorrectedBehavior>removed the requirement</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={337} standard="C++98">
+    <PublishedBehavior>`replace_copy_if` only required `InputIt` to<br />meet the requirements of [*LegacyIterator*](/docs/cpp/library/named_req/Iterator)[[1]](/docs/cpp/library/algorithm/replace_copy#cite_note-1)</PublishedBehavior>
+    <CorrectedBehavior>corrected to<br />[*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-algorithm-replace-copy:0020 */}
+1. ↑ The actual defect in the C++ standard is that the template parameter `InputIterator` was misspecified as `Iterator`. This affects the type requirements because the C++ standard states that for the function templates in the algorithms library, the template type parameters whose name ends with `Iterator` imply the type requirements of the corresponding iterator categories.
+
+### See also
+
+{/* source:cpp-algorithm-replace-copy:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace`, `replace_if`](/docs/cpp/library/algorithm/replace)</DescriptionTerm>
+    <DescriptionBody>replaces all values satisfying specific criteria with another value (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove`, `remove_if`](/docs/cpp/library/algorithm/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::replace_copy`, `ranges::replace_copy_if`](/docs/cpp/library/algorithm/ranges/replace_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range, replacing elements satisfying specific criteria with another value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,166 @@
+---
+title: "std::reverse_copy"
+description: "Copies the elements from the range [first, last) (source range) to another range of N elements beginning at d_first (destination range) in such a way that the elements in the destination range are in reverse order."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/reverse_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-reverse-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class BidirIt, class OutputIt >
+OutputIt reverse_copy( BidirIt first, BidirIt last,
+
+                       OutputIt d_first );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class BidirIt, class ForwardIt >
+ForwardIt reverse_copy( ExecutionPolicy&& policy,
+                        BidirIt first, BidirIt last,
+
+                        ForwardIt d_first );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-reverse-copy:0001 */}
+1. 1) Given `N` as `std::distance(first, last)`. Copies the elements from the range `[first, last)` (source range) to another range of `N` elements beginning at `d_first` (destination range) in such a way that the elements in the destination range are in reverse order.
+
+{/* source:cpp-algorithm-reverse-copy:0002 */}
+2. Behaves as if by executing the assignment `*(d_first + N - 1 - i) = *(first + i)` [1] once for each integer `i` in `[0, N)`.
+
+{/* source:cpp-algorithm-reverse-copy:0003 */}
+3. If source and destination ranges overlap, the behavior is undefined.
+
+{/* source:cpp-algorithm-reverse-copy:0004 */}
+4. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-reverse-copy:0005 */}
+5. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-reverse-copy:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to copy</Parameter>
+  <Parameter name="d_first">the beginning of the destination range</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `BidirIt` must meet the requirements of [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-reverse-copy:0007 */}
+Output iterator to the element past the last element copied.
+
+### Complexity
+
+{/* source:cpp-algorithm-reverse-copy:0008 */}
+Exactly `N` assignments.
+
+### Exceptions
+
+{/* source:cpp-algorithm-reverse-copy:0009 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-reverse-copy:0010 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-reverse-copy:0011 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/14d8a5ae472ca5743016f37da2dd4770d83dea21/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1170-L1190), [libc++](https://github.com/llvm/llvm-project/tree/134723edd5bf06ff6ec8aca7b87c56e5bd70ccae/libcxx/include/__algorithm/reverse_copy.h), and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L4184-L4229).
+
+{/* source:cpp-algorithm-reverse-copy:0012 */}
+```cpp
+template<class BidirIt, class OutputIt>
+constexpr // since C++20
+OutputIt reverse_copy(BidirIt first, BidirIt last, OutputIt d_first)
+{
+    for (; first != last; ++d_first)
+        *d_first = *(--last);
+    return d_first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-reverse-copy:0013 */}
+Implementations (e.g. [MSVC STL](https://github.com/microsoft/STL/blob/main/stl/src/vector_algorithms.cpp)) may enable vectorization when the both iterator types satisfy [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) and have the same value type, and the value type is [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable).
+
+### Example
+
+{/* source:cpp-algorithm-reverse-copy:0014 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    auto print = [](const std::vector<int>& v)
+    {
+        for (const auto& value : v)
+            std::cout << value << ' ';
+        std::cout << '\n';
+    };
+ 
+    std::vector<int> v{1, 2, 3};
+    print(v);
+ 
+    std::vector<int> destination(3);
+    std::reverse_copy(std::begin(v), std::end(v), std::begin(destination));
+    print(destination);
+ 
+    std::reverse_copy(std::rbegin(v), std::rend(v), std::begin(destination));
+    print(destination);
+}
+```
+
+Output:
+
+```text
+1 2 3 
+3 2 1 
+1 2 3
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-reverse-copy:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-reverse-copy:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2074} standard="C++98">
+    <PublishedBehavior>for each `i`, the assignment was<br />`*(d_first + N - i) = *(first + i)` [1]</PublishedBehavior>
+    <CorrectedBehavior>corrected to<br />`*(d_first + N - 1 - i) = *(first + i)` [1]</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2150} standard="C++98">
+    <PublishedBehavior>only one element was required to be assigned</PublishedBehavior>
+    <CorrectedBehavior>corrected the requirement</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-algorithm-reverse-copy:0017 */}
+[*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator) is not required to support binary `+` and `-`. The usages of `+` and `-` here are exposition-only: the actual computation does not need to use them.
+
+### See also
+
+{/* source:cpp-algorithm-reverse-copy:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reverse`](/docs/cpp/library/algorithm/reverse)</DescriptionTerm>
+    <DescriptionBody>reverses the order of elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse_copy`](/docs/cpp/library/algorithm/ranges/reverse_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a copy of a range that is reversed (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

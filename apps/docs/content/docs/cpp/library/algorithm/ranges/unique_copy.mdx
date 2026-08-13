@@ -1,0 +1,216 @@
+---
+title: "std::ranges::unique_copy, std::ranges::unique_copy_result"
+description: "Copies the elements from the source range [first, last), to the destination range beginning at result in such a way that there are no consecutive equal elements."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/unique_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-unique-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O,
+          class Proj = std::identity,
+          std::indirect_equivalence_relation<std::projected<I, Proj>> C = ranges::equal_to >
+requires std::indirectly_copyable<I, O> && (std::forward_iterator<I> ||
+             (std::input_iterator<O> && std::same_as<std::iter_value_t<I>,
+                 std::iter_value_t<O>>) || std::indirectly_copyable_storable<I, O>)
+constexpr unique_copy_result<I, O>
+
+    unique_copy( I first, S last, O result, C comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R, std::weakly_incrementable O, class Proj = std::identity,
+          std::indirect_equivalence_relation<std::projected<ranges::iterator_t<R>,
+              Proj>> C = ranges::equal_to >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O> &&
+             (std::forward_iterator<ranges::iterator_t<R>> ||
+             (std::input_iterator<O> && std::same_as<ranges::range_value_t<R>,
+                 std::iter_value_t<O>>) ||
+             std::indirectly_copyable_storable<ranges::iterator_t<R>, O>)
+constexpr unique_copy_result<ranges::borrowed_iterator_t<R>, O>
+
+    unique_copy( R&& r, O result, C comp = {}, Proj proj = {} );`} />
+
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I, class O >
+using unique_copy_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-unique-copy:0001 */}
+1. 1) Copies the elements from the source range `[first, last)`, to the destination range beginning at `result` in such a way that there are no consecutive equal elements. Only the first element of each group of equal elements is copied.
+
+{/* source:cpp-algorithm-ranges-unique-copy:0002 */}
+2. The ranges `[first, last)` and `[result, result + N)` must not overlap. `N = ranges::distance(first, last)`.
+
+{/* source:cpp-algorithm-ranges-unique-copy:0003 */}
+3. Two consecutive elements `*(i - 1)` and `*i` are considered equivalent if `std::invoke(comp, std::invoke(proj, *(i - 1)), std::invoke(proj, *i)) == true`, where `i` is an iterator in the range `[first + 1, last)`.
+
+{/* source:cpp-algorithm-ranges-unique-copy:0004 */}
+4. 2) Same as (1), but uses `r` as the range, as if using `ranges::begin(r)` as `first`, and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-unique-copy:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-unique-copy:0006 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-unique-copy:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the source range of elements</Parameter>
+  <Parameter name="r">the source range of elements</Parameter>
+  <Parameter name="result">the destination range of elements</Parameter>
+  <Parameter name="comp">the binary predicate to compare the projected elements</Parameter>
+  <Parameter name="proj">the projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-unique-copy:0008 */}
+`{last, result + N}`
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-unique-copy:0009 */}
+Exactly `N - 1` applications of the corresponding predicate `comp` and no more than twice as many applications of any projection `proj`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-unique-copy:0010 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/master/libstdc%2B%2B-v3/include/bits/ranges_algo.h#L1198-L1276) and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L4022-L4113) (and third-party libraries: [cmcstl2](https://github.com/CaseyCarter/cmcstl2/blob/master/include/stl2/detail/algorithm/unique_copy.hpp), [NanoRange](https://github.com/tcbrindle/NanoRange/blob/master/include/nanorange/algorithm/unique_copy.hpp), and [range-v3](https://github.com/ericniebler/range-v3/blob/master/include/range/v3/algorithm/unique_copy.hpp)).
+
+{/* source:cpp-algorithm-ranges-unique-copy:0011 */}
+```cpp
+struct unique_copy_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O,
+             class Proj = std::identity,
+             std::indirect_equivalence_relation<std::projected<I,
+                 Proj>> C = ranges::equal_to>
+    requires std::indirectly_copyable<I, O> && (std::forward_iterator<I> ||
+                 (std::input_iterator<O> && std::same_as<std::iter_value_t<I>,
+                     std::iter_value_t<O>>) || std::indirectly_copyable_storable<I, O>)
+    constexpr ranges::unique_copy_result<I, O>
+        operator()(I first, S last, O result, C comp = {}, Proj proj = {}) const
+    {
+        if (!(first == last))
+        {
+            std::iter_value_t<I> value = *first;
+            *result = value;
+            ++result;
+            while (!(++first == last))
+            {
+                auto&& value2 = *first;
+                if (!std::invoke(comp, std::invoke(proj, value2),
+                        std::invoke(proj, value)))
+                {
+                    value = std::forward<decltype(value2)>(value2);
+                    *result = value;
+                    ++result;
+                }
+            }
+        }
+ 
+        return {std::move(first), std::move(result)};
+    }
+ 
+    template<ranges::input_range R, std::weakly_incrementable O, class Proj = std::identity,
+             std::indirect_equivalence_relation<std::projected<ranges::iterator_t<R>,
+                 Proj>> C = ranges::equal_to>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O> &&
+                 (std::forward_iterator<ranges::iterator_t<R>> ||
+                 (std::input_iterator<O> && std::same_as<ranges::range_value_t<R>,
+                     std::iter_value_t<O>>) ||
+                 std::indirectly_copyable_storable<ranges::iterator_t<R>, O>)
+    constexpr ranges::unique_copy_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, C comp = {}, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(result),
+                       std::move(comp), std::move(proj));
+    }
+};
+ 
+inline constexpr unique_copy_fn unique_copy {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-unique-copy:0012 */}
+```cpp
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <string>
+#include <type_traits>
+ 
+void print(const auto& rem, const auto& v)
+{
+    using V = std::remove_cvref_t<decltype(v)>;
+    constexpr bool sep{std::is_same_v<typename V::value_type, int>};
+    std::cout << rem << std::showpos;
+    for (const auto& e : v)
+        std::cout << e << (sep ? " " : "");
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::string s1{"The      string    with many       spaces!"};
+    print("s1: ", s1);
+ 
+    std::string s2;
+    std::ranges::unique_copy(
+        s1.begin(), s1.end(), std::back_inserter(s2),
+        [](char c1, char c2) { return c1 == ' ' && c2 == ' '; }
+    );
+    print("s2: ", s2);
+ 
+    const auto v1 = {-1, +1, +2, -2, -3, +3, -3};
+    print("v1: ", v1);
+    std::list<int> v2;
+    std::ranges::unique_copy(
+        v1, std::back_inserter(v2),
+        {}, // default comparator std::ranges::equal_to
+        [](int x) { return std::abs(x); } // projection
+    );
+    print("v2: ", v2);
+}
+```
+
+Output:
+
+```text
+s1: The      string    with many       spaces!
+s2: The string with many spaces!
+v1: -1 +1 +2 -2 -3 +3 -3 
+v2: -1 +2 -3
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-unique-copy:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::unique`](/docs/cpp/library/algorithm/ranges/unique) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy`, `ranges::copy_if`](/docs/cpp/library/algorithm/ranges/copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::adjacent_find`](/docs/cpp/library/algorithm/ranges/adjacent_find) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first two adjacent items that are equal (or satisfy a given predicate) (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_copy`](/docs/cpp/library/algorithm/unique_copy)</DescriptionTerm>
+    <DescriptionBody>creates a copy of some range of elements that contains no consecutive duplicates (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

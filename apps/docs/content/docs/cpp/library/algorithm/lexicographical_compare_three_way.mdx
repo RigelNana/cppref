@@ -1,0 +1,173 @@
+---
+title: "std::lexicographical_compare_three_way"
+description: "Lexicographically compares two ranges [ first1 , last1 ) and [ first2 , last2 ) using three-way comparison and produces a result of the strongest applicable comparison category type."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/lexicographical_compare_three_way"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class InputIt1, class InputIt2, class Cmp >
+constexpr auto lexicographical_compare_three_way
+    ( InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
+
+      Cmp comp ) -> decltype(comp(*first1, *first2));`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class InputIt1, class InputIt2 >
+constexpr auto lexicographical_compare_three_way
+
+    ( InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2 );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0001 */}
+Lexicographically compares two ranges `[first1, last1)` and `[first2, last2)` using three-way comparison and produces a result of the strongest applicable comparison category type.
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0002 */}
+1. 1) Returns the order between the first non-equivalent pair of elements according to `comp` in both ranges if any, otherwise (if one ranges is equivalent to the prefix of another according to `comp`), returns the order between the length of both ranges.
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0003 */}
+2. 2) Equivalent to `return std::lexicographical_compare_three_way(    first1, last1, first2, last2, std::compare_three_way());`
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0004 */}
+If the return type is not one of the three comparison category types, the program is ill-formed:
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0005 */}
+- [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering)
+- [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering)
+- [`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering)
+
+### Parameters
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0006 */}
+<ParameterList>
+  <Parameter name="first1, last1">the first range of elements to examine</Parameter>
+  <Parameter name="first2, last2">the second range of elements to examine</Parameter>
+  <Parameter name="comp">a function object</Parameter>
+</ParameterList>
+
+Type requirements
+- `InputIt1, InputIt2` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0007 */}
+The value of a comparison category type specified above.
+
+### Complexity
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0008 */}
+Given N1 as `std::distance(first1, last1)` and N2 as `std::distance(first2, last2)`:
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0009 */}
+1. 1) At most min(1,N2) applications of `comp`.
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0010 */}
+2. 2) At most min(N1,N2) applications of `std::compare_three_way()`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0011 */}
+```cpp
+template<class I1, class I2, class Cmp>
+constexpr auto lexicographical_compare_three_way(I1 f1, I1 l1, I2 f2, I2 l2, Cmp comp)
+    -> decltype(comp(*f1, *f2))
+{
+    using ret_t = decltype(comp(*f1, *f2));
+    static_assert(std::disjunction_v<
+                      std::is_same<ret_t, std::strong_ordering>,
+                      std::is_same<ret_t, std::weak_ordering>,
+                      std::is_same<ret_t, std::partial_ordering>>,
+                  "The return type must be a comparison category type.");
+ 
+    bool exhaust1 = (f1 == l1);
+    bool exhaust2 = (f2 == l2);
+    for (; !exhaust1 && !exhaust2; exhaust1 = (++f1 == l1), exhaust2 = (++f2 == l2))
+        if (auto c = comp(*f1, *f2); c != 0)
+            return c;
+ 
+    return !exhaust1 ? std::strong_ordering::greater:
+           !exhaust2 ? std::strong_ordering::less:
+                       std::strong_ordering::equal;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0012 */}
+```cpp
+#include <algorithm>
+#include <cctype>
+#include <compare>
+#include <iomanip>
+#include <iostream>
+#include <string_view>
+#include <utility>
+ 
+using namespace std::literals;
+ 
+void show_result(std::string_view s1, std::string_view s2, std::strong_ordering o)
+{
+    std::cout << std::quoted(s1) << " is ";
+    std::is_lt(o) ? std::cout << "less than ":
+    std::is_gt(o) ? std::cout << "greater than ":
+                    std::cout << "equal to ";
+    std::cout << std::quoted(s2) << '\n';
+}
+ 
+std::strong_ordering cmp_icase(unsigned char x, unsigned char y)
+{
+    return std::toupper(x) <=> std::toupper(y);
+};
+ 
+int main()
+{
+    for (const auto& [s1, s2] :
+    {
+        std::pair{"one"sv, "ONE"sv}, {"two"sv, "four"sv}, {"three"sv, "two"sv}
+    })
+    {
+        const auto res = std::lexicographical_compare_three_way(
+            s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), cmp_icase);
+        show_result(s1, s2, res);
+    }
+}
+```
+
+Output:
+
+```text
+"one" is equal to "ONE"
+"two" is greater than "four"
+"three" is less than "two"
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3410} standard="C++20">
+    <PublishedBehavior>extraneous comparisons between iterators were required</PublishedBehavior>
+    <CorrectedBehavior>such requirement removed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-lexicographical-compare-three-way:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lexicographical_compare`](/docs/cpp/library/algorithm/lexicographical_compare)</DescriptionTerm>
+    <DescriptionBody>returns `true` if one range is lexicographically less than another (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare_three_way`](/docs/cpp/library/utility/functional/compare_three_way) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x <=> y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lexicographical_compare`](/docs/cpp/library/algorithm/ranges/lexicographical_compare) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns `true` if one range is lexicographically less than another (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

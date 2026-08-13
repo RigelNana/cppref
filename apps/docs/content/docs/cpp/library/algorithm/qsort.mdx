@@ -1,0 +1,140 @@
+---
+title: "std::qsort"
+description: "Sorts the given array pointed to by ptr in ascending order."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/qsort"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-qsort:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration id="1" language="cpp" code={`void qsort( void *ptr, std::size_t count,
+            std::size_t size, /* c-compare-pred */* comp );
+void qsort( void *ptr, std::size_t count,
+
+            std::size_t size, /* compare-pred */* comp );`} />
+  <Declaration id="2" language="cpp" code={`extern "C" using /* c-compare-pred */ = int(const void*, const void*);
+extern "C++" using /* compare-pred */ = int(const void*, const void*);`} />
+
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-qsort:0001 */}
+Sorts the given array pointed to by `ptr` in ascending order. The array contains `count` elements of `size` bytes. Function pointed to by `comp` is used for object comparison.
+
+{/* source:cpp-algorithm-qsort:0002 */}
+If `comp` indicates two elements as equivalent, their order is unspecified.
+
+{/* source:cpp-algorithm-qsort:0003 */}
+If the type of the elements of the array is not a <InlineRevision until="C++11">[*PODType*](/docs/cpp/library/named_req/PODType)</InlineRevision><InlineRevision since="C++11">[*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable) type</InlineRevision>, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-algorithm-qsort:0004 */}
+<ParameterList>
+  <Parameter name="ptr">pointer to the array to sort</Parameter>
+  <Parameter name="count">number of elements in the array</Parameter>
+  <Parameter name="size">size of each element in the array in bytes</Parameter>
+  <Parameter name="comp">
+comparison function which returns a negative integer value if the first argument is *less* than the second, a positive integer value if the first argument is *greater* than the second and zero if the arguments are equivalent. The signature of the comparison function should be equivalent to the following:
+
+`int cmp(const void *a, const void *b);`
+
+The function must not modify the objects passed to it and must return consistent results when called for the same objects, regardless of their positions in the array.
+  </Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-qsort:0005 */}
+(none)
+
+### Notes
+
+{/* source:cpp-algorithm-qsort:0006 */}
+Despite the name, C++, C, and POSIX standards do not require this function to be implemented using [Quicksort](https://en.wikipedia.org/wiki/Quicksort) or make any complexity or stability guarantees.
+
+{/* source:cpp-algorithm-qsort:0007 */}
+The two overloads provided by the C++ standard library are distinct because the types of the parameter `comp` are distinct ([language linkage](/docs/cpp/language/declarations/language_linkage) is part of its type).
+
+### Example
+
+{/* source:cpp-algorithm-qsort:0008 */}
+The following code sorts an array of integers using `qsort()`:
+
+```cpp
+#include <array>
+#include <climits>
+#include <compare>
+#include <cstdlib>
+#include <iostream>
+ 
+int main()
+{
+    std::array a{-2, 99, 0, -743, INT_MAX, 2, INT_MIN, 4};
+ 
+    std::qsort
+    (
+        a.data(),
+        a.size(),
+        sizeof(decltype(a)::value_type),
+        [](const void* x, const void* y)
+        {
+            const int arg1 = *static_cast<const int*>(x);
+            const int arg2 = *static_cast<const int*>(y);
+            const auto cmp = arg1 <=> arg2;
+            if (cmp < 0)
+                return -1;
+            if (cmp > 0)
+                return 1;
+            return 0;
+        }
+    );
+ 
+    for (int ai : a)
+        std::cout << ai << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+-2147483648 -743 -2 0 2 4 99 2147483647
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-qsort:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-qsort:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={405} standard="C++98">
+    <PublishedBehavior>the elements of the array could have any type</PublishedBehavior>
+    <CorrectedBehavior>limited to [*PODType*](/docs/cpp/library/named_req/PODType)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-qsort:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`bsearch`](/docs/cpp/library/algorithm/bsearch)</DescriptionTerm>
+    <DescriptionBody>searches an array for an element of unspecified type (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sort`](/docs/cpp/library/algorithm/sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range into ascending order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_trivial`](/docs/cpp/library/meta/is_trivial) <InlineRevision since="C++11" /> (deprecated in C++26)</DescriptionTerm>
+    <DescriptionBody>checks if a type is trivial (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/algorithm/qsort) for `qsort`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

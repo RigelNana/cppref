@@ -1,0 +1,167 @@
+---
+title: "std::ranges::in_found_result"
+description: "ranges::in_found_result is a class template that provides a way to store an iterator and a boolean flag as a single unit."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/return_types/in_found_result"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration language="cpp" since="C++20" code={`template< class I >
+struct in_found_result;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0001 */}
+`ranges::in_found_result` is a class template that provides a way to store an iterator and a boolean flag as a single unit.
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0002 */}
+This class template has no base classes or declared members other than those shown below. Thus it is suitable for use with [structured bindings](/docs/cpp/language/declarations/structured_binding).
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0003 */}
+All special member functions of this class template are implicitly declared, which makes specializations be [aggregate classes](/docs/cpp/language/initialization/aggregate_initialization), and propagate triviality, potentially-throwing-ness, and constexpr-ness of corresponding operations on data members.
+
+### Template parameters
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0004 */}
+<ParameterList>
+  <Parameter name="I">the type of the iterator that the `ranges::in_found_result` stores.</Parameter>
+</ParameterList>
+
+### Data members
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`in`</DescriptionTerm>
+    <DescriptionBody>a value (that is supposed to be an iterator) of type `I`. It is declared with [`[[no_unique_address]]`](/docs/cpp/language/declarations/attributes/no_unique_address) attribute. (public member object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`found`</DescriptionTerm>
+    <DescriptionBody>a boolean flag (that may show whether an appropriate range can be found) of type `bool`. (public member object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0006 */}
+#### `std::ranges::in_found_result::operator in_found_result<I2>`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template<class I2>
+requires std::convertible_to<const I&, I2>
+
+constexpr operator in_found_result<I2>() const &;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template<class I2>
+requires std::convertible_to<I, I2>
+
+constexpr operator in_found_result<I2>() &&;`} />
+</DeclarationDoc>
+
+Converts `*this` to the result by constructing every data member of the result from the corresponding member of `*this`.
+
+1. 1) Equivalent to `return {in, found};`.
+
+2. 2) Equivalent to `return {std::move(in), found};`.
+
+### Standard library
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0007 */}
+The following standard library functions use `ranges::in_found_result` as the return type:
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0008 */}
+**Algorithm functions**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::next_permutation`](/docs/cpp/library/algorithm/ranges/next_permutation) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>generates the next greater lexicographic permutation of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::prev_permutation`](/docs/cpp/library/algorithm/ranges/prev_permutation) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>generates the next smaller lexicographic permutation of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Synopsis
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0009 */}
+```cpp
+namespace std::ranges
+{
+    template<class I>
+    struct in_found_result
+    {
+        [[no_unique_address]] I in;
+        bool found;
+
+        template<class I2>
+        requires std::convertible_to<const I&, I2>
+        constexpr operator in_found_result<I2>() const &
+        {
+            return {in, found};
+        }
+
+        template<class I2>
+        requires std::convertible_to<I, I2>
+        constexpr operator in_found_result<I2>() &&
+        {
+            return {std::move(in), found};
+        }
+    };
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0010 */}
+Each standard library algorithm that uses this family of return types declares a new [alias type](/docs/cpp/language/declarations/type_alias), e.g. `using merge_result = in_in_out_result<I1, I2, O>;`.
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0011 */}
+The names for such aliases are formed by adding the suffix `_result` to the algorithm's name. So, the return type of `std::ranges::merge` can be named as `std::ranges::merge_result`.
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0012 */}
+Unlike [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), this class template has data members of meaningful names.
+
+### Example
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0013 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+
+int main()
+{
+    int v[] {1, 2, 3};
+
+    const auto result = std::ranges::next_permutation(v);
+
+    std::ranges::for_each(std::cbegin(v), result.in, [](int e) {std::cout << e << ' ';});
+
+    std::cout << std::boolalpha << "\n" "result.found: " << result.found << '\n';
+}
+```
+
+Output:
+
+```text
+1 3 2 
+result.found = true
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-return-types-in-found-result:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pair`](/docs/cpp/library/utility/pair) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements binary tuple, i.e. a pair of values (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple`](/docs/cpp/library/utility/tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements fixed size container, which holds elements of possibly different types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,322 @@
+---
+title: "std::ranges::remove_copy, std::ranges::remove_copy_if, std::ranges::remove_copy_result, std::ranges::remove_copy_if_result"
+description: "Copies elements from the source range [first, last), to the destination range beginning at result, omitting the elements which (after being projected by proj) satisfy specific criteria."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/remove_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-remove-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          std::weakly_incrementable O, class T, class Proj = std::identity >
+requires std::indirectly_copyable<I, O> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to, std::projected<I, Proj>, const T*>
+constexpr remove_copy_result<I, O>
+
+    remove_copy( I first, S last, O result, const T& value, Proj proj = {} );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          std::weakly_incrementable O, class Proj = std::identity,
+          class T = std::projected_value_t<I, Proj> >
+requires std::indirectly_copyable<I, O> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to, std::projected<I, Proj>, const T*>
+constexpr remove_copy_result<I, O>
+
+    remove_copy( I first, S last, O result, const T& value, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" until="C++26" code={`template< ranges::input_range R, 
+          std::weakly_incrementable O, class T, class Proj = std::identity >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to,
+              std::projected<ranges::iterator_t<R>, Proj>, const T*>
+constexpr remove_copy_result<ranges::borrowed_iterator_t<R>, O>
+
+    remove_copy( R&& r, O result, const T& value, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< ranges::input_range R, 
+          std::weakly_incrementable O, class Proj = std::identity,
+          class T = std::projected_value_t<ranges::iterator_t<R>, Proj> >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to,
+              std::projected<ranges::iterator_t<R>, Proj>, const T*>
+constexpr remove_copy_result<ranges::borrowed_iterator_t<R>, O>
+
+    remove_copy( R&& r, O result, const T& value, Proj proj = {} );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          std::weakly_incrementable O, class Proj = std::identity,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+requires std::indirectly_copyable<I, O>
+constexpr remove_copy_if_result<I, O>
+
+    remove_copy_if( I first, S last, O result, Pred pred, Proj proj = {} );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< ranges::input_range R,
+          std::weakly_incrementable O, class Proj = std::identity,
+          std::indirect_unary_predicate<
+              std::projected<ranges::iterator_t<R>, Proj>> Pred >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+constexpr remove_copy_if_result<ranges::borrowed_iterator_t<R>, O>
+
+    remove_copy_if( R&& r, O result, Pred pred, Proj proj = {} );`} />
+
+Helper types
+
+  <Declaration id="5" language="cpp" since="C++20" code={`template< class I, class O >
+using remove_copy_result = ranges::in_out_result<I, O>;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class I, class O >
+using remove_copy_if_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-remove-copy:0001 */}
+Copies elements from the source range `[first, last)`, to the destination range beginning at `result`, omitting the elements which (after being projected by `proj`) satisfy specific criteria. The behavior is undefined if the source and destination ranges overlap.
+
+{/* source:cpp-algorithm-ranges-remove-copy:0002 */}
+1. 1) Ignores all elements that are equal to `value`.
+
+{/* source:cpp-algorithm-ranges-remove-copy:0003 */}
+2. 3) Ignores all elements for which predicate `pred` returns `true`.
+
+{/* source:cpp-algorithm-ranges-remove-copy:0004 */}
+3. 2,4) Same as (1,3), but uses `r` as the source range, as if using `ranges::begin(r)` as `first`, and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-remove-copy:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-remove-copy:0006 */}
+Explicit template argument lists cannot be specified when calling any of them.
+None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-remove-copy:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the source range of elements</Parameter>
+  <Parameter name="r">the source range of elements</Parameter>
+  <Parameter name="result">the beginning of the destination range</Parameter>
+  <Parameter name="value">the value of the elements not to copy</Parameter>
+  <Parameter name="comp">the binary predicate to compare the projected elements</Parameter>
+  <Parameter name="proj">the projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-remove-copy:0008 */}
+`{last, result + N}`, where `N` is the number of elements copied.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-remove-copy:0009 */}
+Exactly `ranges::distance(first, last)` applications of the corresponding predicate `comp` and any projection `proj`.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-remove-copy:0010 */}
+The algorithm is stable, i.e. preserves the relative order of the copied elements.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-remove-copy:0011 */}
+| [Feature-test macro](/docs/cpp/library/utility/feature_test) | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/ranges/remove_copy#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-remove-copy:0012 */}
+[`remove_copy (1)`](/docs/cpp/library/algorithm/ranges/remove_copy#Version_1)
+
+```cpp
+struct remove_copy_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S,
+             std::weakly_incrementable O, class Proj = std::identity,
+             class T = std::projected_value_t<I, Proj>>
+    requires std::indirectly_copyable<I, O> &&
+             std::indirect_binary_predicate<ranges::equal_to,
+                                            std::projected<I, Proj>, const T*>
+    constexpr ranges::remove_copy_result<I, O>
+        operator()(I first, S last, O result, const T& value, Proj proj = {}) const
+    {
+        for (; !(first == last); ++first)
+            if (value != std::invoke(proj, *first))
+            {
+                *result = *first;
+                ++result;
+            }
+        return {std::move(first), std::move(result)};
+    }
+ 
+    template<ranges::input_range R, 
+             std::weakly_incrementable O, class Proj = std::identity,
+             class T = std::projected_value_t<ranges::iterator_t<R>, Proj>>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O> &&
+             std::indirect_binary_predicate<ranges::equal_to,
+             std::projected<ranges::iterator_t<R>, Proj>, const T*>
+    constexpr ranges::remove_copy_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, const T& value, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(result), value,
+                       std::move(proj));
+    }
+};
+ 
+inline constexpr remove_copy_fn remove_copy {};
+```
+
+[`remove_copy_if (3)`](/docs/cpp/library/algorithm/ranges/remove_copy#Version_3)
+
+```cpp
+struct remove_copy_if_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O,
+             class Proj = std::identity,
+             std::indirect_unary_predicate<std::projected<I, Proj>> Pred>
+    requires std::indirectly_copyable<I, O>
+    constexpr ranges::remove_copy_if_result<I, O>
+        operator()(I first, S last, O result, Pred pred, Proj proj = {}) const
+    {
+        for (; first != last; ++first)
+            if (false == std::invoke(pred, std::invoke(proj, *first)))
+            {
+                *result = *first;
+                ++result;
+            }
+        return {std::move(first), std::move(result)};
+    }
+ 
+    template<ranges::input_range R, std::weakly_incrementable O,
+             class Proj = std::identity,
+             std::indirect_unary_predicate<
+                 std::projected<ranges::iterator_t<R>, Proj>> Pred>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+    constexpr ranges::remove_copy_if_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, Pred pred, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(result),
+                       std::move(pred), std::move(proj));
+    }
+};
+ 
+inline constexpr remove_copy_if_fn remove_copy_if {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-remove-copy:0013 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <complex>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <string_view>
+#include <vector>
+ 
+void println(const auto rem, const auto& v)
+{
+    std::cout << rem << ' ';
+    for (const auto& e : v)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    // Filter out the hash symbol from the given string.
+    const std::string_view str{"#Small #Buffer #Optimization"};
+    std::cout << "before: " << std::quoted(str) << '\n';
+ 
+    std::cout << "after:  \"";
+    std::ranges::remove_copy(str.begin(), str.end(),
+                             std::ostream_iterator<char>(std::cout), '#');
+    std::cout << "\"\n";
+ 
+    // Copy only the complex numbers with positive imaginary part.
+    using Ci = std::complex<int>;
+    constexpr std::array<Ci, 5> source
+    {
+        Ci{1, 0}, Ci{0, 1}, Ci{2, -1}, Ci{3, 2}, Ci{4, -3}
+    };
+    std::vector<std::complex<int>> target;
+ 
+    std::ranges::remove_copy_if
+    (
+        source,
+        std::back_inserter(target),
+        [](int imag) { return imag <= 0; },
+        [](Ci z) { return z.imag(); }
+    );
+ 
+    println("source:", source);
+    println("target:", target);
+ 
+    std::vector<std::complex<float>> nums{{2, 2}, {1, 3}, {4, 8}, {1, 3}};
+    std::vector<std::complex<double>> outs;
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::remove_copy(nums.cbegin(), nums.cend(), std::back_inserter(outs),
+                         {1, 3}); // T gets deduced to std::complex<float>
+    #else
+        std::remove_copy(nums.cbegin(), nums.cend(), std::back_inserter(outs),
+                         std::complex<float>{1, 3});
+    #endif
+    println("nums:  ", nums);
+    println("outs:  ", outs);
+}
+```
+Output:
+```text
+before: "#Small #Buffer #Optimization"
+after:  "Small Buffer Optimization"
+source: (1,0) (0,1) (2,-1) (3,2) (4,-3)
+target: (0,1) (3,2)
+nums:   (2,2) (1,3) (4,8) (1,3)
+outs:   (2,2) (4,8)
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-remove-copy:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::remove`, `ranges::remove_if`](/docs/cpp/library/algorithm/ranges/remove) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy`, `ranges::copy_if`](/docs/cpp/library/algorithm/ranges/copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_n`](/docs/cpp/library/algorithm/ranges/copy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a number of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_backward`](/docs/cpp/library/algorithm/ranges/copy_backward) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements in backwards order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::replace_copy`, `ranges::replace_copy_if`](/docs/cpp/library/algorithm/ranges/replace_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range, replacing elements satisfying specific criteria with another value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse_copy`](/docs/cpp/library/algorithm/ranges/reverse_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a copy of a range that is reversed (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::rotate_copy`](/docs/cpp/library/algorithm/ranges/rotate_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies and rotate a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::unique_copy`](/docs/cpp/library/algorithm/ranges/unique_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a copy of some range of elements that contains no consecutive duplicates (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_copy`, `remove_copy_if`](/docs/cpp/library/algorithm/remove_copy)</DescriptionTerm>
+    <DescriptionBody>copies a range of elements omitting those that satisfy specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

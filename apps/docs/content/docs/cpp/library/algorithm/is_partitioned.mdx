@@ -1,0 +1,132 @@
+---
+title: "std::is_partitioned"
+description: "Checks whether [ first , last ) is partitioned by the predicate p: all elements satisfy p appear before all elements that do not."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/is_partitioned"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-is-partitioned:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class InputIt, class UnaryPred >
+bool is_partitioned( InputIt first, InputIt last, UnaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryPred >
+bool is_partitioned( ExecutionPolicy&& policy,
+
+                     ForwardIt first, ForwardIt last, UnaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-is-partitioned:0001 */}
+1. 1) Checks whether `[first, last)` is partitioned by the predicate `p`: all elements satisfy `p` appear before all elements that do not.
+
+{/* source:cpp-algorithm-is-partitioned:0002 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-is-partitioned:0003 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+   - `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`. <InlineRevision until="C++20" />
+   - `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`. <InlineRevision since="C++20" />
+
+### Parameters
+
+{/* source:cpp-algorithm-is-partitioned:0004 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to check</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+unary predicate which returns `true` for the elements expected to be found in the beginning of the range.
+
+The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `InputIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&`is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator). and its value type must be convertible to `UnaryPred`'s parameter type.
+- `UnaryPred` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+### Return value
+
+{/* source:cpp-algorithm-is-partitioned:0005 */}
+`true` if the elements `e` of `[first, last)` are [partitioned](/docs/cpp/library/algorithm#Requirements) with respect to the expression `p(e)`. `false` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-is-partitioned:0006 */}
+At most `std::distance(first, last)` applications of `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-is-partitioned:0007 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-is-partitioned:0008 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-is-partitioned:0009 */}
+```cpp
+template<class InputIt, class UnaryPred>
+bool is_partitioned(InputIt first, InputIt last, UnaryPred p)
+{
+    for (; first != last; ++first)
+        if (!p(*first))
+            break;
+    for (; first != last; ++first)
+        if (p(*first))
+            return false;
+    return true;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-is-partitioned:0010 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <iostream>
+ 
+int main()
+{
+    std::array<int, 9> v {1, 2, 3, 4, 5, 6, 7, 8, 9};
+ 
+    auto is_even = [](int i) { return i % 2 == 0; };
+    std::cout.setf(std::ios_base::boolalpha);
+    std::cout << std::is_partitioned(v.begin(), v.end(), is_even) << ' ';
+ 
+    std::partition(v.begin(), v.end(), is_even);
+    std::cout << std::is_partitioned(v.begin(), v.end(), is_even) << ' ';
+ 
+    std::reverse(v.begin(), v.end());
+    std::cout << std::is_partitioned(v.cbegin(), v.cend(), is_even) << ' ';
+    std::cout << std::is_partitioned(v.crbegin(), v.crend(), is_even) << '\n';
+}
+```
+
+Output:
+
+```text
+false true false true
+```
+
+### See also
+
+{/* source:cpp-algorithm-is-partitioned:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`partition`](/docs/cpp/library/algorithm/partition)</DescriptionTerm>
+    <DescriptionBody>divides a range of elements into two groups (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partition_point`](/docs/cpp/library/algorithm/partition_point) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>locates the partition point of a partitioned range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::is_partitioned`](/docs/cpp/library/algorithm/ranges/is_partitioned) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>determines if the range is partitioned by the given predicate (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,236 @@
+---
+title: "std::ranges::stable_sort"
+description: "Sorts the elements in the range [first, last) in non-descending order."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/stable_sort"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-stable-sort:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::random_access_iterator I, std::sentinel_for<I> S,
+          class Comp = ranges::less, class Proj = std::identity >
+requires std::sortable<I, Comp, Proj>
+
+    I stable_sort( I first, S last, Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::random_access_range R, class Comp = ranges::less,
+          class Proj = std::identity >
+requires std::sortable<ranges::iterator_t<R>, Comp, Proj>
+ranges::borrowed_iterator_t<R>
+
+    stable_sort( R&& r, Comp comp = {}, Proj proj = {} );`} />
+
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-stable-sort:0001 */}
+Sorts the elements in the range `[first, last)` in non-descending order. The order of equivalent elements is stable, i.e. guaranteed to be preserved.
+
+{/* source:cpp-algorithm-ranges-stable-sort:0002 */}
+A sequence is sorted with respect to a comparator `comp` if for any iterator `it` pointing to the sequence and any non-negative integer `n` such that `it + n` is a valid iterator pointing to an element of the sequence, `std::invoke(comp, std::invoke(proj, *(it + n)), std::invoke(proj, *it))` evaluates to `false`.
+
+{/* source:cpp-algorithm-ranges-stable-sort:0003 */}
+1. 1) Elements are compared using the given binary comparison function `comp`.
+
+{/* source:cpp-algorithm-ranges-stable-sort:0004 */}
+2. 2) Same as (1), but uses `r` as the range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-stable-sort:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-stable-sort:0006 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-stable-sort:0007 */}
+<ParameterList>
+  <Parameter name="first, last">iterator-sentinel defining the range to sort</Parameter>
+  <Parameter name="r">the range to sort</Parameter>
+  <Parameter name="comp">comparison to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-stable-sort:0008 */}
+An iterator equal to `last`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-stable-sort:0009 */}
+N·log(N) comparisons, if extra memory is available; where N is `ranges::distance(first, last)`. N·log²(N) comparisons otherwise. Twice as many projections as the number of comparisons in both cases.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-stable-sort:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+|---|---|---|---|
+| [`__cpp_lib_constexpr_algorithms`](/docs/cpp/library/feature_test#cpp_lib_constexpr_algorithms) | [202306L](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_algorithms_202306L) | (C++26) | constexpr stable sorting |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-stable-sort:0011 */}
+This implementation only shows the slower algorithm used when no additional memory is available. See also implementation in [MSVC STL](https://github.com/microsoft/STL/blob/e745bad3b1d05b5b19ec652d68abb37865ffa454/stl/inc/algorithm#L7842-L8094) and [libstdc++](https://github.com/gcc-mirror/gcc/blob/54258e22b0846aaa6bd3265f592feb161eecda75/libstdc%2B%2B-v3/include/bits/ranges_algo.h#L1836-L1862).
+
+{/* source:cpp-algorithm-ranges-stable-sort:0012 */}
+```cpp
+struct stable_sort_fn
+{
+    template<std::random_access_iterator I, std::sentinel_for<I> S,
+             class Comp = ranges::less, class Proj = std::identity>
+    requires std::sortable<I, Comp, Proj>
+    constexpr //< since C++26
+    I operator()(I first, S last, Comp comp = {}, Proj proj = {}) const
+    {
+        auto count = ranges::distance(first, last);
+        auto mid = first + count / 2;
+        auto last_it = first + count;
+ 
+        if (count <= 1)
+            return last_it;
+ 
+        (*this)(first, mid, std::ref(comp), std::ref(proj));
+        (*this)(mid, last_it, std::ref(comp), std::ref(proj));
+ 
+        ranges::inplace_merge(first, mid, last_it);
+ 
+        return last_it;
+    }
+ 
+    template<ranges::random_access_range R, class Comp = ranges::less,
+             class Proj = std::identity>
+    requires std::sortable<ranges::iterator_t<R>, Comp, Proj>
+    constexpr //< since C++26
+    ranges::borrowed_iterator_t<R> operator()(R&& r, Comp comp = {}, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(comp), std::move(proj));
+    }
+};
+ 
+inline constexpr stable_sort_fn stable_sort {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-stable-sort:0013 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+ 
+void print(auto const& seq)
+{
+    for (auto const& elem : seq)
+        std::cout << elem << ' ';
+    std::cout << '\n';
+}
+ 
+struct Particle
+{
+    std::string name; double mass; // MeV
+    friend std::ostream& operator<<(std::ostream& os, Particle const& p)
+    {
+        return os << '\n' << std::left << std::setw(8) << p.name << " : " << p.mass;
+    }
+};
+ 
+int main()
+{
+    std::array s {5, 7, 4, 2, 8, 6, 1, 9, 0, 3};
+ 
+    // sort using the default operator<
+    std::ranges::stable_sort(s);
+    print(s);
+ 
+    // sort using a standard library compare function object
+    std::ranges::stable_sort(s, std::ranges::greater());
+    print(s);
+ 
+    // sort using a custom function object
+    struct
+    {
+        bool operator()(int a, int b) const
+        {
+            return a < b;
+        }
+    } customLess;
+    std::ranges::stable_sort(s.begin(), s.end(), customLess);
+    print(s);
+ 
+    // sort using a lambda expression
+    std::ranges::stable_sort(s, [](int a, int b) { return a > b; });
+    print(s);
+ 
+    // sort with projection
+    Particle particles[]
+    {
+        {"Electron", 0.511}, {"Muon", 105.66}, {"Tau", 1776.86},
+        {"Positron", 0.511}, {"Proton", 938.27}, {"Neutron", 939.57}
+    };
+    print(particles);
+    std::ranges::stable_sort(particles, {}, &Particle::name); //< sort by name
+    print(particles);
+    std::ranges::stable_sort(particles, {}, &Particle::mass); //< sort by mass
+    print(particles);
+}
+```
+
+Output:
+
+```text
+0 1 2 3 4 5 6 7 8 9
+9 8 7 6 5 4 3 2 1 0
+0 1 2 3 4 5 6 7 8 9
+9 8 7 6 5 4 3 2 1 0
+ 
+Electron : 0.511
+Muon     : 105.66
+Tau      : 1776.86
+Positron : 0.511
+Proton   : 938.27
+Neutron  : 939.57
+ 
+Electron : 0.511
+Muon     : 105.66
+Neutron  : 939.57
+Positron : 0.511
+Proton   : 938.27
+Tau      : 1776.86
+ 
+Electron : 0.511
+Positron : 0.511
+Muon     : 105.66
+Proton   : 938.27
+Neutron  : 939.57
+Tau      : 1776.86
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-stable-sort:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sort`](/docs/cpp/library/algorithm/ranges/sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts a range into ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partial_sort`](/docs/cpp/library/algorithm/ranges/partial_sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts the first `N` elements of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::stable_partition`](/docs/cpp/library/algorithm/ranges/stable_partition) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>divides elements into two groups while preserving their relative order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stable_sort`](/docs/cpp/library/algorithm/stable_sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range of elements while preserving order between equal elements (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

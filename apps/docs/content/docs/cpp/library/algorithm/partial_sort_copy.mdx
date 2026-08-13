@@ -1,0 +1,220 @@
+---
+title: "std::partial_sort_copy"
+description: "Sorts some of the elements in the range [first, last) in ascending order, storing the result in the range [d_first, d_last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/partial_sort_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-partial-sort-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class RandomIt >
+RandomIt partial_sort_copy( InputIt first, InputIt last,
+
+                            RandomIt d_first, RandomIt d_last );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt, class RandomIt >
+RandomIt partial_sort_copy( ExecutionPolicy&& policy,
+                            ForwardIt first, ForwardIt last,
+
+                            RandomIt d_first, RandomIt d_last );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt, class RandomIt, class Compare >
+RandomIt partial_sort_copy( InputIt first, InputIt last,
+                            RandomIt d_first, RandomIt d_last,
+
+                            Compare comp );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt, class RandomIt, class Compare >
+RandomIt partial_sort_copy( ExecutionPolicy&& policy,
+                            ForwardIt first, ForwardIt last,
+                            RandomIt d_first, RandomIt d_last,
+
+                            Compare comp );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-partial-sort-copy:0001 */}
+Sorts some of the elements in the range `[first, last)` in ascending order, storing the result in the range `[d_first, d_last)`.
+
+{/* source:cpp-algorithm-partial-sort-copy:0002 */}
+At most `d_last - d_first` of the elements are placed sorted to the range `[d_first, d_first + n)`. `n` is the number of elements to sort (`std::min(std::distance(first, last), d_last - d_first)`). The order of equal elements is not guaranteed to be preserved.
+
+{/* source:cpp-algorithm-partial-sort-copy:0003 */}
+1. 1) Elements are [sorted](/docs/cpp/library/algorithm#Requirements) with respect to <InlineRevision until="C++20">`operator<`</InlineRevision> <InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-partial-sort-copy:0004 */}
+2. 3) Elements are sorted with respect to `comp`.
+
+{/* source:cpp-algorithm-partial-sort-copy:0005 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-partial-sort-copy:0006 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-partial-sort-copy:0007 */}
+If `*first` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `d_first`, the program is ill-formed.
+
+{/* source:cpp-algorithm-partial-sort-copy:0008 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-partial-sort-copy:0009 */}
+<Revision until="C++11">
+The type of `*d_first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable).
+</Revision>
+
+<Revision since="C++11">
+`RandomIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable).
+
+The type of `*d_first` is not [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible).
+
+The type of `*d_first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-partial-sort-copy:0010 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to sort</Parameter>
+  <Parameter name="d_first, d_last">random access iterators defining the destination range</Parameter>
+  <Parameter name="policy">the execution policy to use</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is less than (i.e. is ordered before) the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `RandomIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `RandomIt` must meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Return value
+
+{/* source:cpp-algorithm-partial-sort-copy:0011 */}
+An iterator to the element defining the upper boundary of the sorted range, i.e. `d_first + std::min(std::distance(first, last), d_last - d_first)`.
+
+### Complexity
+
+{/* source:cpp-algorithm-partial-sort-copy:0012 */}
+Given `N` as `std::distance(first, last)`, `D` as `d_last - d_first`:
+
+{/* source:cpp-algorithm-partial-sort-copy:0013 */}
+1. 1,2) Approximately `N·log(min(N,D))` comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision> <InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-partial-sort-copy:0014 */}
+2. 3,4) Approximately `N·log(min(N,D))` applications of the comparator `comp`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-partial-sort-copy:0015 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-partial-sort-copy:0016 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined. If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-partial-sort-copy:0017 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1669) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L5064).
+
+### Example
+
+{/* source:cpp-algorithm-partial-sort-copy:0018 */}
+The following code sorts a vector of integers and copies them into a smaller and a larger vector.
+
+```cpp
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <string_view>
+#include <type_traits>
+#include <vector>
+ 
+void println(std::string_view rem, const auto& v)
+{
+    std::cout << rem;
+    if constexpr (std::is_scalar_v<std::decay_t<decltype(v)>>)
+        std::cout << v;
+    else
+        for (int e : v)
+            std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    const auto v0 = {4, 2, 5, 1, 3};
+    std::vector<int> v1{10, 11, 12};
+    std::vector<int> v2{10, 11, 12, 13, 14, 15, 16};
+    std::vector<int>::iterator it;
+ 
+    it = std::partial_sort_copy(v0.begin(), v0.end(), v1.begin(), v1.end());
+    println("Writing to the smaller vector in ascending order gives: ", v1);
+ 
+    if (it == v1.end())
+        println("The return value is the end iterator", ' ');
+ 
+    it = std::partial_sort_copy(v0.begin(), v0.end(), v2.begin(), v2.end(),
+                                std::greater<int>());
+ 
+    println("Writing to the larger vector in descending order gives: ", v2);
+    println("The return value is the iterator to ", *it);
+}
+```
+
+Output:
+
+```text
+Writing to the smaller vector in ascending order gives: 1 2 3
+The return value is the end iterator
+Writing to the larger vector in descending order gives: 5 4 3 2 1 15 16
+The return value is the iterator to 15
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-partial-sort-copy:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-partial-sort-copy:0020 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P0896R4" standard="C++98">
+    <PublishedBehavior>`*first` was not required to be writable to `d_first`</PublishedBehavior>
+    <CorrectedBehavior>the program is ill-formed if not writable</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-partial-sort-copy:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_sort`](/docs/cpp/library/algorithm/partial_sort)</DescriptionTerm>
+    <DescriptionBody>sorts the first `N` elements of a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sort`](/docs/cpp/library/algorithm/sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range into ascending order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stable_sort`](/docs/cpp/library/algorithm/stable_sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range of elements while preserving order between equal elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partial_sort_copy`](/docs/cpp/library/algorithm/ranges/partial_sort_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies and partially sorts a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

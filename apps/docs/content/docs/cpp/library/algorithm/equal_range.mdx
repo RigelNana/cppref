@@ -1,0 +1,281 @@
+---
+title: "std::equal_range"
+description: "Returns a range containing all elements equivalent to value in the partitioned range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/equal_range"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-equal-range:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< class ForwardIt, class T >
+std::pair<ForwardIt, ForwardIt> 
+
+    equal_range( ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+constexpr std::pair<ForwardIt, ForwardIt> 
+
+    equal_range( ForwardIt first, ForwardIt last, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++20" until="C++26" code={`template< class ForwardIt, class T, class Compare >
+std::pair<ForwardIt, ForwardIt> 
+    equal_range( ForwardIt first, ForwardIt last,
+
+                 const T& value, Compare comp );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type,
+          class Compare >
+constexpr std::pair<ForwardIt, ForwardIt> 
+    equal_range( ForwardIt first, ForwardIt last,
+
+                 const T& value, Compare comp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-equal-range:0001 */}
+Returns a range containing all elements equivalent to `value` in the partitioned range `[first, last)`.
+
+{/* source:cpp-algorithm-equal-range:0002 */}
+1. 1) The equivalence is checked using `operator<`:
+
+   <Revision until="C++20">
+   Returns the results of `std::lower_bound(first, last, value)` and `std::upper_bound(first, last, value)`.
+
+   If any of the following conditions is satisfied, the behavior is undefined:
+
+   - For any element `elem` of `[first, last)`, `bool(elem < value)` does not imply `!bool(value < elem)`.
+   - The elements `elem` of `[first, last)` are not [partitioned](/docs/cpp/library/algorithm#Requirements) with respect to expressions `bool(elem < value)` and `!bool(value < elem)`.
+   </Revision>
+
+   <Revision since="C++20">
+   Equivalent to `std::equal_range(first, last, value, std::less{})`.
+   </Revision>
+
+{/* source:cpp-algorithm-equal-range:0003 */}
+2. 2) The equivalence is checked using `comp`:
+
+{/* source:cpp-algorithm-equal-range:0004 */}
+3. Returns the results of `std::lower_bound(first, last, value, comp)` and `std::upper_bound(first, last, value, comp)`.
+
+{/* source:cpp-algorithm-equal-range:0005 */}
+4. If any of the following conditions is satisfied, the behavior is undefined:
+
+   - For any element `elem` of `[first, last)`, `bool(comp(elem, value))` does not imply `!bool(comp(value, elem))`.
+   - The elements `elem` of `[first, last)` are not [partitioned](/docs/cpp/library/algorithm#Requirements) with respect to expressions `bool(comp(elem, value))` and `!bool(comp(value, elem))`.
+
+### Parameters
+
+{/* source:cpp-algorithm-equal-range:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the partitioned range of elements to examine</Parameter>
+  <Parameter name="value">value to compare the elements to</Parameter>
+  <Parameter name="comp">
+binary predicate which returns `true` if the first argument is ordered before the second.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>).
+
+The types `Type1` and `Type2` must be such that an object of type `T` can be implicitly converted to both `Type1` and `Type2`, and an object of type `ForwardIt` can be dereferenced and then implicitly converted to both `Type1` and `Type2`.
+  </Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `Compare` must meet the requirements of [*BinaryPredicate*](/docs/cpp/library/named_req/BinaryPredicate). It is not required to satisfy [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Return value
+
+{/* source:cpp-algorithm-equal-range:0007 */}
+A [`std::pair`](/docs/cpp/library/utility/pair) containing a pair of iterators, where
+
+{/* source:cpp-algorithm-equal-range:0008 */}
+- `first` is an iterator to the first element of the range `[first, last)` not ordered before `value` (or `last` if no such element is found), and
+- `second` is an iterator to the first element of the range `[first, last)` ordered after `value` (or `last` if no such element is found).
+
+### Complexity
+
+{/* source:cpp-algorithm-equal-range:0009 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-equal-range:0010 */}
+1. 1) At most 2log2(N)+O(1) comparisons with `value` using <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-equal-range:0011 */}
+2. 2) At most 2log2(N)+O(1) applications of the comparator `comp`.
+
+{/* source:cpp-algorithm-equal-range:0012 */}
+However, if `ForwardIt` is not a [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), the number of iterator increments is linear in `N`. Notably, [`std::set`](/docs/cpp/library/container/set) and [`std::multiset`](/docs/cpp/library/container/multiset) iterators are not random access, and so their member functions [`std::set::equal_range`](/docs/cpp/library/container/set/equal_range) (resp. [`std::multiset::equal_range`](/docs/cpp/library/container/multiset/equal_range)) should be preferred.
+
+### Notes
+
+{/* source:cpp-algorithm-equal-range:0013 */}
+Although `std::equal_range` only requires `[first, last)` to be partitioned, this algorithm is usually used in the case where `[first, last)` is sorted, so that the binary search is valid for any value.
+
+{/* source:cpp-algorithm-equal-range:0014 */}
+On top of the requirements of [`std::lower_bound`](/docs/cpp/library/algorithm/lower_bound) and [`std::upper_bound`](/docs/cpp/library/algorithm/upper_bound), `std::equal_range` also requires `operator<` or `comp` to be asymmetric (i.e., `a < b` and `b < a` always have different results).
+
+{/* source:cpp-algorithm-equal-range:0015 */}
+Therefore, the intermediate results of binary search can be shared by [`std::lower_bound`](/docs/cpp/library/algorithm/lower_bound) and [`std::upper_bound`](/docs/cpp/library/algorithm/upper_bound). For example, the result of the [`std::lower_bound`](/docs/cpp/library/algorithm/lower_bound) call can be used as the argument of `first` in the [`std::upper_bound`](/docs/cpp/library/algorithm/upper_bound) call.
+
+{/* source:cpp-algorithm-equal-range:0016 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [202403](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/equal_range#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-equal-range:0017 */}
+[`equal_range (1)`](/docs/cpp/library/algorithm/equal_range#Version_1)
+
+```cpp
+template<class ForwardIt,
+         class T = typename std::iterator_traits<ForwardIt>::value_type>
+constexpr std::pair<ForwardIt, ForwardIt> 
+    equal_range(ForwardIt first, ForwardIt last, const T& value)
+{
+    return std::equal_range(first, last, value, std::less{});
+}
+```
+
+[`equal_range (2)`](/docs/cpp/library/algorithm/equal_range#Version_2)
+
+```cpp
+template<class ForwardIt,
+         class T = typename std::iterator_traits<ForwardIt>::value_type,
+         class Compare>
+constexpr std::pair<ForwardIt, ForwardIt>
+    equal_range(ForwardIt first, ForwardIt last, const T& value, Compare comp)
+{
+    return std::make_pair(std::lower_bound(first, last, value, comp),
+                          std::upper_bound(first, last, value, comp));
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-equal-range:0018 */}
+```cpp
+#include <algorithm>
+#include <complex>
+#include <iostream>
+#include <vector>
+ 
+struct S
+{
+    int number;
+    char name;
+    // note: name is ignored by this comparison operator
+    bool operator<(const S& s) const { return number < s.number; }
+};
+ 
+struct Comp
+{
+    bool operator()(const S& s, int i) const { return s.number < i; }
+    bool operator()(int i, const S& s) const { return i < s.number; }
+};
+ 
+int main()
+{
+    // note: not ordered, only partitioned w.r.t. S defined below
+    const std::vector<S> vec{{1, 'A'}, {2, 'B'}, {2, 'C'},
+                             {2, 'D'}, {4, 'G'}, {3, 'F'}};
+    const S value{2, '?'};
+ 
+    std::cout << "Compare using S::operator<(): ";
+    const auto p = std::equal_range(vec.begin(), vec.end(), value);
+ 
+    for (auto it = p.first; it != p.second; ++it)
+        std::cout << it->name << ' ';
+    std::cout << '\n';
+ 
+    std::cout << "Using heterogeneous comparison: ";
+    const auto p2 = std::equal_range(vec.begin(), vec.end(), 2, Comp{});
+ 
+    for (auto it = p2.first; it != p2.second; ++it)
+        std::cout << it->name << ' ';
+    std::cout << '\n';
+ 
+    using CD = std::complex<double>;
+    std::vector<CD> nums{{1, 0}, {2, 2}, {2, 1}, {3, 0}, {3, 1}};
+    auto cmpz = [](CD x, CD y) { return x.real() < y.real(); };
+    #ifdef __cpp_lib_algorithm_default_value_type
+        auto p3 = std::equal_range(nums.cbegin(), nums.cend(), {2, 0}, cmpz);
+    #else
+        auto p3 = std::equal_range(nums.cbegin(), nums.cend(), CD{2, 0}, cmpz);
+    #endif
+ 
+    for (auto it = p3.first; it != p3.second; ++it)
+        std::cout << *it << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+Compare using S::operator<(): B C D 
+Using heterogeneous comparison: B C D
+(2,2) (2, 1)
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-equal-range:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-equal-range:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={270} standard="C++98">
+    <PublishedBehavior>`Compare` was required to satisfy [*Compare*](/docs/cpp/library/named_req/Compare) and `T` was required<br />to be [*LessThanComparable*](/docs/cpp/library/named_req/LessThanComparable) (strict weak ordering required)</PublishedBehavior>
+    <CorrectedBehavior>only a partitioning is required;<br />heterogeneous comparisons permitted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={384} standard="C++98">
+    <PublishedBehavior>at most 2log2(N)+1 comparisons<br />were allowed, which is not implementable[^1]</PublishedBehavior>
+    <CorrectedBehavior>corrected to 2log2(N)+O(1)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-algorithm-equal-range:0021 */}
+[^1]: ↑ Applying equal_range to a single-element range requires 2 comparisons, but at most 1 comparison is allowed by the complexity requirement.
+
+### See also
+
+{/* source:cpp-algorithm-equal-range:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lower_bound`](/docs/cpp/library/algorithm/lower_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element *not less* than the given value (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`upper_bound`](/docs/cpp/library/algorithm/upper_bound)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element *greater* than a certain value (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_search`](/docs/cpp/library/algorithm/binary_search)</DescriptionTerm>
+    <DescriptionBody>determines if an element exists in a partially-ordered range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partition`](/docs/cpp/library/algorithm/partition)</DescriptionTerm>
+    <DescriptionBody>divides a range of elements into two groups (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal`](/docs/cpp/library/algorithm/equal)</DescriptionTerm>
+    <DescriptionBody>determines if two sets of elements are the same (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/container/set/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (public member function of `std::set<Key,Compare,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_range`](/docs/cpp/library/container/multiset/equal_range)</DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (public member function of `std::multiset<Key,Compare,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal_range`](/docs/cpp/library/algorithm/ranges/equal_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

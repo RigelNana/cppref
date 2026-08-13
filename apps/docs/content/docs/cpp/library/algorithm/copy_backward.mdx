@@ -1,0 +1,118 @@
+---
+title: "std::copy_backward"
+description: "Copies the elements from the range [first, last) to another range ending at d_last."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/copy_backward"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-copy-backward:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration language="cpp" since="C++20" code={`template< class BidirIt1, class BidirIt2 >
+BidirIt2 copy_backward( BidirIt1 first, BidirIt1 last, BidirIt2 d_last );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-copy-backward:0001 */}
+Copies the elements from the range `[first, last)` to another range ending at `d_last`. The elements are copied in reverse order (the last element is copied first), but their relative order is preserved.
+
+{/* source:cpp-algorithm-copy-backward:0002 */}
+The behavior is undefined if `d_last` is within `(first, last]`. [`std::copy`](/docs/cpp/library/algorithm/copy) must be used instead of `std::copy_backward` in that case.
+
+### Parameters
+
+{/* source:cpp-algorithm-copy-backward:0003 */}
+<ParameterList>
+  <Parameter name="first, last">the range of the elements to copy from</Parameter>
+  <Parameter name="d_last">the end of the destination range</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `BidirIt` must meet the requirements of [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-copy-backward:0004 */}
+Iterator to the last element copied.
+
+### Complexity
+
+{/* source:cpp-algorithm-copy-backward:0005 */}
+Exactly `std::distance(first, last)` assignments.
+
+### Notes
+
+{/* source:cpp-algorithm-copy-backward:0006 */}
+When copying overlapping ranges, `std::copy` is appropriate when copying to the left (beginning of the destination range is outside the source range) while `std::copy_backward` is appropriate when copying to the right (end of the destination range is outside the source range).
+
+### Possible implementation
+
+{/* source:cpp-algorithm-copy-backward:0007 */}
+```cpp
+template<class BidirIt1, class BidirIt2>
+BidirIt2 copy_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
+{
+    while (first != last)
+        *(--d_last) = *(--last);
+    return d_last;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-copy-backward:0008 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> source(4);
+    std::iota(source.begin(), source.end(), 1); // fills with 1, 2, 3, 4
+ 
+    std::vector<int> destination(6);
+ 
+    std::copy_backward(source.begin(), source.end(), destination.end());
+ 
+    std::cout << "destination contains: ";
+    for (auto i: destination)
+        std::cout << i << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+destination contains: 0 0 1 2 3 4
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-copy-backward:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-copy-backward:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={1206} standard="C++98">
+    <PublishedBehavior>1. the behavior was well-defined if `d_last == last`<br />2. the behavior was undefined if `d_last == first`</PublishedBehavior>
+    <CorrectedBehavior>1. made undefined<br />2. made well-defined</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-copy-backward:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`, `copy_if`](/docs/cpp/library/algorithm/copy) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_backward`](/docs/cpp/library/algorithm/ranges/copy_backward) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements in backwards order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

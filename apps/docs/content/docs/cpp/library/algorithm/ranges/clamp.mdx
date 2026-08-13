@@ -1,0 +1,186 @@
+---
+title: "std::ranges::clamp"
+description: "If the value of v is within [lo, hi], returns v; otherwise returns the nearest boundary."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/clamp"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-clamp:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< class T, class Proj = std::identity,
+          std::indirect_strict_weak_order<std::projected<const T*, Proj>> Comp =
+              ranges::less >
+constexpr const T&
+
+    clamp( const T& v, const T& lo, const T& hi, Comp comp = {}, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-clamp:0001 */}
+If the value of `v` is within `[lo, hi]`, returns `v`; otherwise returns the nearest boundary.
+
+{/* source:cpp-algorithm-ranges-clamp:0002 */}
+The behavior is undefined if `lo` is greater than `hi`.
+
+{/* source:cpp-algorithm-ranges-clamp:0003 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-clamp:0004 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-clamp:0005 */}
+<ParameterList>
+  <Parameter name="v">the value to clamp</Parameter>
+  <Parameter name="lo, hi">the boundaries to clamp `v` to</Parameter>
+  <Parameter name="comp">the comparison to apply to the projected elements</Parameter>
+  <Parameter name="proj">the projection to apply to `v`, `lo` and `hi`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-clamp:0006 */}
+Reference to `lo` if the projected value of `v` is less than the projected value of `lo`, reference to `hi` if the projected value of `hi` is less than the projected value of `v`, otherwise reference to `v`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-clamp:0007 */}
+At most two comparisons and three applications of the projection.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-clamp:0008 */}
+```cpp
+struct clamp_fn
+{
+    template<class T, class Proj = std::identity,
+             std::indirect_strict_weak_order<std::projected<const T*, Proj>>
+                 Comp = std::ranges::less>
+    constexpr const T& operator()(const T& v, const T& lo, const T& hi,
+                                  Comp comp = {}, Proj proj = {}) const
+    {
+        auto&& pv = std::invoke(proj, v);
+ 
+        if (std::invoke(comp, std::forward<decltype(pv)>(pv), std::invoke(proj, lo)))
+            return lo;
+ 
+        if (std::invoke(comp, std::invoke(proj, hi), std::forward<decltype(pv)>(pv)))
+            return hi;
+ 
+        return v;
+    }
+};
+ 
+inline constexpr clamp_fn clamp;
+```
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-clamp:0009 */}
+```cpp
+int n = -1;
+const int& r = std::ranges::clamp(n, 0, 255); // r is dangling
+```
+
+{/* source:cpp-algorithm-ranges-clamp:0010 */}
+If `v` compares equivalent to either bound, returns a reference to `v`, not the bound.
+
+{/* source:cpp-algorithm-ranges-clamp:0011 */}
+This function should not be used with both a projection the returns by value and comparator that takes arguments by value unless a move from the projection result type to the comparator parameter type is equivalent to a copy. If the comparison via [`std::invoke`](/docs/cpp/library/utility/functional/invoke) would change the result of projection, the behavior is undefined due to [the semantic requirements of `std::regular_invocable`](/docs/cpp/library/concepts/invocable) (subsumed by [`std::indirect_strict_weak_order`](/docs/cpp/library/iterator/indirect_strict_weak_order)).
+
+{/* source:cpp-algorithm-ranges-clamp:0012 */}
+The standard requires that the value category of the result of the projection be preserved, and `proj` can only be called on `v` once, which means that a projection result that is a prvalue has to be cached and moved from twice for the two calls to the comparator.
+
+{/* source:cpp-algorithm-ranges-clamp:0013 */}
+- [libstdc++](https://github.com/gcc-mirror/gcc/blob/f3169941996c76ecbfae9c37709d2b57652be555/libstdc%2B%2B-v3/include/bits/ranges_algo.h#L3196-L3218) does not conform to this and always passes the projection result as an lvalue.
+- [libc++](https://github.com/llvm/llvm-project/issues/64717) used to run the projection twice, which was corrected in Clang 18.
+- [MSVC STL](https://github.com/microsoft/STL/issues/1893) used to run the projection twice, which was corrected in VS 2022 17.2.
+
+### Example
+
+{/* source:cpp-algorithm-ranges-clamp:0014 */}
+```cpp
+#include <algorithm>
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <string>
+ 
+using namespace std::literals;
+namespace ranges = std::ranges;
+ 
+int main()
+{
+    std::cout << "[raw] [" << INT8_MIN << ',' << INT8_MAX << "] "
+                 "[0" << ',' << UINT8_MAX << "]\n";
+    for (int const v : {-129, -128, -1, 0, 42, 127, 128, 255, 256})
+        std::cout << std::setw(4) << v
+                  << std::setw(11) << ranges::clamp(v, INT8_MIN, INT8_MAX)
+                  << std::setw(8) << ranges::clamp(v, 0, UINT8_MAX) << '\n';
+    std::cout << std::string(23, '-') << '\n';
+ 
+    // Projection function
+    const auto stoi = [](std::string s) { return std::stoi(s); };
+ 
+    // Same as above, but with strings
+    for (std::string const v : {"-129", "-128", "-1", "0", "42",
+                                "127", "128", "255", "256"})
+        std::cout << std::setw(4) << v
+                  << std::setw(11) << ranges::clamp(v, "-128"s, "127"s, {}, stoi)
+                  << std::setw(8) << ranges::clamp(v, "0"s, "255"s, {}, stoi)
+                  << '\n';
+}
+```
+
+Output:
+
+```text
+[raw] [-128,127] [0,255]
+-129       -128       0
+-128       -128       0
+  -1         -1       0
+   0          0       0
+  42         42      42
+ 127        127     127
+ 128        127     128
+ 255        127     255
+ 256        127     255
+-----------------------
+-129       -128       0
+-128       -128       0
+  -1         -1       0
+   0          0       0
+  42         42      42
+ 127        127     127
+ 128        127     128
+ 255        127     255
+ 256        127     255
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-clamp:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::min`](/docs/cpp/library/algorithm/ranges/min) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the smaller of the given values (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::max`](/docs/cpp/library/algorithm/ranges/max) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the greater of the given values (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_range`](/docs/cpp/library/utility/in_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if an integer value is in the range of a given integer type (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`clamp`](/docs/cpp/library/algorithm/clamp) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>clamps a value between a pair of boundary values (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

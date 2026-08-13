@@ -1,0 +1,224 @@
+---
+title: "std::ranges::is_heap"
+description: "Checks whether the specified range represents a heap with respect to comp and proj."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/is_heap"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-is-heap:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::random_access_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          std::indirect_strict_weak_order
+              <std::projected<I, Proj>> Comp = ranges::less >
+
+constexpr bool is_heap( I first, S last, Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::random_access_range R, class Proj = std::identity,
+          std::indirect_strict_weak_order
+              <std::projected
+                   <ranges::iterator_t<R>, Proj>> Comp = ranges::less >
+
+constexpr bool is_heap( R&& r, Comp comp = {}, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-is-heap:0001 */}
+Checks whether the specified range represents a [heap](/docs/cpp/library/algorithm#Heap_operations) with respect to `comp` and `proj`.
+
+{/* source:cpp-algorithm-ranges-is-heap:0002 */}
+1. 1) The specified range is `[first, last)`.
+
+{/* source:cpp-algorithm-ranges-is-heap:0003 */}
+2. 2) The specified range is `r`.
+
+{/* source:cpp-algorithm-ranges-is-heap:0004 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-is-heap:0005 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-is-heap:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the iterator and sentinel designating the range of elements to examine</Parameter>
+  <Parameter name="r">the range of elements to examine</Parameter>
+  <Parameter name="comp">comparator to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-is-heap:0007 */}
+1. 1) `ranges::is_heap_until(first, last, comp, proj) == last`
+
+{/* source:cpp-algorithm-ranges-is-heap:0008 */}
+2. 2) `ranges::is_heap_until(r, comp, proj) == ranges::end(r)`
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-is-heap:0009 */}
+`O(N)` applications of `comp` and `proj`, where `N` is:
+
+{/* source:cpp-algorithm-ranges-is-heap:0010 */}
+1. 1) `ranges::distance(first, last)`
+
+{/* source:cpp-algorithm-ranges-is-heap:0011 */}
+2. 2) `ranges::distance(r)`
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-is-heap:0012 */}
+```cpp
+struct is_heap_fn
+{
+    template<std::random_access_iterator I, std::sentinel_for<I> S,
+             class Proj = std::identity,
+             std::indirect_strict_weak_order
+                 <std::projected<I, Proj>> Comp = ranges::less>
+    constexpr bool operator()(I first, S last, Comp comp = {}, Proj proj = {}) const
+    {
+        return (last == ranges::is_heap_until(first, last,
+                                              std::move(comp), std::move(proj)));
+    }
+ 
+    template<ranges::random_access_range R, class Proj = std::identity,
+             std::indirect_strict_weak_order
+                 <std::projected<ranges::iterator_t<R>, Proj>> Comp = ranges::less>
+    constexpr bool operator()(R&& r, Comp comp = {}, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r),
+                       std::move(comp), std::move(proj));
+    }
+};
+ 
+inline constexpr is_heap_fn is_heap{};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-is-heap:0013 */}
+```cpp
+#include <algorithm>
+#include <bit>
+#include <cmath>
+#include <iostream>
+#include <vector>
+ 
+void out(const auto& what, int n = 1)
+{
+    while (n-- > 0)
+        std::cout << what;
+}
+ 
+void draw_heap(const auto& v)
+{
+    auto bails = [](int n, int w)
+    {
+        auto b = [](int w) { out("┌"), out("─", w), out("┴"), out("─", w), out("┐"); };
+        n /= 2;
+        if (!n)
+            return;
+        for (out(' ', w); n-- > 0;)
+            b(w), out(' ', w + w + 1);
+        out('\n');
+    };
+ 
+    auto data = [](int n, int w, auto& first, auto last)
+    {
+        for (out(' ', w); n-- > 0 && first != last; ++first)
+            out(*first), out(' ', w + w + 1);
+        out('\n');
+    };
+ 
+    auto tier = [&](int t, int m, auto& first, auto last)
+    {
+        const int n{1 << t};
+        const int w{(1 << (m - t - 1)) - 1};
+        bails(n, w), data(n, w, first, last);
+    };
+ 
+    const int m{static_cast<int>(std::ceil(std::log2(1 + v.size())))};
+    auto first{v.cbegin()};
+    for (int i{}; i != m; ++i)
+        tier(i, m, first, v.cend());
+}
+ 
+int main()
+{
+    std::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8};
+ 
+    out("initially, v:\n");
+    for (auto i : v)
+        std::cout << i << ' ';
+    out('\n');
+ 
+    if (!std::ranges::is_heap(v))
+    {
+        out("making heap...\n");
+        std::ranges::make_heap(v);
+    }
+ 
+    out("after make_heap, v:\n");
+    for (auto t{1U}; auto i : v)
+        std::cout << i << (std::has_single_bit(++t) ? " │ " : " ");
+ 
+    out("\n" "corresponding binary tree is:\n");
+    draw_heap(v);
+}
+```
+
+Output:
+
+```text
+initially, v:
+3 1 4 1 5 9 2 6 5 3 5 8 9 7 9 3 2 3 8
+making heap...
+after make_heap, v:
+9 │ 8 9 │ 6 5 8 9 │ 3 5 3 5 3 4 7 2 │ 1 2 3 1
+corresponding binary tree is:
+               9
+       ┌───────┴───────┐
+       8               9
+   ┌───┴───┐       ┌───┴───┐
+   6       5       8       9
+ ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐
+ 3   5   3   5   3   4   7   2
+┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐
+1 2 3 1
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-is-heap:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::is_heap_until`](/docs/cpp/library/algorithm/ranges/is_heap_until) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the largest subrange that is a max heap (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::make_heap`](/docs/cpp/library/algorithm/ranges/make_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a max heap out of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::push_heap`](/docs/cpp/library/algorithm/ranges/push_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>adds an element to a max heap (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::pop_heap`](/docs/cpp/library/algorithm/ranges/pop_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes the largest element from a max heap (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sort_heap`](/docs/cpp/library/algorithm/ranges/sort_heap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>turns a max heap into a range of elements sorted in ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_heap`](/docs/cpp/library/algorithm/is_heap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the given range is a max heap (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

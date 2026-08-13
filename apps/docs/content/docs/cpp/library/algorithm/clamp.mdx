@@ -1,0 +1,166 @@
+---
+title: "std::clamp"
+description: "If the value of v is within [lo, hi], returns v; otherwise returns the nearest boundary."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/clamp"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-clamp:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class T >
+constexpr const T& clamp( const T& v, const T& lo, const T& hi );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class Compare >
+constexpr const T& clamp( const T& v, const T& lo, const T& hi,
+
+                          Compare comp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-clamp:0001 */}
+If the value of `v` is within `[lo, hi]`, returns `v`; otherwise returns the nearest boundary.
+
+{/* source:cpp-algorithm-clamp:0002 */}
+1. 1) Uses <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision> to compare the values.
+
+{/* source:cpp-algorithm-clamp:0003 */}
+2. If `T` is not [*LessThanComparable*](/docs/cpp/library/named_req/LessThanComparable), the behavior is undefined.[^1]
+
+{/* source:cpp-algorithm-clamp:0004 */}
+3. 2) Uses the comparison function `comp` to compare the values.
+
+{/* source:cpp-algorithm-clamp:0005 */}
+If `lo` is greater than `hi`, the behavior is undefined.
+
+{/* source:cpp-algorithm-clamp:0006 */}
+[^1]: ↑ If NaN is avoided, `T` can be a floating-point type.
+
+### Parameters
+
+{/* source:cpp-algorithm-clamp:0007 */}
+<ParameterList>
+  <Parameter name="v">the value to clamp</Parameter>
+  <Parameter name="lo, hi">the boundaries to clamp `v` to</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is *less* than the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>).
+
+The types `Type1` and `Type2` must be such that an object of type `T` can be implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-clamp:0008 */}
+Reference to `lo` if `v` is less than `lo`, reference to `hi` if `hi` is less than `v`, otherwise reference to `v`.
+
+### Complexity
+
+{/* source:cpp-algorithm-clamp:0009 */}
+1. 1) At most two comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-clamp:0010 */}
+2. 2) At most two applications of the comparison function `comp`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-clamp:0011 */}
+[`clamp (1)`](/docs/cpp/library/algorithm/clamp#Version_1)
+
+```cpp
+template<class T>
+constexpr const T& clamp(const T& v, const T& lo, const T& hi)
+{
+    return clamp(v, lo, hi, less{});
+}
+```
+
+[`clamp (2)`](/docs/cpp/library/algorithm/clamp#Version_2)
+
+```cpp
+template<class T, class Compare>
+constexpr const T& clamp(const T& v, const T& lo, const T& hi, Compare comp)
+{
+    return comp(v, lo) ? lo : comp(hi, v) ? hi : v;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-clamp:0012 */}
+```cpp
+int n = -1;
+const int& r = std::clamp(n, 0, 255); // r is dangling
+```
+
+{/* source:cpp-algorithm-clamp:0013 */}
+If `v` compares equivalent to either bound, returns a reference to `v`, not the bound.
+
+{/* source:cpp-algorithm-clamp:0014 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_clamp`](/docs/cpp/library/feature_test#cpp_lib_clamp) | [201603L](/docs/cpp/library/compiler_support/17#cpp_lib_clamp_201603L) | (C++17) | [`std::clamp`](/docs/cpp/library/algorithm/clamp#top) |
+
+### Example
+
+{/* source:cpp-algorithm-clamp:0015 */}
+```cpp
+#include <algorithm>
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
+ 
+int main()
+{
+    std::cout << "[raw] "
+                 "[" << INT8_MIN << ',' << INT8_MAX << "] "
+                 "[0," << UINT8_MAX << "]\n";
+ 
+    for (const int v : {-129, -128, -1, 0, 42, 127, 128, 255, 256})
+        std::cout << std::setw(4) << v
+                  << std::setw(11) << std::clamp(v, INT8_MIN, INT8_MAX)
+                  << std::setw(8) << std::clamp(v, 0, UINT8_MAX) << '\n';
+}
+```
+
+Output:
+
+```text
+[raw] [-128,127] [0,255]
+-129       -128       0
+-128       -128       0
+  -1         -1       0
+   0          0       0
+  42         42      42
+ 127        127     127
+ 128        127     128
+ 255        127     255
+ 256        127     255
+```
+
+### See also
+
+{/* source:cpp-algorithm-clamp:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`min`](/docs/cpp/library/algorithm/min)</DescriptionTerm>
+    <DescriptionBody>returns the smaller of the given values (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max`](/docs/cpp/library/algorithm/max)</DescriptionTerm>
+    <DescriptionBody>returns the greater of the given values (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_range`](/docs/cpp/library/utility/in_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if an integer value is in the range of a given integer type (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::clamp`](/docs/cpp/library/algorithm/ranges/clamp) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>clamps a value between a pair of boundary values (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

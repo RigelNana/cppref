@@ -1,0 +1,137 @@
+---
+title: "std::ranges::reverse_copy, std::ranges::reverse_copy_result"
+description: "Copies the elements from the source range [first, last) to the destination range [result, result + N), in such a way that the elements in the new range are in reverse order."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/reverse_copy"
+language: "C++"
+---
+{/* source:cpp-algorithm-ranges-reverse-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::bidirectional_iterator I, std::sentinel_for<I> S,
+          std::weakly_incrementable O >
+requires std::indirectly_copyable<I, O>
+constexpr reverse_copy_result<I, O>
+
+    reverse_copy( I first, S last, O result );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::bidirectional_range R, std::weakly_incrementable O >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+constexpr reverse_copy_result<ranges::borrowed_iterator_t<R>, O>
+
+    reverse_copy( R&& r, O result );`} />
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I, class O >
+using reverse_copy_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0001 */}
+1. 1) Copies the elements from the source range `[first, last)` to the destination range `[result, result + N)`, where `N` is `ranges::distance(first, last)`, in such a way that the elements in the new range are in reverse order. Behaves as if by executing the assignment `*(result + N - 1 - i) = *(first + i)` once for each integer `i` in `[0, N)`. The behavior is undefined if the source and destination ranges overlap.
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0002 */}
+2. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0003 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0004 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0005 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to copy</Parameter>
+  <Parameter name="r">the range of elements to copy</Parameter>
+  <Parameter name="result">the beginning of the destination range.</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0006 */}
+`{last, result + N}`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0007 */}
+Exactly `N` assignments.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0008 */}
+Implementations (e.g. [MSVC STL](https://github.com/microsoft/STL/blob/main/stl/src/vector_algorithms.cpp)) may enable vectorization when the both iterator types model [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator) and have the same value type, and the value type is [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable).
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0009 */}
+See also the implementations in [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L4245-L4323) and [libstdc++](https://github.com/gcc-mirror/gcc/blob/14d8a5ae472ca5743016f37da2dd4770d83dea21/libstdc%2B%2B-v3/include/bits/ranges_algo.h#L1330-L1359).
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0010 */}
+```cpp
+struct reverse_copy_fn
+{
+    template<std::bidirectional_iterator I, std::sentinel_for<I> S,
+             std::weakly_incrementable O>
+    requires std::indirectly_copyable<I, O>
+    constexpr ranges::reverse_copy_result<I, O>
+        operator()(I first, S last, O result) const
+    {
+        auto ret = ranges::next(first, last);
+        for (; last != first; *result = *--last, ++result);
+        return {std::move(ret), std::move(result)};
+    }
+ 
+    template<ranges::bidirectional_range R, std::weakly_incrementable O>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+    constexpr ranges::reverse_copy_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(result));
+    }
+};
+ 
+inline constexpr reverse_copy_fn reverse_copy {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0011 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::string x {"12345"}, y(x.size(), ' ');
+    std::cout << x << " → ";
+    std::ranges::reverse_copy(x.begin(), x.end(), y.begin());
+    std::cout << y << " → ";
+    std::ranges::reverse_copy(y, x.begin());
+    std::cout << x << '\n';
+}
+```
+
+Output:
+
+```text
+12345 → 54321 → 12345
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-reverse-copy:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse`](/docs/cpp/library/algorithm/ranges/reverse) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>reverses the order of elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reverse_copy`](/docs/cpp/library/algorithm/reverse_copy)</DescriptionTerm>
+    <DescriptionBody>creates a copy of a range that is reversed (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

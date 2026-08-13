@@ -1,0 +1,213 @@
+---
+title: "std::for_each"
+description: "Applies the given function object f to the result of dereferencing every iterator in the range [first, last). If f returns a result, the result is ignored."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/for_each"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-for-each:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class UnaryFunc >
+UnaryFunc for_each( InputIt first, InputIt last, UnaryFunc f );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class UnaryFunc >
+void for_each( ExecutionPolicy&& policy,
+
+               ForwardIt first, ForwardIt last, UnaryFunc f );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-for-each:0001 */}
+Applies the given function object `f` to the result of dereferencing every iterator in the range [`first`, `last`). If `f` returns a result, the result is ignored.
+
+{/* source:cpp-algorithm-for-each:0002 */}
+1. 1) `f` is applied in order starting from `first`.
+
+   <Revision since="C++11">
+   If `UnaryFunc` is not [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible), the behavior is undefined.
+   </Revision>
+
+{/* source:cpp-algorithm-for-each:0003 */}
+2. 2) `f` might not be applied in order. The algorithm is executed according to `policy`.
+
+{/* source:cpp-algorithm-for-each:0004 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">
+   `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+   <Revision since="C++20">
+   `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+{/* source:cpp-algorithm-for-each:0005 */}
+4. If `UnaryFunc` is not [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible), the behavior is undefined.
+
+{/* source:cpp-algorithm-for-each:0006 */}
+If the iterator type (`InputIt`/`ForwardIt`) is mutable, `f` may modify the elements of the range through the dereferenced iterator.
+
+{/* source:cpp-algorithm-for-each:0007 */}
+Unlike the rest of the parallel algorithms, `for_each` is not allowed to make copies of the elements in the sequence even if they are [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable).
+
+### Parameters
+
+{/* source:cpp-algorithm-for-each:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range to apply the function to</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="f">
+function object, to be applied to the result of dereferencing every iterator in the range [`first`, `last`)
+
+The signature of the function should be equivalent to the following:
+
+`void fun(const Type &a);`
+
+The signature does not need to have `const &`.
+The type `Type` must be such that an object of type `InputIt` can be dereferenced and then implicitly converted to `Type`.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-for-each:0009 */}
+1. 1) `f`
+
+{/* source:cpp-algorithm-for-each:0010 */}
+2. 2) (none)
+
+### Complexity
+
+{/* source:cpp-algorithm-for-each:0011 */}
+Exactly `std::distance(first, last)` applications of `f`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-for-each:0012 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-for-each:0013 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-for-each:0014 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L3858), [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L880) and [MSVC stdlib](https://github.com/microsoft/STL/blob/ff83542af4b683fb2f2dea1423fd6c50fe3e13b0/stl/inc/algorithm#L229).
+
+{/* source:cpp-algorithm-for-each:0015 */}
+```cpp
+template<class InputIt, class UnaryFunc>
+constexpr UnaryFunc for_each(InputIt first, InputIt last, UnaryFunc f)
+{
+    for (; first != last; ++first)
+        f(*first);
+ 
+    return f; // implicit move since C++11
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-for-each:0016 */}
+For overload (1), `f` can be a stateful function object. The return value can be considered as the final state of the batch operation.
+
+{/* source:cpp-algorithm-for-each:0017 */}
+For overload (2), multiple copies of `f` may be created to perform parallel invocation. No value is returned because parallelization often does not permit efficient state accumulation.
+
+### Example
+
+{/* source:cpp-algorithm-for-each:0018 */}
+The following example uses a [lambda-expression](/docs/cpp/language/functions/lambda) to increment all of the elements of a vector and then uses an overloaded `operator()` in a function object (a.k.a., "functor") to compute their sum. Note that to compute the sum, it is recommended to use the dedicated algorithm [`std::accumulate`](/docs/cpp/library/numeric/accumulate).
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v{3, -4, 2, -8, 15, 267};
+ 
+    auto print = [](const int& n) { std::cout << n << ' '; };
+ 
+    std::cout << "before:\t";
+    std::for_each(v.cbegin(), v.cend(), print);
+    std::cout << '\n';
+ 
+    // increment elements in-place
+    std::for_each(v.begin(), v.end(), [](int &n) { n++; });
+ 
+    std::cout << "after:\t";
+    std::for_each(v.cbegin(), v.cend(), print);
+    std::cout << '\n';
+ 
+    struct Sum
+    {
+        void operator()(int n) { sum += n; }
+        int sum {0};
+    };
+ 
+    // invoke Sum::operator() for each element
+    Sum s = std::for_each(v.cbegin(), v.cend(), Sum());    
+    std::cout << "sum:\t" << s.sum << '\n';
+}
+```
+
+Output:
+
+```text
+before:	3 -4 2 -8 15 267 
+after:	4 -3 3 -7 16 268 
+sum:	281
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-for-each:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-for-each:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={475} standard="C++98">
+    <PublishedBehavior>it was unclear whether `f` can modify the elements<br />of the sequence being iterated over (`for_each` is<br />classified as “non-modifying sequence operations”)</PublishedBehavior>
+    <CorrectedBehavior>made clear (allowed if the<br />iterator type is mutable)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2747} standard="C++11">
+    <PublishedBehavior>overload (1) returned `std::move(f)`</PublishedBehavior>
+    <CorrectedBehavior>returns `f` (which implicitly moves)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-for-each:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform`](/docs/cpp/library/algorithm/transform)</DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements, storing results in a destination range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`for_each_n`](/docs/cpp/library/algorithm/for_each_n) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>applies a function object to the first `N` elements of a sequence (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::for_each`](/docs/cpp/library/algorithm/ranges/for_each) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::for_each_n`](/docs/cpp/library/algorithm/ranges/for_each_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function object to the first `N` elements of a sequence (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[range-for loop](/docs/cpp/language/statements/range-for) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>executes loop over range</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

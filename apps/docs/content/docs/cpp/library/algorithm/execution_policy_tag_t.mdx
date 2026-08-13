@@ -1,0 +1,97 @@
+---
+title: "std::execution::sequenced_policy, std::execution::parallel_policy, std::execution::parallel_unsequenced_policy, std::execution::unsequenced_policy"
+description: "The execution policy type used as a unique type to disambiguate parallel algorithm overloading and require that a parallel algorithm's execution may not be parallelized."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/execution_policy_tag_t"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0000 */}
+<DeclarationDoc>
+Defined in header [`<execution>`](/docs/cpp/library/headers/execution)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`class sequenced_policy { /* unspecified */ };`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`class parallel_policy { /* unspecified */ };`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`class parallel_unsequenced_policy { /* unspecified */ };`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`class unsequenced_policy { /* unspecified */ };`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0001 */}
+1. 1) The execution policy type used as a unique type to disambiguate parallel algorithm overloading and require that a parallel algorithm's execution may not be parallelized. The invocations of element access functions in parallel algorithms invoked with this policy (usually specified as [`std::execution::seq`](/docs/cpp/library/algorithm/execution_policy_tag)) are indeterminately sequenced in the calling thread.
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0002 */}
+2. 2) The execution policy type used as a unique type to disambiguate parallel algorithm overloading and indicate that a parallel algorithm's execution may be parallelized. The invocations of element access functions in parallel algorithms invoked with this policy (usually specified as [`std::execution::par`](/docs/cpp/library/algorithm/execution_policy_tag)) are permitted to execute in either the invoking thread or in a thread implicitly created by the library to support parallel algorithm execution. Any such invocations executing in the same thread are indeterminately sequenced with respect to each other. If the threads of execution created by [`std::thread`](/docs/cpp/library/atomic/thread) or [`std::jthread`](/docs/cpp/library/atomic/jthread) provide concurrent forward progress guarantees, then the threads of execution created by the library provide parallel forward progress guarantees. Otherwise, the provided forward progress guarantee is implementation-defined. Note: parallel forward progress guarantees that if a thread of execution makes a step, it will eventually make another step, enabling threads to enter critical sections and take locks, because the thread that has the lock will be eventually scheduled again and be able to release it.
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0003 */}
+3. 3) The execution policy type used as a unique type to disambiguate parallel algorithm overloading and indicate that a parallel algorithm's execution may be parallelized, vectorized, or migrated across threads (such as by a parent-stealing scheduler). The invocations of element access functions in parallel algorithms invoked with this policy are permitted to execute in an unordered fashion in unspecified threads, and unsequenced with respect to one another within each thread. The invocation of element access functions in parallel algorithms invoked with this policy are not permitted to invoke vectorization-unsafe operations, like those specified by the standard library to synchronize, including those of [`std::atomic`](/docs/cpp/library/atomic/atomic) and other concurrency primitives. If the threads of execution created by [`std::thread`](/docs/cpp/library/atomic/thread) or [`std::jthread`](/docs/cpp/library/atomic/jthread) provide concurrent forward progress guarantees, then the threads of execution created by the library provide weakly parallel forward progress guarantees. Otherwise, the provided forward progress guarantee is that of the thread invoking the parallel algorithm. Note: weakly parallel forward progress guarantees that one of the threads of execution that have made a step will eventually make another step, which does not allow threads to enter critical sections or take locks, because the thread that has the lock may not be scheduled again until a thread that is attempting to take the lock has exited.
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0004 */}
+4. 4) The execution policy type used as a unique type to disambiguate parallel algorithm overloading and indicate that a parallel algorithm's execution may be vectorized, e.g., executed on a single thread using instructions that operate on multiple data items.
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0005 */}
+During the execution of a parallel algorithm with any of these execution policies, if the invocation of an element access function exits via an uncaught exception, [`std::terminate`](/docs/cpp/library/error/terminate) is called, but the implementations may define additional execution policies that handle exceptions differently.
+
+### Notes
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0006 */}
+When using parallel execution policy, it is the programmer's responsibility to avoid data races and deadlocks:
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0007 */}
+```cpp
+int a[] = {0, 1};
+std::vector<int> v;
+std::for_each(std::execution::par, std::begin(a), std::end(a), [&](int i)
+{
+    v.push_back(i * 2 + 1); // Error: data race
+});
+```
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0008 */}
+```cpp
+std::atomic<int> x {0};
+int a[] = {1, 2};
+std::for_each(std::execution::par, std::begin(a), std::end(a), [&](int)
+{
+    x.fetch_add(1, std::memory_order_relaxed);
+    while (x.load(std::memory_order_relaxed) == 1) { } // Error: assumes execution order
+});
+```
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0009 */}
+```cpp
+int x = 0;
+std::mutex m;
+int a[] = {1, 2};
+std::for_each(std::execution::par, std::begin(a), std::end(a), [&](int)
+{
+    std::lock_guard<std::mutex> guard(m);
+    ++x; // correct
+});
+```
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0010 */}
+Unsequenced execution policies are the only case where function calls are unsequenced with respect to each other, meaning they can be interleaved. In all other situations in C++, they are [indeterminately-sequenced](/docs/cpp/language/expressions/eval_order) (cannot interleave). Because of that, users are not allowed to allocate or deallocate memory, acquire mutexes, use non-lockfree [`std::atomic`](/docs/cpp/library/atomic/atomic) specializations, or, in general, perform any vectorization-unsafe operations when using these policies (vectorization-unsafe functions are the ones that synchronize-with another function, e.g. [`std::mutex::unlock`](/docs/cpp/library/atomic/mutex/unlock) synchronizes-with the next [`std::mutex::lock`](/docs/cpp/library/atomic/mutex/lock)).
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0011 */}
+```cpp
+int x = 0;
+std::mutex m;
+int a[] = {1, 2};
+std::for_each(std::execution::par_unseq, std::begin(a), std::end(a), [&](int)
+{
+    std::lock_guard<std::mutex> guard(m); // Error: lock_guard constructor calls m.lock()
+    ++x;
+});
+```
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0012 */}
+If the implementation cannot parallelize or vectorize (e.g. due to lack of resources), all standard execution policies can fall back to sequential execution.
+
+### See also
+
+{/* source:cpp-algorithm-execution-policy-tag-t:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`seq`, `par`, `par_unseq`, `unseq`](/docs/cpp/library/algorithm/execution_policy_tag) <InlineRevision since="C++17" /><InlineRevision since="C++17" /><InlineRevision since="C++17" /><InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>global execution policy objects (constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

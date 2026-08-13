@@ -1,0 +1,201 @@
+---
+title: "std::random_shuffle, std::shuffle"
+description: "Reorders the elements in the given range [first, last) such that each possible permutation of those elements has equal probability of appearance."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/random_shuffle"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-random-shuffle:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" removed="C++17" code={`template< class RandomIt >
+void random_shuffle( RandomIt first, RandomIt last );`} /> (deprecated in C++14)
+  <Declaration id="2" language="cpp" until="C++11" code={`template< class RandomIt, class RandomFunc >
+void random_shuffle( RandomIt first, RandomIt last, RandomFunc& r );`} />
+  <Declaration id="2" language="cpp" since="C++11" removed="C++17" code={`template< class RandomIt, class RandomFunc >
+void random_shuffle( RandomIt first, RandomIt last, RandomFunc&& r );`} /> (deprecated in C++14)
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class RandomIt, class URBG >
+void shuffle( RandomIt first, RandomIt last, URBG&& g );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-random-shuffle:0001 */}
+Reorders the elements in the given range `[first, last)` such that each possible permutation of those elements has equal probability of appearance.
+
+{/* source:cpp-algorithm-random-shuffle:0002 */}
+1. 1) The source of randomness is implementation-defined, but the function [`std::rand`](/docs/cpp/library/numeric/random/rand) is often used.
+
+{/* source:cpp-algorithm-random-shuffle:0003 */}
+2. 2) The source of randomness is the function object `r`.
+
+{/* source:cpp-algorithm-random-shuffle:0004 */}
+3. If any of the following conditions is satisfied, the behavior is undefined:
+   - The return type of `r` is not convertible to `std::iterator_traits<RandomIt>::difference_type`.
+   - Given a positive value `n` of type `std::iterator_traits<RandomIt>::difference_type`, the result of `r(n)` is not a randomly chosen value in the interval `[0, n)`.
+
+{/* source:cpp-algorithm-random-shuffle:0005 */}
+4. 3) The source of randomness is the object `g`.
+
+{/* source:cpp-algorithm-random-shuffle:0006 */}
+5. Given the type `T` as `std::remove_reference_t<URBG>`, if any of the following conditions is satisfied, the behavior is undefined:
+   - `T` is not a [*UniformRandomBitGenerator*](/docs/cpp/library/named_req/UniformRandomBitGenerator).
+   - <Revision until="C++20">`T::result_type` is not convertible to `std::iterator_traits<RandomIt>::difference_type`.</Revision>
+
+{/* source:cpp-algorithm-random-shuffle:0007 */}
+If <InlineRevision until="C++11">the type of `*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable)</InlineRevision><InlineRevision since="C++11">`RandomIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable)</InlineRevision>, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-algorithm-random-shuffle:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to shuffle randomly</Parameter>
+  <Parameter name="r">function object returning a randomly chosen value</Parameter>
+  <Parameter name="g">generator object returning a randomly chosen value</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `RandomIt` must meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+
+### Complexity
+
+{/* source:cpp-algorithm-random-shuffle:0009 */}
+Exactly `std::distance(first, last) - 1` swaps.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-random-shuffle:0010 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L4551) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L3066).
+
+{/* source:cpp-algorithm-random-shuffle:0011 */}
+[`random_shuffle (1)`](/docs/cpp/library/algorithm/random_shuffle#Version_1)
+
+```cpp
+template<class RandomIt>
+void random_shuffle(RandomIt first, RandomIt last)
+{
+    typedef typename std::iterator_traits<RandomIt>::difference_type diff_t;
+ 
+    for (diff_t i = last - first - 1; i > 0; --i)
+    {
+        using std::swap;
+        swap(first[i], first[std::rand() % (i + 1)]);
+        // rand() % (i + 1) is not actually correct, because the generated number is
+        // not uniformly distributed for most values of i. The correct code would be
+        // a variation of the C++11 std::uniform_int_distribution implementation.
+    }
+}
+```
+
+[`random_shuffle (2)`](/docs/cpp/library/algorithm/random_shuffle#Version_2)
+
+```cpp
+template<class RandomIt, class RandomFunc>
+void random_shuffle(RandomIt first, RandomIt last, RandomFunc&& r)
+{
+    typedef typename std::iterator_traits<RandomIt>::difference_type diff_t;
+ 
+    for (diff_t i = last - first - 1; i > 0; --i)
+    {
+        using std::swap;
+        swap(first[i], first[r(i + 1)]);
+    }
+}
+```
+
+[`shuffle (3)`](/docs/cpp/library/algorithm/random_shuffle#Version_3)
+
+```cpp
+template<class RandomIt, class URBG>
+void shuffle(RandomIt first, RandomIt last, URBG&& g)
+{
+    typedef typename std::iterator_traits<RandomIt>::difference_type diff_t;
+    typedef std::uniform_int_distribution<diff_t> distr_t;
+    typedef typename distr_t::param_type param_t;
+ 
+    distr_t D;
+    for (diff_t i = last - first - 1; i > 0; --i)
+    {
+        using std::swap;
+        swap(first[i], first[D(g, param_t(0, i))]);
+    }
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-random-shuffle:0012 */}
+Note that the implementation is not dictated by the standard, so even if you use exactly the same `RandomFunc` or `URBG` (Uniform Random Number Generator) you may get different results with different standard library implementations.
+
+{/* source:cpp-algorithm-random-shuffle:0013 */}
+The reason for removing `std::random_shuffle` in C++17 is that the iterator-only version usually depends on [`std::rand`](/docs/cpp/library/numeric/random/rand), which is now also discussed for deprecation. ([`std::rand`](/docs/cpp/library/numeric/random/rand) should be replaced with the classes of the [`<random>`](/docs/cpp/library/headers/random) header, as [`std::rand`](/docs/cpp/library/numeric/random/rand) is considered harmful.) In addition, the iterator-only `std::random_shuffle` version usually depends on a global state. The `std::shuffle`'s shuffle algorithm is the preferred replacement, as it uses a `URBG` as its 3rd parameter.
+
+### Example
+
+{/* source:cpp-algorithm-random-shuffle:0014 */}
+Randomly shuffles the sequence `[1, 10]` of integers:
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <random>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+ 
+    std::random_device rd;
+    std::mt19937 g(rd());
+ 
+    std::shuffle(v.begin(), v.end(), g);
+ 
+    std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+}
+```
+
+Possible output:
+
+```text
+8 6 10 4 2 3 7 1 9 5
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-random-shuffle:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-random-shuffle:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={395} standard="C++98">
+    <PublishedBehavior>the source of randomness of overload (1) was not specified, and<br />[`std::rand`](/docs/cpp/library/numeric/random/rand) could not be the source due to the C library requirement</PublishedBehavior>
+    <CorrectedBehavior>it is implementation-defined,<br />and using [`std::rand`](/docs/cpp/library/numeric/random/rand) is allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={552} standard="C++98">
+    <PublishedBehavior>`r` was not required to be the source<br />of randomness of overload (2)[[1]](/docs/cpp/library/algorithm/random_shuffle#cite_note-1)</PublishedBehavior>
+    <CorrectedBehavior>required</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-algorithm-random-shuffle:0017 */}
+1. ↑ Overload (3) has the same defect, but that part of the resolution is not applicable to C++98.
+
+### See also
+
+{/* source:cpp-algorithm-random-shuffle:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`next_permutation`](/docs/cpp/library/algorithm/next_permutation)</DescriptionTerm>
+    <DescriptionBody>generates the next greater lexicographic permutation of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prev_permutation`](/docs/cpp/library/algorithm/prev_permutation)</DescriptionTerm>
+    <DescriptionBody>generates the next smaller lexicographic permutation of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::shuffle`](/docs/cpp/library/algorithm/ranges/shuffle) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>randomly re-orders elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

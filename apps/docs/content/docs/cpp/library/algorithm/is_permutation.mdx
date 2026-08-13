@@ -1,0 +1,196 @@
+---
+title: "std::is_permutation"
+description: "Checks whether [ first1 , last1 ) is a permutation of a range starting from first2:"
+source_url: "https://en.cppreference.com/w/cpp/algorithm/is_permutation"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-is-permutation:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class ForwardIt1, class ForwardIt2 >
+bool is_permutation( ForwardIt1 first1, ForwardIt1 last1,
+
+                     ForwardIt2 first2 );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class ForwardIt1, class ForwardIt2,
+          class BinaryPredicate >
+bool is_permutation( ForwardIt1 first1, ForwardIt1 last1,
+
+                     ForwardIt2 first2, BinaryPredicate p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="3" language="cpp" since="C++14" code={`template< class ForwardIt1, class ForwardIt2 >
+bool is_permutation( ForwardIt1 first1, ForwardIt1 last1,
+
+                     ForwardIt2 first2, ForwardIt2 last2 );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++14" code={`template< class ForwardIt1, class ForwardIt2,
+          class BinaryPredicate >
+bool is_permutation( ForwardIt1 first1, ForwardIt1 last1,
+                     ForwardIt2 first2, ForwardIt2 last2,
+
+                     BinaryPredicate p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-is-permutation:0001 */}
+Checks whether `[first1, last1)` is a [permutation](https://en.wikipedia.org/wiki/permutation) of a range starting from `first2`:
+
+{/* source:cpp-algorithm-is-permutation:0002 */}
+- For overloads (1,2), the second range has `std::distance(first1, last1)` elements.
+- For overloads (3,4), the second range is `[first2, last2)`.
+
+{/* source:cpp-algorithm-is-permutation:0003 */}
+1. 1,3) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-is-permutation:0004 */}
+2. 2,4) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-is-permutation:0005 */}
+If `ForwardIt1` and `ForwardIt2` have different [value types](/docs/cpp/library/iterator#Types_and_writability), the program is ill-formed.
+
+{/* source:cpp-algorithm-is-permutation:0006 */}
+If the comparison function is not an [equivalence relation](https://en.wikipedia.org/wiki/equivalence_relation), the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-algorithm-is-permutation:0007 */}
+<ParameterList>
+  <Parameter name="first1, last1">the range of elements to compare</Parameter>
+  <Parameter name="first2, last2">the second range to compare</Parameter>
+  <Parameter name="p">
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+` bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>).
+
+The types `Type1` and `Type2` must be such that objects of types `InputIt1` and `InputIt2` can be dereferenced and then implicitly converted to `Type1` and `Type2` respectively.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+- `ForwardIt1, ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-is-permutation:0008 */}
+`true` if the range `[first1, last1)` is a permutation of the range `[first2, last2)`, `false` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-is-permutation:0009 */}
+Given N as `std::distance(first1, last1)`:
+
+{/* source:cpp-algorithm-is-permutation:0010 */}
+1. 1) Exactly N comparisons using `operator==` if the two ranges are equal, otherwise O(N2) comparisons in the worst case.
+
+{/* source:cpp-algorithm-is-permutation:0011 */}
+2. 2) Exactly N applications of the predicate `p` if the two ranges are equal, otherwise O(N2) applications in the worst case.
+
+{/* source:cpp-algorithm-is-permutation:0012 */}
+3. 3,4) If `ForwardIt1` and `ForwardIt2` are both [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), and `last1 - first1 != last2 - first2` is `true`, no comparison will be made.
+
+{/* source:cpp-algorithm-is-permutation:0013 */}
+4. Otherwise:
+
+{/* source:cpp-algorithm-is-permutation:0014 */}
+5. 3) Exactly N comparisons using `operator==` if the two ranges are equal, otherwise O(N2) comparisons in the worst case.
+
+{/* source:cpp-algorithm-is-permutation:0015 */}
+6. 4) Exactly N applications of the predicate `p` if the two ranges are equal, otherwise O(N2) applications in the worst case.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-is-permutation:0016 */}
+```cpp
+template<class ForwardIt1, class ForwardIt2>
+bool is_permutation(ForwardIt1 first, ForwardIt1 last,
+                    ForwardIt2 d_first)
+{
+    // skip common prefix
+    std::tie(first, d_first) = std::mismatch(first, last, d_first);
+ 
+    // iterate over the rest, counting how many times each element
+    // from [first, last) appears in [d_first, d_last)
+    if (first != last)
+    {
+        ForwardIt2 d_last = std::next(d_first, std::distance(first, last));
+        for (ForwardIt1 i = first; i != last; ++i)
+        {
+            if (i != std::find(first, i, *i))
+                continue; // this *i has been checked
+ 
+            auto m = std::count(d_first, d_last, *i);
+            if (m == 0 || std::count(i, last, *i) != m)
+                return false;
+        }
+    }
+    return true;
+}
+```
+
+### Note
+
+{/* source:cpp-algorithm-is-permutation:0017 */}
+The `std::is_permutation` can be used in *testing*, namely to check the correctness of rearranging algorithms (e.g. sorting, shuffling, partitioning). If `x` is an original range and `y` is a *permuted* range then `std::is_permutation(x, y) == true` means that `y` consist of *"the same"* elements, maybe staying at other positions.
+
+### Example
+
+{/* source:cpp-algorithm-is-permutation:0018 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+ 
+template<typename Os, typename V>
+Os& operator<<(Os& os, const V& v)
+{
+    os << "{ ";
+    for (const auto& e : v)
+        os << e << ' ';
+    return os << '}';
+}
+ 
+int main()
+{
+    static constexpr auto v1 = {1, 2, 3, 4, 5};
+    static constexpr auto v2 = {3, 5, 4, 1, 2};
+    static constexpr auto v3 = {3, 5, 4, 1, 1};
+ 
+    std::cout << v2 << " is a permutation of " << v1 << ": " << std::boolalpha
+              << std::is_permutation(v1.begin(), v1.end(), v2.begin()) << '\n'
+              << v3 << " is a permutation of " << v1 << ": "
+              << std::is_permutation(v1.begin(), v1.end(), v3.begin()) << '\n';
+}
+```
+
+Output:
+
+```text
+{ 3 5 4 1 2 } is a permutation of { 1 2 3 4 5 }: true
+{ 3 5 4 1 1 } is a permutation of { 1 2 3 4 5 }: false
+```
+
+### See also
+
+{/* source:cpp-algorithm-is-permutation:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`next_permutation`](/docs/cpp/library/algorithm/next_permutation)</DescriptionTerm>
+    <DescriptionBody>generates the next greater lexicographic permutation of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prev_permutation`](/docs/cpp/library/algorithm/prev_permutation)</DescriptionTerm>
+    <DescriptionBody>generates the next smaller lexicographic permutation of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equivalence_relation`](/docs/cpp/library/concepts/equivalence_relation) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`relation`](/docs/cpp/library/concepts/relation) imposes an equivalence relation (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::is_permutation`](/docs/cpp/library/algorithm/ranges/is_permutation) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>determines if a sequence is a permutation of another sequence (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

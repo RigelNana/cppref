@@ -1,0 +1,239 @@
+---
+title: "std::replace, std::replace_if"
+description: "Replaces all elements in the range [first, last) with new_value if they satisfy specific criteria."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/replace"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-replace:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" until="C++26" code={`template< class ForwardIt, class T >
+void replace( ForwardIt first, ForwardIt last,
+
+              const T& old_value, const T& new_value );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class ForwardIt, class T = typename std::iterator_traits
+                                         <ForwardIt>::value_type >
+constexpr void replace( ForwardIt first, ForwardIt last,
+
+                        const T& old_value, const T& new_value );`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy, class ForwardIt, class T >
+void replace( ExecutionPolicy&& policy,
+              ForwardIt first, ForwardIt last,
+
+              const T& old_value, const T& new_value );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class ExecutionPolicy, class ForwardIt,
+          class T = typename std::iterator_traits
+                        <ForwardIt>::value_type >
+void replace( ExecutionPolicy&& policy,
+              ForwardIt first, ForwardIt last,
+
+              const T& old_value, const T& new_value );`} />
+  <Declaration id="3" language="cpp" until="C++26" code={`template< class ForwardIt, class UnaryPred, class T >
+void replace_if( ForwardIt first, ForwardIt last,
+
+                 UnaryPred p, const T& new_value );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="3" language="cpp" since="C++26" code={`template< class ForwardIt, class UnaryPred,
+          class T = typename std::iterator_traits
+                        <ForwardIt>::value_type> >
+constexpr void replace_if( ForwardIt first, ForwardIt last,
+
+                           UnaryPred p, const T& new_value );`} />
+  <Declaration id="4" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class UnaryPred, class T >
+void replace_if( ExecutionPolicy&& policy,
+                 ForwardIt first, ForwardIt last,
+
+                 UnaryPred p, const T& new_value );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class UnaryPred,
+          class T = typename std::iterator_traits
+                        <ForwardIt>::value_type> >
+void replace_if( ExecutionPolicy&& policy,
+                 ForwardIt first, ForwardIt last,
+
+                 UnaryPred p, const T& new_value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-replace:0001 */}
+Replaces all elements in the range `[first, last)` with `new_value` if they satisfy specific criteria.
+
+{/* source:cpp-algorithm-replace:0002 */}
+1. 1) Replaces all elements that are equal to `old_value` (using `operator==`).
+
+{/* source:cpp-algorithm-replace:0003 */}
+2. 3) Replaces all elements for which predicate `p` returns `true`.
+
+{/* source:cpp-algorithm-replace:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-replace:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+{/* source:cpp-algorithm-replace:0006 */}
+If <InlineRevision until="C++20">`*first = new_value` is invalid</InlineRevision><InlineRevision since="C++20">`new_value` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `first`</InlineRevision>, the program is ill-formed.
+
+### Parameters
+
+{/* source:cpp-algorithm-replace:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to process</Parameter>
+  <Parameter name="old_value">the value of elements to replace</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">unary predicate which returns `true` if the element value should be replaced. The expression `p(v)` must be convertible to `bool` for every argument `v` of type (possibly const) `VT`, where `VT` is the value type of `ForwardIt`, regardless of [value category](/docs/cpp/language/expressions/value_category), and must not modify `v`. Thus, a parameter type of `VT&` is not allowed<InlineRevision since="C++11">, nor is `VT` unless for `VT` a move is equivalent to a copy</InlineRevision>.</Parameter>
+  <Parameter name="new_value">the value to use as replacement</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `UnaryPred` must meet the requirements of [*Predicate*](/docs/cpp/library/named_req/Predicate).
+
+### Return value
+
+{/* source:cpp-algorithm-replace:0008 */}
+(none)
+
+### Complexity
+
+{/* source:cpp-algorithm-replace:0009 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-replace:0010 */}
+1. 1,2) Exactly `N` comparisons using `operator==`.
+
+{/* source:cpp-algorithm-replace:0011 */}
+2. 3,4) Exactly `N` applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-replace:0012 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-replace:0013 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Notes
+
+{/* source:cpp-algorithm-replace:0014 */}
+Because the algorithm takes `old_value` and `new_value` by reference, it can have unexpected behavior if either is a reference to an element of the range `[first, last)`.
+
+{/* source:cpp-algorithm-replace:0015 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1-4](/docs/cpp/library/algorithm/replace#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-replace:0016 */}
+[`replace`](/docs/cpp/library/algorithm/replace#Version_1)
+
+```cpp
+template<class ForwardIt,
+         class T = typename std::iterator_traits<ForwardIt>::value_type>
+void replace(ForwardIt first, ForwardIt last,
+             const T& old_value, const T& new_value)
+{
+    for (; first != last; ++first)
+        if (*first == old_value)
+            *first = new_value;
+}
+```
+
+[`replace_if`](/docs/cpp/library/algorithm/replace#Version_3)
+
+```cpp
+template<class ForwardIt, class UnaryPred,
+         class T = typename std::iterator_traits<ForwardIt>::value_type>
+void replace_if(ForwardIt first, ForwardIt last,
+                UnaryPred p, const T& new_value)
+{
+    for (; first != last; ++first)
+        if (p(*first))
+            *first = new_value;
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-replace:0017 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <complex>
+#include <functional>
+#include <iostream>
+ 
+void println(const auto& seq)
+{
+    for (const auto& e : seq)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::array<int, 10> s{5, 7, 4, 2, 8, 6, 1, 9, 0, 3};
+ 
+    // Replace all occurrences of 8 with 88.
+    std::replace(s.begin(), s.end(), 8, 88);
+    println(s);
+ 
+    // Replace all values less than 5 with 55.
+    std::replace_if(s.begin(), s.end(), 
+                    std::bind(std::less<int>(), std::placeholders::_1, 5), 55);
+    println(s);
+ 
+    std::array<std::complex<double>, 2> nums{{{1, 3}, {1, 3}}};
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::replace(nums.begin(), nums.end(), {1, 3}, {4, 2});
+    #else
+        std::replace(nums.begin(), nums.end(), std::complex<double>{1, 3},
+                                               std::complex<double>{4, 2});
+    #endif
+    println(nums);
+}
+```
+
+Output:
+
+```text
+5 7 4 2 88 6 1 9 0 3
+5 7 55 55 88 6 55 9 55 55
+(4,2), (4,2)
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-replace:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-replace:0019 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable) (and [*EqualityComparable*](/docs/cpp/library/named_req/EqualityComparable)<br />for `replace`), but the value type of `ForwardIt` is not<br />always `T` and `T` is not always writable to `ForwardIt`</PublishedBehavior>
+    <CorrectedBehavior>required `*first = new_value`<br />to be valid instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-replace:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace_copy`, `replace_copy_if`](/docs/cpp/library/algorithm/replace_copy)</DescriptionTerm>
+    <DescriptionBody>copies a range, replacing elements satisfying specific criteria with another value (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::replace`, `ranges::replace_if`](/docs/cpp/library/algorithm/ranges/replace) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>replaces all values satisfying specific criteria with another value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,161 @@
+---
+title: "std::prev_permutation"
+description: "Transforms the range [first, last) into the previous permutation."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/prev_permutation"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-prev-permutation:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class BidirIt >
+bool prev_permutation( BidirIt first, BidirIt last );`} />
+  <Declaration id="2" language="cpp" code={`template< class BidirIt, class Compare >
+bool prev_permutation( BidirIt first, BidirIt last, Compare comp );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-prev-permutation:0001 */}
+Transforms the range `[first, last)` into the previous [permutation](https://en.wikipedia.org/wiki/permutation). Returns `true` if such permutation exists, otherwise transforms the range into the last permutation (as if by [`std::sort`](/docs/cpp/library/algorithm/sort) followed by [`std::reverse`](/docs/cpp/library/algorithm/reverse)) and returns `false`.
+
+{/* source:cpp-algorithm-prev-permutation:0002 */}
+1. 1) The set of all permutations is ordered lexicographically with respect to <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">[`std::less{}`](/docs/cpp/library/utility/functional/less)</InlineRevision>.
+
+{/* source:cpp-algorithm-prev-permutation:0003 */}
+2. 2) The set of all permutations is ordered lexicographically with respect to `comp`.
+
+{/* source:cpp-algorithm-prev-permutation:0004 */}
+If <InlineRevision until="C++11">the type of `*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable)</InlineRevision><InlineRevision since="C++11">`BidirIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable)</InlineRevision>, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-algorithm-prev-permutation:0005 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to permute</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is *less* than the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `BidirIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `BidirIt` must meet the requirements of [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable) and [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-prev-permutation:0006 */}
+`true` if the new permutation precedes the old in lexicographical order. `false` if the first permutation was reached and the range was reset to the last permutation.
+
+### Exceptions
+
+{/* source:cpp-algorithm-prev-permutation:0007 */}
+Any exceptions thrown from iterator operations or the element swap.
+
+### Complexity
+
+{/* source:cpp-algorithm-prev-permutation:0008 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-prev-permutation:0009 */}
+1. 1,2) At most `N/2` swaps.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-prev-permutation:0010 */}
+```cpp
+template<class BidirIt>
+bool prev_permutation(BidirIt first, BidirIt last)
+{
+    if (first == last)
+        return false;
+    BidirIt i = last;
+    if (first == --i)
+        return false;
+ 
+    while (1)
+    {
+        BidirIt i1, i2;
+ 
+        i1 = i;
+        if (*i1 < *--i)
+        {
+            i2 = last;
+            while (!(*--i2 < *i))
+                ;
+            std::iter_swap(i, i2);
+            std::reverse(i1, last);
+            return true;
+        }
+ 
+        if (i == first)
+        {
+            std::reverse(first, last);
+            return false;
+        }
+    }
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-prev-permutation:0011 */}
+Averaged over the entire sequence of permutations, typical implementations use about 3 comparisons and 1.5 swaps per call.
+
+{/* source:cpp-algorithm-prev-permutation:0012 */}
+Implementations (e.g. [MSVC STL](https://github.com/microsoft/STL/blob/main/stl/src/vector_algorithms.cpp)) may enable vectorization when the iterator type satisfies [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) and swapping its value type calls neither non-trivial special member function nor [ADL](/docs/cpp/language/functions/adl)-found swap.
+
+### Example
+
+{/* source:cpp-algorithm-prev-permutation:0013 */}
+The following code prints all six permutations of the string `"cab"` in reverse order.
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::string s = "cab";
+ 
+    do
+    {
+        std::cout << s << ' ';
+    }
+    while (std::prev_permutation(s.begin(), s.end()));
+ 
+    std::cout << s << '\n';
+}
+```
+
+Output:
+
+```text
+cab bca bac acb abc cba
+```
+
+### See also
+
+{/* source:cpp-algorithm-prev-permutation:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_permutation`](/docs/cpp/library/algorithm/is_permutation) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>determines if a sequence is a permutation of another sequence (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`next_permutation`](/docs/cpp/library/algorithm/next_permutation)</DescriptionTerm>
+    <DescriptionBody>generates the next greater lexicographic permutation of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::prev_permutation`](/docs/cpp/library/algorithm/ranges/prev_permutation) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>generates the next smaller lexicographic permutation of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

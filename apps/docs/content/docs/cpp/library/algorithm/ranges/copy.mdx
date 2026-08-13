@@ -1,0 +1,242 @@
+---
+title: "std::ranges::copy, std::ranges::copy_if, std::ranges::copy_result, std::ranges::copy_if_result"
+description: "Copies the elements in the range, defined by [first, last), to another range beginning at result."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O >
+requires std::indirectly_copyable<I, O>
+constexpr copy_result<I, O>
+
+    copy( I first, S last, O result );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R, std::weakly_incrementable O >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+constexpr copy_result<ranges::borrowed_iterator_t<R>, O>
+
+    copy( R&& r, O result );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O,
+          class Proj = std::identity,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+requires std::indirectly_copyable<I, O>
+constexpr copy_if_result<I, O>
+
+    copy_if( I first, S last, O result, Pred pred, Proj proj = {} );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< ranges::input_range R, std::weakly_incrementable O,
+          class Proj = std::identity,
+          std::indirect_unary_predicate<
+              std::projected<ranges::iterator_t<R>, Proj>> Pred >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+constexpr copy_if_result<ranges::borrowed_iterator_t<R>, O>
+
+    copy_if( R&& r, O result, Pred pred, Proj proj = {} );`} />
+
+Helper types
+
+  <Declaration id="5" language="cpp" since="C++20" code={`template< class I, class O >
+using copy_result = ranges::in_out_result<I, O>;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class I, class O >
+using copy_if_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-copy:0001 */}
+Copies the elements in the range, defined by `[first, last)`, to another range beginning at `result`.
+
+{/* source:cpp-algorithm-ranges-copy:0002 */}
+1. 1) Copies all elements in the range `[first, last)` starting from `first` and proceeding to `last - 1`. The behavior is undefined if `result` is within the range `[first, last)`. In this case, [`ranges::copy_backward`](/docs/cpp/library/algorithm/ranges/copy_backward) may be used instead.
+
+{/* source:cpp-algorithm-ranges-copy:0003 */}
+2. 3) Only copies the elements for which the predicate `pred` returns `true`. The relative order of the elements that are copied is preserved. The behavior is undefined if the source and the destination ranges overlap.
+
+{/* source:cpp-algorithm-ranges-copy:0004 */}
+3. 2,4) Same as (1,3), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-copy:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-copy:0006 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-copy:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to copy</Parameter>
+  <Parameter name="r">the range of elements to copy</Parameter>
+  <Parameter name="result">the beginning of the destination range.</Parameter>
+  <Parameter name="pred">predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-copy:0008 */}
+A [`ranges::in_out_result`](/docs/cpp/library/algorithm/ranges/return_types/in_out_result) containing an input iterator equal to `last` and an output iterator past the last element copied.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-copy:0009 */}
+1. 1,2) Exactly `last - first` assignments.
+
+{/* source:cpp-algorithm-ranges-copy:0010 */}
+2. 3,4) Exactly `last - first` applications of the predicate and projection, between `0` and `last - first` assignments (assignment for every element for which predicate returns `true`, dependent on predicate and input data).
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-copy:0011 */}
+In practice, implementations of `ranges::copy` avoid multiple assignments and use bulk copy functions such as [`std::memmove`](/docs/cpp/library/text/byte/memmove) if the value type is [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable) and the iterator types satisfy [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator).
+
+{/* source:cpp-algorithm-ranges-copy:0012 */}
+When copying overlapping ranges, `ranges::copy` is appropriate when copying to the left (beginning of the destination range is outside the source range) while [`ranges::copy_backward`](/docs/cpp/library/algorithm/ranges/copy_backward) is appropriate when copying to the right (end of the destination range is outside the source range).
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-copy:0013 */}
+[`copy`](/docs/cpp/library/algorithm/ranges/copy#Version_1)
+
+```cpp
+struct copy_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O>
+    requires std::indirectly_copyable<I, O>
+    constexpr ranges::copy_result<I, O> operator()(I first, S last, O result) const
+    {
+        for (; first != last; ++first, (void)++result)
+            *result = *first;
+        return {std::move(first), std::move(result)};
+    }
+ 
+    template<ranges::input_range R, std::weakly_incrementable O>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+    constexpr ranges::copy_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(result));
+    }
+};
+ 
+inline constexpr copy_fn copy;
+```
+
+[`copy_if`](/docs/cpp/library/algorithm/ranges/copy#Version_3)
+
+```cpp
+struct copy_if_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O,
+             class Proj = std::identity,
+             std::indirect_unary_predicate<std::projected<I, Proj>> Pred>
+    requires std::indirectly_copyable<I, O>
+    constexpr ranges::copy_if_result<I, O>
+        operator()(I first, S last, O result, Pred pred, Proj proj = {}) const
+    {
+        for (; first != last; (void)++first)
+            if (std::invoke(pred, std::invoke(proj, *first)))
+            {
+                *result = *first;
+                (void)++result;
+            }
+        return {std::move(first), std::move(result)};
+    }
+ 
+    template<ranges::input_range R, std::weakly_incrementable O,
+             class Proj = std::identity,
+             std::indirect_unary_predicate<
+                 std::projected<ranges::iterator_t<R>, Proj>> Pred>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+    constexpr ranges::copy_if_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, Pred pred, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r),
+                       std::move(result),
+                       std::ref(pred), std::ref(proj));
+    }
+};
+ 
+inline constexpr copy_if_fn copy_if;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-copy:0014 */}
+The following code uses `ranges::copy` to both copy the contents of one [`std::vector`](/docs/cpp/library/container/vector) to another and to display the resulting `std::vector`:
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> source(10);
+    std::iota(source.begin(), source.end(), 0);
+ 
+    std::vector<int> destination;
+ 
+    std::ranges::copy(source.begin(), source.end(),
+                      std::back_inserter(destination));
+// or, alternatively,
+//  std::vector<int> destination(source.size());
+//  std::ranges::copy(source.begin(), source.end(), destination.begin());
+// either way is equivalent to
+//  std::vector<int> destination = source;
+ 
+    std::cout << "destination contains: ";
+ 
+    std::ranges::copy(destination, std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+ 
+    std::cout << "odd numbers in destination are: ";
+ 
+    std::ranges::copy_if(destination, std::ostream_iterator<int>(std::cout, " "),
+                         [](int x) { return (x % 2) == 1; });
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+destination contains: 0 1 2 3 4 5 6 7 8 9
+odd numbers in destination are: 1 3 5 7 9
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-copy:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_backward`](/docs/cpp/library/algorithm/ranges/copy_backward) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements in backwards order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse_copy`](/docs/cpp/library/algorithm/ranges/reverse_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a copy of a range that is reversed (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_n`](/docs/cpp/library/algorithm/ranges/copy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a number of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a range of elements a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::remove_copy ranges::remove_copy_if`](/docs/cpp/library/algorithm/ranges/remove_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements omitting those that satisfy specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy copy_if`](/docs/cpp/library/algorithm/copy) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,189 @@
+---
+title: "std::fill_n"
+description: "Assigns the given value to the first count elements in the range beginning at first if count > 0. Does nothing otherwise."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/fill_n"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-fill-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" until="C++26" code={`template< class OutputIt, class Size, class T >
+OutputIt fill_n( OutputIt first, Size count, const T& value );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class OutputIt, class Size,
+          class T = typename std::iterator_traits
+                        <OutputIt>::value_type >
+constexpr OutputIt fill_n( OutputIt first, Size count,
+
+                           const T& value );`} />
+  <Declaration id="3" language="cpp" since="C++17" until="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class Size, class T >
+ForwardIt fill_n( ExecutionPolicy&& policy,
+
+                  ForwardIt first, Size count, const T& value );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< class ExecutionPolicy,
+          class ForwardIt, class Size,
+          class T = typename std::iterator_traits
+                        <OutputIt>::value_type >
+ForwardIt fill_n( ExecutionPolicy&& policy,
+
+                  ForwardIt first, Size count, const T& value );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-fill-n:0001 */}
+1. 1) Assigns the given `value` to the first `count` elements in the range beginning at `first` if `count > 0`. Does nothing otherwise.
+
+{/* source:cpp-algorithm-fill-n:0002 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-fill-n:0003 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">
+   `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+   <Revision since="C++20">
+   `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+{/* source:cpp-algorithm-fill-n:0004 */}
+If any of the following conditions is satisfied, the program is ill-formed:
+
+{/* source:cpp-algorithm-fill-n:0005 */}
+- `value` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `first`.
+- `Size` is not [convertible](/docs/cpp/language/expressions/implicit_cast) to an [integral type](/docs/cpp/language/basic_concepts/type-id).
+
+### Parameters
+
+{/* source:cpp-algorithm-fill-n:0006 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of elements to modify</Parameter>
+  <Parameter name="count">number of elements to modify</Parameter>
+  <Parameter name="value">the value to be assigned</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-fill-n:0007 */}
+Iterator one past the last element assigned if `count > 0`, `first` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-fill-n:0008 */}
+Exactly `std::max(0, count)` assignments.
+
+### Exceptions
+
+{/* source:cpp-algorithm-fill-n:0009 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-fill-n:0010 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-fill-n:0011 */}
+[`fill_n (1)`](/docs/cpp/library/algorithm/fill_n#Version_1)
+
+```cpp
+template<class OutputIt, class Size,
+         class T = typename std::iterator_traits<OutputIt>::value_type>
+OutputIt fill_n(OutputIt first, Size count, const T& value)
+{
+    for (Size i = 0; i < count; i++)
+        *first++ = value;
+    return first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-fill-n:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/fill_n#Version_1)) |
+
+### Example
+
+{/* source:cpp-algorithm-fill-n:0013 */}
+```cpp
+#include <algorithm>
+#include <complex>
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v1{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+ 
+    // replace values of the first 5 elements with -1
+    std::fill_n(v1.begin(), 5, -1);
+ 
+    std::copy_n(v1.cbegin(), v1.size(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+ 
+    std::vector<std::complex<double>> nums{{1, 3}, {2, 2}, {4, 8}};
+    #ifdef __cpp_lib_algorithm_default_value_type
+        std::fill_n(nums.begin(), 2, {4, 2});
+    #else
+        std::fill_n(nums.begin(), 2, std::complex<double>{4, 2});
+    #endif
+    std::copy_n(nums.cbegin(), nums.size(),
+                std::ostream_iterator<std::complex<double>>(std::cout, " "));
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+-1 -1 -1 -1 -1 5 6 7 8 9
+(4,2) (4,2) (4,8)
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-fill-n:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-fill-n:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={283} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable), but<br />`T` is not always writable to `OutputIt`</PublishedBehavior>
+    <CorrectedBehavior>required to be writable instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={426} standard="C++98">
+    <PublishedBehavior>the complexity requirement was “exactly `count`<br />assignments”, which is broken if `count` is negative</PublishedBehavior>
+    <CorrectedBehavior>no assignment if<br />`count` is non-positive</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={865} standard="C++98">
+    <PublishedBehavior>the location of the first element following<br />the filling range was not returned</PublishedBehavior>
+    <CorrectedBehavior>returned</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-fill-n:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fill`](/docs/cpp/library/algorithm/fill)</DescriptionTerm>
+    <DescriptionBody>copy-assigns the given value to every element in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fill_n`](/docs/cpp/library/algorithm/ranges/fill_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns a value to a number of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

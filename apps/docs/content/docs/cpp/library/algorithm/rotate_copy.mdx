@@ -1,0 +1,142 @@
+---
+title: "std::rotate_copy"
+description: "Copies the elements from the range [first, last), to another range beginning at d_first in such a way, that the element *(n_first) becomes the first element of the new range and *(n_first - 1) becomes the last element."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/rotate_copy"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-rotate-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class ForwardIt, class OutputIt >
+OutputIt rotate_copy( ForwardIt first, ForwardIt n_first,
+
+                      ForwardIt last, OutputIt d_first );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2 >
+ForwardIt2 rotate_copy( ExecutionPolicy&& policy,
+                        ForwardIt1 first, ForwardIt1 n_first,
+
+                        ForwardIt1 last, ForwardIt2 d_first );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-rotate-copy:0001 */}
+1. 1) Copies the elements from the range `[first, last)`, to another range beginning at `d_first` in such a way, that the element `*(n_first)` becomes the first element of the new range and `*(n_first - 1)` becomes the last element.
+
+{/* source:cpp-algorithm-rotate-copy:0002 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-rotate-copy:0003 */}
+3. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-rotate-copy:0004 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-rotate-copy:0005 */}
+- `[first, n_first)` or `[n_first, last)` is not a [valid range](/docs/cpp/library/iterator#Ranges).
+- The source and destination ranges overlap.
+
+### Parameters
+
+{/* source:cpp-algorithm-rotate-copy:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to copy</Parameter>
+  <Parameter name="n_first">an iterator to an element in `[first, last)` that should appear at the beginning of the new range</Parameter>
+  <Parameter name="d_first">beginning of the destination range</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `ForwardIt`, `ForwardIt1`, `ForwardIt2` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-rotate-copy:0007 */}
+Output iterator to the element past the last element copied.
+
+### Complexity
+
+{/* source:cpp-algorithm-rotate-copy:0008 */}
+Exactly `std::distance(first, last)` assignments.
+
+### Exceptions
+
+{/* source:cpp-algorithm-rotate-copy:0009 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-rotate-copy:0010 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-rotate-copy:0011 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/14d8a5ae472ca5743016f37da2dd4770d83dea21/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1440-L1455), [libc++](https://github.com/llvm/llvm-project/tree/f221d905b131158cbe3cbc4320d1ecd1376c3f22/libcxx/include/__algorithm/rotate_copy.h), and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L4438-L4459).
+
+{/* source:cpp-algorithm-rotate-copy:0012 */}
+```cpp
+template<class ForwardIt, class OutputIt>
+constexpr // since C++20
+OutputIt rotate_copy(ForwardIt first, ForwardIt n_first,
+                     ForwardIt last, OutputIt d_first)
+{
+    d_first = std::copy(n_first, last, d_first);
+    return std::copy(first, n_first, d_first);
+}
+```
+
+### Example
+
+{/* source:cpp-algorithm-rotate-copy:0013 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> src{1, 2, 3, 4, 5};
+    std::vector<int> dest(src.size());
+    auto pivot = std::find(src.begin(), src.end(), 3);
+ 
+    std::rotate_copy(src.begin(), pivot, src.end(), dest.begin());
+    for (int i : dest)
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    // copy the rotation result directly to the std::cout
+    pivot = std::find(dest.begin(), dest.end(), 1);
+    std::rotate_copy(dest.begin(), pivot, dest.end(),
+                     std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+3 4 5 1 2
+1 2 3 4 5
+```
+
+### See also
+
+{/* source:cpp-algorithm-rotate-copy:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`rotate`](/docs/cpp/library/algorithm/rotate)</DescriptionTerm>
+    <DescriptionBody>rotates the order of elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::rotate_copy`](/docs/cpp/library/algorithm/ranges/rotate_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies and rotate a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

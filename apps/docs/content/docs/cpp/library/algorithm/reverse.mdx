@@ -1,0 +1,162 @@
+---
+title: "std::reverse"
+description: "Reverses the order of the elements in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/reverse"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-reverse:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class BidirIt >
+void reverse( BidirIt first, BidirIt last );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class BidirIt >
+void reverse( ExecutionPolicy&& policy, BidirIt first, BidirIt last );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-reverse:0001 */}
+1. 1) Reverses the order of the elements in the range `[first, last)`.
+
+{/* source:cpp-algorithm-reverse:0002 */}
+2. Behaves as if applying [`std::iter_swap`](/docs/cpp/library/algorithm/iter_swap) to every pair of iterators `first + i` and `(last - i) - 1` for each integer `i` in `[0, std::distance(first, last) / 2)`.
+
+{/* source:cpp-algorithm-reverse:0003 */}
+3. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-algorithm-reverse:0004 */}
+4. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+{/* source:cpp-algorithm-reverse:0005 */}
+If <InlineRevision until="C++20">`*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable)</InlineRevision><InlineRevision since="C++20">`BidirIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable)</InlineRevision>, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-algorithm-reverse:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to reverse</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `BidirIt` must meet the requirements of [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator).
+
+### Complexity
+
+{/* source:cpp-algorithm-reverse:0007 */}
+Exactly `std::distance(first, last) / 2` swaps.
+
+### Exceptions
+
+{/* source:cpp-algorithm-reverse:0008 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-algorithm-reverse:0009 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-reverse:0010 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/14d8a5ae472ca5743016f37da2dd4770d83dea21/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1087-L1152), [libc++](https://github.com/llvm/llvm-project/blob/6adbc83ee9e46b476e0f75d5671c3a21f675a936/libcxx/include/__algorithm/reverse.h), and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/xutility#L5335-L5370).
+
+{/* source:cpp-algorithm-reverse:0011 */}
+```cpp
+template<class BidirIt>
+constexpr // since C++20
+void reverse(BidirIt first, BidirIt last)
+{
+    using iter_cat = typename std::iterator_traits<BidirIt>::iterator_category;
+ 
+    // Tag dispatch, e.g. calling reverse_impl(first, last, iter_cat()),
+    // can be used in C++14 and earlier modes.
+    if constexpr (std::is_base_of_v<std::random_access_iterator_tag, iter_cat>)
+    {
+        if (first == last)
+            return;
+ 
+        for (--last; first < last; (void)++first, --last)
+            std::iter_swap(first, last);
+    }
+    else
+        while (first != last && first != --last)
+            std::iter_swap(first++, last);
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-reverse:0012 */}
+Implementations (e.g. [MSVC STL](https://github.com/microsoft/STL/blob/main/stl/src/vector_algorithms.cpp)) may enable vectorization when the iterator type satisfies [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) and swapping its value type calls neither non-trivial special member function nor [ADL](/docs/cpp/language/functions/adl)-found swap.
+
+### Example
+
+{/* source:cpp-algorithm-reverse:0013 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+void println(auto rem, auto const& v)
+{
+    for (std::cout << rem; auto e : v)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::vector<int> v {1, 2, 3};
+    std::reverse(v.begin(), v.end());
+    println("after reverse, v = ", v);
+ 
+    int a[] = {4, 5, 6, 7};
+    std::reverse(std::begin(a), std::end(a));
+    println("after reverse, a = ", a);
+}
+```
+
+Output:
+
+```text
+after reverse, v = 3 2 1
+after reverse, a = 7 6 5 4
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-reverse:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-reverse:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={223} standard="C++98">
+    <PublishedBehavior>[`std::swap`](/docs/cpp/library/algorithm/swap) was applied to each pair of iterators</PublishedBehavior>
+    <CorrectedBehavior>applies [`std::iter_swap`](/docs/cpp/library/algorithm/iter_swap) instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2039} standard="C++98">
+    <PublishedBehavior>[`std::iter_swap`](/docs/cpp/library/algorithm/iter_swap) was also applied when `i`<br />equals `std::distance(first, last) / 2`</PublishedBehavior>
+    <CorrectedBehavior>not applied</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-reverse:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reverse_copy`](/docs/cpp/library/algorithm/reverse_copy)</DescriptionTerm>
+    <DescriptionBody>creates a copy of a range that is reversed (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse`](/docs/cpp/library/algorithm/ranges/reverse) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>reverses the order of elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

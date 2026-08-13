@@ -1,0 +1,190 @@
+---
+title: "std::ranges::mismatch, std::ranges::mismatch_result"
+description: "Returns the first mismatching pair of projected elements from two ranges: one defined by [first1, last1) or r1 and another defined by [first2, last2) or r2."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/mismatch"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-mismatch:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I1, std::sentinel_for<I1> S1,
+          std::input_iterator I2, std::sentinel_for<I2> S2,
+          class Pred = ranges::equal_to,
+          class Proj1 = std::identity, class Proj2 = std::identity >
+requires std::indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+constexpr mismatch_result<I1, I2>
+    mismatch( I1 first1, S1 last1, I2 first2, S2 last2,
+
+              Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R1, ranges::input_range R2,
+          class Pred = ranges::equal_to,
+          class Proj1 = std::identity, class Proj2 = std::identity >
+requires std::indirectly_comparable<
+             ranges::iterator_t<R1>, ranges::iterator_t<R2>, Pred, Proj1, Proj2>
+constexpr mismatch_result<ranges::borrowed_iterator_t<R1>,
+                          ranges::borrowed_iterator_t<R2>>
+    mismatch( R1&& r1, R2&& r2, Pred pred = {},
+
+              Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I1, class I2 >
+using mismatch_result = ranges::in_in_result<I1, I2>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-mismatch:0001 */}
+Returns the first mismatching pair of projected elements from two ranges: one defined by `[first1, last1)` or `r1` and another defined by `[first2, last2)` or `r2`.
+
+{/* source:cpp-algorithm-ranges-mismatch:0002 */}
+1. 1) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-ranges-mismatch:0003 */}
+2. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-mismatch:0004 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-mismatch:0005 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-mismatch:0006 */}
+<ParameterList>
+  <Parameter name="first1, last1">an iterator-sentinel pair denoting the first range of the elements to compare</Parameter>
+  <Parameter name="r1">the first range of the elements to compare</Parameter>
+  <Parameter name="first2, last2">an iterator-sentinel pair denoting the second range of the elements to compare</Parameter>
+  <Parameter name="r2">the second range of the elements to compare</Parameter>
+  <Parameter name="pred">predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj1">projection to apply to the first range of elements</Parameter>
+  <Parameter name="proj2">projection to apply to the second range of elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-mismatch:0007 */}
+`ranges::mismatch_result` with iterators to the first two non-equal elements.
+
+{/* source:cpp-algorithm-ranges-mismatch:0008 */}
+If no mismatches are found when the comparison reaches `last1` or `last2`, whichever happens first, the object holds the end iterator and the corresponding iterator from the other range.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-mismatch:0009 */}
+At most `std::min(last1 - first1, last2 - first2)` applications of the predicate and corresponding projections.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-mismatch:0010 */}
+```cpp
+struct mismatch_fn
+{
+    template<std::input_iterator I1, std::sentinel_for<I1> S1,
+             std::input_iterator I2, std::sentinel_for<I2> S2,
+             class Pred = ranges::equal_to,
+             class Proj1 = std::identity, class Proj2 = std::identity>
+    requires std::indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+    constexpr std::mismatch_result<I1, I2>
+        operator()(I1 first1, S1 last1, I2 first2, S2 last2,
+                   Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        for (; first1 != last1 && first2 != last2; ++first1, (void)++first2)
+            if (not std::invoke(pred, std::invoke(proj1, *first1),
+                                      std::invoke(proj2, *first2)))
+                break;
+ 
+        return {first1, first2};
+    }
+ 
+    template<ranges::input_range R1, ranges::input_range R2,
+             class Pred = ranges::equal_to,
+             class Proj1 = std::identity, class Proj2 = std::identity>
+    requires std::indirectly_comparable<ranges::iterator_t<R1>, ranges::iterator_t<R2>,
+                                        Pred, Proj1, Proj2>
+    constexpr ranges::mismatch_result<ranges::borrowed_iterator_t<R1>,
+                                      ranges::borrowed_iterator_t<R2>>
+        operator()(R1&& r1, R2&& r2, Pred pred = {},
+                   Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        return (*this)(ranges::begin(r1), ranges::end(r1),
+                       ranges::begin(r2), ranges::end(r2),
+                       std::ref(pred), std::ref(proj1), std::ref(proj2));
+    }
+};
+ 
+inline constexpr mismatch_fn mismatch;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-mismatch:0011 */}
+This program determines the longest substring that is simultaneously found at the very beginning and at the very end of the given string, in reverse order (possibly overlapping).
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+ 
+[[nodiscard]]
+constexpr std::string_view mirror_ends(const std::string_view in)
+{
+    const auto end = std::ranges::mismatch(in, in | std::views::reverse).in1;
+    return {in.cbegin(), end};
+}
+ 
+int main()
+{
+    std::cout << mirror_ends("abXYZba") << '\n'
+              << mirror_ends("abca") << '\n'
+              << mirror_ends("ABBA") << '\n'
+              << mirror_ends("level") << '\n';
+ 
+    using namespace std::literals::string_view_literals;
+ 
+    static_assert("123"sv == mirror_ends("123!@#321"));
+    static_assert("radar"sv == mirror_ends("radar"));
+}
+```
+
+Output:
+
+```text
+ab
+a
+ABBA
+level
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-mismatch:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal`](/docs/cpp/library/algorithm/ranges/equal) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>determines if two sets of elements are the same (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find`, `ranges::find_if`, `ranges::find_if_not`](/docs/cpp/library/algorithm/ranges/find) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lexicographical_compare`](/docs/cpp/library/algorithm/ranges/lexicographical_compare) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns true if one range is lexicographically less than another (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::search`](/docs/cpp/library/algorithm/ranges/search) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mismatch`](/docs/cpp/library/algorithm/mismatch)</DescriptionTerm>
+    <DescriptionBody>finds the first position where two ranges differ (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,275 @@
+---
+title: "std::transform"
+description: "std::transform applies the given function to the elements of the given input range(s), and stores the result in an output range starting from d_first."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/transform"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-transform:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class OutputIt, class UnaryOp >
+OutputIt transform( InputIt first1, InputIt last1,
+
+                    OutputIt d_first, UnaryOp unary_op );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2, class UnaryOp >
+ForwardIt2 transform( ExecutionPolicy&& policy,
+                      ForwardIt1 first1, ForwardIt1 last1,
+
+                      ForwardIt2 d_first, UnaryOp unary_op );`} />
+  <Declaration id="3" language="cpp" code={`template< class InputIt1, class InputIt2,
+          class OutputIt, class BinaryOp >
+OutputIt transform( InputIt1 first1, InputIt1 last1, InputIt2 first2,
+
+                    OutputIt d_first, BinaryOp binary_op );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt1, class ForwardIt2,
+          class ForwardIt3, class BinaryOp >
+ForwardIt3 transform( ExecutionPolicy&& policy,
+                      ForwardIt1 first1, ForwardIt1 last1,
+                      ForwardIt2 first2,
+
+                      ForwardIt3 d_first, BinaryOp binary_op );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-transform:0001 */}
+`std::transform` applies the given function to the elements of the given input range(s), and stores the result in an output range starting from `d_first`.
+
+{/* source:cpp-algorithm-transform:0002 */}
+1. 1) The unary operation `unary_op` is applied to the elements of `[first1, last1)`.
+
+{/* source:cpp-algorithm-transform:0003 */}
+2. If `unary_op` invalidates an iterator or modifies an element in any of the following ranges, the behavior is undefined: `[first1, last1]`. The range of `std::distance(first1, last1) + 1` elements starting from `d_first`.
+
+{/* source:cpp-algorithm-transform:0004 */}
+3. 3) The binary operation `binary_op` is applied to pairs of elements from two ranges: `[first1, last1)` and another range of `std::distance(first1, last1)` elements starting from `first2`.
+
+{/* source:cpp-algorithm-transform:0005 */}
+4. If `binary_op` invalidates an iterator or modifies an element in any of the following ranges, the behavior is undefined: `[first1, last1]`. The range of `std::distance(first1, last1) + 1` elements starting from `first2`. The range of `std::distance(first1, last1) + 1` elements starting from `d_first`.
+
+{/* source:cpp-algorithm-transform:0006 */}
+5. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-transform:0007 */}
+6. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+<Revision until="C++20">
+
+`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+<Revision since="C++20">
+
+`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-transform:0008 */}
+<ParameterList>
+  <Parameter name="first1, last1">the first range of elements to transform</Parameter>
+  <Parameter name="first2">the beginning of the second range of elements to transform</Parameter>
+  <Parameter name="d_first">the beginning of the destination range, may be equal to `first1` or `first2`</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="unary_op">
+
+unary operation function object that will be applied.
+
+The signature of the function should be equivalent to the following:
+
+`Ret fun(const Type &a);`
+
+The signature does not need to have `const &`. The type `Type` must be such that an object of type `InputIt` can be dereferenced and then implicitly converted to `Type`. The type `Ret` must be such that an object of type `OutputIt` can be dereferenced and assigned a value of type `Ret`.
+
+</Parameter>
+  <Parameter name="binary_op">
+
+binary operation function object that will be applied.
+
+The signature of the function should be equivalent to the following:
+
+`Ret fun(const Type1 &a, const Type2 &b);`
+
+The signature does not need to have `const &`. The types `Type1` and `Type2` must be such that objects of types `InputIt1` and `InputIt2` can be dereferenced and then implicitly converted to `Type1` and `Type2` respectively. The type `Ret` must be such that an object of type `OutputIt` can be dereferenced and assigned a value of type `Ret`.
+
+</Parameter>
+</ParameterList>
+
+Type requirements:
+
+- `InputIt`, `InputIt1`, `InputIt2` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- `ForwardIt1`, `ForwardIt2`, `ForwardIt3` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-transform:0009 */}
+Output iterator to the element that follows the last element transformed.
+
+### Complexity
+
+{/* source:cpp-algorithm-transform:0010 */}
+Given `N` as `std::distance(first1, last1)`:
+
+{/* source:cpp-algorithm-transform:0011 */}
+1. 1,2) Exactly `N` applications of `unary_op`.
+
+{/* source:cpp-algorithm-transform:0012 */}
+2. 3,4) Exactly `N` applications of `binary_op`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-transform:0013 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-transform:0014 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-transform:0015 */}
+[`transform (1)`](/docs/cpp/library/algorithm/transform#Version_1)
+
+```cpp
+template<class InputIt, class OutputIt, class UnaryOp>
+constexpr //< since C++20
+OutputIt transform(InputIt first1, InputIt last1,
+                   OutputIt d_first, UnaryOp unary_op)
+{
+    for (; first1 != last1; ++d_first, ++first1)
+        *d_first = unary_op(*first1);
+ 
+    return d_first;
+}
+```
+
+[`transform (3)`](/docs/cpp/library/algorithm/transform#Version_3)
+
+```cpp
+template<class InputIt1, class InputIt2, 
+         class OutputIt, class BinaryOp>
+constexpr //< since C++20
+OutputIt transform(InputIt1 first1, InputIt1 last1, InputIt2 first2,
+                   OutputIt d_first, BinaryOp binary_op)
+{
+    for (; first1 != last1; ++d_first, ++first1, ++first2)
+        *d_first = binary_op(*first1, *first2);
+ 
+    return d_first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-transform:0016 */}
+`std::transform` does not guarantee in-order application of `unary_op` or `binary_op`. To apply a function to a sequence in-order or to apply a function that modifies the elements of a sequence, use [`std::for_each`](/docs/cpp/library/algorithm/for_each).
+
+### Example
+
+{/* source:cpp-algorithm-transform:0017 */}
+```cpp
+#include <algorithm>
+#include <cctype>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+ 
+void print_ordinals(const std::vector<unsigned>& ordinals)
+{
+    std::cout << "ordinals: ";
+    for (unsigned ord : ordinals)
+        std::cout << std::setw(3) << ord << ' ';
+    std::cout << '\n';
+}
+ 
+char to_uppercase(unsigned char c)
+{
+    return std::toupper(c);
+}
+ 
+void to_uppercase_inplace(char& c)
+{
+    c = to_uppercase(c);
+}
+ 
+void unary_transform_example(std::string& hello, std::string world)
+{
+    // Transform string to uppercase in-place
+ 
+    std::transform(hello.cbegin(), hello.cend(), hello.begin(), to_uppercase);
+    std::cout << "hello = " << std::quoted(hello) << '\n';
+ 
+    // for_each version (see Notes above)
+    std::for_each(world.begin(), world.end(), to_uppercase_inplace);
+    std::cout << "world = " << std::quoted(world) << '\n';
+}
+ 
+void binary_transform_example(std::vector<unsigned> ordinals)
+{
+    // Transform numbers to doubled values
+ 
+    print_ordinals(ordinals);
+ 
+    std::transform(ordinals.cbegin(), ordinals.cend(), ordinals.cbegin(),
+                   ordinals.begin(), std::plus<>{});
+ 
+    print_ordinals(ordinals);
+}
+ 
+int main()
+{
+    std::string hello("hello");
+    unary_transform_example(hello, "world");
+ 
+    std::vector<unsigned> ordinals;
+    std::copy(hello.cbegin(), hello.cend(), std::back_inserter(ordinals));
+    binary_transform_example(std::move(ordinals));
+}
+```
+
+Output:
+
+```text
+hello = "HELLO"
+world = "WORLD"
+ordinals:  72  69  76  76  79 
+ordinals: 144 138 152 152 158
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-transform:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-transform:0019 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={242} standard="C++98">
+    <PublishedBehavior>`unary_op` and `binary_op` could not have side effects</PublishedBehavior>
+    <CorrectedBehavior>they cannot modify the ranges involved</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-transform:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`for_each`](/docs/cpp/library/algorithm/for_each)</DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform`](/docs/cpp/library/algorithm/ranges/transform) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

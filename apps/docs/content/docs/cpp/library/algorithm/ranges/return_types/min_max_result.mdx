@@ -1,0 +1,163 @@
+---
+title: "std::ranges::min_max_result"
+description: "ranges::min_max_result is a class template that provides a way to store two objects or references of the same type as a single unit."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/return_types/min_max_result"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+struct min_max_result;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0001 */}
+`ranges::min_max_result` is a class template that provides a way to store two objects or references of the same type as a single unit.
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0002 */}
+This class template has no base classes or declared members other than those shown below. Thus it is suitable for use with [structured bindings](/docs/cpp/language/declarations/structured_binding).
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0003 */}
+All special member functions of this class template are implicitly declared, which makes specializations be [aggregate classes](/docs/cpp/language/initialization/aggregate_initialization), and propagate triviality, potentially-throwing-ness, and constexpr-ness of corresponding operations on data members.
+
+### Template parameters
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0004 */}
+<ParameterList>
+  <Parameter name="T">the type of the objects or references that the `ranges::min_max_result` stores.</Parameter>
+</ParameterList>
+
+### Data members
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`min`</DescriptionTerm>
+    <DescriptionBody>may be a reference to, a copy of, or an iterator of type `T` to a minimum element in a range. (public member object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`max`</DescriptionTerm>
+    <DescriptionBody>may be a reference to, a copy of, or an iterator of type `T` to a maximum element in a range (public member object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0006 */}
+All these members are declared with [`[[no_unique_address]]`](/docs/cpp/language/declarations/attributes/no_unique_address) attribute.
+
+### Member functions
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0007 */}
+#### `std::ranges::min_max_result::operator min_max_result<T2>`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template<class T2>
+requires std::convertible_to<const T&, T2>
+
+constexpr operator min_max_result<T2>() const &;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template<class T2>
+requires std::convertible_to<T, T2>
+
+constexpr operator min_max_result<T2>() &&;`} />
+</DeclarationDoc>
+
+Converts `*this` to the result by constructing every data member of the result from the corresponding member of `*this`.
+
+1. 1) Equivalent to `return {min, max};`.
+
+2. 2) Equivalent to `return {std::move(min), std::move(max)};`.
+
+### Standard library
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0008 */}
+The following standard library functions use `ranges::min_max_result` as the return type:
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0009 */}
+**Algorithm functions**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::minmax`](/docs/cpp/library/algorithm/ranges/minmax) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the smaller and larger of two elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::minmax_element`](/docs/cpp/library/algorithm/ranges/minmax_element) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the smallest and the largest elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Synopsis
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0010 */}
+```cpp
+namespace std::ranges
+{
+    template<class T>
+    struct min_max_result
+    {
+        [[no_unique_address]] T min;
+        [[no_unique_address]] T max;
+
+        template<class T2>
+        requires std::convertible_to<const T&, T2>
+        constexpr operator min_max_result<T2>() const &
+        {
+            return {min, max};
+        }
+
+        template<class T2>
+        requires std::convertible_to<T, T2>
+        constexpr operator min_max_result<T2>() &&
+        {
+            return {std::move(min), std::move(max)};
+        }
+    };
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0011 */}
+Each standard library algorithm that uses this family of return types declares a new [alias type](/docs/cpp/language/declarations/type_alias), e.g. `using merge_result = in_in_out_result<I1, I2, O>;`.
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0012 */}
+The names for such aliases are formed by adding the suffix `_result` to the algorithm's name. So, the return type of `std::ranges::merge` can be named as `std::ranges::merge_result`.
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0013 */}
+Unlike [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), this class template has data members of meaningful names.
+
+### Example
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0014 */}
+```cpp
+#include <algorithm>
+#include <ranges>
+
+int main()
+{
+    constexpr static auto v = {3, 1, 4, 1, 5, 9, 2};
+    {
+        constexpr auto result = std::ranges::minmax(v);
+        static_assert(1 == result.min && 9 == result.max);
+    }
+    {
+        constexpr auto result = std::ranges::minmax_element(v);
+        static_assert(1 == *result.min && 9 == *result.max);
+    }
+}
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-return-types-min-max-result:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pair`](/docs/cpp/library/utility/pair) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements binary tuple, i.e. a pair of values (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple`](/docs/cpp/library/utility/tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements fixed size container, which holds elements of possibly different types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

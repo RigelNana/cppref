@@ -1,0 +1,131 @@
+---
+title: "std::sample"
+description: "Selects n elements from the sequence [first, last) (without replacement) such that each possible sample has equal probability of appearance, and writes those selected elements into the output iterator out."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/sample"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-sample:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration language="cpp" since="C++17" code={`template< class PopulationIt, class SampleIt, class Distance, class URBG >
+SampleIterator sample( PopulationIt first, PopulationIt last,
+
+                       SampleIt out, Distance n, URBG&& g );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-sample:0001 */}
+Selects `n` elements from the sequence `[first, last)` (without replacement) such that each possible sample has equal probability of appearance, and writes those selected elements into the output iterator `out`. Random numbers are generated using the random number generator `g`.
+
+{/* source:cpp-algorithm-sample:0002 */}
+If `n` is greater than the number of elements in the sequence, selects all elements in the sequence.
+
+{/* source:cpp-algorithm-sample:0003 */}
+The algorithm is stable (preserves the relative order of the selected elements) only if `PopulationIt` meets the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+{/* source:cpp-algorithm-sample:0004 */}
+If <InlineRevision until="C++20">the value type of `first`</InlineRevision><InlineRevision since="C++20">`*first`</InlineRevision> is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `out`, the program is ill-formed.
+
+{/* source:cpp-algorithm-sample:0005 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-sample:0006 */}
+- `out` is in `[first, last)`.
+- `PopulationIt` does not meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `SampleIt` does not meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+- All following conditions are satisfied:
+
+{/* source:cpp-algorithm-sample:0007 */}
+  - <Revision until="C++23">`PopulationIt` does not meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).</Revision>
+  - <Revision since="C++23">`PopulationIt` does not model [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator).</Revision>
+
+{/* source:cpp-algorithm-sample:0008 */}
+  - `SampleIt` does not meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+
+{/* source:cpp-algorithm-sample:0009 */}
+  - Given the type `T` as `std::remove_reference_t<URBG>`, any of the following conditions is satisfied:
+
+{/* source:cpp-algorithm-sample:0010 */}
+    - `T` does not meet the requirements of [*UniformRandomBitGenerator*](/docs/cpp/library/named_req/UniformRandomBitGenerator).
+
+{/* source:cpp-algorithm-sample:0011 */}
+    - <Revision until="C++20">The return type of `T` is not convertible to `Distance`.</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-sample:0012 */}
+<ParameterList>
+  <Parameter name="first, last">pair of iterators forming the range from which to make the sampling (the population)</Parameter>
+  <Parameter name="out">the output iterator where the samples are written</Parameter>
+  <Parameter name="n">number of samples to make</Parameter>
+  <Parameter name="g">the random number generator used as the source of randomness</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `Distance` must be an integer type.
+
+### Return value
+
+{/* source:cpp-algorithm-sample:0013 */}
+Returns a copy of `out` after the last sample that was output, that is, end of the sample range.
+
+### Complexity
+
+{/* source:cpp-algorithm-sample:0014 */}
+Linear in `std::distance(first, last)`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-sample:0015 */}
+See the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/14d8a5ae472ca5743016f37da2dd4770d83dea21/libstdc%2B%2B-v3/include/bits/stl_algo.h#L5743-L5869), [libc++](https://github.com/llvm/llvm-project/blob/f221d905b131158cbe3cbc4320d1ecd1376c3f22/libcxx/include/__algorithm/sample.h) and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L4518-L4600).
+
+### Notes
+
+{/* source:cpp-algorithm-sample:0016 */}
+This function may implement selection sampling or [reservoir sampling](https://en.wikipedia.org/wiki/reservoir_sampling).
+
+{/* source:cpp-algorithm-sample:0017 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_sample`](/docs/cpp/library/feature_test#cpp_lib_sample) | [`201603L`](/docs/cpp/library/compiler_support/17#cpp_lib_sample_201603L) | (C++17) | `std::sample` |
+
+### Example
+
+{/* source:cpp-algorithm-sample:0018 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <random>
+#include <string>
+ 
+int main()
+{
+    std::string in {"ABCDEFGHIJK"}, out;
+    std::sample(in.begin(), in.end(), std::back_inserter(out), 4,
+                std::mt19937 {std::random_device{}()});
+    std::cout << "Four random letters out of " << in << " : " << out << '\n';
+}
+```
+
+Possible output:
+
+```text
+Four random letters out of ABCDEFGHIJK: EFGK
+```
+
+### See also
+
+{/* source:cpp-algorithm-sample:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`random_shuffle`, `shuffle`](/docs/cpp/library/algorithm/random_shuffle) <InlineRevision until="C++17" /><InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>randomly re-orders elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sample`](/docs/cpp/library/algorithm/ranges/sample) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>selects `N` random elements from a sequence (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

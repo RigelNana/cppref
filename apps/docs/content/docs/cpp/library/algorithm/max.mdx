@@ -1,0 +1,225 @@
+---
+title: "std::max"
+description: "Returns the greater of the given values."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/max"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-max:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class T >
+const T& max( const T& a, const T& b );`} />
+  <Declaration id="2" language="cpp" code={`template< class T, class Compare >
+const T& max( const T& a, const T& b, Compare comp );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+T max( std::initializer_list<T> ilist );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class T, class Compare >
+T max( std::initializer_list<T> ilist, Compare comp );`} />
+
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-max:0001 */}
+Returns the greater of the given values.
+
+{/* source:cpp-algorithm-max:0002 */}
+1. 1,2) Returns the greater of `a` and `b`.
+
+{/* source:cpp-algorithm-max:0003 */}
+2. 1) Uses `operator<` to compare the values.
+
+{/* source:cpp-algorithm-max:0004 */}
+3. If `T` is not [*LessThanComparable*](/docs/cpp/library/named_req/LessThanComparable), the behavior is undefined.
+
+{/* source:cpp-algorithm-max:0005 */}
+4. 2) Use the comparison function `comp` to compare the values.
+
+{/* source:cpp-algorithm-max:0006 */}
+5. 3,4) Returns the greatest of the values in initializer list `ilist`.
+
+{/* source:cpp-algorithm-max:0007 */}
+6. If `ilist.size()` is zero, or `T` is not [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible), the behavior is undefined.
+
+{/* source:cpp-algorithm-max:0008 */}
+7. 3) Uses `operator<` to compare the values.
+
+{/* source:cpp-algorithm-max:0009 */}
+8. If `T` is not [*LessThanComparable*](/docs/cpp/library/named_req/LessThanComparable), the behavior is undefined.
+
+{/* source:cpp-algorithm-max:0010 */}
+9. 4) Use the comparison function `comp` to compare the values.
+
+### Parameters
+
+{/* source:cpp-algorithm-max:0011 */}
+<ParameterList>
+  <Parameter name="a, b">the values to compare</Parameter>
+  <Parameter name="ilist">initializer list with the values to compare</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if `a` is *less* than `b`.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp( const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `T` can be implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-max:0012 */}
+1. 1,2) The greater of `a` and `b`. If they are equivalent, returns `a`.
+
+{/* source:cpp-algorithm-max:0013 */}
+2. 3,4) The greatest value in `ilist`. If several values are equivalent to the greatest, returns the leftmost one.
+
+### Complexity
+
+{/* source:cpp-algorithm-max:0014 */}
+1. 1) Exactly one comparison using `operator<`.
+
+{/* source:cpp-algorithm-max:0015 */}
+2. 2) Exactly one application of the comparison function `comp`.
+
+{/* source:cpp-algorithm-max:0016 */}
+3. 3,4) Given `N` as `ilist.size()`:
+
+{/* source:cpp-algorithm-max:0017 */}
+4. 3) Exactly `N-1` comparisons using `operator<`.
+
+{/* source:cpp-algorithm-max:0018 */}
+5. 4) Exactly `N-1` applications of the comparison function `comp`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-max:0019 */}
+[`max (1)`](/docs/cpp/library/algorithm/max#Version_1)
+
+```cpp
+template<class T> 
+const T& max(const T& a, const T& b)
+{
+    return (a < b) ? b : a;
+}
+```
+
+[`max (2)`](/docs/cpp/library/algorithm/max#Version_2)
+
+```cpp
+template<class T, class Compare> 
+const T& max(const T& a, const T& b, Compare comp)
+{
+    return (comp(a, b)) ? b : a;
+}
+```
+
+[`max (3)`](/docs/cpp/library/algorithm/max#Version_3)
+
+```cpp
+template<class T>
+T max(std::initializer_list<T> ilist)
+{
+    return *std::max_element(ilist.begin(), ilist.end());
+}
+```
+
+[`max (4)`](/docs/cpp/library/algorithm/max#Version_4)
+
+```cpp
+template<class T, class Compare>
+T max(std::initializer_list<T> ilist, Compare comp)
+{
+    return *std::max_element(ilist.begin(), ilist.end(), comp);
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-max:0020 */}
+Capturing the result of `std::max` by reference produces a dangling reference if one of the parameters is a temporary and that parameter is returned:
+
+{/* source:cpp-algorithm-max:0021 */}
+```cpp
+int n = -1;
+const int& r = std::max(n + 2, n * 2); // r is dangling
+```
+
+### Example
+
+{/* source:cpp-algorithm-max:0022 */}
+```cpp
+#include <algorithm>
+#include <iomanip>
+#include <iostream>
+#include <string_view>
+ 
+int main()
+{
+    auto longest = [](const std::string_view s1, const std::string_view s2)
+                   {
+                       return s1.size() < s2.size();
+                   };
+ 
+    std::cout << "Larger of 69 and 96 is " << std::max(69, 96) << "\n"
+                 "Larger of 'q' and 'p' is '" << std::max('q', 'p') << "'\n"
+                 "Largest of 010, 10, 0X10, and 0B10 is "
+              << std::max({010, 10, 0X10, 0B10}) << '\n'
+              << R"(Longest of "long", "short", and "int" is )"
+              << std::quoted(std::max({"long", "short", "int"}, longest)) << '\n';
+}
+```
+
+Output:
+
+```text
+Larger of 69 and 96 is 96
+Larger of 'q' and 'p' is 'q'
+Largest of 010, 10, 0X10, and 0B10 is 16
+Longest of "long", "short", and "int" is "short"
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-max:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-max:0024 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={281} standard="C++98">
+    <PublishedBehavior>`T` was required to be [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) for overloads ([1,2](/docs/cpp/library/algorithm/max#Version_1))</PublishedBehavior>
+    <CorrectedBehavior>not required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2239} standard="C++98">
+    <PublishedBehavior>1. `T` was required to be [*LessThanComparable*](/docs/cpp/library/named_req/LessThanComparable) for<br />    overloads ([2](/docs/cpp/library/algorithm/max#Version_2)) (C++98) and ([4](/docs/cpp/library/algorithm/max#Version_4)) (C++11)<br />2. the complexity requirements were missing</PublishedBehavior>
+    <CorrectedBehavior>1. not required<br />2. added the requirements</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-max:0025 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`min`](/docs/cpp/library/algorithm/min)</DescriptionTerm>
+    <DescriptionBody>returns the smaller of the given values (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`minmax`](/docs/cpp/library/algorithm/minmax) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns the smaller and larger of two elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_element`](/docs/cpp/library/algorithm/max_element)</DescriptionTerm>
+    <DescriptionBody>returns the largest element in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`clamp`](/docs/cpp/library/algorithm/clamp) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>clamps a value between a pair of boundary values (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::max`](/docs/cpp/library/algorithm/ranges/max) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the greater of the given values (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

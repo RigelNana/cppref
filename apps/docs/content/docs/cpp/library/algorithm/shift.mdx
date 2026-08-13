@@ -1,0 +1,220 @@
+---
+title: "std::shift_left, std::shift_right"
+description: "Shifts the elements in the range [first, last) by n positions."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/shift"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-shift:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class ForwardIt >
+constexpr ForwardIt shift_left( ForwardIt first, ForwardIt last,
+                                typename std::iterator_traits<ForwardIt>::
+
+                                    difference_type n );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class ExecutionPolicy, class ForwardIt >
+ForwardIt shift_left( ExecutionPolicy&& policy,
+                      ForwardIt first, ForwardIt last,
+                      typename std::iterator_traits<ForwardIt>::
+
+                          difference_type n );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class ForwardIt >
+constexpr ForwardIt shift_right( ForwardIt first, ForwardIt last,
+                                 typename std::iterator_traits<ForwardIt>::
+
+                                     difference_type n );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class ExecutionPolicy, class ForwardIt >
+ForwardIt shift_right( ExecutionPolicy&& policy,
+                       ForwardIt first, ForwardIt last,
+                       typename std::iterator_traits<ForwardIt>::
+
+                           difference_type n );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-shift:0001 */}
+Shifts the elements in the range `[first, last)` by `n` positions.
+
+{/* source:cpp-algorithm-shift:0002 */}
+1. 1) Shifts the elements towards the beginning of the range. If `n == 0 || n >= last - first`, there are no effects. Otherwise, for every integer `i` in `[0, last - first - n)`, moves the element originally at position `first + n + i` to position `first + i`.
+
+{/* source:cpp-algorithm-shift:0003 */}
+2. The moves are performed in increasing order of `i` starting from `0`.
+
+{/* source:cpp-algorithm-shift:0004 */}
+3. 3) Shifts the elements towards the end of the range. If `n == 0 || n >= last - first`, there are no effects. Otherwise, for every integer `i` in `[0, last - first - n)`, moves the element originally at position `first + i` to position `first + n + i`.
+
+{/* source:cpp-algorithm-shift:0005 */}
+4. If `ForwardIt` meets the [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator) requirements, then the moves are performed in decreasing order of `i` starting from `last - first - n - 1`.
+
+{/* source:cpp-algorithm-shift:0006 */}
+5. 2,4) Same as (1) and (3), respectively, but executed according to `policy` and the moves may be performed in any order.
+
+{/* source:cpp-algorithm-shift:0007 */}
+6. These overloads participate in overload resolution only if `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+
+{/* source:cpp-algorithm-shift:0008 */}
+Elements that are in the original range but not the new range are left in a valid but unspecified state.
+
+{/* source:cpp-algorithm-shift:0009 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-shift:0010 */}
+- `n >= 0` is not `true`.
+- The type of `*first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+- For `shift_right`, `ForwardIt` is neither [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator) nor [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable).
+
+### Parameters
+
+{/* source:cpp-algorithm-shift:0011 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the original range</Parameter>
+  <Parameter name="last">the end of the original range</Parameter>
+  <Parameter name="n">the number of positions to shift</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-shift:0012 */}
+1. 1,2) The end of the resulting range. If `n` is less than `std::distance(first, last)`, returns an iterator equal to `std::next(first, (std::distance(first, last) - n))`. Otherwise, returns `first`.
+
+{/* source:cpp-algorithm-shift:0013 */}
+2. 3,4) The beginning of the resulting range. If `n` is less than `std::distance(first, last)`, returns an iterator equal to `std::next(first, n)`. Otherwise, returns `last`.
+
+### Complexity
+
+{/* source:cpp-algorithm-shift:0014 */}
+1. 1,2) At most `std::distance(first, last) - n` assignments.
+
+{/* source:cpp-algorithm-shift:0015 */}
+2. 3,4) At most `std::distance(first, last) - n` assignment or swaps.
+
+### Exceptions
+
+{/* source:cpp-algorithm-shift:0016 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-shift:0017 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Notes
+
+{/* source:cpp-algorithm-shift:0018 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_shift`](/docs/cpp/library/feature_test#cpp_lib_shift) | [`201806L`](/docs/cpp/library/compiler_support/20#cpp_lib_shift_201806L) | (C++20) | [`std::shift_left`](/docs/cpp/library/algorithm/shift#top) and [`std::shift_right`](/docs/cpp/library/algorithm/shift#top) |
+
+### Example
+
+{/* source:cpp-algorithm-shift:0019 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <type_traits>
+#include <vector>
+ 
+struct S
+{
+    int value{0};
+    bool specified_state{true};
+ 
+    S(int v = 0) : value{v} {}
+    S(S const& rhs) = default;
+    S(S&& rhs) { *this = std::move(rhs); }
+    S& operator=(S const& rhs) = default;
+    S& operator=(S&& rhs)
+    {
+        if (this != &rhs)
+        {
+            value = rhs.value;
+            specified_state = rhs.specified_state;
+            rhs.specified_state = false;
+        }
+        return *this;
+    }
+};
+ 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, std::vector<T> const& v)
+{
+    for (const auto& s : v)
+    {
+        if constexpr (std::is_same_v<T, S>)
+            s.specified_state ? os << s.value << ' ' : os << ". ";
+        else if constexpr (std::is_same_v<T, std::string>)
+            os << (s.empty() ? "." : s) << ' ';
+        else
+            os << s << ' ';
+    }
+    return os;
+}
+ 
+int main()
+{
+    std::cout << std::left;
+ 
+    std::vector<S>           a{1, 2, 3, 4, 5, 6, 7};
+    std::vector<int>         b{1, 2, 3, 4, 5, 6, 7};
+    std::vector<std::string> c{"α", "β", "γ", "δ", "ε", "ζ", "η"};
+ 
+    std::cout << "vector<S> \tvector<int> \tvector<string>\n";
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+    std::shift_left(begin(a), end(a), 3);
+    std::shift_left(begin(b), end(b), 3);
+    std::shift_left(begin(c), end(c), 3);
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+    std::shift_right(begin(a), end(a), 2);
+    std::shift_right(begin(b), end(b), 2);
+    std::shift_right(begin(c), end(c), 2);
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+    std::shift_left(begin(a), end(a), 8); // has no effect: n >= last - first
+    std::shift_left(begin(b), end(b), 8); // ditto
+    std::shift_left(begin(c), end(c), 8); // ditto
+    std::cout << a << "  " << b << "  " << c << '\n';
+ 
+//  std::shift_left(begin(a), end(a), -3); // UB, e.g. segfault
+}
+```
+
+Possible output:
+
+```text
+vector<S>       vector<int>     vector<string>
+1 2 3 4 5 6 7   1 2 3 4 5 6 7   α β γ δ ε ζ η
+4 5 6 7 . . .   4 5 6 7 5 6 7   δ ε ζ η . . .
+. . 4 5 6 7 .   4 5 4 5 6 7 5   . . δ ε ζ η .
+. . 4 5 6 7 .   4 5 4 5 6 7 5   . . δ ε ζ η .
+```
+
+### See also
+
+{/* source:cpp-algorithm-shift:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`move`](/docs/cpp/library/algorithm/move) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_backward`](/docs/cpp/library/algorithm/move_backward) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location in backwards order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rotate`](/docs/cpp/library/algorithm/rotate)</DescriptionTerm>
+    <DescriptionBody>rotates the order of elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::shift_left`, `ranges::shift_right`](/docs/cpp/library/algorithm/ranges/shift) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>shifts elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,204 @@
+---
+title: "std::ranges::binary_search"
+description: "Checks if a projected element equivalent to value appears within the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/binary_search"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-binary-search:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class T, class Proj = std::identity,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<I, Proj>> Comp = ranges::less >
+constexpr bool binary_search( I first, S last, const T& value,
+
+                              Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          class T = std::projected_value_t<I, Proj>,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<I, Proj>> Comp = ranges::less >
+constexpr bool binary_search( I first, S last, const T& value,
+
+                              Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" until="C++26" code={`template< ranges::forward_range R,
+          class T, class Proj = std::identity,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<ranges::iterator_t<R>,
+                                        Proj>> Comp = ranges::less >
+constexpr bool binary_search( R&& r, const T& value,
+
+                              Comp comp = {}, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< ranges::forward_range R,
+          class Proj = std::identity,
+          class T = std::projected_value_t<ranges::iterator_t<R>, Proj>,
+          std::indirect_strict_weak_order
+              <const T*, std::projected<ranges::iterator_t<R>,
+                                        Proj>> Comp = ranges::less >
+constexpr bool binary_search( R&& r, const T& value,
+
+                              Comp comp = {}, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-binary-search:0001 */}
+1. 1) Checks if a projected element equivalent to `value` appears within the range `[first, last)`.
+
+{/* source:cpp-algorithm-ranges-binary-search:0002 */}
+2. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-binary-search:0003 */}
+For `ranges::binary_search` to succeed, the range `[first, last)` must be at least partially ordered with respect to `value`, i.e. it must satisfy all of the following requirements:
+
+{/* source:cpp-algorithm-ranges-binary-search:0004 */}
+- partitioned with respect to `std::invoke(comp, std::invoke(proj, element), value)` (that is, all projected elements for which the expression is `true` precedes all elements for which the expression is `false`).
+- partitioned with respect to `!std::invoke(comp, value, std::invoke(proj, element))`.
+- for all elements, if `std::invoke(comp, std::invoke(proj, element), value)` is `true` then `!std::invoke(comp, value, std::invoke(proj, element))` is also `true`.
+
+{/* source:cpp-algorithm-ranges-binary-search:0005 */}
+A fully-sorted range meets these criteria.
+
+{/* source:cpp-algorithm-ranges-binary-search:0006 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-binary-search:0007 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-binary-search:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="r">the range of elements to examine</Parameter>
+  <Parameter name="value">value to compare the elements to</Parameter>
+  <Parameter name="comp">comparison function to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-binary-search:0009 */}
+`true` if an element equal to `value` is found, `false` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-binary-search:0010 */}
+The number of comparisons and projections performed is logarithmic in the distance between `first` and `last` (at most log2(last - first) + O(1) comparisons and projections). However, for iterator-sentinel pair that does not model [`std::random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator), number of iterator increments is linear.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-binary-search:0011 */}
+`std::ranges::binary_search` doesn't return an iterator to the found element when an element whose projection equals `value` is found. If an iterator is desired, `std::ranges::lower_bound` should be used instead.
+
+{/* source:cpp-algorithm-ranges-binary-search:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/ranges/binary_search#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-binary-search:0013 */}
+```cpp
+struct binary_search_fn
+{
+    template<std::forward_iterator I, std::sentinel_for<I> S,
+             class Proj = std::identity, class T = std::projected_value_t<I, Proj>,
+             std::indirect_strict_weak_order
+                 <const T*, std::projected<I, Proj>> Comp = ranges::less>
+    constexpr bool operator()(I first, S last, const T& value,
+                              Comp comp = {}, Proj proj = {}) const
+    {
+        auto x = ranges::lower_bound(first, last, value, comp, proj);
+        return (!(x == last) && !(std::invoke(comp, value, std::invoke(proj, *x))));
+    }
+ 
+    template<ranges::forward_range R, class Proj = std::identity,
+             class T = std::projected_value_t<ranges::iterator_t<R>, Proj>,
+             std::indirect_strict_weak_order
+                 <const T*, std::projected<ranges::iterator_t<R>,
+                                           Proj>> Comp = ranges::less>
+    constexpr bool operator()(R&& r, const T& value, Comp comp = {}, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), value,
+                       std::move(comp), std::move(proj));
+    }
+};
+ 
+inline constexpr binary_search_fn binary_search;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-binary-search:0014 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <complex>
+#include <iostream>
+#include <ranges>
+#include <vector>
+ 
+int main()
+{
+    constexpr static auto haystack = {1, 3, 4, 5, 9};
+    static_assert(std::ranges::is_sorted(haystack));
+ 
+    for (const int needle : std::views::iota(1)
+                          | std::views::take(3))
+    {
+        std::cout << "Searching for " << needle << ": ";
+        std::ranges::binary_search(haystack, needle)
+            ? std::cout << "found " << needle << '\n'
+            : std::cout << "no dice!\n";
+    }
+ 
+    using CD = std::complex<double>;
+    std::vector<CD> nums{{1, 1}, {2, 3}, {4, 2}, {4, 3}};
+    auto cmpz = [](CD x, CD y){ return abs(x) < abs(y); };
+    #ifdef __cpp_lib_algorithm_default_value_type
+        assert(std::ranges::binary_search(nums, {4, 2}, cmpz));
+    #else
+        assert(std::ranges::binary_search(nums, CD{4, 2}, cmpz));
+    #endif
+}
+```
+
+Output:
+
+```text
+Searching for 1: found 1
+Searching for 2: no dice!
+Searching for 3: found 3
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-binary-search:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal_range`](/docs/cpp/library/algorithm/ranges/equal_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns range of elements matching a specific key (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lower_bound`](/docs/cpp/library/algorithm/ranges/lower_bound) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element not less than the given value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::upper_bound`](/docs/cpp/library/algorithm/ranges/upper_bound) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the first element greater than a certain value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::contains ranges::contains_subrange`](/docs/cpp/library/algorithm/ranges/contains) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>checks if the range contains the given element or subrange (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_search`](/docs/cpp/library/algorithm/binary_search)</DescriptionTerm>
+    <DescriptionBody>determines if an element exists in a partially-ordered range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,154 @@
+---
+title: "std::ranges::rotate_copy, std::ranges::rotate_copy_result"
+description: "Copies the elements from the source range [first, last), to the destination range beginning at result in such a way, that the element *middle becomes the first element of the destination range and *(middle - 1) becomes the last element."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/rotate_copy"
+language: "C++"
+---
+{/* source:cpp-algorithm-ranges-rotate-copy:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          std::weakly_incrementable O >
+requires std::indirectly_copyable<I, O>
+constexpr rotate_copy_result<I, O>
+
+    rotate_copy( I first, I middle, S last, O result );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::forward_range R, std::weakly_incrementable O >
+requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+constexpr rotate_copy_result<ranges::borrowed_iterator_t<R>, O>
+
+    rotate_copy( R&& r, ranges::iterator_t<R> middle, O result );`} />
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I, class O >
+using rotate_copy_result = in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0001 */}
+1. 1) Copies the elements from the source range `[first, last)`, to the destination range beginning at `result` in such a way, that the element `*middle` becomes the first element of the destination range and `*(middle - 1)` becomes the last element. The result is that the destination range contains a left rotated copy of the source range.
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0002 */}
+2. The behavior is undefined if either `[first, middle)` or `[middle, last)` is not a valid range, or the source and destination ranges overlap.
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0003 */}
+3. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0004 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0005 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the source range of elements to copy from</Parameter>
+  <Parameter name="r">the source range of elements to copy from</Parameter>
+  <Parameter name="middle">the iterator to the element that should appear at the beginning of the destination range</Parameter>
+  <Parameter name="result">beginning of the destination range</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0007 */}
+`{last, result + N}`, where `N = ranges::distance(first, last)`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0008 */}
+Linear: exactly `N` assignments.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0009 */}
+If the value type is [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable) and the iterator types satisfy [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator), implementations of `ranges::rotate_copy` usually avoid multiple assignments by using a "bulk copy" function such as [`std::memmove`](/docs/cpp/library/text/byte/memmove).
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0010 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/14d8a5ae472ca5743016f37da2dd4770d83dea21/libstdc%2B%2B-v3/include/bits/ranges_algo.h#L1511-L1539) and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L4466-L4514).
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0011 */}
+```cpp
+struct rotate_copy_fn
+{
+    template<std::forward_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O>
+    requires std::indirectly_copyable<I, O>
+    constexpr ranges::rotate_copy_result<I, O>
+        operator()(I first, I middle, S last, O result) const
+    {
+        auto c1 {ranges::copy(middle, std::move(last), std::move(result))};
+        auto c2 {ranges::copy(std::move(first), std::move(middle), std::move(c1.out))};
+        return {std::move(c1.in), std::move(c2.out)};
+    }
+ 
+    template<ranges::forward_range R, std::weakly_incrementable O>
+    requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+    constexpr ranges::rotate_copy_result<ranges::borrowed_iterator_t<R>, O>
+        operator()(R&& r, ranges::iterator_t<R> middle, O result) const
+    {
+        return (*this)(ranges::begin(r), std::move(middle),
+                       ranges::end(r), std::move(result));
+    }
+};
+ 
+inline constexpr rotate_copy_fn rotate_copy {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0012 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> src {1, 2, 3, 4, 5};
+    std::vector<int> dest(src.size());
+    auto pivot = std::ranges::find(src, 3);
+ 
+    std::ranges::rotate_copy(src, pivot, dest.begin());
+    for (int i : dest)
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    // copy the rotation result directly to the std::cout
+    pivot = std::ranges::find(dest, 1);
+    std::ranges::rotate_copy(dest, pivot, std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+3 4 5 1 2
+1 2 3 4 5
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-rotate-copy:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::rotate`](/docs/cpp/library/algorithm/ranges/rotate) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>rotates the order of elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy`, `ranges::copy_if`](/docs/cpp/library/algorithm/ranges/copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rotate_copy`](/docs/cpp/library/algorithm/rotate_copy)</DescriptionTerm>
+    <DescriptionBody>copies and rotate a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

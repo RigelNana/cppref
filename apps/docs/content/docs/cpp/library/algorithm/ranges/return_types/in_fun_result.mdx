@@ -1,0 +1,183 @@
+---
+title: "std::ranges::in_fun_result"
+description: "ranges::in_fun_result is a class template that provides a way to store an iterator and a function object as a single unit."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/return_types/in_fun_result"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration language="cpp" since="C++20" code={`template< class I, class F >
+struct in_fun_result;`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0001 */}
+`ranges::in_fun_result` is a class template that provides a way to store an iterator and a function object as a single unit.
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0002 */}
+This class template has no base classes or declared members other than those shown below. Thus it is suitable for use with [structured bindings](/docs/cpp/language/declarations/structured_binding).
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0003 */}
+All special member functions of this class template are implicitly declared, which makes specializations be [aggregate classes](/docs/cpp/language/initialization/aggregate_initialization), and propagate triviality, potentially-throwing-ness, and constexpr-ness of corresponding operations on data members.
+
+### Template parameters
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0004 */}
+<ParameterList>
+  <Parameter name="I">the type of the iterator that the `ranges::in_fun_result` stores.</Parameter>
+  <Parameter name="F">the type of the function object that the `ranges::in_fun_result` stores.</Parameter>
+</ParameterList>
+
+### Data members
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`in`</DescriptionTerm>
+    <DescriptionBody>a value (that is supposed to be an iterator) of type `I`. (public member object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`fun`</DescriptionTerm>
+    <DescriptionBody>a value (that is supposed to be a function object) of type `F`. (public member object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0006 */}
+All these members are declared with [`[[no_unique_address]]`](/docs/cpp/language/declarations/attributes/no_unique_address) attribute.
+
+### Member functions
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0007 */}
+#### `std::ranges::in_fun_result::operator in_fun_result<I2, F2>`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template<class I2, class F2>
+requires std::convertible_to<const I&, I2> && std::convertible_to<const F&, F2>
+
+constexpr operator in_fun_result<I2, F2>() const &;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template<class I2, class F2>
+requires std::convertible_to<I, I2> && std::convertible_to<F, F2>
+
+constexpr operator in_fun_result<I2, F2>() &&;`} />
+</DeclarationDoc>
+
+Converts `*this` to the result by constructing every data member of the result from the corresponding member of `*this`.
+
+1. 1) Equivalent to `return {in, fun};`.
+
+2. 2) Equivalent to `return {std::move(in), std::move(fun)};`.
+
+### Standard library
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0008 */}
+The following standard library functions use `ranges::in_fun_result` as the return type:
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0009 */}
+**Algorithm functions**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::for_each`](/docs/cpp/library/algorithm/ranges/for_each) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::for_each_n`](/docs/cpp/library/algorithm/ranges/for_each_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function object to the first `N` elements of a sequence (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Synopsis
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0010 */}
+```cpp
+namespace std::ranges
+{
+    template<class I, class F>
+    struct in_fun_result
+    {
+        [[no_unique_address]] I in;
+        [[no_unique_address]] F fun;
+
+        template<class I2, class F2>
+        requires std::convertible_to<const I&, I2> && std::convertible_to<const F&, F2>
+        constexpr operator in_fun_result<I2, F2>() const &
+        {
+            return {in, fun};
+        }
+
+        template<class I2, class F2>
+        requires std::convertible_to<I, I2> && std::convertible_to<F, F2>
+        constexpr operator in_fun_result<I2, F2>() &&
+        {
+            return {std::move(in), std::move(fun)};
+        }
+    };
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0011 */}
+Each standard library algorithm that uses this family of return types declares a new [alias type](/docs/cpp/language/declarations/type_alias), e.g. `using merge_result = in_in_out_result<I1, I2, O>;`.
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0012 */}
+The names for such aliases are formed by adding the suffix `_result` to the algorithm's name. So, the return type of `std::ranges::merge` can be named as `std::ranges::merge_result`.
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0013 */}
+Unlike [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), this class template has data members of meaningful names.
+
+### Example
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0014 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+
+int main()
+{
+    int v[]{1, 2, 3};
+
+    const std::ranges::in_fun_result res1 = std::ranges::for_each_n(
+        v, std::size(v),
+        [](int& x) { return x = -x; } // negating lambda
+    );
+    assert(res1.in == std::end(v));
+
+    const std::ranges::in_fun_result res2 = std::ranges::for_each(
+        std::begin(v),
+        res1.in,
+        [](int x) { std::cout << x << ' '; } // printing lambda
+    );
+
+    std::cout << "│ ";
+
+    std::ranges::for_each(v, res1.fun); // uses negating lambda
+    std::ranges::for_each(v, res2.fun); // uses printing lambda
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+-1 -2 -3 │ 1 2 3
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-return-types-in-fun-result:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pair`](/docs/cpp/library/utility/pair) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements binary tuple, i.e. a pair of values (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple`](/docs/cpp/library/utility/tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements fixed size container, which holds elements of possibly different types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

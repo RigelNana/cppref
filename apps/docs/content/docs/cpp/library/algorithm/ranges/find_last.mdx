@@ -1,0 +1,392 @@
+---
+title: "std::ranges::find_last, std::ranges::find_last_if, std::ranges::find_last_if_not"
+description: "Returns the last element in the range [first, last) that satisfies specific criteria"
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/find_last"
+language: "C++"
+---
+
+
+{/* source:cpp-algorithm-ranges-find-last:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++23" until="C++26" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class T,
+          class Proj = std::identity >
+requires std::indirect_binary_predicate
+             <ranges::equal_to, std::projected<I, Proj>, const T*>
+constexpr ranges::subrange<I>
+
+    find_last( I first, S last, const T& value, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          class T = std::projected_value_t<I, Proj> >
+requires std::indirect_binary_predicate
+             <ranges::equal_to, std::projected<I, Proj>, const T*>
+constexpr ranges::subrange<I>
+
+    find_last( I first, S last, const T& value, Proj proj = {} );`} />
+  <Declaration id="3" language="cpp" since="C++23" until="C++26" code={`template< ranges::forward_range R,
+          class T,
+          class Proj = std::identity >
+requires std::indirect_binary_predicate
+             <ranges::equal_to,
+              std::projected<ranges::iterator_t<R>, Proj>, const T*>
+constexpr ranges::borrowed_subrange_t<R>
+
+    find_last( R&& r, const T& value, Proj proj = {} );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< ranges::forward_range R,
+          class Proj = std::identity,
+          class T = std::projected_value_t<iterator_t<R>, Proj> >
+requires std::indirect_binary_predicate
+             <ranges::equal_to,
+              std::projected<ranges::iterator_t<R>, Proj>, const T*>
+constexpr ranges::borrowed_subrange_t<R>
+
+    find_last( R&& r, const T& value, Proj proj = {} );`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr ranges::subrange<I>
+
+    find_last_if( I first, S last, Pred pred, Proj proj = {} );`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< ranges::forward_range R,
+          class Proj = std::identity,
+          std::indirect_unary_predicate
+              <std::projected<ranges::iterator_t<R>, Proj>> Pred >
+constexpr ranges::borrowed_subrange_t<R>
+
+    find_last_if( R&& r, Pred pred, Proj proj = {} );`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< std::forward_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr ranges::subrange<I>
+
+    find_last_if_not( I first, S last, Pred pred, Proj proj = {} );`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< ranges::forward_range R,
+          class Proj = std::identity,
+          std::indirect_unary_predicate
+              <std::projected<ranges::iterator_t<R>, Proj>> Pred >
+constexpr ranges::borrowed_subrange_t<R>
+
+    find_last_if_not( R&& r, Pred pred, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-find-last:0001 */}
+Returns the last element in the range [`first`, `last`) that satisfies specific criteria:
+
+{/* source:cpp-algorithm-ranges-find-last:0002 */}
+1. 1) `find_last` searches for an element equal to `value`.
+
+{/* source:cpp-algorithm-ranges-find-last:0003 */}
+2. 3) `find_last_if` searches for the last element in the range [`first`, `last`) for which predicate `pred` returns `true`.
+
+{/* source:cpp-algorithm-ranges-find-last:0004 */}
+3. 5) `find_last_if_not` searches for the last element in the range [`first`, `last`) for which predicate `pred` returns `false`.
+
+{/* source:cpp-algorithm-ranges-find-last:0005 */}
+4. 2,4,6) Same as (1,3,5), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-find-last:0006 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-find-last:0007 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-find-last:0008 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="r">the range of the elements to examine</Parameter>
+  <Parameter name="value">value to compare the elements to</Parameter>
+  <Parameter name="pred">predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-find-last:0009 */}
+1. 1,3,5) Let `i` be the last iterator in the range [`first`, `last`) for which `E` is true.
+
+{/* source:cpp-algorithm-ranges-find-last:0010 */}
+2. Returns `ranges::subrange<I>{i, last}`, or `ranges::subrange<I>{last, last}` if no such iterator is found.
+
+{/* source:cpp-algorithm-ranges-find-last:0011 */}
+3. 1) `E` is `bool(std::invoke(proj, *i) == value)`.
+
+{/* source:cpp-algorithm-ranges-find-last:0012 */}
+4. 3) `E` is `bool(std::invoke(pred, std::invoke(proj, *i)))`.
+
+{/* source:cpp-algorithm-ranges-find-last:0013 */}
+5. 5) `E` is `bool(!std::invoke(pred, std::invoke(proj, *i)))`.
+
+{/* source:cpp-algorithm-ranges-find-last:0014 */}
+6. 2,4,6) Same as (1,3,5) but the return type is `ranges::borrowed_subrange_t<I>`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-find-last:0015 */}
+At most `last - first` applications of the predicate and projection.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-find-last:0016 */}
+`ranges::find_last`, `ranges::find_last_if`, `ranges::find_last_if_not` have better efficiency on common implementations if `I` models [*bidirectional_iterator*](/docs/cpp/library/iterator/bidirectional_iterator) or (better) [*random_access_iterator*](/docs/cpp/library/iterator/random_access_iterator).
+
+{/* source:cpp-algorithm-ranges-find-last:0017 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_find_last`](/docs/cpp/library/feature_test#cpp_lib_ranges_find_last) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_find_last_202207L) | (C++23) | `ranges::find_last`, `ranges::find_last_if`, `ranges::find_last_if_not` |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403L`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403L) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1,2](/docs/cpp/library/algorithm/ranges/find_last#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-find-last:0018 */}
+These implementations only show the slower algorithm used when `I` models [*forward_iterator*](/docs/cpp/library/iterator/forward_iterator).
+
+{/* source:cpp-algorithm-ranges-find-last:0019 */}
+[`find_last (1,2)`](/docs/cpp/library/algorithm/ranges/find_last#Version_1)
+
+```cpp
+struct find_last_fn
+{
+    template<std::forward_iterator I, std::sentinel_for<I> S,
+             class Proj = std::identity,
+             class T = std::projected_value_t<iterator_t<R>, Proj>>
+    requires std::indirect_binary_predicate
+                 <ranges::equal_to, std::projected<I, Proj>, const T*>
+    constexpr ranges::subrange<I>
+        operator()(I first, S last, const T &value, Proj proj = {}) const
+    {
+        // Note: if I is mere forward_iterator, we may only go from begin to end.
+        std::optional<I> found;
+        for (; first != last; ++first)
+            if (std::invoke(proj, *first) == value)
+                found = first;
+ 
+        if (!found)
+            return {first, first};
+ 
+        return {*found, std::ranges::next(*found, last)};
+    }
+ 
+    template<ranges::forward_range R,
+             class Proj = std::identity,
+             class T = std::projected_value_t<iterator_t<R>, Proj>>
+    requires std::indirect_binary_predicate
+                 <ranges::equal_to,
+                  std::projected<ranges::iterator_t<R>, Proj>, const T*>
+    constexpr ranges::borrowed_subrange_t<R>
+        operator()(R&& r, const T &value, Proj proj = {}) const
+    {
+        return this->operator()(ranges::begin(r), ranges::end(r), value, std::ref(proj));
+    }
+};
+ 
+inline constexpr find_last_fn find_last;
+```
+
+[`find_last_if (3,4)`](/docs/cpp/library/algorithm/ranges/find_last#Version_3)
+
+```cpp
+struct find_last_if_fn
+{
+    template<std::forward_iterator I, std::sentinel_for<I> S,
+             class Proj = std::identity,
+             std::indirect_unary_predicate<std::projected<I, Proj>> Pred>
+    constexpr ranges::subrange<I>
+        operator()(I first, S last, Pred pred, Proj proj = {}) const
+    {
+        // Note: if I is mere forward_iterator, we may only go from begin to end.
+        std::optional<I> found;
+        for (; first != last; ++first)
+            if (std::invoke(pred, std::invoke(proj, *first)))
+                found = first;
+ 
+        if (!found)
+            return {first, first};
+ 
+        return {*found, std::ranges::next(*found, last)};
+    }
+ 
+    template<ranges::forward_range R, class Proj = std::identity,
+             std::indirect_unary_predicate
+                 <std::projected<ranges::iterator_t<R>, Proj>> Pred>
+    constexpr ranges::borrowed_subrange_t<R>
+        operator()(R&& r, Pred pred, Proj proj = {}) const
+    {
+        return this->operator()(ranges::begin(r), ranges::end(r),
+                                std::ref(pred), std::ref(proj));
+    }
+};
+ 
+inline constexpr find_last_if_fn find_last_if;
+```
+
+[`find_last_if_not (5,6)`](/docs/cpp/library/algorithm/ranges/find_last#Version_5)
+
+```cpp
+struct find_last_if_not_fn
+{
+    template<std::forward_iterator I, std::sentinel_for<I> S,
+             class Proj = std::identity,
+             std::indirect_unary_predicate<std::projected<I, Proj>> Pred>
+    constexpr ranges::subrange<I>
+        operator()(I first, S last, Pred pred, Proj proj = {}) const
+    {
+        // Note: if I is mere forward_iterator, we may only go from begin to end.
+        std::optional<I> found;
+        for (; first != last; ++first)
+            if (!std::invoke(pred, std::invoke(proj, *first)))
+                found = first;
+ 
+        if (!found)
+            return {first, first};
+ 
+        return {*found, std::ranges::next(*found, last)};
+    }
+ 
+    template<ranges::forward_range R, class Proj = std::identity,
+             std::indirect_unary_predicate
+                 <std::projected<ranges::iterator_t<R>, Proj>> Pred>
+    constexpr ranges::borrowed_subrange_t<R>
+        operator()(R&& r, Pred pred, Proj proj = {}) const
+    {
+        return this->operator()(ranges::begin(r), ranges::end(r),
+                                std::ref(pred), std::ref(proj));
+    }
+};
+ 
+inline constexpr find_last_if_not_fn find_last_if_not;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-find-last:0020 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <forward_list>
+#include <iomanip>
+#include <iostream>
+#include <string_view>
+ 
+int main()
+{
+    namespace ranges = std::ranges;
+ 
+    constexpr static auto v = {1, 2, 3, 1, 2, 3, 1, 2};
+ 
+    {
+        constexpr auto i1 = ranges::find_last(v.begin(), v.end(), 3);
+        constexpr auto i2 = ranges::find_last(v, 3);
+        static_assert(ranges::distance(v.begin(), i1.begin()) == 5);
+        static_assert(ranges::distance(v.begin(), i2.begin()) == 5);
+    }
+    {
+        constexpr auto i1 = ranges::find_last(v.begin(), v.end(), -3);
+        constexpr auto i2 = ranges::find_last(v, -3);
+        static_assert(i1.begin() == v.end());
+        static_assert(i2.begin() == v.end());
+    }
+ 
+    auto abs = [](int x) { return x < 0 ? -x : x; };
+ 
+    {
+        auto pred = [](int x) { return x == 3; };
+        constexpr auto i1 = ranges::find_last_if(v.begin(), v.end(), pred, abs);
+        constexpr auto i2 = ranges::find_last_if(v, pred, abs);
+        static_assert(ranges::distance(v.begin(), i1.begin()) == 5);
+        static_assert(ranges::distance(v.begin(), i2.begin()) == 5);
+    }
+    {
+        auto pred = [](int x) { return x == -3; };
+        constexpr auto i1 = ranges::find_last_if(v.begin(), v.end(), pred, abs);
+        constexpr auto i2 = ranges::find_last_if(v, pred, abs);
+        static_assert(i1.begin() == v.end());
+        static_assert(i2.begin() == v.end());
+    }
+ 
+    {
+        auto pred = [](int x) { return x == 1 or x == 2; };
+        constexpr auto i1 = ranges::find_last_if_not(v.begin(), v.end(), pred, abs);
+        constexpr auto i2 = ranges::find_last_if_not(v, pred, abs);
+        static_assert(ranges::distance(v.begin(), i1.begin()) == 5);
+        static_assert(ranges::distance(v.begin(), i2.begin()) == 5);
+    }
+    {
+        auto pred = [](int x) { return x == 1 or x == 2 or x == 3; };
+        constexpr auto i1 = ranges::find_last_if_not(v.begin(), v.end(), pred, abs);
+        constexpr auto i2 = ranges::find_last_if_not(v, pred, abs);
+        static_assert(i1.begin() == v.end());
+        static_assert(i2.begin() == v.end());
+    }
+ 
+    using P = std::pair<std::string_view, int>;
+    std::forward_list<P> list
+    {
+        {"one", 1}, {"two", 2}, {"three", 3},
+        {"one", 4}, {"two", 5}, {"three", 6},
+    };
+    auto cmp_one = [](const std::string_view &s) { return s == "one"; };
+ 
+    // find latest element that satisfy the comparator, and projecting pair::first
+    const auto subrange = ranges::find_last_if(list, cmp_one, &P::first);
+ 
+    std::cout << "The found element and the tail after it are:\n";
+    for (P const& e : subrange)
+        std::cout << '{' << std::quoted(e.first) << ", " << e.second << "} ";
+    std::cout << '\n';
+ 
+#if __cpp_lib_algorithm_default_value_type
+    const auto i3 = ranges::find_last(list, {"three", 3}); // (2) C++26
+#else
+    const auto i3 = ranges::find_last(list, P{"three", 3}); // (2) C++23
+#endif
+    assert(i3.begin()->first == "three" && i3.begin()->second == 3);
+}
+```
+
+Output:
+
+```text
+The found element and the tail after it are:
+{"one", 4} {"two", 5} {"three", 6}
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-find-last:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find_end`](/docs/cpp/library/algorithm/ranges/find_end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the last sequence of elements in a certain range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::find`, `ranges::find_if`, `ranges::find_if_not`](/docs/cpp/library/algorithm/ranges/find) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the first element satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::search`](/docs/cpp/library/algorithm/ranges/search) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>searches for the first occurrence of a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::includes`](/docs/cpp/library/algorithm/ranges/includes) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns true if one sequence is a subsequence of another (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::binary_search`](/docs/cpp/library/algorithm/ranges/binary_search) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>determines if an element exists in a partially-ordered range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::contains`, `ranges::contains_subrange`](/docs/cpp/library/algorithm/ranges/contains) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>checks if the range contains the given element or subrange (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

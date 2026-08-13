@@ -1,0 +1,187 @@
+---
+title: "std::ranges::lexicographical_compare"
+description: "Checks if the first range [first1, last1) is lexicographically less than the second range [first2, last2)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/lexicographical_compare"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I1, std::sentinel_for<I1> S1,
+          std::input_iterator I2, std::sentinel_for<I2> S2,
+          class Proj1 = std::identity, class Proj2 = std::identity,
+          std::indirect_strict_weak_order<
+              std::projected<I1, Proj1>,
+              std::projected<I2, Proj2>> Comp = ranges::less >
+constexpr bool
+    lexicographical_compare( I1 first1, S1 last1, I2 first2, S2 last2,
+
+                             Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< ranges::input_range R1, ranges::input_range R2,
+          class Proj1 = std::identity, class Proj2 = std::identity,
+          std::indirect_strict_weak_order<
+              std::projected<ranges::iterator_t<R1>, Proj1>,
+              std::projected<ranges::iterator_t<R2>, Proj2>> Comp = ranges::less >
+constexpr bool
+    lexicographical_compare( R1&& r1, R2&& r2, Comp comp = {},
+
+                             Proj1 proj1 = {}, Proj2 proj2 = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0001 */}
+Checks if the first range `[first1, last1)` is lexicographically less than the second range `[first2, last2)`.
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0002 */}
+1. 1) Elements are compared using the given binary comparison function `comp`.
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0003 */}
+2. 2) Same as (1), but uses `r` as the source range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0004 */}
+Lexicographical comparison is an operation with the following properties:
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0005 */}
+- Two ranges are compared element by element.
+- The first mismatching element defines which range is lexicographically *less* or *greater* than the other.
+- If one range is a prefix of another, the shorter range is lexicographically *less* than the other.
+- If two ranges have equivalent elements and are of the same length, then the ranges are lexicographically *equal*.
+- An empty range is lexicographically *less* than any non-empty range.
+- Two empty ranges are lexicographically *equal*.
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0006 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0007 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0008 */}
+<ParameterList>
+  <Parameter name="first1, last1">the first range of elements to examine</Parameter>
+  <Parameter name="r1">the first range of elements to examine</Parameter>
+  <Parameter name="first2, last2">the second range of elements to examine</Parameter>
+  <Parameter name="r2">the second range of elements to examine</Parameter>
+  <Parameter name="comp">comparison function to apply to the projected elements</Parameter>
+  <Parameter name="proj1">projection to apply to the first range of elements</Parameter>
+  <Parameter name="proj2">projection to apply to the second range of elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0009 */}
+`true` if the first range is lexicographically less than the second.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0010 */}
+At most 2·min(N1, N2) applications of the comparison and corresponding projections, where `N1 = ranges::distance(first1, last1)` and `N2 = ranges::distance(first2, last2)`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0011 */}
+```cpp
+struct lexicographical_compare_fn
+{
+    template<std::input_iterator I1, std::sentinel_for<I1> S1,
+             std::input_iterator I2, std::sentinel_for<I2> S2,
+             class Proj1 = std::identity, class Proj2 = std::identity,
+             std::indirect_strict_weak_order<
+                 std::projected<I1, Proj1>,
+                 std::projected<I2, Proj2>> Comp = ranges::less>
+    constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2,
+                              Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2)
+        {
+            if (std::invoke(comp, std::invoke(proj1, *first1), std::invoke(proj2, *first2)))
+                return true;
+ 
+            if (std::invoke(comp, std::invoke(proj2, *first2), std::invoke(proj1, *first1)))
+                return false;
+        }
+        return (first1 == last1) && (first2 != last2);
+    }
+ 
+    template<ranges::input_range R1, ranges::input_range R2,
+             class Proj1 = std::identity, class Proj2 = std::identity,
+             std::indirect_strict_weak_order<
+                 std::projected<ranges::iterator_t<R1>, Proj1>,
+                 std::projected<ranges::iterator_t<R2>, Proj2>> Comp = ranges::less>
+    constexpr bool operator()(R1&& r1, R2&& r2, Comp comp = {},
+                              Proj1 proj1 = {}, Proj2 proj2 = {}) const
+    {
+        return (*this)(ranges::begin(r1), ranges::end(r1),
+                       ranges::begin(r2), ranges::end(r2),
+                       std::ref(comp), std::ref(proj1), std::ref(proj2));
+    }
+};
+ 
+inline constexpr lexicographical_compare_fn lexicographical_compare;
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0012 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <random>
+#include <vector>
+ 
+int main()
+{
+    std::vector<char> v1 {'a', 'b', 'c', 'd'};
+    std::vector<char> v2 {'a', 'b', 'c', 'd'};
+ 
+    namespace ranges = std::ranges;
+    auto os = std::ostream_iterator<char>(std::cout, " ");
+ 
+    std::mt19937 g {std::random_device {}()};
+    while (not ranges::lexicographical_compare(v1, v2))
+    {
+        ranges::copy(v1, os);
+        std::cout << ">= ";
+        ranges::copy(v2, os);
+        std::cout << '\n';
+ 
+        ranges::shuffle(v1, g);
+        ranges::shuffle(v2, g);
+    }
+ 
+    ranges::copy(v1, os);
+    std::cout << "<  ";
+    ranges::copy(v2, os);
+    std::cout << '\n';
+}
+```
+
+Possible output:
+
+```text
+a b c d >= a b c d
+d a b c >= c b d a
+b d a c >= a d c b
+a c d b <  c d a b
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-lexicographical-compare:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal`](/docs/cpp/library/algorithm/ranges/equal) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>determines if two sets of elements are the same (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lexicographical_compare`](/docs/cpp/library/algorithm/lexicographical_compare)</DescriptionTerm>
+    <DescriptionBody>returns `true` if one range is lexicographically less than another (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

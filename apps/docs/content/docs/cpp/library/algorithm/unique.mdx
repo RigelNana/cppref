@@ -1,0 +1,268 @@
+---
+title: "std::unique"
+description: "Removes all except the first element from every consecutive group of equivalent elements from the range [first, last) and returns a past-the-end iterator for the new end of the range."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/unique"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-unique:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class ForwardIt >
+ForwardIt unique( ForwardIt first, ForwardIt last );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt >
+ForwardIt unique( ExecutionPolicy&& policy,
+
+                  ForwardIt first, ForwardIt last );`} />
+  <Declaration id="3" language="cpp" code={`template< class ForwardIt, class BinaryPred >
+ForwardIt unique( ForwardIt first, ForwardIt last, BinaryPred p );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class ForwardIt, class BinaryPred >
+ForwardIt unique( ExecutionPolicy&& policy,
+
+                  ForwardIt first, ForwardIt last, BinaryPred p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-unique:0001 */}
+Removes all except the first element from every consecutive group of equivalent elements from the range `[first, last)` and returns a past-the-end iterator for the new end of the range.
+
+{/* source:cpp-algorithm-unique:0002 */}
+1. 1) Elements are compared using `operator==`.
+
+{/* source:cpp-algorithm-unique:0003 */}
+2. If `operator==` does not establish an [equivalence relation](https://en.wikipedia.org/wiki/equivalence_relation), the behavior is undefined.
+
+{/* source:cpp-algorithm-unique:0004 */}
+3. 3) Elements are compared using the given binary predicate `p`.
+
+{/* source:cpp-algorithm-unique:0005 */}
+4. If `p` does not establish an equivalence relation, the behavior is undefined.
+
+{/* source:cpp-algorithm-unique:0006 */}
+5. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-unique:0007 */}
+6. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+<Revision until="C++20">
+
+`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+<Revision since="C++20">
+
+`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+
+</Revision>
+
+### Explanation
+
+{/* source:cpp-algorithm-unique:0008 */}
+Removing is done by shifting the elements in the range in such a way that the elements that are not to be removed appear in the beginning of the range.
+
+{/* source:cpp-algorithm-unique:0009 */}
+- Shifting is done by <InlineRevision until="C++11">[copy assignment](/docs/cpp/language/classes/as_operator)</InlineRevision><InlineRevision since="C++11">[move assignment](/docs/cpp/language/classes/move_operator)</InlineRevision>.
+- The removing operation is stable: the relative order of the elements not to be removed stays the same.
+- The underlying sequence of `[first, last)` is not shortened by the removing operation. Given `result` as the returned iterator:
+
+{/* source:cpp-algorithm-unique:0010 */}
+- All iterators in `[result, last)` are still [dereferenceable](/docs/cpp/library/iterator#Dereferenceability_and_validity).
+
+{/* source:cpp-algorithm-unique:0011 */}
+<Revision since="C++11">
+
+- Each element of `[result, last)` has a valid but unspecified state, because move assignment can eliminate elements by moving from elements that were originally in that range.
+
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-unique:0012 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to process</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="p">
+
+binary predicate which returns `true` if the elements should be treated as equal.
+
+The signature of the predicate function should be equivalent to the following:
+
+`bool pred(const Type1 &a, const Type2 &b);`
+
+While the signature does not need to have `const &`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1 &` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `ForwardIt` can be dereferenced and then implicitly converted to both of them.
+
+</Parameter>
+</ParameterList>
+
+Type requirements:
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- The type of dereferenced `ForwardIt` must meet the requirements of [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+
+### Return value
+
+{/* source:cpp-algorithm-unique:0013 */}
+A `ForwardIt` to the new end of the range.
+
+### Complexity
+
+{/* source:cpp-algorithm-unique:0014 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-unique:0015 */}
+1. 1,2) Exactly max(0,N-1) comparisons using `operator==`.
+
+{/* source:cpp-algorithm-unique:0016 */}
+2. 3,4) Exactly max(0,N-1) applications of the predicate `p`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-unique:0017 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-unique:0018 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-unique:0019 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/7f2f4b87910506effb8dffffc60eeb2451573126/libstdc%2B%2B-v3/include/bits/stl_algo.h#L919-L1000), [libc++](https://github.com/llvm/llvm-project/blob/5ba396011377bdf4086757d56cd48fc7d3c9f2ad/libcxx/include/__algorithm/unique.h), and [MSVC STL](https://github.com/microsoft/STL/blob/472161105d596192194d4715ccad307c6c163b4a/stl/inc/algorithm#L3804-L3848).
+
+{/* source:cpp-algorithm-unique:0020 */}
+[`unique (1)`](/docs/cpp/library/algorithm/unique#Version_1)
+
+```cpp
+template<class ForwardIt>
+ForwardIt unique(ForwardIt first, ForwardIt last)
+{
+    if (first == last)
+        return last;
+ 
+    ForwardIt result = first;
+    while (++first != last)
+        if (!(*result == *first) && ++result != first)
+            *result = std::move(*first);
+ 
+    return ++result;
+}
+```
+
+[`unique (3)`](/docs/cpp/library/algorithm/unique#Version_3)
+
+```cpp
+template<class ForwardIt, class BinaryPredicate>
+ForwardIt unique(ForwardIt first, ForwardIt last, BinaryPredicate p)
+{
+    if (first == last)
+        return last;
+ 
+    ForwardIt result = first;
+    while (++first != last)
+        if (!p(*result, *first) && ++result != first)
+            *result = std::move(*first);
+ 
+    return ++result;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-unique:0021 */}
+A call to `unique` is typically followed by a call to a container's `erase` member function to actually remove elements from the container.
+
+### Example
+
+{/* source:cpp-algorithm-unique:0022 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    // a vector containing several duplicate elements
+    std::vector<int> v{1, 2, 1, 1, 3, 3, 3, 4, 5, 4};
+    auto print = [&](int id)
+    {
+        std::cout << "@" << id << ": ";
+        for (int i : v)
+            std::cout << i << ' ';
+        std::cout << '\n';
+    };
+    print(1);
+ 
+    // remove consecutive (adjacent) duplicates
+    auto last = std::unique(v.begin(), v.end());
+    // v now holds {1 2 1 3 4 5 4 x x x}, where 'x' is indeterminate
+    v.erase(last, v.end());
+    print(2);
+ 
+    // sort followed by unique, to remove all duplicates
+    std::sort(v.begin(), v.end()); // {1 1 2 3 4 4 5}
+    print(3);
+ 
+    last = std::unique(v.begin(), v.end());
+    // v now holds {1 2 3 4 5 x x}, where 'x' is indeterminate
+    v.erase(last, v.end());
+    print(4);
+}
+```
+
+Output:
+
+```text
+@1: 1 2 1 1 3 3 3 4 5 4
+@2: 1 2 1 3 4 5 4
+@3: 1 1 2 3 4 4 5
+@4: 1 2 3 4 5
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-unique:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-unique:0024 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={202} standard="C++98">
+    <PublishedBehavior>the behavior was unclear if the elements are compared using a non-equivalence relation</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-unique:0025 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`adjacent_find`](/docs/cpp/library/algorithm/adjacent_find)</DescriptionTerm>
+    <DescriptionBody>finds the first two adjacent items that are equal (or satisfy a given predicate) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_copy`](/docs/cpp/library/algorithm/unique_copy)</DescriptionTerm>
+    <DescriptionBody>creates a copy of some range of elements that contains no consecutive duplicates (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove` `remove_if`](/docs/cpp/library/algorithm/remove)</DescriptionTerm>
+    <DescriptionBody>removes elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/container/list/unique)</DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements (public member function of `std::list<T,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/container/forward_list/unique)</DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements (public member function of `std::forward_list<T,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::unique`](/docs/cpp/library/algorithm/ranges/unique) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>removes consecutive duplicate elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

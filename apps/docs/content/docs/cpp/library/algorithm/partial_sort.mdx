@@ -1,0 +1,297 @@
+---
+title: "std::partial_sort"
+description: "Rearranges elements such that the range [first, middle) contains the sorted middle − first smallest elements in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/partial_sort"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-partial-sort:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" code={`template< class RandomIt >
+void partial_sort( RandomIt first, RandomIt middle, RandomIt last );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class RandomIt >
+void partial_sort( ExecutionPolicy&& policy,
+
+                   RandomIt first, RandomIt middle, RandomIt last );`} />
+  <Declaration id="3" language="cpp" code={`template< class RandomIt, class Compare >
+void partial_sort( RandomIt first, RandomIt middle, RandomIt last,
+
+                   Compare comp );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class RandomIt, class Compare >
+void partial_sort( ExecutionPolicy&& policy,
+                   RandomIt first, RandomIt middle, RandomIt last,
+
+                   Compare comp );`} />
+
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-partial-sort:0001 */}
+Rearranges elements such that the range `[first, middle)` contains the sorted `middle − first` smallest elements in the range `[first, last)`.
+
+{/* source:cpp-algorithm-partial-sort:0002 */}
+The order of equal elements is not guaranteed to be preserved. The order of the remaining elements in the range `[middle, last)` is unspecified.
+
+{/* source:cpp-algorithm-partial-sort:0003 */}
+1. 1) Elements are [sorted](/docs/cpp/library/algorithm#Requirements) with respect to <InlineRevision until="C++20">`operator<`</InlineRevision> <InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-partial-sort:0004 */}
+2. 3) Elements are sorted with respect to `comp`.
+
+{/* source:cpp-algorithm-partial-sort:0005 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-partial-sort:0006 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+{/* source:cpp-algorithm-partial-sort:0007 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-partial-sort:0008 */}
+- `[first, middle)` or `[middle, last)` is not a [valid range](/docs/cpp/library/iterator#Ranges).
+
+{/* source:cpp-algorithm-partial-sort:0009 */}
+<Revision until="C++11">
+The type of `*first` is not [*Swappable*](/docs/cpp/library/named_req/Swappable).
+</Revision>
+
+<Revision since="C++11">
+`RandomIt` is not [*ValueSwappable*](/docs/cpp/library/named_req/ValueSwappable).
+
+The type of `*first` is not [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible).
+
+The type of `*first` is not [*MoveAssignable*](/docs/cpp/library/named_req/MoveAssignable).
+</Revision>
+
+### Parameters
+
+{/* source:cpp-algorithm-partial-sort:0010 */}
+<ParameterList>
+  <Parameter name="first, last">random access iterators defining the range</Parameter>
+  <Parameter name="middle">random access iterator defining the one-past-the-end iterator of the range to be sorted</Parameter>
+  <Parameter name="policy">the execution policy to use</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is less than (i.e. is ordered before) the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>). The types `Type1` and `Type2` must be such that an object of type `RandomIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `RandomIt` must meet the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Complexity
+
+{/* source:cpp-algorithm-partial-sort:0011 */}
+Given `M` as `middle - first`, `N` as `last - first`:
+
+{/* source:cpp-algorithm-partial-sort:0012 */}
+1. 1,2) Approximately `N·log(M)` comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision> <InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-partial-sort:0013 */}
+2. 3,4) Approximately `N·log(M)` applications of the comparator `comp`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-partial-sort:0014 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-partial-sort:0015 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined. If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-partial-sort:0016 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L1915) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L5025).
+
+{/* source:cpp-algorithm-partial-sort:0017 */}
+[`partial_sort (1)`](/docs/cpp/library/algorithm/partial_sort#Version_1)
+
+```cpp
+template<typename RandomIt>
+constexpr //< since C++20
+void partial_sort(RandomIt first, RandomIt middle, RandomIt last)
+{
+    typedef typename std::iterator_traits<RandomIt>::value_type VT;
+    std::partial_sort(first, middle, last, std::less<VT>());
+}
+```
+
+[`partial_sort (3)`](/docs/cpp/library/algorithm/partial_sort#Version_3)
+
+```cpp
+namespace impl
+{
+    template<typename RandomIt, typename Compare>
+    constexpr //< since C++20
+    void sift_down(RandomIt first, RandomIt last, const Compare& comp)
+    {
+        // sift down element at “first”
+        const auto length = static_cast<std::size_t>(last - first);
+        std::size_t current = 0;
+        std::size_t next = 2;
+        while (next < length)
+        {
+            if (comp(*(first + next), *(first + (next - 1))))
+                --next;
+            if (!comp(*(first + current), *(first + next)))
+                return;
+            std::iter_swap(first + current, first + next);
+            current = next;
+            next = 2 * current + 2;
+        }
+        --next;
+        if (next < length && comp(*(first + current), *(first + next)))
+            std::iter_swap(first + current, first + next);
+    }
+ 
+    template<typename RandomIt, typename Compare>
+    constexpr //< since C++20
+    void heap_select(RandomIt first, RandomIt middle, RandomIt last, const Compare& comp)
+    {
+        std::make_heap(first, middle, comp);
+        for (auto i = middle; i != last; ++i)
+        {
+            if (comp(*i, *first))
+            {
+                std::iter_swap(first, i);
+                sift_down(first, middle, comp);
+            }
+        }
+    }
+} // namespace impl
+ 
+template<typename RandomIt, typename Compare>
+constexpr //< since C++20
+void partial_sort(RandomIt first, RandomIt middle, RandomIt last, Compare comp)
+{
+    impl::heap_select(first, middle, last, comp);
+    std::sort_heap(first, middle, comp);
+}
+```
+
+### Notes
+
+#### Algorithm
+
+{/* source:cpp-algorithm-partial-sort:0018 */}
+The algorithm used is typically heap select to select the smallest elements, and heap sort to sort the selected elements in the heap in ascending order.
+
+{/* source:cpp-algorithm-partial-sort:0019 */}
+To select elements, a heap is used (see [heap](https://en.wikipedia.org/wiki/Heap_(data_structure)#Applications)). For example, for `operator<` as comparison function, max-heap is used to select `middle − first` smallest elements.
+
+{/* source:cpp-algorithm-partial-sort:0020 */}
+[Heap sort](https://en.wikipedia.org/wiki/Heapsort) is used after selection to sort `[first, middle)` selected elements (see [`std::sort_heap`](/docs/cpp/library/algorithm/sort_heap)).
+
+#### Intended use
+
+{/* source:cpp-algorithm-partial-sort:0021 */}
+`std::partial_sort` algorithms are intended to be used for small constant numbers of `[first, middle)` selected elements.
+
+### Example
+
+{/* source:cpp-algorithm-partial-sort:0022 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <iostream>
+ 
+void print(const auto& s, int middle)
+{
+    for (int a : s)
+        std::cout << a << ' ';
+    std::cout << '\n';
+    if (middle > 0)
+    {
+        while (middle-- > 0)
+            std::cout << "--";
+        std::cout << '^';
+    }
+    else if (middle < 0)
+    {
+        for (auto i = s.size() + middle; --i; std::cout << "  ")
+        {}
+ 
+        for (std::cout << '^'; middle++ < 0; std::cout << "--")
+        {}
+    }
+    std::cout << '\n';
+};
+ 
+int main()
+{
+    std::array<int, 10> s{5, 7, 4, 2, 8, 6, 1, 9, 0, 3};
+    print(s, 0);
+    std::partial_sort(s.begin(), s.begin() + 3, s.end());
+    print(s, 3);
+    std::partial_sort(s.rbegin(), s.rbegin() + 4, s.rend());
+    print(s, -4);
+    std::partial_sort(s.rbegin(), s.rbegin() + 5, s.rend(), std::greater{});
+    print(s, -5);
+}
+```
+
+Possible output:
+
+```text
+5 7 4 2 8 6 1 9 0 3
+ 
+0 1 2 7 8 6 5 9 4 3
+------^
+4 5 6 7 8 9 3 2 1 0
+          ^--------
+4 3 2 1 0 5 6 7 8 9
+        ^----------
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-partial-sort:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-partial-sort:0024 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P0896R4" standard="C++98">
+    <PublishedBehavior>`[first, middle)` and `[middle, last)`<br />were not required to be valid ranges</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined<br />if any of them is invalid</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-partial-sort:0025 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`nth_element`](/docs/cpp/library/algorithm/nth_element)</DescriptionTerm>
+    <DescriptionBody>partially sorts the given range making sure that it is partitioned by the given element (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_sort_copy`](/docs/cpp/library/algorithm/partial_sort_copy)</DescriptionTerm>
+    <DescriptionBody>copies and partially sorts a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stable_sort`](/docs/cpp/library/algorithm/stable_sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range of elements while preserving order between equal elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sort`](/docs/cpp/library/algorithm/sort)</DescriptionTerm>
+    <DescriptionBody>sorts a range into ascending order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::partial_sort`](/docs/cpp/library/algorithm/ranges/partial_sort) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sorts the first `N` elements of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

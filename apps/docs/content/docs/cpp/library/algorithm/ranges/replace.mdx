@@ -1,0 +1,275 @@
+---
+title: "std::ranges::replace, std::ranges::replace_if"
+description: "Replaces all elements satisfying specific criteria with new_value in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/ranges/replace"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-ranges-replace:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" until="C++26" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          class T1, class T2, class Proj = std::identity >
+requires std::indirectly_writable<I, const T2&> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to, std::projected<I, Proj>, const T1*>
+constexpr I replace( I first, S last, const T1& old_value,
+
+                     const T2& new_value, Proj proj = {} );`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          class T1 = std::projected_value_t<I, Proj>, class T2 = T1 >
+requires std::indirectly_writable<I, const T2&> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to, std::projected<I, Proj>, const T1*>
+constexpr I replace( I first, S last, const T1& old_value,
+
+                     const T2& new_value, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++20" until="C++26" code={`template< ranges::input_range R,
+          class T1, class T2, class Proj = std::identity >
+requires std::indirectly_writable<ranges::iterator_t<R>, const T2&> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to,
+              std::projected<ranges::iterator_t<R>, Proj>, const T1*>
+constexpr ranges::borrowed_iterator_t<R>
+    replace( R&& r, const T1& old_value,
+
+             const T2& new_value, Proj proj = {} );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< ranges::input_range R,
+          class Proj = std::identity,
+          class T1 = std::projected_value_t<ranges::iterator_t<R>, Proj>,
+          class T2 = T1 >
+requires std::indirectly_writable<ranges::iterator_t<R>, const T2&> &&
+         std::indirect_binary_predicate
+             <ranges::equal_to,
+              std::projected<ranges::iterator_t<R>, Proj>, const T1*>
+constexpr ranges::borrowed_iterator_t<R>
+    replace( R&& r, const T1& old_value,
+
+             const T2& new_value, Proj proj = {} );`} />
+  <Declaration id="3" language="cpp" since="C++20" until="C++26" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          class T, class Proj = std::identity,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+requires std::indirectly_writable<I, const T&>
+constexpr I replace_if( I first, S last, Pred pred,
+
+                        const T& new_value, Proj proj = {} );`} />
+  <Declaration id="3" language="cpp" since="C++26" code={`template< std::input_iterator I, std::sentinel_for<I> S,
+          class Proj = std::identity,
+          class T = std::projected_value_t<I, Proj>,
+          std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+requires std::indirectly_writable<I, const T&>
+constexpr I replace_if( I first, S last, Pred pred,
+
+                        const T& new_value, Proj proj = {} );`} />
+  <Declaration id="4" language="cpp" since="C++20" until="C++26" code={`template< ranges::input_range R, class T, class Proj = std::identity,
+          std::indirect_unary_predicate<
+              std::projected<ranges::iterator_t<R>, Proj>> Pred >
+requires std::indirectly_writable<ranges::iterator_t<R>, const T&>
+constexpr ranges::borrowed_iterator_t<R>
+
+    replace_if( R&& r, Pred pred, const T& new_value, Proj proj = {} );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< ranges::input_range R, class Proj = std::identity,
+          class T = std::projected_value_t<ranges::iterator_t<R>, Proj>,
+          std::indirect_unary_predicate<
+              std::projected<ranges::iterator_t<R>, Proj>> Pred >
+requires std::indirectly_writable<ranges::iterator_t<R>, const T&>
+constexpr ranges::borrowed_iterator_t<R>
+
+    replace_if( R&& r, Pred pred, const T& new_value, Proj proj = {} );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-ranges-replace:0001 */}
+Replaces all elements satisfying specific criteria with `new_value` in the range `[first, last)`.
+
+{/* source:cpp-algorithm-ranges-replace:0002 */}
+1. 1) Replaces all elements that are equal to `old_value`, using `std::invoke(proj, *i) == old_value` to compare.
+
+{/* source:cpp-algorithm-ranges-replace:0003 */}
+2. 3) Replaces all elements for which the predicate `pred` evaluates to `true`, where evaluating expression is `std::invoke(pred, std::invoke(proj, *i))`.
+
+{/* source:cpp-algorithm-ranges-replace:0004 */}
+3. 2,4) Same as (1,3), but uses `r` as the range, as if using `ranges::begin(r)` as `first` and `ranges::end(r)` as `last`.
+
+{/* source:cpp-algorithm-ranges-replace:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-algorithm-ranges-replace:0006 */}
+Explicit template argument lists cannot be specified when calling any of them.
+None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-algorithm-ranges-replace:0007 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to process</Parameter>
+  <Parameter name="r">the range of elements to process</Parameter>
+  <Parameter name="old_value">the value of elements to replace</Parameter>
+  <Parameter name="new_value">the value to use as a replacement</Parameter>
+  <Parameter name="pred">predicate to apply to the projected elements</Parameter>
+  <Parameter name="proj">projection to apply to the elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-algorithm-ranges-replace:0008 */}
+An iterator equal to `last`.
+
+### Complexity
+
+{/* source:cpp-algorithm-ranges-replace:0009 */}
+Exactly `ranges::distance(first, last)` applications of the corresponding predicate `comp` and any projection `proj`.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-replace:0010 */}
+Because the algorithm takes `old_value` and `new_value` by reference, it may have unexpected behavior if either is a reference to an element of the range `[first, last)`.
+
+### Notes
+
+{/* source:cpp-algorithm-ranges-replace:0011 */}
+| [Feature-test macro](/docs/cpp/library/utility/feature_test) | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_algorithm_default_value_type`](/docs/cpp/library/feature_test#cpp_lib_algorithm_default_value_type) | [`202403`](/docs/cpp/library/compiler_support/26#cpp_lib_algorithm_default_value_type_202403) | (C++26) | [List-initialization](/docs/cpp/language/initialization/list_initialization) for algorithms ([1-4](/docs/cpp/library/algorithm/ranges/replace#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-algorithm-ranges-replace:0012 */}
+[`replace (1)`](/docs/cpp/library/algorithm/ranges/replace#Version_1)
+
+```cpp
+struct replace_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity,
+             class T1 = std::projected_value_t<I, Proj>, class T2 = T1>
+    requires std::indirectly_writable<I, const T2&> && 
+             std::indirect_binary_predicate
+                 <ranges::equal_to, std::projected<I, Proj>, const T1*>
+    constexpr I operator()(I first, S last, const T1& old_value,
+                           const T2& new_value, Proj proj = {}) const
+    {
+        for (; first != last; ++first)
+            if (old_value == std::invoke(proj, *first))
+                *first = new_value;
+        return first;
+    }
+ 
+    template<ranges::input_range R, class Proj = std::identity
+             class T1 = std::projected_value_t<ranges::iterator_t<R>, Proj>,
+             class T2 = T1>
+    requires std::indirectly_writable<ranges::iterator_t<R>, const T2&> &&
+             std::indirect_binary_predicate<ranges::equal_to,
+             std::projected<ranges::iterator_t<R>, Proj>, const T1*>
+    constexpr ranges::borrowed_iterator_t<R>
+        operator()(R&& r, const T1& old_value,
+                   const T2& new_value, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), old_value,
+                       new_value, std::move(proj));
+    }
+};
+ 
+inline constexpr replace_fn replace {};
+```
+
+[`replace_if (3)`](/docs/cpp/library/algorithm/ranges/replace#Version_3)
+
+```cpp
+struct replace_if_fn
+{
+    template<std::input_iterator I, std::sentinel_for<I> S,
+             class Proj = std::identity, class T = std::projected_value_t<I, Proj>,
+             std::indirect_unary_predicate<std::projected<I, Proj>> Pred>
+    requires std::indirectly_writable<I, const T&>
+    constexpr I operator()(I first, S last, Pred pred,
+                           const T& new_value, Proj proj = {}) const
+    {
+        for (; first != last; ++first)
+            if (!!std::invoke(pred, std::invoke(proj, *first)))
+                *first = new_value;
+        return std::move(first);
+    }
+ 
+    template<ranges::input_range R, class Proj = std::identity,
+             class T = std::projected_value_t<ranges::iterator_t<R>, Proj>
+             std::indirect_unary_predicate
+                 <std::projected<ranges::iterator_t<R>, Proj>> Pred>
+    requires std::indirectly_writable<ranges::iterator_t<R>, const T&>
+    constexpr ranges::borrowed_iterator_t<R>
+        operator()(R&& r, Pred pred, const T& new_value, Proj proj = {}) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), std::move(pred),
+                       new_value, std::move(proj));
+    }
+};
+ 
+inline constexpr replace_if_fn replace_if {};
+```
+
+### Example
+
+{/* source:cpp-algorithm-ranges-replace:0013 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <complex>
+#include <iostream>
+ 
+void println(const auto& v)
+{
+    for (const auto& e : v)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    namespace ranges = std::ranges;
+ 
+    std::array p{1, 6, 1, 6, 1, 6};
+    println(p);
+    ranges::replace(p, 6, 9);
+    println(p);
+ 
+    std::array q{1, 2, 3, 6, 7, 8, 4, 5};
+    println(q);
+    ranges::replace_if(q, [](int x) { return 5 < x; }, 5);
+    println(q);
+ 
+    std::array<std::complex<double>, 2> nums{{{1, 3}, {1, 3}}};
+    println(nums);
+    #ifdef __cpp_lib_algorithm_default_value_type
+        ranges::replace(nums, {1, 3}, {4, 2});
+    #else
+        ranges::replace(nums, std::complex<double>{1, 3}, std::complex<double>{4, 2});
+    #endif
+    println(nums);
+}
+```
+Output:
+```text
+1 6 1 6 1 6
+1 9 1 9 1 9
+1 2 3 6 7 8 4 5
+1 2 3 5 5 5 4 5
+(1,3) (1,3)
+(4,2) (4,2)
+```
+
+### See also
+
+{/* source:cpp-algorithm-ranges-replace:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::replace_copy`, `ranges::replace_copy_if`](/docs/cpp/library/algorithm/ranges/replace_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range, replacing elements satisfying specific criteria with another value (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace`, `replace_if`](/docs/cpp/library/algorithm/replace)</DescriptionTerm>
+    <DescriptionBody>replaces all values satisfying specific criteria with another value (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

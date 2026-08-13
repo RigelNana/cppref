@@ -1,0 +1,135 @@
+---
+title: "std::move_backward"
+description: "Moves the elements from the range [first, last), to another range ending at d_last."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/move_backward"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-move-backward:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class BidirIt1, class BidirIt2 >
+BidirIt2 move_backward( BidirIt1 first, BidirIt1 last, BidirIt2 d_last );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-move-backward:0001 */}
+Moves the elements from the range `[first, last)`, to another range ending at `d_last`. The elements are moved in reverse order (the last element is moved first), but their relative order is preserved.
+
+{/* source:cpp-algorithm-move-backward:0002 */}
+If `d_last` is within `(first, last]`, the behavior is undefined. In this case, [`std::move`](/docs/cpp/library/algorithm/move) may be used instead.
+
+### Parameters
+
+{/* source:cpp-algorithm-move-backward:0003 */}
+<ParameterList>
+  <Parameter name="first, last">the range of the elements to move</Parameter>
+  <Parameter name="d_last">end of the destination range</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `BidirIt1`, `BidirIt2` must meet the requirements of [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-move-backward:0004 */}
+Iterator in the destination range, pointing at the last element moved.
+
+### Complexity
+
+{/* source:cpp-algorithm-move-backward:0005 */}
+Exactly `std::distance(first, last)` move assignments.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-move-backward:0006 */}
+```cpp
+template<class BidirIt1, class BidirIt2>
+BidirIt2 move_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
+{
+    while (first != last)
+        *(--d_last) = std::move(*(--last));
+ 
+    return d_last;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-move-backward:0007 */}
+When moving overlapping ranges, [`std::move`](/docs/cpp/library/algorithm/move) is appropriate when moving to the left (beginning of the destination range is outside the source range) while `std::move_backward` is appropriate when moving to the right (end of the destination range is outside the source range).
+
+### Example
+
+{/* source:cpp-algorithm-move-backward:0008 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <string_view>
+#include <vector>
+ 
+using container = std::vector<std::string>;
+ 
+void print(std::string_view comment, const container& src, const container& dst = {})
+{
+    auto prn = [](std::string_view name, const container& cont)
+    {
+        std::cout << name;
+        for (const auto &s : cont)
+            std::cout << (s.empty() ? "∙" : s.data()) << ' ';
+        std::cout << '\n';
+    };
+    std::cout << comment << '\n';
+    prn("src: ", src);
+    if (dst.empty())
+        return;
+    prn("dst: ", dst);
+}
+ 
+int main()
+{
+    container src{"foo", "bar", "baz"};
+    container dst{"qux", "quux", "quuz", "corge"};
+    print("Non-overlapping case; before move_backward:", src, dst);
+    std::move_backward(src.begin(), src.end(), dst.end());
+    print("After:", src, dst);
+ 
+    src = {"snap", "crackle", "pop", "lock", "drop"};
+    print("Overlapping case; before move_backward:", src);
+    std::move_backward(src.begin(), std::next(src.begin(), 3), src.end());
+    print("After:", src);
+}
+```
+
+Output:
+
+```text
+Non-overlapping case; before move_backward:
+src: foo bar baz
+dst: qux quux quuz corge
+After:
+src: ∙ ∙ ∙
+dst: qux foo bar baz
+Overlapping case; before move_backward:
+src: snap crackle pop lock drop
+After:
+src: ∙ ∙ snap crackle pop
+```
+
+### See also
+
+{/* source:cpp-algorithm-move-backward:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`move`](/docs/cpp/library/algorithm/move) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::move_backward`](/docs/cpp/library/algorithm/ranges/move_backward) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location in backwards order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,161 @@
+---
+title: "std::is_sorted"
+description: "Checks if the elements in range [ first , last ) are sorted in non-descending order."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/is_sorted"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-is-sorted:0000 */}
+<DeclarationDoc>
+Defined in header [`<algorithm>`](/docs/cpp/library/headers/algorithm)
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class ForwardIt >
+bool is_sorted( ForwardIt first, ForwardIt last );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt >
+bool is_sorted( ExecutionPolicy&& policy,
+
+                ForwardIt first, ForwardIt last );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class ForwardIt, class Compare >
+bool is_sorted( ForwardIt first, ForwardIt last, Compare comp );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class Compare >
+bool is_sorted( ExecutionPolicy&& policy,
+
+                ForwardIt first, ForwardIt last, Compare comp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-is-sorted:0001 */}
+Checks if the elements in range `[first, last)` are sorted in non-descending order.
+
+{/* source:cpp-algorithm-is-sorted:0002 */}
+1. 1) Checks if the elements are [sorted](/docs/cpp/library/algorithm#Requirements) with respect to <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-is-sorted:0003 */}
+2. 3) Checks if the elements are sorted with respect to `comp`.
+
+{/* source:cpp-algorithm-is-sorted:0004 */}
+3. 2,4) Same as (1,3), but executed according to `policy`.
+
+{/* source:cpp-algorithm-is-sorted:0005 */}
+4. These overloads participate in overload resolution only if all following conditions are satisfied:
+   - `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`. <InlineRevision until="C++20" />
+   - `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`. <InlineRevision since="C++20" />
+
+### Parameters
+
+{/* source:cpp-algorithm-is-sorted:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to examine</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+  <Parameter name="comp">
+comparison function object (i.e. an object that satisfies the requirements of [*Compare*](/docs/cpp/library/named_req/Compare)) which returns `true` if the first argument is *less* than (i.e. is ordered *before*) the second.
+
+The signature of the comparison function should be equivalent to the following:
+
+`bool cmp(const Type1& a, const Type2& b);`
+
+While the signature does not need to have `const&`, the function must not modify the objects passed to it and must be able to accept all values of type (possibly const) `Type1` and `Type2` regardless of [value category](/docs/cpp/language/expressions/value_category) (thus, `Type1&` is not allowed<InlineRevision since="C++11">, nor is `Type1` unless for `Type1` a move is equivalent to a copy</InlineRevision>).
+
+The types `Type1` and `Type2` must be such that an object of type `ForwardIt` can be dereferenced and then implicitly converted to both of them.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `Compare` must meet the requirements of [*Compare*](/docs/cpp/library/named_req/Compare).
+
+### Return value
+
+{/* source:cpp-algorithm-is-sorted:0007 */}
+`true` if the elements in the range are sorted in non-descending order, `false` otherwise.
+
+### Complexity
+
+{/* source:cpp-algorithm-is-sorted:0008 */}
+Given N as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-is-sorted:0009 */}
+1. 1,2) O(N) comparisons using <InlineRevision until="C++20">`operator<`</InlineRevision><InlineRevision since="C++20">`std::less{}`</InlineRevision>.
+
+{/* source:cpp-algorithm-is-sorted:0010 */}
+2. 3,4) O(N) applications of the comparator `comp`.
+
+### Exceptions
+
+{/* source:cpp-algorithm-is-sorted:0011 */}
+The overloads with a template parameter named `ExecutionPolicy` report errors as follows:
+
+{/* source:cpp-algorithm-is-sorted:0012 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-is-sorted:0013 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algo.h#L3184) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/algorithm#L3642).
+
+{/* source:cpp-algorithm-is-sorted:0014 */}
+[`is_sorted (1)`](/docs/cpp/library/algorithm/is_sorted#Version_1)
+
+```cpp
+template<class ForwardIt>
+bool is_sorted(ForwardIt first, ForwardIt last)
+{
+    return std::is_sorted_until(first, last) == last;
+}
+```
+
+[`is_sorted (3)`](/docs/cpp/library/algorithm/is_sorted#Version_3)
+
+```cpp
+template<class ForwardIt, class Compare>
+bool is_sorted(ForwardIt first, ForwardIt last, Compare comp)
+{
+    return std::is_sorted_until(first, last, comp) == last;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-is-sorted:0015 */}
+`std::is_sorted` returns `true` for empty ranges and ranges of length one.
+
+### Example
+
+{/* source:cpp-algorithm-is-sorted:0016 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <functional>
+#include <iterator>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v;
+    assert(std::is_sorted(v.cbegin(), v.cend()) && "an empty range is always sorted");
+    v.push_back(42);
+    assert(std::is_sorted(v.cbegin(), v.cend()) && "a range of size 1 is always sorted");
+ 
+    int data[] = {3, 1, 4, 1, 5};
+    assert(not std::is_sorted(std::begin(data), std::end(data)));
+ 
+    std::sort(std::begin(data), std::end(data));
+    assert(std::is_sorted(std::begin(data), std::end(data)));
+    assert(not std::is_sorted(std::begin(data), std::end(data), std::greater<>{}));
+}
+```
+
+### See also
+
+{/* source:cpp-algorithm-is-sorted:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_sorted_until`](/docs/cpp/library/algorithm/is_sorted_until) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>finds the largest sorted subrange (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::is_sorted`](/docs/cpp/library/algorithm/ranges/is_sorted) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks whether a range is sorted into ascending order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
