@@ -11,6 +11,6 @@ export function baseOptions(): BaseLayoutProps {
         </span>
       ),
     },
-    githubUrl: "https://github.com/cppreference/cppreference-doc",
+    githubUrl: "https://github.com/RigelNana/cppref",
   };
 }
