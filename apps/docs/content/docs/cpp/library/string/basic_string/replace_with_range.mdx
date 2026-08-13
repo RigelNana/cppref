@@ -1,0 +1,113 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::replace_with_range"
+description: "Replaces the characters in the range [first, last) with the characters from the range rg."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/replace_with_range"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-replace-with-range:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration language="cpp" since="C++23" code={`template< container-compatible-range<CharT> R >
+constexpr std::basic_string& replace_with_range( const_iterator first,
+                                                 const_iterator last,
+
+                                                 R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-replace-with-range:0001 */}
+Replaces the characters in the range [`first`, `last`) with the characters from the range `rg`.
+
+{/* source:cpp-string-basic-string-replace-with-range:0002 */}
+Equivalent to
+
+{/* source:cpp-string-basic-string-replace-with-range:0003 */}
+```cpp
+return replace(first,
+               last,
+               std::basic_string(
+                   std::from_range,
+                   std::forward<R>(rg),
+                   get_allocator())
+);
+```
+
+### Parameters
+
+{/* source:cpp-string-basic-string-replace-with-range:0004 */}
+<ParameterList>
+  <Parameter name="first, last">range of characters that is going to be replaced</Parameter>
+  <Parameter name="rg">a [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range)</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-replace-with-range:0005 */}
+`*this`
+
+### Complexity
+
+{/* source:cpp-string-basic-string-replace-with-range:0006 */}
+Linear in size of `rg`.
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-replace-with-range:0007 */}
+If the operation would cause [`size()`](/docs/cpp/library/string/basic_string/size) to exceed [`max_size()`](/docs/cpp/library/string/basic_string/max_size), throws [`std::length_error`](/docs/cpp/library/error/length_error).
+
+{/* source:cpp-string-basic-string-replace-with-range:0008 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Notes
+
+{/* source:cpp-string-basic-string-replace-with-range:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | member functions that accept [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range) |
+
+### Example
+
+{/* source:cpp-string-basic-string-replace-with-range:0010 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <forward_list>
+#include <iterator>
+#include <string>
+ 
+int main()
+{
+    using namespace std::literals;
+ 
+    auto s{"Today is today!"s};
+    constexpr auto today{"today"sv};
+    constexpr auto tomorrow{"tomorrow's yesterday"sv};
+    std::forward_list<char> rg;
+    std::ranges::reverse_copy(tomorrow, std::front_inserter(rg));
+ 
+    const auto pos{s.rfind(today)};
+    assert(pos != s.npos);
+    const auto first{std::next(s.begin(), pos)};
+    const auto last{std::next(first, today.length())};
+ 
+#ifdef __cpp_lib_containers_ranges
+    s.replace_range(first, last, rg);
+#else
+    s.replace(first, last, rg.cbegin(), rg.cend());
+#endif
+ 
+    assert("Today is tomorrow's yesterday!" == s);
+}
+```
+
+### See also
+
+{/* source:cpp-string-basic-string-replace-with-range:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace`](/docs/cpp/library/string/basic_string/replace)</DescriptionTerm>
+    <DescriptionBody>replaces specified portion of a string (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

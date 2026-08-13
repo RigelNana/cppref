@@ -1,0 +1,206 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::rfind"
+description: "Finds the last substring that is equal to the given character sequence."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/rfind"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-rfind:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration id="1" language="cpp" code={`size_type rfind( const basic_string& str, size_type pos = npos ) const;`} />
+  (noexcept since C++11)
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" code={`size_type rfind( const CharT* s, size_type pos, size_type count ) const;`} />
+  (constexpr since C++20)
+  <Declaration id="3" language="cpp" code={`size_type rfind( const CharT* s, size_type pos = npos ) const;`} />
+  (constexpr since C++20)
+  <Declaration id="4" language="cpp" code={`size_type rfind( CharT ch, size_type pos = npos ) const;`} />
+  (noexcept since C++11)
+  (constexpr since C++20)
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class StringViewLike >
+size_type rfind( const StringViewLike& t,
+
+                 size_type pos = npos ) const noexcept(/* see below */);`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-rfind:0001 */}
+Finds the last substring that is equal to the given character sequence. The search begins at `pos` and proceeds from right to left (thus, the found substring, if any, cannot begin in a position following `pos`). If [`npos`](/docs/cpp/library/string/basic_string/npos) or any value not smaller than [`size()`](/docs/cpp/library/string/basic_string/size) - 1 is passed as `pos`, the whole string will be searched.
+
+{/* source:cpp-string-basic-string-rfind:0002 */}
+1) Finds the last substring equal to `str`.
+
+{/* source:cpp-string-basic-string-rfind:0003 */}
+2) Finds the last substring equal to the range [`s`, `s + count`). This range can include null characters.
+
+{/* source:cpp-string-basic-string-rfind:0004 */}
+If [`s`, `s + count`) is not a [valid range](/docs/cpp/library/iterator#Ranges), the behavior is undefined.
+
+{/* source:cpp-string-basic-string-rfind:0005 */}
+3) Finds the last substring equal to the character string pointed to by `s`. The length of the string is determined by the first null character using `Traits::length(s)`.
+
+{/* source:cpp-string-basic-string-rfind:0006 */}
+If [`s`, `s + Traits::length(s)`) is not a [valid range](/docs/cpp/library/iterator#Ranges), the behavior is undefined.
+
+{/* source:cpp-string-basic-string-rfind:0007 */}
+4) Finds the last character equal to `ch`.
+
+{/* source:cpp-string-basic-string-rfind:0008 */}
+5) Implicitly converts `t` to a string view `sv` as if by `std::basic_string_view<CharT, Traits> sv = t;`, then finds the last substring equal to the contents of `sv`.
+
+{/* source:cpp-string-basic-string-rfind:0009 */}
+This overload participates in overload resolution only if `std::is_convertible_v<const StringViewLike&, std::basic_string_view<CharT, Traits>>` is `true` and `std::is_convertible_v<const StringViewLike&, const CharT*>` is `false`.
+
+{/* source:cpp-string-basic-string-rfind:0010 */}
+In all cases, equality is checked by calling [`Traits::eq`](/docs/cpp/library/string/char_traits/cmp).
+
+### Parameters
+
+{/* source:cpp-string-basic-string-rfind:0011 */}
+<ParameterList>
+  <Parameter name="str">string to search for</Parameter>
+  <Parameter name="pos">position at which to begin searching</Parameter>
+  <Parameter name="count">length of substring to search for</Parameter>
+  <Parameter name="s">pointer to a character string to search for</Parameter>
+  <Parameter name="ch">character to search for</Parameter>
+  <Parameter name="t">object (convertible to [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view)) to search for</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-rfind:0012 */}
+Position of the first character of the found substring or [`npos`](/docs/cpp/library/string/basic_string/npos) if no such substring is found. Note that this is an offset from the start of the string, not the end.
+
+{/* source:cpp-string-basic-string-rfind:0013 */}
+If searching for an empty string (i.e., `str.size()`, `count`, or `Traits::length(s)` is zero), the empty string is found immediately and `rfind` returns:
+
+{/* source:cpp-string-basic-string-rfind:0014 */}
+- `pos`, if `pos < size()`;
+- `size()` otherwise, including the case where `pos == npos`.
+
+{/* source:cpp-string-basic-string-rfind:0015 */}
+Otherwise, if [`size()`](/docs/cpp/library/string/basic_string/size) is zero, [`npos`](/docs/cpp/library/string/basic_string/npos) is always returned.
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-rfind:0016 */}
+1,4) Throws nothing.
+
+{/* source:cpp-string-basic-string-rfind:0017 */}
+5) noexcept specification: [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) `noexcept(std::is_nothrow_convertible_v<const T&, std::basic_string_view<CharT, Traits>>)`
+
+{/* source:cpp-string-basic-string-rfind:0018 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-string-basic-string-rfind:0019 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <string>
+ 
+void print(std::string::size_type n,
+           std::string::size_type len,
+           std::string const &s)
+{
+    if (n == std::string::npos)
+        std::cout << "not found\n";
+    else
+        std::cout << "found: " << std::quoted(s.substr(n, len)) << " at " << n << '\n';
+}
+ 
+int main()
+{
+    std::string::size_type n;
+    std::string const s = "This is a string";
+ 
+    // search backwards from end of string
+    n = s.rfind("is");
+    print(n, 2, s);
+ 
+    // search backwards from position 4
+    n = s.rfind("is", 4);
+    print(n, 2, s);
+ 
+    // find a single character
+    n = s.rfind('s');
+    print(n, 1, s);
+ 
+    // find a single character
+    n = s.rfind('q');
+    print(n, 1, s);
+ 
+    // find the prefix (see also s.starts_with("This"))
+    n = s.rfind("This", 0);
+    print(n, 4, s);
+}
+```
+
+Output:
+
+```text
+found: "is" at 5
+found: "is" at 2
+found: "s" at 10
+not found
+found: "This" at 0
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-rfind:0020 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-rfind:0021 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={847} standard="C++98">
+    <PublishedBehavior>there was no exception safety guarantee</PublishedBehavior>
+    <CorrectedBehavior>added strong exception safety guarantee</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2064} standard="C++11">
+    <PublishedBehavior>overloads (3,4) were noexcept</PublishedBehavior>
+    <CorrectedBehavior>removed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2946} standard="C++17">
+    <PublishedBehavior>overload (5) caused ambiguity in some cases</PublishedBehavior>
+    <CorrectedBehavior>avoided by making it a template</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P1148R0" standard="C++11 C++17">
+    <PublishedBehavior>noexcept for overloads (4,5) were<br />accidently dropped by LWG2064/LWG2946</PublishedBehavior>
+    <CorrectedBehavior>restored</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-string-basic-string-rfind:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/string/basic_string/find)</DescriptionTerm>
+    <DescriptionBody>finds the first occurrence of the given substring (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_of`](/docs/cpp/library/string/basic_string/find_first_of)</DescriptionTerm>
+    <DescriptionBody>find first occurrence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_not_of`](/docs/cpp/library/string/basic_string/find_first_not_of)</DescriptionTerm>
+    <DescriptionBody>find first absence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_last_of`](/docs/cpp/library/string/basic_string/find_last_of)</DescriptionTerm>
+    <DescriptionBody>find last occurrence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_last_not_of`](/docs/cpp/library/string/basic_string/find_last_not_of)</DescriptionTerm>
+    <DescriptionBody>find last absence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rfind`](/docs/cpp/library/string/basic_string_view/rfind)</DescriptionTerm>
+    <DescriptionBody>find the last occurrence of a substring (public member function of `std::basic_string_view<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

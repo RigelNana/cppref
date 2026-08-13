@@ -1,0 +1,592 @@
+---
+title: "std::basic_string"
+description: "The class template basic_string stores and manipulates sequences of character-like objects."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+    <Declaration id="1" language="cpp" code={`template<
+    class CharT,
+    class Traits = std::char_traits<CharT>,
+    class Allocator = std::allocator<CharT>
+
+> class basic_string;`} />
+    <Declaration id="2" language="cpp" since="C++17" code={`namespace pmr {
+template<
+    class CharT,
+    class Traits = std::char_traits<CharT>
+> using basic_string =
+    std::basic_string<CharT, Traits, std::pmr::polymorphic_allocator<CharT>>;
+
+}`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string:0001 */}
+The class template `basic_string` stores and manipulates sequences of [character](/docs/cpp/language/basic_concepts/types#Character_types)-like objects, which are non-array objects of [*TrivialType*](/docs/cpp/library/named_req/TrivialType) and [*StandardLayoutType*](/docs/cpp/library/named_req/StandardLayoutType). The class is dependent neither on the character type nor on the nature of operations on that type. The definitions of the operations are supplied via the `Traits` template parameter - a specialization of [`std::char_traits`](/docs/cpp/library/string/char_traits) or a compatible traits class.
+
+{/* source:cpp-string-basic-string:0002 */}
+The elements of a `basic_string` are stored contiguously, that is, for a `basic_string` `s`, `&*(s.begin() + n) == &*s.begin() + n` for any `n` in [`0`, `s.size()`), <InlineRevision since="C++11">, and `*(s.begin() + s.size())` has value `CharT()` (a null terminator)</InlineRevision>; or, equivalently, a pointer to `s[0]` can be passed to functions that expect a pointer to the first element of <InlineRevision until="C++11">an array</InlineRevision><InlineRevision since="C++11">a null-terminated array</InlineRevision> of `CharT`.
+
+{/* source:cpp-string-basic-string:0003 */}
+`std::basic_string` satisfies the requirements of [*AllocatorAwareContainer*](/docs/cpp/library/named_req/AllocatorAwareContainer) (except that customized construct/destroy are not used for construction/destruction of elements), [*SequenceContainer*](/docs/cpp/library/named_req/SequenceContainer) and <InlineRevision since="C++17">[*ContiguousContainer*](/docs/cpp/library/named_req/ContiguousContainer)</InlineRevision>.
+
+{/* source:cpp-string-basic-string:0004 */}
+If any of `Traits::char_type` and `Allocator::char_type` is different from `CharT`, the program is ill-formed.
+
+{/* source:cpp-string-basic-string:0005 */}
+<Revision since="C++20">
+Member functions of `std::basic_string` are constexpr: it is possible to create and use `std::string` objects in the evaluation of a constant expression. However, `std::string` objects generally cannot be constexpr, because any dynamically allocated storage must be released in the same evaluation of constant expression.
+</Revision>
+
+{/* source:cpp-string-basic-string:0006 */}
+Several typedefs for common character types are provided:
+
+{/* source:cpp-string-basic-string:0007 */}
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::string`</DescriptionTerm>
+    <DescriptionBody>`std::basic_string<char>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::wstring`</DescriptionTerm>
+    <DescriptionBody>`std::basic_string<wchar_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::u8string` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_string<char8_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::u16string` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_string<char16_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::u32string` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_string<char32_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::pmr::string` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>`std::pmr::basic_string<char>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::pmr::wstring` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>`std::pmr::basic_string<wchar_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::pmr::u8string` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::pmr::basic_string<char8_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::pmr::u16string` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>`std::pmr::basic_string<char16_t>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::pmr::u32string` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>`std::pmr::basic_string<char32_t>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Template parameters
+
+{/* source:cpp-string-basic-string:0008 */}
+<ParameterList>
+  <Parameter name="CharT">character type</Parameter>
+  <Parameter name="Traits">traits class specifying the operations on the character type</Parameter>
+  <Parameter name="Allocator">[*Allocator*](/docs/cpp/library/named_req/Allocator) type used to allocate internal storage</Parameter>
+</ParameterList>
+
+### Nested types
+
+{/* source:cpp-string-basic-string:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`traits_type`</DescriptionTerm>
+    <DescriptionBody>`Traits`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`CharT`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`allocator_type`</DescriptionTerm>
+    <DescriptionBody>`Allocator`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`size_type`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++11">`Allocator::size_type`</InlineRevision><InlineRevision since="C++11">[`std::allocator_traits<Allocator>::size_type`](/docs/cpp/library/memory/allocator_traits)</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++11">`Allocator::difference_type`</InlineRevision><InlineRevision since="C++11">[`std::allocator_traits<Allocator>::difference_type`](/docs/cpp/library/memory/allocator_traits)</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reference`</DescriptionTerm>
+    <DescriptionBody>`const value_type&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++11">`Allocator::pointer`</InlineRevision><InlineRevision since="C++11">[`std::allocator_traits<Allocator>::pointer`](/docs/cpp/library/memory/allocator_traits)</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_pointer`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++11">`Allocator::const_pointer`</InlineRevision><InlineRevision since="C++11">[`std::allocator_traits<Allocator>::const_pointer`](/docs/cpp/library/memory/allocator_traits)</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++20">[*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator) and [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) to `value_type`</InlineRevision><InlineRevision since="C++20">[*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator), and [*ConstexprIterator*](/docs/cpp/library/named_req/ConstexprIterator) to `value_type`</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_iterator`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++20">[*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator) and [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) to `const value_type`</InlineRevision><InlineRevision since="C++20">[*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator), and [*ConstexprIterator*](/docs/cpp/library/named_req/ConstexprIterator) to `const value_type`</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reverse_iterator`</DescriptionTerm>
+    <DescriptionBody>[`std::reverse_iterator<iterator>`](/docs/cpp/library/iterator/reverse_iterator)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_reverse_iterator`</DescriptionTerm>
+    <DescriptionBody>[`std::reverse_iterator<const_iterator>`](/docs/cpp/library/iterator/reverse_iterator)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Data members
+
+{/* source:cpp-string-basic-string:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`constexpr size_type` `npos` [static]</DescriptionTerm>
+    <DescriptionBody>the special value `size_type(-1)`, its exact meaning depends on the context</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-string-basic-string:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/string/basic_string/basic_string)</DescriptionTerm>
+    <DescriptionBody>constructs a `basic_string` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/string/basic_string/~basic_string)</DescriptionTerm>
+    <DescriptionBody>destroys the string, deallocating internal storage if used (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/string/basic_string/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns values to the string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/string/basic_string/assign)</DescriptionTerm>
+    <DescriptionBody>assign characters to a string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign_range`](/docs/cpp/library/string/basic_string/assign_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>assign a range of characters to a string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_allocator`](/docs/cpp/library/string/basic_string/get_allocator)</DescriptionTerm>
+    <DescriptionBody>returns the associated allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Element access
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`at`](/docs/cpp/library/string/basic_string/at)</DescriptionTerm>
+    <DescriptionBody>accesses the specified character with bounds checking (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/string/basic_string/operator_at)</DescriptionTerm>
+    <DescriptionBody>accesses the specified character (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/string/basic_string/front) (DR*)</DescriptionTerm>
+    <DescriptionBody>accesses the first character (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/string/basic_string/back) (DR*)</DescriptionTerm>
+    <DescriptionBody>accesses the last character (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/string/basic_string/data)</DescriptionTerm>
+    <DescriptionBody>returns a pointer to the first character of a string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`c_str`](/docs/cpp/library/string/basic_string/c_str)</DescriptionTerm>
+    <DescriptionBody>returns a non-modifiable standard C character array version of the string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator basic_string_view`](/docs/cpp/library/string/basic_string/operator_basic_string_view) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>returns a non-modifiable `basic_string_view` into the entire string (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterators
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin` `cbegin`](/docs/cpp/library/string/basic_string/begin) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end` `cend`](/docs/cpp/library/string/basic_string/end) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rbegin` `crbegin`](/docs/cpp/library/string/basic_string/rbegin) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rend` `crend`](/docs/cpp/library/string/basic_string/rend) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Capacity
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/string/basic_string/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the string is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size` `length`](/docs/cpp/library/string/basic_string/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/string/basic_string/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the maximum number of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reserve`](/docs/cpp/library/string/basic_string/reserve)</DescriptionTerm>
+    <DescriptionBody>reserves storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`capacity`](/docs/cpp/library/string/basic_string/capacity)</DescriptionTerm>
+    <DescriptionBody>returns the number of characters that can be held in currently allocated storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shrink_to_fit`](/docs/cpp/library/string/basic_string/shrink_to_fit) (DR*)</DescriptionTerm>
+    <DescriptionBody>reduces memory usage by freeing unused memory (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/string/basic_string/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/string/basic_string/insert)</DescriptionTerm>
+    <DescriptionBody>inserts characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_range`](/docs/cpp/library/string/basic_string/insert_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>inserts a range of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase`](/docs/cpp/library/string/basic_string/erase)</DescriptionTerm>
+    <DescriptionBody>removes characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`push_back`](/docs/cpp/library/string/basic_string/push_back)</DescriptionTerm>
+    <DescriptionBody>appends a character to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pop_back`](/docs/cpp/library/string/basic_string/pop_back) (DR*)</DescriptionTerm>
+    <DescriptionBody>removes the last character (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`append`](/docs/cpp/library/string/basic_string/append)</DescriptionTerm>
+    <DescriptionBody>appends characters to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`append_range`](/docs/cpp/library/string/basic_string/append_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>appends a range of characters to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+=`](/docs/cpp/library/string/basic_string/operator_plus_assign)</DescriptionTerm>
+    <DescriptionBody>appends characters to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace`](/docs/cpp/library/string/basic_string/replace)</DescriptionTerm>
+    <DescriptionBody>replaces specified portion of a string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace_with_range`](/docs/cpp/library/string/basic_string/replace_with_range) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>replaces specified portion of a string with a range of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`](/docs/cpp/library/string/basic_string/copy)</DescriptionTerm>
+    <DescriptionBody>copies characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`resize`](/docs/cpp/library/string/basic_string/resize)</DescriptionTerm>
+    <DescriptionBody>changes the number of characters stored (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`resize_and_overwrite`](/docs/cpp/library/string/basic_string/resize_and_overwrite) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>changes the number of characters stored and possibly overwrites indeterminate contents via user-provided operation (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/string/basic_string/swap)</DescriptionTerm>
+    <DescriptionBody>swaps the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Search
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/string/basic_string/find)</DescriptionTerm>
+    <DescriptionBody>finds the first occurrence of the given substring (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rfind`](/docs/cpp/library/string/basic_string/rfind)</DescriptionTerm>
+    <DescriptionBody>find the last occurrence of a substring (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_of`](/docs/cpp/library/string/basic_string/find_first_of)</DescriptionTerm>
+    <DescriptionBody>find first occurrence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_not_of`](/docs/cpp/library/string/basic_string/find_first_not_of)</DescriptionTerm>
+    <DescriptionBody>find first absence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_last_of`](/docs/cpp/library/string/basic_string/find_last_of)</DescriptionTerm>
+    <DescriptionBody>find last occurrence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_last_not_of`](/docs/cpp/library/string/basic_string/find_last_not_of)</DescriptionTerm>
+    <DescriptionBody>find last absence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Operations
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare`](/docs/cpp/library/string/basic_string/compare)</DescriptionTerm>
+    <DescriptionBody>compares two strings (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`starts_with`](/docs/cpp/library/string/basic_string/starts_with) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if the string starts with the given prefix (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ends_with`](/docs/cpp/library/string/basic_string/ends_with) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if the string ends with the given suffix (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`contains`](/docs/cpp/library/string/basic_string/contains) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>checks if the string contains the given substring or character (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`substr`](/docs/cpp/library/string/basic_string/substr)</DescriptionTerm>
+    <DescriptionBody>returns a substring (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-string-basic-string:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+`](/docs/cpp/library/string/basic_string/operator_plus)</DescriptionTerm>
+    <DescriptionBody>concatenates two strings, a string and a `char`, or a string and [`string_view`](/docs/cpp/library/string/basic_string_view) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==` `operator!=` `operator<` `operator>` `operator<=` `operator>=` `operator<=>`](/docs/cpp/library/string/basic_string/operator_cmp) <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares two strings (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::basic_string)`](/docs/cpp/library/string/basic_string/swap2)</DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`erase(std::basic_string)` `erase_if(std::basic_string)`](/docs/cpp/library/string/basic_string/erase2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>erases all elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Input/output
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/string/basic_string/operator_ltltgtgt)</DescriptionTerm>
+    <DescriptionBody>performs stream input and output on strings (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`getline`](/docs/cpp/library/string/basic_string/getline)</DescriptionTerm>
+    <DescriptionBody>read data from an I/O stream into a string (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Numeric conversions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`stoi` `stol` `stoll`](/docs/cpp/library/string/basic_string/stol) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a string to a signed integer (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stoul` `stoull`](/docs/cpp/library/string/basic_string/stoul) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a string to an unsigned integer (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stof` `stod` `stold`](/docs/cpp/library/string/basic_string/stof) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a string to a floating point value (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_string`](/docs/cpp/library/string/basic_string/to_string) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts an integral or floating-point value to `string` (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_wstring`](/docs/cpp/library/string/basic_string/to_wstring) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts an integral or floating-point value to `wstring` (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Literals
+
+{/* source:cpp-string-basic-string:0013 */}
+Defined in inline namespace `std::literals::string_literals`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""s`](/docs/cpp/library/string/basic_string/operator_q__q_s) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>converts a character array literal to `basic_string` (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper classes
+
+{/* source:cpp-string-basic-string:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::hash<std::basic_string>`](/docs/cpp/library/string/basic_string/hash) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>hash support for strings (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/string/basic_string/deduction_guides) (since C++17)
+
+### Iterator invalidation
+
+{/* source:cpp-string-basic-string:0015 */}
+References, pointers, and iterators referring to the elements of a `basic_string` may be invalidated by any standard library function taking a reference to non-const `basic_string` as an argument, such as [`std::getline`](/docs/cpp/library/string/basic_string/getline), [`std::swap`](/docs/cpp/library/algorithm/swap), or [`operator>>`](/docs/cpp/library/string/basic_string/operator_ltltgtgt), and by calling non-const member functions, except [`operator[]`](/docs/cpp/library/string/basic_string/operator_at), [`at`](/docs/cpp/library/string/basic_string/at), [`data`](/docs/cpp/library/string/basic_string/data), [`front`](/docs/cpp/library/string/basic_string/front), [`back`](/docs/cpp/library/string/basic_string/back), [`begin`](/docs/cpp/library/string/basic_string/begin), [`rbegin`](/docs/cpp/library/string/basic_string/rbegin), [`end`](/docs/cpp/library/string/basic_string/end), and [`rend`](/docs/cpp/library/string/basic_string/rend).
+
+### Notes
+
+{/* source:cpp-string-basic-string:0016 */}
+Although it is required that customized construct or destroy is used when constructing or destroying elements of `std::basic_string` until C++23, all implementations only used the default mechanism. The requirement is corrected by [P1072R10](https://wg21.link/P1072R10) to match existing practice.
+
+{/* source:cpp-string-basic-string:0017 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_string_udls`](/docs/cpp/library/feature_test#cpp_lib_string_udls) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_lib_string_udls_201304L) | (C++14) | [User-defined literals for string types](/docs/cpp/library/string/basic_string#Literals) |
+| [`__cpp_lib_starts_ends_with`](/docs/cpp/library/feature_test#cpp_lib_starts_ends_with) | [`201711L`](/docs/cpp/library/compiler_support/20#cpp_lib_starts_ends_with_201711L) | (C++20) | [`starts_with`](/docs/cpp/library/string/basic_string/starts_with), [`ends_with`](/docs/cpp/library/string/basic_string/ends_with) |
+| [`__cpp_lib_constexpr_string`](/docs/cpp/library/feature_test#cpp_lib_constexpr_string) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_constexpr_string_201907L) | (C++20) | Constexpr for `std::basic_string` |
+| [`__cpp_lib_char8_t`](/docs/cpp/library/feature_test#cpp_lib_char8_t) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_char8_t_201907L) | (C++20) | `std::u8string` |
+| [`__cpp_lib_erase_if`](/docs/cpp/library/feature_test#cpp_lib_erase_if) | [`202002L`](/docs/cpp/library/compiler_support/20#cpp_lib_erase_if_202002L) | (C++20) | [`erase`](/docs/cpp/library/string/basic_string/erase2), [`erase_if`](/docs/cpp/library/string/basic_string/erase2) |
+| [`__cpp_lib_string_contains`](/docs/cpp/library/feature_test#cpp_lib_string_contains) | [`202011L`](/docs/cpp/library/compiler_support/23#cpp_lib_string_contains_202011L) | (C++23) | [`contains`](/docs/cpp/library/string/basic_string/contains) |
+| [`__cpp_lib_string_resize_and_overwrite`](/docs/cpp/library/feature_test#cpp_lib_string_resize_and_overwrite) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_string_resize_and_overwrite_202110L) | (C++23) | [`resize_and_overwrite`](/docs/cpp/library/string/basic_string/resize_and_overwrite) |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | Member functions for construction, insertion, and replacement that accept [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range) |
+
+### Example
+
+{/* source:cpp-string-basic-string:0018 */}
+```cpp
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    using namespace std::literals;
+ 
+    // Creating a string from const char*
+    std::string str1 = "hello";
+ 
+    // Creating a string using string literal
+    auto str2 = "world"s;
+ 
+    // Concatenating strings
+    std::string str3 = str1 + " " + str2;
+ 
+    // Print out the result
+    std::cout << str3 << '\n';
+ 
+    std::string::size_type pos = str3.find(" ");
+    str1 = str3.substr(pos + 1); // the part after the space
+    str2 = str3.substr(0, pos);  // the part till the space
+ 
+    std::cout << str1 << ' ' << str2 << '\n';
+ 
+    // Accessing an element using subscript operator[]
+    std::cout << str1[0] << '\n';
+    str1[0] = 'W';
+    std::cout << str1 << '\n';
+}
+```
+
+Output:
+
+```text
+hello world
+world hello
+w
+World
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={530} standard="C++98">
+    <PublishedBehavior>contiguity of the storage for elements of `basic_string`<br />was accidently made not required by [LWG259](https://cplusplus.github.io/LWG/issue259)</PublishedBehavior>
+    <CorrectedBehavior>required again</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2861} standard="C++98">
+    <PublishedBehavior>`value_type` was `Traits::char_type`</PublishedBehavior>
+    <CorrectedBehavior>changed to `CharT`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2994} standard="C++98">
+    ([P1148R0](https://wg21.link/P1148R0))
+    <PublishedBehavior>the behavior is undefined if any of `Traits::char_type`[^1]<br />and `Allocator::char_type` is different from `CharT`</PublishedBehavior>
+    <CorrectedBehavior>the program is<br />ill-formed in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-string-basic-string:0021 */}
+[^1]: ↑ The `Traits::char_type` case is fixed in [P1148R0](https://wg21.link/P1148R0).
+
+### See also
+
+{/* source:cpp-string-basic-string:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_string_view`](/docs/cpp/library/string/basic_string_view) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>read-only string view (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-string-basic-string:0023 */}
+[`C++ string handling`](https://en.wikipedia.org/wiki/C%2B%2B_string_handling)

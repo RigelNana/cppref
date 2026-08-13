@@ -1,0 +1,203 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::find_last_not_of"
+description: "Finds the last character equal to none of the characters in the given character sequence."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/find_last_not_of"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-find-last-not-of:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`size_type find_last_not_of( const basic_string& str,
+                            size_type pos = npos ) const;`} />
+  (noexcept since C++11)
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" code={`size_type find_last_not_of( const CharT* s,
+                            size_type pos, size_type count ) const;`} />
+  (constexpr since C++20)
+  <Declaration id="3" language="cpp" code={`size_type find_last_not_of( const CharT* s, size_type pos = npos ) const;`} />
+  (constexpr since C++20)
+  <Declaration id="4" language="cpp" code={`size_type find_last_not_of( CharT ch, size_type pos = npos ) const;`} />
+  (noexcept since C++11)
+  (constexpr since C++20)
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class StringViewLike >
+size_type
+    find_last_not_of( const StringViewLike& t,
+
+                      size_type pos = npos ) const noexcept(/* see below */);`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-find-last-not-of:0001 */}
+Finds the last character equal to none of the characters in the given character sequence. The search considers only the range [`0`, `pos`]. If all characters in the range can be found in the given character sequence, [`npos`](/docs/cpp/library/string/basic_string/npos) will be returned.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0002 */}
+1) Finds the last character equal to none of characters in `str`.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0003 */}
+2) Finds the last character equal to none of characters in the range [`s`, `s + count`). This range can include null characters.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0004 */}
+If [`s`, `s + count`) is not a [valid range](/docs/cpp/library/iterator#Ranges), the behavior is undefined.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0005 */}
+3) Finds the last character equal to none of characters in character string pointed to by `s`. The length of the string is determined by the first null character using `Traits::length(s)`.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0006 */}
+If [`s`, `s + Traits::length(s)`) is not a [valid range](/docs/cpp/library/iterator#Ranges), the behavior is undefined.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0007 */}
+4) Finds the last character not equal to `ch`.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0008 */}
+5) Implicitly converts `t` to a string view `sv` as if by `std::basic_string_view<CharT, Traits> sv = t;`, then finds the last character equal to none of characters in `sv`.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0009 */}
+This overload participates in overload resolution only if `std::is_convertible_v<const StringViewLike&, std::basic_string_view<CharT, Traits>>` is `true` and `std::is_convertible_v<const StringViewLike&, const CharT*>` is `false`.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0010 */}
+In all cases, equality is checked by calling [`Traits::eq`](/docs/cpp/library/string/char_traits/cmp).
+
+### Parameters
+
+{/* source:cpp-string-basic-string-find-last-not-of:0011 */}
+<ParameterList>
+  <Parameter name="str">string identifying characters to search for</Parameter>
+  <Parameter name="pos">position at which to end search</Parameter>
+  <Parameter name="count">length of character string identifying characters to search for</Parameter>
+  <Parameter name="s">pointer to a character string identifying characters to search for</Parameter>
+  <Parameter name="ch">character identifying characters to search for</Parameter>
+  <Parameter name="t">object (convertible to [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view)) identifying characters to search for</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-find-last-not-of:0012 */}
+Position of the found character or [`npos`](/docs/cpp/library/string/basic_string/npos) if no such character is found.
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-find-last-not-of:0013 */}
+1,4) Throws nothing.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0014 */}
+5) [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification: `noexcept(std::is_nothrow_convertible_v<
+    const T&, std::basic_string_view<CharT, Traits>>)`
+
+{/* source:cpp-string-basic-string-find-last-not-of:0015 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-string-basic-string-find-last-not-of:0016 */}
+```cpp
+#include <iostream>
+#include <string>
+ 
+void show_pos(const std::string& str, std::string::size_type found)
+{
+    if (found != std::string::npos)
+        std::cout << '[' << found << "] = \'" << str[found] << "\'\n";
+    else
+        std::cout << "not found\n";
+}
+ 
+int main()
+{
+    std::string str{"abc_123"};
+    char const* skip_set{"0123456789"};
+    std::string::size_type str_last_pos{std::string::npos};
+ 
+    show_pos(str, str.find_last_not_of(skip_set)); // [3] = '_'
+ 
+    str_last_pos = 2;
+    show_pos(str, str.find_last_not_of(skip_set, str_last_pos)); // [2] = 'c'
+ 
+    str_last_pos = 2;
+    show_pos(str, str.find_last_not_of('c', str_last_pos)); // [1] = 'b'
+ 
+    const char arr[]{'3', '4', '5'};
+    show_pos(str, str.find_last_not_of(arr)); // [5] = '2'
+ 
+    str_last_pos = 2;
+    std::string::size_type skip_set_size{4};
+    show_pos(str, str.find_last_not_of(skip_set,
+                                       str_last_pos,
+                                       skip_set_size)); // [2] = 'c'
+ 
+    show_pos(str, str.find_last_not_of("abc")); // [6] = '3'
+ 
+    str_last_pos = 2;
+    show_pos(str, str.find_last_not_of("abc", str_last_pos)); // not found
+}
+```
+
+Output:
+
+```text
+[3] = '_'
+[2] = 'c'
+[1] = 'b'
+[5] = '2'
+[2] = 'c'
+[6] = '3'
+not found
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-find-last-not-of:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-find-last-not-of:0018 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={141} standard="C++98">
+    <PublishedBehavior>overload (1) could only return [`npos`](/docs/cpp/library/string/basic_string/npos) if `pos >= size()`</PublishedBehavior>
+    <CorrectedBehavior>the search range is<br />[`0`, `size()`) in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={847} standard="C++98">
+    <PublishedBehavior>there was no exception safety guarantee</PublishedBehavior>
+    <CorrectedBehavior>added strong exception safety guarantee</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2064} standard="C++11">
+    <PublishedBehavior>overloads (3,4) were noexcept</PublishedBehavior>
+    <CorrectedBehavior>removed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2946} standard="C++17">
+    <PublishedBehavior>overload (5) caused ambiguity in some cases</PublishedBehavior>
+    <CorrectedBehavior>avoided by making it a template</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P1148R0" standard="C++11">
+    <PublishedBehavior>noexcept for overloads (4,5) were<br />accidentally dropped by LWG2064/LWG2946</PublishedBehavior>
+    <CorrectedBehavior>restored</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-string-basic-string-find-last-not-of:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`find`](/docs/cpp/library/string/basic_string/find)</DescriptionTerm>
+    <DescriptionBody>finds the first occurrence of the given substring (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rfind`](/docs/cpp/library/string/basic_string/rfind)</DescriptionTerm>
+    <DescriptionBody>find the last occurrence of a substring (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_of`](/docs/cpp/library/string/basic_string/find_first_of)</DescriptionTerm>
+    <DescriptionBody>find first occurrence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_first_not_of`](/docs/cpp/library/string/basic_string/find_first_not_of)</DescriptionTerm>
+    <DescriptionBody>find first absence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_last_of`](/docs/cpp/library/string/basic_string/find_last_of)</DescriptionTerm>
+    <DescriptionBody>find last occurrence of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_last_not_of`](/docs/cpp/library/string/basic_string_view/find_last_not_of)</DescriptionTerm>
+    <DescriptionBody>find last absence of characters (public member function of `std::basic_string_view<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

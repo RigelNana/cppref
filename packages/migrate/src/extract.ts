@@ -249,6 +249,8 @@ export function normalizeCppreferenceLink(
     .map((segment) => {
       if (segment === "operator=") return "operator_assignment";
       if (segment === "operator==") return "operator_eq";
+      if (segment === "operator+=") return "operator_plus_assign";
+      if (segment === "operator+") return "operator_plus";
       return segment;
     })
     .join("/");

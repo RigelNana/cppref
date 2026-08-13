@@ -1,0 +1,107 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::insert_range"
+description: "Inserts characters from the range rg before the element (if any) pointed by pos."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/insert_range"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-insert-range:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< container-compatible-range<CharT> R >
+constexpr iterator insert_range( const_iterator pos, R&& rg );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-insert-range:0001 */}
+Inserts characters from the range `rg` before the element (if any) pointed by `pos`.
+
+{/* source:cpp-string-basic-string-insert-range:0002 */}
+Equivalent to
+
+{/* source:cpp-string-basic-string-insert-range:0003 */}
+```cpp
+return insert(pos - begin(),
+    std::basic_string(
+        std::from_range,
+        std​::​forward<R>(rg),
+        get_allocator())
+);
+```
+
+{/* source:cpp-string-basic-string-insert-range:0004 */}
+If `pos` is not a valid iterator on `*this`, the behavior is undefined.
+
+{/* source:cpp-string-basic-string-insert-range:0005 */}
+### Parameters
+
+<ParameterList>
+  <Parameter name="pos">iterator before which the characters will be inserted</Parameter>
+  <Parameter name="rg">a [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range)</Parameter>
+</ParameterList>
+
+{/* source:cpp-string-basic-string-insert-range:0006 */}
+### Return value
+
+An iterator which refers to the first inserted character, or `pos` if no characters were inserted because `rg` was empty.
+
+{/* source:cpp-string-basic-string-insert-range:0007 */}
+### Complexity
+
+Linear in size of `rg`.
+
+{/* source:cpp-string-basic-string-insert-range:0008 */}
+### Exceptions
+
+If `std::allocator_traits<Allocator>::allocate` throws an exception, it is rethrown.
+
+{/* source:cpp-string-basic-string-insert-range:0009 */}
+If the operation would cause [`size()`](/docs/cpp/library/string/basic_string/size) to exceed [`max_size()`](/docs/cpp/library/string/basic_string/max_size), throws [`std::length_error`](/docs/cpp/library/error/length_error).
+
+{/* source:cpp-string-basic-string-insert-range:0010 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+{/* source:cpp-string-basic-string-insert-range:0011 */}
+### Notes
+
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | member functions that accept [container compatible range](/docs/cpp/library/ranges/to#container_compatible_range) |
+
+{/* source:cpp-string-basic-string-insert-range:0012 */}
+### Example
+
+```cpp
+#include <cassert>
+#include <iterator>
+#include <string>
+ 
+int main()
+{
+    const auto source = {'l', 'i', 'b', '_'};
+    std::string target{"__cpp_containers_ranges"};
+    //                        ^insertion will occur
+    //                         before this position
+ 
+    const auto pos = target.find("container");
+    assert(pos != target.npos);
+    auto iter = std::next(target.begin(), pos);
+ 
+#ifdef __cpp_lib_containers_ranges
+    target.insert_range(iter, source);
+#else
+    target.insert(iter, source.begin(), source.end());
+#endif
+ 
+    assert(target == "__cpp_lib_containers_ranges");
+    //                      ^^^^
+}
+```
+
+{/* source:cpp-string-basic-string-insert-range:0013 */}
+### See also
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert`](/docs/cpp/library/string/basic_string/insert)</DescriptionTerm>
+    <DescriptionBody>inserts characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

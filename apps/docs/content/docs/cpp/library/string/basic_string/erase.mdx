@@ -1,0 +1,138 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::erase"
+description: "Removes specified characters from the string."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/erase"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-erase:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`basic_string& erase( size_type index = 0, size_type count = npos );`} />
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" until="C++11" code={`iterator erase( iterator position );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`iterator erase( const_iterator position );`} />
+  (constexpr since C++20)
+  <Declaration id="3" language="cpp" until="C++11" code={`iterator erase( iterator first, iterator last );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`iterator erase( const_iterator first, const_iterator last );`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-erase:0001 */}
+Removes specified characters from the string.
+
+{/* source:cpp-string-basic-string-erase:0002 */}
+1) Removes `std::min(count, size() - index)` characters starting at `index`.
+
+{/* source:cpp-string-basic-string-erase:0003 */}
+2) Removes the character at `position`.
+
+{/* source:cpp-string-basic-string-erase:0004 */}
+If `position` is not a [dereferenceable iterator](/docs/cpp/library/iterator#Dereferenceability_and_validity) on `*this`, the behavior is undefined.
+
+{/* source:cpp-string-basic-string-erase:0005 */}
+3) Removes the characters in the range [`first`, `last`).
+
+{/* source:cpp-string-basic-string-erase:0006 */}
+If `first` or `last` is not a [valid iterator](/docs/cpp/library/iterator#Dereferenceability_and_validity) on `*this`, or [`first`, `last`) is not a [valid range](/docs/cpp/library/iterator#Ranges), the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-string-basic-string-erase:0007 */}
+<ParameterList>
+  <Parameter name="index">first character to remove</Parameter>
+  <Parameter name="count">number of characters to remove</Parameter>
+  <Parameter name="position">iterator to the character to remove</Parameter>
+  <Parameter name="first, last">range of the characters to remove</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-erase:0008 */}
+1) `*this`
+
+{/* source:cpp-string-basic-string-erase:0009 */}
+2) Iterator pointing to the character immediately following the character erased, or [`end()`](/docs/cpp/library/string/basic_string/end) if no such character exists.
+
+{/* source:cpp-string-basic-string-erase:0010 */}
+3) Iterator pointing to the character `last` pointed to before the erase, or [`end()`](/docs/cpp/library/string/basic_string/end) if no such character exists.
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-erase:0011 */}
+1) [`std::out_of_range`](/docs/cpp/library/error/out_of_range) if `index > size()`.
+
+{/* source:cpp-string-basic-string-erase:0012 */}
+2,3) Throws nothing.
+
+{/* source:cpp-string-basic-string-erase:0013 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-string-basic-string-erase:0014 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <string>
+ 
+int main()
+{
+    std::string s = "This Is An Example";
+    std::cout << "1) " << s << '\n';
+ 
+    s.erase(7, 3); // erases " An" using overload (1)
+    std::cout << "2) " << s << '\n';
+ 
+    s.erase(std::find(s.begin(), s.end(), ' ')); // erases first ' '; overload (2)
+    std::cout << "3) " << s << '\n';
+ 
+    s.erase(s.find(' ')); // trims from ' ' to the end of the string; overload (1)
+    std::cout << "4) " << s << '\n';
+ 
+    auto it = std::next(s.begin(), s.find('s')); // obtains iterator to the first 's'
+    s.erase(it, std::next(it, 2)); // erases "sI"; overload (3)
+    std::cout << "5) " << s << '\n';
+}
+```
+
+Output:
+
+```text
+1) This Is An Example
+2) This Is Example
+3) ThisIs Example
+4) ThisIs
+5) This
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-erase:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-erase:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={27} standard="C++98">
+    <PublishedBehavior>overload ([3](/docs/cpp/library/string/basic_string/erase#Version_3)) did not erase the character `last` pointed to, but it returned<br />the iterator pointing to the character immediately following that character</PublishedBehavior>
+    <CorrectedBehavior>returns an iterator<br />pointing to that character</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={428} standard="C++98">
+    <PublishedBehavior>overload ([2](/docs/cpp/library/string/basic_string/erase#Version_2)) explicitly required `position` to be valid, but<br />[*SequenceContainer*](/docs/cpp/library/named_req/SequenceContainer) requires it to be dereferenceable (stricter)</PublishedBehavior>
+    <CorrectedBehavior>removed the<br />explicit requirement</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={847} standard="C++98">
+    <PublishedBehavior>there was no exception safety guarantee</PublishedBehavior>
+    <CorrectedBehavior>added strong exception<br />safety guarantee</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-string-basic-string-erase:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/string/basic_string/clear)</DescriptionTerm>
+    <DescriptionBody>clears the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,142 @@
+---
+title: "operator<<,>>(std::basic_string)"
+description: "Inserts or extracts a string from a stream."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/operator_ltltgtgt"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration id="1" language="cpp" code={`template< class CharT, class Traits, class Allocator >
+std::basic_ostream<CharT, Traits>& 
+    operator<<( std::basic_ostream<CharT, Traits>& os, 
+
+                const std::basic_string<CharT, Traits, Allocator>& str );`} />
+  <Declaration id="2" language="cpp" code={`template< class CharT, class Traits, class Allocator >
+std::basic_istream<CharT, Traits>& 
+    operator>>( std::basic_istream<CharT, Traits>& is, 
+
+                std::basic_string<CharT, Traits, Allocator>& str );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0001 */}
+1. 1) Behaves as a [*FormattedOutputFunction*](/docs/cpp/library/named_req/FormattedOutputFunction). After constructing and checking the sentry object, [determines the output format padding](/docs/cpp/library/named_req/FormattedOutputFunction#Padding).
+
+   Then inserts each character from the resulting sequence `seq` (the contents of `str` plus padding) to the output stream `os` as if by calling `os.rdbuf()->sputn(seq, n)`, where `n` is `std::max(os.width(), str.size())` Finally, calls `os.width(0)` to cancel the effects of [`std::setw`](/docs/cpp/library/io/manip/setw), if any.
+
+   <Revision since="C++17">
+   Equivalent to `return os << std::basic_string_view<CharT, Traits>(str);`.
+   </Revision>
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0002 */}
+2. 2) Behaves as a [*FormattedInputFunction*](/docs/cpp/library/named_req/FormattedInputFunction). After constructing and checking the sentry object, which may skip leading whitespace, first clears `str` with `str.erase()`, then reads characters from `is` and appends them to `str` as if by `str.append(1, c)`, until one of the following conditions becomes true: `N` characters are read, where `N` is `is.width()` if `is.width() > 0`, otherwise `N` is `str.max_size()`, the end-of-file condition occurs in the stream `is`, or `std::isspace(c, is.getloc())` is `true` for the next character `c` in `is` (this whitespace character remains in the input stream). If no characters are extracted then `std::ios::failbit` is set on `is`, which may throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure). Finally, calls `is.width(0)` to cancel the effects of [`std::setw`](/docs/cpp/library/io/manip/setw), if any.
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0003 */}
+### Exceptions
+
+1. 1) May throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure) if an exception is thrown during output.
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0004 */}
+2. 2) May throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure) if no characters are extracted from `is` (e.g. the stream is at end of file, or consists of whitespace only), or if an exception is thrown during input.
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0005 */}
+### Parameters
+
+<ParameterList>
+  <Parameter name="os">a character output stream</Parameter>
+  <Parameter name="is">a character input stream</Parameter>
+  <Parameter name="str">the string to be inserted or extracted</Parameter>
+</ParameterList>
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0006 */}
+### Return value
+
+1. 1) `os`
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0007 */}
+2. 2) `is`
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0008 */}
+### Example
+
+```cpp
+#include <iostream>
+#include <sstream>
+#include <string>
+ 
+int main()
+{
+    std::string greeting = "Hello, whirled!";
+    std::istringstream iss(greeting);
+ 
+    std::string hello_comma, whirled, word;
+ 
+    iss >> hello_comma;
+    iss >> whirled;
+ 
+    std::cout << greeting << '\n'
+              << hello_comma << '\n' << whirled << '\n';
+ 
+    // Reset the stream
+    iss.clear();
+    iss.seekg(0);
+ 
+    while (iss >> word)
+        std::cout << '+' << word << '\n';
+}
+```
+
+Output:
+
+```text
+Hello, whirled!
+Hello,
+whirled!
++Hello,
++whirled!
+```
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0009 */}
+### Defect reports
+
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={25} standard="C++98">
+    <PublishedBehavior>`n` was the smaller of `os.width()` and `str.size()`</PublishedBehavior>
+    <CorrectedBehavior>`n` is the larger of them</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={90} standard="C++98">
+    <PublishedBehavior>`std::isspace(c, getloc())` was used to check<br />for spaces, but `getloc` is not declared in [`<string>`](/docs/cpp/library/headers/string)</PublishedBehavior>
+    <CorrectedBehavior>replaced `getloc()`<br />with `is.getloc()`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={91} standard="C++98">
+    <PublishedBehavior>`operator>>` did not behave<br />as a [*FormattedInputFunction*](/docs/cpp/library/named_req/FormattedInputFunction)</PublishedBehavior>
+    <CorrectedBehavior>behaves as a<br />[*FormattedInputFunction*](/docs/cpp/library/named_req/FormattedInputFunction)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={211} standard="C++98">
+    <PublishedBehavior>`operator>>` did not set `failbit` if no character is extracted</PublishedBehavior>
+    <CorrectedBehavior>sets `failbit`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={435} standard="C++98">
+    <PublishedBehavior>characters were inserted by `os.rdbuf()->sputn(str.data(), n)`,<br />and the resolution of [LWG issue 25](https://cplusplus.github.io/LWG/issue25) made the behavior<br />undefined if `os.width()` is larger than `str.size()`</PublishedBehavior>
+    <CorrectedBehavior>determines the padding<br />first and inserts the padded<br />character sequence instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={586} standard="C++98">
+    <PublishedBehavior>`operator<<` did not behave<br />as a [*FormattedOutputFunction*](/docs/cpp/library/named_req/FormattedOutputFunction)</PublishedBehavior>
+    <CorrectedBehavior>behaves as a<br />[*FormattedOutputFunction*](/docs/cpp/library/named_req/FormattedOutputFunction)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-string-basic-string-operator-ltltgtgt:0011 */}
+### See also
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator<<`](/docs/cpp/library/string/basic_string_view/operator_ltlt) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>performs stream output on string views (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

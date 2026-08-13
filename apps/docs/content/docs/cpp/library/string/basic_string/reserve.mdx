@@ -1,0 +1,140 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::reserve"
+description: "Informs a std::basic_string object of a planned change in size, so that it can manage the storage allocation appropriately."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/reserve"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-reserve:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration id="1" language="cpp" code={`void reserve( size_type new_cap = 0 );`} />
+  (until C++20)
+  <Declaration id="1" language="cpp" code={`constexpr void reserve( size_type new_cap );`} />
+  (since C++20)
+  <Declaration id="2" language="cpp" since="C++20" code={`void reserve();`} />
+  (deprecated in C++20) (removed in C++26)
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-reserve:0001 */}
+1) Informs a `std::basic_string` object of a planned change in size, so that it can manage the storage allocation appropriately.
+
+- If `new_cap` is greater than the current [`capacity()`](/docs/cpp/library/string/basic_string/capacity), new storage is allocated, and [`capacity()`](/docs/cpp/library/string/basic_string/capacity) is made equal or greater than `new_cap`.
+
+<Revision until="C++20">
+- If `new_cap` is less than the current [`capacity()`](/docs/cpp/library/string/basic_string/capacity), this is a non-binding shrink request.
+- If `new_cap` is less than the current [`size()`](/docs/cpp/library/string/basic_string/size), this is a non-binding shrink-to-fit request <InlineRevision since="C++11">equivalent to [`shrink_to_fit()`](/docs/cpp/library/string/basic_string/shrink_to_fit)</InlineRevision>.
+</Revision>
+
+<Revision since="C++20">
+- If `new_cap` is less than or equal to the current [`capacity()`](/docs/cpp/library/string/basic_string/capacity), there is no effect.
+</Revision>
+
+{/* source:cpp-string-basic-string-reserve:0002 */}
+If a capacity change takes place, all iterators and references, including the past-the-end iterator, are invalidated.
+
+{/* source:cpp-string-basic-string-reserve:0003 */}
+2) A non-binding shrink-to-fit request. After this call, [`capacity()`](/docs/cpp/library/string/basic_string/capacity) has an unspecified value greater than or equal to [`size()`](/docs/cpp/library/string/basic_string/size).
+
+### Parameters
+
+{/* source:cpp-string-basic-string-reserve:0004 */}
+<ParameterList>
+  <Parameter name="new_cap">new capacity of the string</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-reserve:0005 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-reserve:0006 */}
+Throws [`std::length_error`](/docs/cpp/library/error/length_error) if `new_cap` is greater than [`max_size()`](/docs/cpp/library/string/basic_string/max_size).
+
+{/* source:cpp-string-basic-string-reserve:0007 */}
+May throw any exceptions thrown by `std::allocator_traits<Allocator>::allocate()`, such as [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc).
+
+{/* source:cpp-string-basic-string-reserve:0008 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Complexity
+
+{/* source:cpp-string-basic-string-reserve:0009 */}
+At most linear in the [`size()`](/docs/cpp/library/string/basic_string/size) of the string.
+
+### Example
+
+{/* source:cpp-string-basic-string-reserve:0010 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::string s;
+    std::cout << "1) Initially: " << s.capacity() << '\n';
+ 
+    const std::string::size_type new_cap{101u};
+    s.reserve(new_cap);
+    assert(s.capacity() >= new_cap);
+    std::cout << "2) After reserve(" << new_cap << "): " << s.capacity() << '\n';
+ 
+    // observing the capacity growth factor
+    auto cap{s.capacity()};
+    for (int check{}; check != 4; ++check)
+    {
+        while (cap == s.capacity())
+            s += '$';
+        cap = s.capacity();
+        std::cout << (3) + check << ") Capacity: " << cap << '\n';
+    }
+ 
+//  s.reserve(); // deprecated/removed in C++20/26, use:
+    s.shrink_to_fit();
+    std::cout << "7) After shrink_to_fit: " << s.capacity() << '\n';
+}
+```
+
+Possible output:
+
+```text
+1) Initially: 15
+2) After reserve(101): 101
+3) Capacity: 202
+4) Capacity: 404
+5) Capacity: 808
+6) Capacity: 1616
+7) After shrink_to_fit: 809
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-reserve:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-reserve:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={847} standard="C++98">
+    <PublishedBehavior>there was no exception safety guarantee</PublishedBehavior>
+    <CorrectedBehavior>added strong exception safety guarantee</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-string-basic-string-reserve:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`capacity`](/docs/cpp/library/string/basic_string/capacity)</DescriptionTerm>
+    <DescriptionBody>returns the number of characters that can be held in currently allocated storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`resize`](/docs/cpp/library/string/basic_string/resize)</DescriptionTerm>
+    <DescriptionBody>changes the number of characters stored (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

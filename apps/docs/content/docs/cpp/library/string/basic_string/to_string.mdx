@@ -1,0 +1,173 @@
+---
+title: "std::to_string"
+description: "Converts a numeric value to std::string."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/to_string"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-to-string:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`std::string to_string( int value );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`std::string to_string( long value );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`std::string to_string( long long value );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`std::string to_string( unsigned value );`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`std::string to_string( unsigned long value );`} />
+  <Declaration id="6" language="cpp" since="C++11" code={`std::string to_string( unsigned long long value );`} />
+  <Declaration id="7" language="cpp" since="C++11" code={`std::string to_string( float value );`} />
+  <Declaration id="8" language="cpp" since="C++11" code={`std::string to_string( double value );`} />
+  <Declaration id="9" language="cpp" since="C++11" code={`std::string to_string( long double value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-to-string:0001 */}
+Converts a numeric value to [`std::string`](/docs/cpp/library/string/basic_string).
+
+{/* source:cpp-string-basic-string-to-string:0002 */}
+<Revision until="C++26">
+Let `buf` be an internal to the conversion functions buffer, sufficiently large to contain the result of conversion.
+
+1. 1) Converts a signed integer to a string as if by `std::sprintf(buf, "%d", value)`.
+2. 2) Converts a signed integer to a string as if by `std::sprintf(buf, "%ld", value)`.
+3. 3) Converts a signed integer to a string as if by `std::sprintf(buf, "%lld", value)`.
+4. 4) Converts an unsigned integer to a string as if by `std::sprintf(buf, "%u", value)`.
+5. 5) Converts an unsigned integer to a string as if by `std::sprintf(buf, "%lu", value)`.
+6. 6) Converts an unsigned integer to a string as if by `std::sprintf(buf, "%llu", value)`.
+7. 7,8) Converts a floating point value to a string as if by `std::sprintf(buf, "%f", value)`.
+8. 9) Converts a floating point value to a string as if by `std::sprintf(buf, "%Lf", value)`.
+</Revision>
+
+<Revision since="C++26">
+1. 1-9) Converts a numeric value to a string as if by `std::format("{}", value)`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-string-basic-string-to-string:0003 */}
+<ParameterList>
+  <Parameter name="value">a numeric value to convert</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-to-string:0004 */}
+A string holding the converted value.
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-to-string:0005 */}
+May throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) from the [`std::string`](/docs/cpp/library/string/basic_string) constructor.
+
+### Notes
+
+{/* source:cpp-string-basic-string-to-string:0006 */}
+- With floating point types `std::to_string` may yield unexpected results as the number of significant digits in the returned string can be zero, see the example.
+- The return value may differ significantly from what `std::cout` prints by default, see the example.
+
+{/* source:cpp-string-basic-string-to-string:0007 */}
+<Revision until="C++26">
+`std::to_string` relies on the current C locale for formatting purposes, and therefore concurrent calls to `std::to_string` from multiple threads may result in partial serialization of calls.
+
+- The results of overloads for integer types do not rely on the current C locale, and thus implementations generally avoid access to the current C locale in these overloads for both correctness and performance. However, such avoidance is not guaranteed by the standard.
+</Revision>
+
+{/* source:cpp-string-basic-string-to-string:0008 */}
+C++17 provides [`std::to_chars`](/docs/cpp/library/text/to_chars) as a higher-performance locale-independent alternative.
+
+{/* source:cpp-string-basic-string-to-string:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_to_string`](/docs/cpp/library/feature_test#cpp_lib_to_string) | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_lib_to_string_202306L) | (C++26) | Redefining `std::to_string` in terms of [`std::format`](/docs/cpp/library/text/format/format) |
+
+### Example
+
+{/* source:cpp-string-basic-string-to-string:0010 */}
+```cpp
+#include <cstdio>
+#include <format>
+#include <initializer_list>
+#include <iostream>
+#include <string>
+ 
+#if __cpp_lib_to_string >= 202306L
+constexpr auto revision() { return " (post C++26)"; }
+#else
+constexpr auto revision() { return " (pre C++26)"; }
+#endif
+ 
+int main()
+{
+    for (const double f : {1.23456789555555, 23.43, 1e-9, 1e40, 1e-40, 123456789.0})
+    {
+        std::cout << "to_string:\t" << std::to_string(f) << revision() << '\n';
+ 
+        // Before C++26, the output of std::to_string matches std::printf.
+        std::printf("printf:\t\t%f\n", f);
+ 
+        // As of C++26, the output of std::to_string matches std::format.
+        std::cout << std::format("format:\t\t{}\n", f);
+ 
+        std::cout << "std::cout:\t" << f << "\n\n";
+    }
+}
+```
+
+Possible output:
+
+```text
+to_string:      1.234568 (pre C++26)
+printf:         1.234568
+format:         1.23456789555555
+std::cout:      1.23457
+ 
+to_string:      23.430000 (pre C++26)
+printf:         23.430000
+format:         23.43
+std::cout:      23.43
+ 
+to_string:      0.000000 (pre C++26)
+printf:         0.000000
+format:         1e-09
+std::cout:      1e-09
+ 
+to_string:      10000000000000000303786028427003666890752.000000 (pre C++26)
+printf:         10000000000000000303786028427003666890752.000000
+format:         1e+40
+std::cout:      1e+40
+ 
+to_string:      0.000000 (pre C++26)
+printf:         0.000000
+format:         1e-40
+std::cout:      1e-40
+ 
+to_string:      123456789.000000 (pre C++26)
+printf:         123456789.000000
+format:         123456789
+std::cout:      1.23457e+08
+```
+
+### See also
+
+{/* source:cpp-string-basic-string-to-string:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_wstring`](/docs/cpp/library/string/basic_string/to_wstring) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts an integral or floating-point value to `wstring` (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stoul` `stoull`](/docs/cpp/library/string/basic_string/stoul) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a string to an unsigned integer (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stoi` `stol` `stoll`](/docs/cpp/library/string/basic_string/stol) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a string to a signed integer (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stof` `stod` `stold`](/docs/cpp/library/string/basic_string/stof) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a string to a floating point value (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_chars`](/docs/cpp/library/text/to_chars) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts an integer or floating-point value to a character sequence (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

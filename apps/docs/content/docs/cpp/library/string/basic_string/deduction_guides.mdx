@@ -1,0 +1,99 @@
+---
+title: "deduction guides for std::basic_string"
+description: "Guides (2,3) are needed because the std::basic_string constructors for std::basic_string_views are made templates to avoid causing ambiguities in existing code."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class InputIt, class Alloc = std::allocator<
+                             typename std::iterator_traits<InputIt>::value_type> >
+basic_string( InputIt, InputIt, Alloc = Alloc() )
+    -> basic_string<typename std::iterator_traits<InputIt>::value_type,
+                    std::char_traits<
+
+                        typename std::iterator_traits<InputIt>::value_type>, Alloc>;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class CharT,
+          class Traits,
+          class Alloc = std::allocator<CharT> >
+explicit basic_string( std::basic_string_view<CharT, Traits>, const Alloc& = Alloc() )
+
+    -> basic_string<CharT, Traits, Alloc>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class CharT,
+          class Traits,
+          class Alloc = std::allocator<CharT>> >
+basic_string( std::basic_string_view<CharT, Traits>,
+              typename /* see below */::size_type,
+              typename /* see below */::size_type,
+              const Alloc& = Alloc() )
+
+    -> basic_string<CharT, Traits, Alloc>;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< ranges::input_range R,
+          class Alloc = std::allocator<ranges::range_value_t<R>> >
+basic_string( std::from_range_t, R&&, Alloc = Alloc() )
+    -> basic_string<ranges::range_value_t<R>,
+
+                       std::char_traits<ranges::range_value_t<R>>, Alloc>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-deduction-guides:0001 */}
+1) This [deduction guide](/docs/cpp/language/templates/ctad) is provided for [`std::basic_string`](/docs/cpp/library/string/basic_string) to allow deduction from an iterator range. This overload participates in overload resolution only if `InputIt` satisfies [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) and `Alloc` satisfies [*Allocator*](/docs/cpp/library/named_req/Allocator).
+
+{/* source:cpp-string-basic-string-deduction-guides:0002 */}
+2,3) These deduction guides are provided for [`std::basic_string`](/docs/cpp/library/string/basic_string) to allow deduction from a [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view). The `size_type` parameter type in (3) refers to the `size_type` member type of the type deduced by the deduction guide. These overloads participate in overload resolution only if `Alloc` satisfies [*Allocator*](/docs/cpp/library/named_req/Allocator).
+
+{/* source:cpp-string-basic-string-deduction-guides:0003 */}
+4) This deduction guide is provided for [`std::basic_string`](/docs/cpp/library/string/basic_string) to allow deduction from a [`std::from_range_t`](/docs/cpp/library/ranges/from_range) tag and an [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-string-basic-string-deduction-guides:0004 */}
+Note: the extent to which the library determines that a type does not satisfy [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) is unspecified, except that as a minimum integral types do not qualify as input iterators. Likewise, the extent to which it determines that a type does not satisfy [*Allocator*](/docs/cpp/library/named_req/Allocator) is unspecified, except that as a minimum the member type `Alloc::value_type` must exist and the expression `std::declval<Alloc&>().allocate(std::size_t{})` must be well-formed when treated as an unevaluated operand.
+
+### Notes
+
+{/* source:cpp-string-basic-string-deduction-guides:0005 */}
+Guides ([2,3](/docs/cpp/library/string/basic_string/deduction_guides#Version_2)) are needed because the [`std::basic_string`](/docs/cpp/library/string/basic_string) constructors for [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view)s are made templates to avoid causing ambiguities in existing code, and those templates do not support class template argument deduction.
+
+### Notes
+
+{/* source:cpp-string-basic-string-deduction-guides:0006 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_containers_ranges`](/docs/cpp/library/feature_test#cpp_lib_containers_ranges) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_containers_ranges_202202L) | (C++23) | [Ranges-aware](/docs/cpp/library/ranges/to#container_compatible_range) construction and insertion; overload ([4](/docs/cpp/library/string/basic_string/deduction_guides#Version_4)) |
+
+### Example
+
+{/* source:cpp-string-basic-string-deduction-guides:0007 */}
+```cpp
+#include <cassert>
+#include <string>
+#include <vector>
+ 
+int main()
+{
+    std::vector<char> v = {'a', 'b', 'c'};
+    std::basic_string s1(v.begin(), v.end()); // uses deduction guide (1)
+    assert(s1 == "abc");
+ 
+#if __cpp_lib_containers_ranges >= 202202L
+    std::vector<wchar_t> v4{0x43, 43, 053, 0x32, 0x33};
+    std::basic_string s4(std::from_range, v4); // uses deduction guide (4)
+    assert(s4 == L"C++23");
+#endif
+}
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-deduction-guides:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-deduction-guides:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3075} standard="C++17">
+    <PublishedBehavior>deduction from `basic_string_view` was unsupported (exacerbated by [LWG issue 2946](https://cplusplus.github.io/LWG/issue2946))</PublishedBehavior>
+    <CorrectedBehavior>deduction guides added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

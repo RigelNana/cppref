@@ -1,0 +1,173 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::resize"
+description: "Resizes the string to contain count characters."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/resize"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-resize:0000 */}
+<DeclarationDoc>
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+  <Declaration id="1" language="cpp" code={`void resize( size_type count );`} />
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" code={`void resize( size_type count, CharT ch );`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-resize:0001 */}
+Resizes the string to contain `count` characters.
+
+{/* source:cpp-string-basic-string-resize:0002 */}
+If the current size is less than `count`, additional characters are appended:
+
+{/* source:cpp-string-basic-string-resize:0003 */}
+1) Initializes appended characters to `CharT()` (`'\0'` if `CharT` is `char`).
+
+{/* source:cpp-string-basic-string-resize:0004 */}
+2) Initializes appended characters to `ch`.
+
+{/* source:cpp-string-basic-string-resize:0005 */}
+If the current size is greater than `count`, the string is reduced to its first `count` elements.
+
+### Parameters
+
+{/* source:cpp-string-basic-string-resize:0006 */}
+<ParameterList>
+  <Parameter name="count">new size of the string</Parameter>
+  <Parameter name="ch">character to initialize the new characters with</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-string-basic-string-resize:0007 */}
+[`std::length_error`](/docs/cpp/library/error/length_error) if `count > max_size()` is `true`. Any exceptions thrown by corresponding `Allocator`.
+
+{/* source:cpp-string-basic-string-resize:0008 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-string-basic-string-resize:0009 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
+ 
+int main()
+{
+    const unsigned desired_length{8};
+    std::string long_string("Where is the end?");
+    std::string short_string("H");
+ 
+    std::cout << "Basic functionality:\n"
+              << "Shorten:\n"
+              << "1. Before: " << std::quoted(long_string) << '\n';
+    long_string.resize(desired_length);
+    std::cout << "2. After:  " << std::quoted(long_string) << '\n';
+ 
+    std::cout << "Lengthen with a given value 'a':\n"
+              << "3. Before: " << std::quoted(short_string) << '\n';
+    short_string.resize(desired_length, 'a');
+    std::cout << "4. After:  " << std::quoted(short_string) << '\n';
+ 
+    std::cout << "Lengthen with char() == " << static_cast<int>(char()) << '\n'
+              << "5. Before: " << std::quoted(short_string) << '\n';
+    short_string.resize(desired_length + 3);
+    std::cout << "6. After:  \"";
+    for (char c : short_string)
+        std::cout << (c == char() ? '@' : c);
+    std::cout << "\"\n\n";
+ 
+    std::cout << "Errors:\n";
+    std::string s;
+ 
+    try
+    {
+        // size is OK, no length_error
+        // (may throw bad_alloc)
+        s.resize(s.max_size() - 1, 'x');
+    }
+    catch (const std::bad_alloc& ex)
+    {
+        std::cout << "1. Exception: " << ex.what() << '\n';
+    }
+ 
+    try
+    {
+        // size is OK, no length_error
+        // (may throw bad_alloc)
+        s.resize(s.max_size(), 'x');
+    }
+    catch (const std::bad_alloc& ex)
+    {
+        std::cout << "2. Exception: " << ex.what() << '\n';
+    }
+ 
+    try
+    {
+        // size is BAD, throw length_error
+        s.resize(s.max_size() + 1, 'x');
+    }
+    catch (const std::length_error& ex)
+    {
+        std::cout << "3. Length error: " << ex.what() << '\n';
+    }
+}
+```
+
+Possible output:
+
+```text
+Basic functionality:
+Shorten:
+1. Before: "Where is the end?"
+2. After:  "Where is"
+Lengthen with a given value 'a':
+3. Before: "H"
+4. After:  "Haaaaaaa"
+Lengthen with char() == 0
+5. Before: "Haaaaaaa"
+6. After:  "Haaaaaaa@@@"
+ 
+Errors:
+1. Exception: std::bad_alloc
+2. Exception: std::bad_alloc
+3. Length error: basic_string::_M_replace_aux
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-resize:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-resize:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={847} standard="C++98">
+    <PublishedBehavior>there was no exception safety guarantee</PublishedBehavior>
+    <CorrectedBehavior>added strong exception safety guarantee</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2250} standard="C++98">
+    <PublishedBehavior>the behavior was undefined if<br />`count > max_size()` is `true`</PublishedBehavior>
+    <CorrectedBehavior>always throws an exception in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-string-basic-string-resize:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`, `length`](/docs/cpp/library/string/basic_string/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reserve`](/docs/cpp/library/string/basic_string/reserve)</DescriptionTerm>
+    <DescriptionBody>reserves storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shrink_to_fit`](/docs/cpp/library/string/basic_string/shrink_to_fit) (DR*)</DescriptionTerm>
+    <DescriptionBody>reduces memory usage by freeing unused memory (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

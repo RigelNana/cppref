@@ -1,0 +1,146 @@
+---
+title: "operator==,!=,<,<=,>,>=,<=>(std::basic_string_view)"
+description: "Compares two views."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string_view/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0000 */}
+<DeclarationDoc>
+Defined in header [`<string_view>`](/docs/cpp/library/headers/string_view)
+
+  <Declaration id="1" language="cpp" since="C++17" until="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator==( std::basic_string_view<CharT,Traits> lhs,
+
+                           std::basic_string_view<CharT,Traits> rhs ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator==(
+    std::basic_string_view<CharT,Traits> lhs,
+
+    std::type_identity_t<std::basic_string_view<CharT,Traits>> rhs ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++17" until="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator!=( std::basic_string_view<CharT,Traits> lhs,
+
+                           std::basic_string_view<CharT,Traits> rhs ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++17" until="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator<( std::basic_string_view<CharT,Traits> lhs,
+
+                          std::basic_string_view<CharT,Traits> rhs ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++17" until="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator<=( std::basic_string_view<CharT,Traits> lhs,
+
+                           std::basic_string_view<CharT,Traits> rhs ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++17" until="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator>( std::basic_string_view<CharT,Traits> lhs,
+
+                          std::basic_string_view<CharT,Traits> rhs ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++17" until="C++20" code={`template< class CharT, class Traits >
+constexpr bool operator>=( std::basic_string_view<CharT,Traits> lhs,
+
+                           std::basic_string_view<CharT,Traits> rhs ) noexcept;`} />
+  <Declaration id="8" language="cpp" since="C++20" code={`template< class CharT, class Traits >
+constexpr /*comp-cat*/ operator<=>(
+    std::basic_string_view<CharT,Traits> lhs,
+
+    std::type_identity_t<std::basic_string_view<CharT,Traits>> rhs ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0001 */}
+Compares two views.
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0002 */}
+All comparisons are done via the [`compare()`](/docs/cpp/library/string/basic_string_view/compare) member function (which itself is defined in terms of `Traits::compare()`):
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0003 */}
+- Two views are equal if both the size of `lhs` and `rhs` are equal and each character in `lhs` has an equivalent character in `rhs` at the same position.
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0004 */}
+- The ordering comparisons are done lexicographically – the comparison is performed by a function equivalent to [`std::lexicographical_compare`](/docs/cpp/library/algorithm/lexicographical_compare).
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0005 */}
+<Revision until="C++20">
+The implementation provides sufficient additional `constexpr` and `noexcept` overloads of these functions so that a `basic_string_view<CharT,Traits>` object `sv` may be compared to another object `t` with an implicit conversion to `basic_string_view<CharT,Traits>`, with semantics identical to comparing `sv` and `basic_string_view<CharT,Traits>(t)`.
+</Revision>
+
+<Revision since="C++20">
+The return type of three-way comparison operators (`/*comp-cat*/`) is `Traits::comparison_category` if that qualified-id denotes a type, `std::weak_ordering` otherwise. If `/*comp-cat*/` is not a comparison category type, the program is ill-formed.
+
+The `<`, `<=`, `>`, `>=`, and `!=` operators are [synthesized](/docs/cpp/language/expressions/operators#Comparison_operators) from `operator<=>` and `operator==` respectively.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0006 */}
+<ParameterList>
+  <Parameter name="lhs, rhs">views to compare</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0007 */}
+1-6) `true` if the corresponding comparison holds, `false` otherwise.
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0008 */}
+7) `static_cast</*comp-cat*/>(lhs.compare(rhs) <=> 0)`
+
+### Complexity
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0009 */}
+Linear in the size of the views.
+
+### Notes
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0010 */}
+<Revision until="C++20">
+Sufficient additional overloads can be implemented through non-deduced context in one parameter type.
+</Revision>
+
+<Revision since="C++20">
+Three-way comparison result type of [`std::string_view`](/docs/cpp/library/string/basic_string_view), [`std::wstring_view`](/docs/cpp/library/string/basic_string_view), [`std::u8string_view`](/docs/cpp/library/string/basic_string_view), [`std::u16string_view`](/docs/cpp/library/string/basic_string_view) and [`std::u32string_view`](/docs/cpp/library/string/basic_string_view) is `std::strong_ordering`.
+
+`std::type_identity_t` is used for non-deduced context, which makes arguments that implicitly convertible to the string view type comparable with the string view.
+</Revision>
+
+### Example
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0011 */}
+```cpp
+#include <string_view>
+ 
+int main()
+{
+    using namespace std::literals;
+ 
+    static_assert(""sv == ""sv);
+ 
+    static_assert(""sv == "", "Selects an additional overload until C++20.");
+ 
+    static_assert("" == ""sv, "Selects an additional overload until C++20."
+                              "Uses a rewritten candidate since C++20.");
+ 
+    static_assert(!(""sv != ""sv), "Uses the rewritten candidate since C++20.");
+ 
+    static_assert(!(""sv != ""), "Selects an additional overload until C++20;"
+                                 "Uses a rewritten candidate since C++20.");
+ 
+    static_assert(!("" != ""sv), "Selects an additional overload until C++20."
+                                 "Uses a rewritten candidate since C++20.");
+}
+```
+
+### Defect reports
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-view-operator-cmp:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3432} standard="C++20">
+    <PublishedBehavior>the return type of `operator<=>` was not required to be a comparison category type</PublishedBehavior>
+    <CorrectedBehavior>required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3950} standard="C++20">
+    <PublishedBehavior>redundant additional overloads were still required</PublishedBehavior>
+    <CorrectedBehavior>overload sets reduced</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

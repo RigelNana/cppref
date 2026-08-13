@@ -1,0 +1,154 @@
+---
+title: "std::basic_string<CharT,Traits,Allocator>::operator+="
+description: "Appends additional characters to the string."
+source_url: "https://en.cppreference.com/w/cpp/string/basic_string/operator+="
+language: "C++"
+---
+
+{/* source:cpp-string-basic-string-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`basic_string& operator+=( const basic_string& str );`} />
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" code={`basic_string& operator+=( CharT ch );`} />
+  (constexpr since C++20)
+  <Declaration id="3" language="cpp" code={`basic_string& operator+=( const CharT* s );`} />
+  (constexpr since C++20)
+  <Declaration id="4" language="cpp" since="C++11" code={`basic_string& operator+=( std::initializer_list<CharT> ilist );`} />
+  (constexpr since C++20)
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class StringViewLike >
+basic_string& operator+=( const StringViewLike& t );`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-string-basic-string-operator:0001 */}
+Appends additional characters to the string.
+
+{/* source:cpp-string-basic-string-operator:0002 */}
+1. 1) Appends string `str`.
+
+{/* source:cpp-string-basic-string-operator:0003 */}
+2. 2) Appends character `ch`.
+
+{/* source:cpp-string-basic-string-operator:0004 */}
+3. 3) Appends the null-terminated character string pointed to by `s`.
+
+{/* source:cpp-string-basic-string-operator:0005 */}
+4. 4) Appends characters in the initializer list `ilist`.
+
+{/* source:cpp-string-basic-string-operator:0006 */}
+5. 5) Implicitly converts `t` to a string view `sv` as if by `std::basic_string_view<CharT, Traits> sv = t;`, then appends characters in the string view `sv` as if by `append(sv)`.
+
+{/* source:cpp-string-basic-string-operator:0007 */}
+6. This overload participates in overload resolution only if `std::is_convertible_v<const StringViewLike&, std::basic_string_view<CharT, Traits>>` is `true` and `std::is_convertible_v<const StringViewLike&, const CharT*>` is `false`.
+
+{/* source:cpp-string-basic-string-operator:0008 */}
+### Parameters
+
+<ParameterList>
+  <Parameter name="str">string to append</Parameter>
+  <Parameter name="ch">character value to append</Parameter>
+  <Parameter name="s">pointer to a null-terminated character string to append</Parameter>
+  <Parameter name="ilist">[`std::initializer_list`](/docs/cpp/library/utility/initializer_list) with the characters to append</Parameter>
+  <Parameter name="t">object (convertible to [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view)) with the characters to append</Parameter>
+</ParameterList>
+
+{/* source:cpp-string-basic-string-operator:0009 */}
+### Return value
+
+`*this`
+
+{/* source:cpp-string-basic-string-operator:0010 */}
+### Complexity
+
+There are no standard complexity guarantees, typical implementations behave similar to [`std::vector::insert()`](/docs/cpp/library/container/vector/insert).
+
+{/* source:cpp-string-basic-string-operator:0011 */}
+### Exceptions
+
+If the operation would cause [`size()`](/docs/cpp/library/string/basic_string/size) to exceed [`max_size()`](/docs/cpp/library/string/basic_string/max_size), throws [`std::length_error`](/docs/cpp/library/error/length_error).
+
+{/* source:cpp-string-basic-string-operator:0012 */}
+If an exception is thrown for any reason, this function has no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+{/* source:cpp-string-basic-string-operator:0013 */}
+### Notes
+
+Overload (2) can accept any types that are implicitly convertible to `CharT`. For `std::string`, where `CharT` is `char`, the set of acceptable types includes all arithmetic types. This may have unintended effects.
+
+{/* source:cpp-string-basic-string-operator:0014 */}
+### Example
+
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::string str;
+ 
+    // reserve sufficient storage space to avoid memory reallocation
+    str.reserve(50);
+ 
+    std::cout << std::quoted(str) << '\n'; // empty string
+ 
+    str += "This";
+    std::cout << std::quoted(str) << '\n';
+ 
+    str += std::string(" is ");
+    std::cout << std::quoted(str) << '\n';
+ 
+    str += 'a';
+    std::cout << std::quoted(str) << '\n';
+ 
+    str += {' ', 's', 't', 'r', 'i', 'n', 'g', '.'};
+    std::cout << std::quoted(str) << '\n';
+ 
+    str += 69.96; // Equivalent to str += static_cast<char>(69.96);
+                  // 'E' (ASCII code 69) is appended by overload (2),
+                  // which might not be the intent.
+ 
+    // To add a numeric value, consider std::to_string():
+    str += std::to_string(1729);
+ 
+    std::cout << std::quoted(str) << '\n';
+}
+```
+
+Output:
+
+```text
+""
+"This"
+"This is "
+"This is a"
+"This is a string."
+"This is a string.E1729"
+```
+
+{/* source:cpp-string-basic-string-operator:0015 */}
+### Defect reports
+
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-string-basic-string-operator:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={847} standard="C++98">
+    <PublishedBehavior>there was no exception safety guarantee</PublishedBehavior>
+    <CorrectedBehavior>added strong exception safety guarantee</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2946} standard="C++17">
+    <PublishedBehavior>overload (5) caused ambiguity in some cases</PublishedBehavior>
+    <CorrectedBehavior>avoided by making it a template</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-string-basic-string-operator:0017 */}
+### See also
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`append`](/docs/cpp/library/string/basic_string/append)</DescriptionTerm>
+    <DescriptionBody>appends characters to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
