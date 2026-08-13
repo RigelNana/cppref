@@ -1,0 +1,64 @@
+---
+title: "C++ named requirements: UnformattedOutputFunction"
+description: "A UnformattedOutputFunction is a stream output function that performs the following:"
+source_url: "https://en.cppreference.com/w/cpp/named_req/UnformattedOutputFunction"
+language: "C++"
+---
+
+### Requirements
+
+{/* source:cpp-named-req-unformattedoutputfunction:0000 */}
+A *UnformattedOutputFunction* is a stream output function that performs the following:
+
+{/* source:cpp-named-req-unformattedoutputfunction:0001 */}
+1. Constructs an object of type [`basic_ostream::sentry`](/docs/cpp/library/io/basic_ostream/sentry) with automatic storage duration, which performs the following:
+   - If [`eofbit`](/docs/cpp/library/io/ios_base/iostate) or [`badbit`](/docs/cpp/library/io/ios_base/iostate) are set on the output stream, sets the [`failbit`](/docs/cpp/library/io/ios_base/iostate) as well, and if exceptions on `failbit` are enabled in this output stream's [`exception mask`](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & failbit) != 0`), throws [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure).
+   - Flushes the tie()'d output stream, if applicable.
+
+{/* source:cpp-named-req-unformattedoutputfunction:0002 */}
+2. Checks the status of the sentry by calling `sentry::operator bool()`, which is equivalent to [`basic_ios::good`](/docs/cpp/library/io/basic_ios/good).
+   - If the operator returns `false` or sentry's constructor throws an exception, no output takes place.
+   - If the operator returns `true`, attempts to perform the desired output by inserting the characters into the output stream as if by calling `rdbuf()->sputc()`. Other public members of [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) may also be used, but virtual members of `rdbuf()` except [`overflow()`](/docs/cpp/library/io/basic_streambuf/overflow), [`xsputn()`](/docs/cpp/library/io/basic_streambuf/sputn) and [`sync()`](/docs/cpp/library/io/basic_streambuf/pubsync) will never be called.
+     - If an exception is thrown during output, sets `badbit` in the output stream. If exceptions on `badbit` are enabled in this stream's [`exception mask`](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & badbit) != 0`), the exception is also rethrown.
+     - If no exception was thrown, returns the value specified by the function.
+
+{/* source:cpp-named-req-unformattedoutputfunction:0003 */}
+3. In any event, whether terminating by exception or returning, the sentry's destructor is called before leaving this function.
+
+### Standard library
+
+{/* source:cpp-named-req-unformattedoutputfunction:0004 */}
+The following standard library functions are *UnformattedOutputFunctions*.
+
+{/* source:cpp-named-req-unformattedoutputfunction:0005 */}
+- [`basic_ostream::operator<<(basic_streambuf*)`](/docs/cpp/library/io/basic_ostream/operator_ltlt)
+- [`basic_ostream::put`](/docs/cpp/library/io/basic_ostream/put)
+- [`basic_ostream::write`](/docs/cpp/library/io/basic_ostream/write)
+- [`basic_ostream::flush`](/docs/cpp/library/io/basic_ostream/flush)
+
+{/* source:cpp-named-req-unformattedoutputfunction:0006 */}
+<Revision since="C++11">
+- [`basic_ostream::tellp`](/docs/cpp/library/io/basic_ostream/tellp) (except calls pubseekoff instead of output)
+- [`basic_ostream::seekp`](/docs/cpp/library/io/basic_ostream/seekp) (except calls pubseekoff or pubseekpos instead of output)
+</Revision>
+
+### Defect reports
+
+{/* source:cpp-named-req-unformattedoutputfunction:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-unformattedoutputfunction:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={63} standard="C++98">
+    <PublishedBehavior>the exception-handling policy was missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={160} standard="C++98">
+    <PublishedBehavior>the process of determining whether the exception caught<br />is rethrown mentioned a non-existing function `exception()`</PublishedBehavior>
+    <CorrectedBehavior>corrected to [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={165} standard="C++98">
+    <PublishedBehavior>the only virtual member allowed to be<br />called on `rdbuf()` was `overflow()`</PublishedBehavior>
+    <CorrectedBehavior>also allowed<br />`xsputn()` and `sync()`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

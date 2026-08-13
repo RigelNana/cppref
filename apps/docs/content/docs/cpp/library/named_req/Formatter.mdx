@@ -1,0 +1,95 @@
+---
+title: "C++ named requirements: Formatter (since C++20)"
+description: "Formatter is a type that abstracts formatting operations for a given formatting argument type and character type."
+source_url: "https://en.cppreference.com/w/cpp/named_req/Formatter"
+language: "C++"
+---
+
+{/* source:cpp-named-req-formatter:0000 */}
+*Formatter* is a type that abstracts formatting operations for a given formatting argument type and character type. Specializations of [`std::formatter`](/docs/cpp/library/text/format/formatter) provided by the standard library are required to meet the requirements of *Formatter* except as noted otherwise.
+
+{/* source:cpp-named-req-formatter:0001 */}
+A *Formatter* is able to format both const and non-const arguments, typically by providing a `format` member function that takes a const reference.
+
+### Requirements
+
+{/* source:cpp-named-req-formatter:0002 */}
+A type satisfies *Formatter* if it satisfies [*BasicFormatter*](/docs/cpp/library/named_req/BasicFormatter) and given the following types and values, the expressions shown in the table below are valid and have the indicated semantics:
+
+{/* source:cpp-named-req-formatter:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`CharT`</DescriptionTerm>
+    <DescriptionBody>a character type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Arg`</DescriptionTerm>
+    <DescriptionBody>a formatting argument type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Formatter`</DescriptionTerm>
+    <DescriptionBody>a *Formatter* type for types `Arg` and `CharT`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`OutputIt`</DescriptionTerm>
+    <DescriptionBody>a [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator) type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`ParseCtx`</DescriptionTerm>
+    <DescriptionBody>`std::basic_format_parse_context<CharT>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`FmtCtx`</DescriptionTerm>
+    <DescriptionBody>`std::basic_format_context<OutputIt, CharT>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`f`</DescriptionTerm>
+    <DescriptionBody>a value of type (possibly const-qualified) `Formatter`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`arg`</DescriptionTerm>
+    <DescriptionBody>an lvalue of type `Arg`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`t`</DescriptionTerm>
+    <DescriptionBody>a value of type convertible to (possibly const-qualified) `Arg`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`parse_ctx`</DescriptionTerm>
+    <DescriptionBody>an lvalue of type `ParseCtx` satisfying all following conditions:<br />`parse_ctx.begin()` points to the beginning of the *format-spec* of the replacement field being formatted in the [format string](/docs/cpp/library/text/format/basic_format_string#Format_specification).<br />If *format-spec* is not present or empty, then either `parse_ctx.begin() == parse_ctx.end()` or `*parse_ctx.begin() == '}'`.</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`fmt_ctx`</DescriptionTerm>
+    <DescriptionBody>an lvalue of type `FmtCtx`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-named-req-formatter:0004 */}
+<table>
+<thead><tr><th>Expression</th><th>Return type</th><th>Semantics</th></tr></thead>
+<tbody>
+<tr>
+<td>`f.format(t, fmt_ctx)`</td>
+<td>`FmtCtx::iterator`</td>
+<td>Formats `t` according to the specifiers stored in `f`, writes the output to `fmt_ctx.out()` and returns an end iterator of the output range.<br />The output can only depend on<br />- `t`,<br />- `fmt_ctx.locale()`,<br />- the range `[parse_ctx.begin(), parse_ctx.end())` from the last call to `f.parse(parse_ctx)`, and<br />- `fmt_ctx.arg(n)` for any value `n` of type [`std::size_t`](/docs/cpp/library/utility/types/size_t).</td>
+</tr>
+<tr>
+<td>`f.format(arg, fmt_ctx)`</td>
+<td>`FmtCtx::iterator`</td>
+<td>As above, but does not modify `arg`.</td>
+</tr>
+</tbody>
+</table>
+
+### Defect reports
+
+{/* source:cpp-named-req-formatter:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-formatter:0006 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3892} standard="C++20">
+    <PublishedBehavior>the value of `pc.begin()` was unclear if *format-spec* is not present</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

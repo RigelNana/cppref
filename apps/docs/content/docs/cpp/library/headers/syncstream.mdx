@@ -1,0 +1,179 @@
+---
+title: "Standard library header <syncstream> (C++20)"
+description: "This header is part of the Input/Output library."
+source_url: "https://en.cppreference.com/w/cpp/header/syncstream"
+language: "C++"
+---
+
+{/* source:cpp-header-syncstream:0000 */}
+This header is part of the [`Input/Output`](/docs/cpp/library/io) library.
+
+{/* source:cpp-header-syncstream:0001 */}
+## Includes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`<ostream>`](/docs/cpp/library/headers/ostream)</DescriptionTerm>
+    <DescriptionBody>[`std::basic_ostream`](/docs/cpp/library/io/basic_ostream), [`std::basic_iostream`](/docs/cpp/library/io/basic_iostream) class templates and typedefs</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Classes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_syncbuf`](/docs/cpp/library/io/basic_syncbuf) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>synchronized output device wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_osyncstream`](/docs/cpp/library/io/basic_osyncstream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>synchronized output stream wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`syncbuf` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_syncbuf<char>` (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`wsyncbuf` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_syncbuf<wchar_t>` (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`osyncstream` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_osyncstream<char>` (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`wosyncstream` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::basic_osyncstream<wchar_t>` (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::basic_syncbuf)`](/docs/cpp/library/io/basic_syncbuf/swap2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+
+## Synopsis
+
+{/* source:cpp-header-syncstream:0002 */}
+```cpp
+#include <ostream>
+ 
+namespace std {
+  template<class CharT, class Traits = char_traits<CharT>,
+           class Allocator = allocator<CharT>>
+    class basic_syncbuf;
+ 
+  using syncbuf = basic_syncbuf<char>;
+  using wsyncbuf = basic_syncbuf<wchar_t>;
+ 
+  template<class CharT, class Traits = char_traits<CharT>,
+           class Allocator = allocator<CharT>>
+    class basic_osyncstream;
+ 
+  using osyncstream = basic_osyncstream<char>;
+  using wosyncstream = basic_osyncstream<wchar_t>;
+}
+```
+
+### Class template std::basic_syncbuf
+
+{/* source:cpp-header-syncstream:0003 */}
+```cpp
+namespace std {
+  template<class CharT, class Traits = char_traits<CharT>,
+           class Allocator = allocator<CharT>>
+  class basic_syncbuf : public basic_streambuf<CharT, Traits> {
+  public:
+    using char_type      = CharT;
+    using int_type       = typename Traits::int_type;
+    using pos_type       = typename Traits::pos_type;
+    using off_type       = typename Traits::off_type;
+    using traits_type    = Traits;
+    using allocator_type = Allocator;
+ 
+    using streambuf_type = basic_streambuf<CharT, Traits>;
+ 
+    // construction and destruction
+    basic_syncbuf()
+      : basic_syncbuf(nullptr) {}
+    explicit basic_syncbuf(streambuf_type* obuf)
+      : basic_syncbuf(obuf, Allocator()) {}
+    basic_syncbuf(streambuf_type*, const Allocator&);
+    basic_syncbuf(basic_syncbuf&&);
+    ~basic_syncbuf();
+ 
+    // assignment and swap
+    basic_syncbuf& operator=(basic_syncbuf&&);
+    void swap(basic_syncbuf&);
+ 
+    // member functions
+    bool emit();
+    streambuf_type* get_wrapped() const noexcept;
+    allocator_type get_allocator() const noexcept;
+    void set_emit_on_sync(bool) noexcept;
+ 
+  protected:
+    // overridden virtual functions
+    int sync() override;
+ 
+  private:
+    streambuf_type* wrapped;    // exposition only
+    bool emit_on_sync{};        // exposition only
+  };
+ 
+  // specialized algorithms
+  template<class CharT, class Traits, class Allocator>
+    void swap(basic_syncbuf<CharT, Traits, Allocator>&,
+              basic_syncbuf<CharT, Traits, Allocator>&);
+}
+```
+
+### Class template std::basic_osyncstream
+
+{/* source:cpp-header-syncstream:0004 */}
+```cpp
+namespace std {
+  template<class CharT, class Traits = char_traits<CharT>,
+           class Allocator = allocator<CharT>>
+  class basic_osyncstream : public basic_ostream<CharT, Traits> {
+  public:
+    using char_type   = CharT;
+    using int_type    = typename Traits::int_type;
+    using pos_type    = typename Traits::pos_type;
+    using off_type    = typename Traits::off_type;
+    using traits_type = Traits;
+ 
+    using allocator_type = Allocator;
+    using streambuf_type = basic_streambuf<CharT, Traits>;
+    using syncbuf_type   = basic_syncbuf<CharT, Traits, Allocator>;
+ 
+    // construction and destruction
+    basic_osyncstream(streambuf_type*, const Allocator&);
+    explicit basic_osyncstream(streambuf_type* obuf)
+      : basic_osyncstream(obuf, Allocator()) {}
+    basic_osyncstream(basic_ostream<CharT, Traits>& os, const Allocator& allocator)
+      : basic_osyncstream(os.rdbuf(), allocator) {}
+    explicit basic_osyncstream(basic_ostream<CharT, Traits>& os)
+      : basic_osyncstream(os, Allocator()) {}
+    basic_osyncstream(basic_osyncstream&&) noexcept;
+    ~basic_osyncstream();
+ 
+    // assignment
+    basic_osyncstream& operator=(basic_osyncstream&&) noexcept;
+ 
+    // member functions
+    void emit();
+    streambuf_type* get_wrapped() const noexcept;
+    syncbuf_type* rdbuf() const noexcept
+    { return const_cast<syncbuf_type*>(addressof(sb)); }
+ 
+  private:
+    syncbuf_type sb;    // exposition only
+  };
+}
+```

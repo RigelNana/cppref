@@ -1,0 +1,221 @@
+---
+title: "C++ named requirements: CharTraits"
+description: "CharTraits is a traits class that abstracts basic character and string operations for a given character type."
+source_url: "https://en.cppreference.com/w/cpp/named_req/CharTraits"
+language: "C++"
+---
+
+{/* source:cpp-named-req-chartraits:0000 */}
+CharTraits is a traits class that abstracts basic character and string operations for a given character type. Most standard library string and input/output classes require a CharTraits template type parameter alongside a corresponding character template type parameter.
+
+### Requirements
+
+{/* source:cpp-named-req-chartraits:0001 */}
+No operation listed below on CharTraits may throw an exception.
+
+{/* source:cpp-named-req-chartraits:0002 */}
+Given
+
+{/* source:cpp-named-req-chartraits:0003 */}
+- `CharT`, a character type
+- `X`, a CharTraits type for type `CharT`
+- `c`, `d`, values of type `CharT`
+- `p`, `q`, values of type `const CharT*`
+- `s`, a value of type `CharT*`
+- `n`, `i`, `j`, values of type [`std::size_t`](/docs/cpp/library/utility/types/size_t)
+- `e`, `f`, values of type `X::int_type`
+- `pos`, a value of type `X::pos_type`
+- `state`, a value of type `X::state_type`
+- `r`, an lvalue of type `CharT`
+
+### Types
+
+{/* source:cpp-named-req-chartraits:0004 */}
+| Type | Semantics |
+| --- | --- |
+| `X::char_type` | `CharT` |
+| `X::int_type` | A type that can hold all valid values of `X::char_type` plus `X::eof()` |
+| `X::off_type` | Invokes implementation-defined behavior if not [`std::streamoff`](/docs/cpp/library/io/streamoff) when `X` is used as the traits template parameter in input/output classes. |
+| `X::pos_type` | Functions in input/output classes returning this type use `X::pos_type(X::off_type(-1))` as an invalid value to signal an error. Use of this invalid value as an argument to any [`std::istream`](/docs/cpp/library/io/basic_istream), [`std::ostream`](/docs/cpp/library/io/basic_ostream) or [`std::streambuf`](/docs/cpp/library/io/basic_streambuf) member taking a value of this type is undefined behavior. Invokes implementation-defined behavior if this type is not [`std::streampos`](/docs/cpp/library/io/fpos) when `X` is used as the traits template parameter in input/output classes |
+| `X::state_type` | [Destructible](/docs/cpp/library/named_req/Destructible), [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable), [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible), [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible) |
+
+### Expressions
+
+{/* source:cpp-named-req-chartraits:0005 */}
+| Expression | Return type | Semantics | Complexity |
+| --- | --- | --- | --- |
+| `X::eq(c, d)` | `bool` | Returns: whether `c` is to be treated as equal to `d` | Constant |
+| `X::lt(c, d)` | `bool` | Returns: whether `c` is to be treated as less than `d` | Constant |
+| `X::compare(p, q, n)` | `int` | Returns: `0` if for each `i` in `[0, n)`, `X::eq(p[i], q[i])` is `true`. Else, a negative value if For some `j` in `[0, n)`, `X::lt(p[j], q[j])` is `true` and For each `i` in `[0, j)`, `X::eq(p[i], q[i])` is `true`. Else a positive value | Linear |
+| `X::length(p)` | [`std::size_t`](/docs/cpp/library/utility/types/size_t) | Returns: the smallest `i` such that `X::eq(p[i], CharT())` is `true` | Linear |
+| `X::find(p, n, c)` | `const X::char_type*` | Returns: the smallest `q` in `[p, p + n)` such that `X::eq(*q, c)` is `true`; `0` otherwise | Linear |
+| `X::move(s, p, n)` | `X::char_type*` | For each `i` in `[0, n)`, performs `X::assign(s[i], p[i])`. Copies correctly even where the ranges `[p, p + n)` and `[s, s + n)` overlap. Returns: `s` | Linear |
+| `X::copy(s, p, n)` | `X::char_type*` | Requires: `[p, p + n)` and `[s, s + n)` do not overlap. Returns: `s`. For each `i` in `[0, n)`, performs `X::assign(s[i], p[i])` | Linear |
+| `X::assign(r, d)` | (Not used) | Assigns `r = d` | Constant |
+| `X::assign(s, n, c)` | `X::char_type*` | For each `i` in `[0, n)`, performs `X::assign(s[i], c)`. Returns: `s` | Linear |
+| `X::not_eof(e)` | `X::int_type` | Returns: `e` if `X::eq_int_type(e, X::eof())` is `false`. Otherwise a value `f` such that `X::eq_int_type(f, X::eof())` is `false` | Constant |
+| `X::to_char_type(e)` | `X::char_type` | Returns: If for some `c`, `X::eq_int_type(e, X::to_int_type(c))` is `true`, `c`. Else some unspecified value | Constant |
+| `X::to_int_type(c)` | `X::int_type` | Returns: some value `e`, constrained by the definitions of `X::to_char_type` and `X::eq_int_type` | Constant |
+| `X::eq_int_type(e, f)` | `bool` | For all `c` and `d`, `X::eq(c, d)` is equal to `X::eq_int_type(X::to_int_type(c), X::to_int_type(d))`. Returns: Yields `X::eq(c, d)` if for some `c` and `d`, `e == X::to_int_type(c)` and `f == X::to_int_type(d)`; Otherwise, yields `true` if `e` and `f` are both copies of `X::eof()`; Otherwise, yields `false` if one of `e` and `f` is a copy of `X::eof()` and the other is not; Otherwise the value is unspecified | Constant |
+| `X::eof()` | `X::int_type` | Returns: a value `e` such that `X::eq_int_type(e, X::to_int_type(c))` is `false` for all values `c` | Constant |
+
+### Standard library
+
+{/* source:cpp-named-req-chartraits:0006 */}
+CharTraits is required by the following standard library class templates as a template type parameter:
+
+{/* source:cpp-named-req-chartraits:0007 */}
+**Strings**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_string`](/docs/cpp/library/string/basic_string)</DescriptionTerm>
+    <DescriptionBody>stores and manipulates sequences of characters (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_string_view`](/docs/cpp/library/string/basic_string_view) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>read-only string view (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**Streams**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ios`](/docs/cpp/library/io/basic_ios)</DescriptionTerm>
+    <DescriptionBody>manages an arbitrary stream buffer (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_istream`](/docs/cpp/library/io/basic_istream)</DescriptionTerm>
+    <DescriptionBody>wraps a given abstract device ([`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf)) and provides high-level input interface (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ifstream`](/docs/cpp/library/io/basic_ifstream)</DescriptionTerm>
+    <DescriptionBody>implements high-level file stream input operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_istringstream`](/docs/cpp/library/io/basic_istringstream)</DescriptionTerm>
+    <DescriptionBody>implements high-level string stream input operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ispanstream`](/docs/cpp/library/io/basic_ispanstream) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>implements fixed character buffer input operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ostream`](/docs/cpp/library/io/basic_ostream)</DescriptionTerm>
+    <DescriptionBody>wraps a given abstract device ([`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf)) and provides high-level output interface (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ofstream`](/docs/cpp/library/io/basic_ofstream)</DescriptionTerm>
+    <DescriptionBody>implements high-level file stream output operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ostringstream`](/docs/cpp/library/io/basic_ostringstream)</DescriptionTerm>
+    <DescriptionBody>implements high-level string stream output operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_osyncstream`](/docs/cpp/library/io/basic_osyncstream) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>synchronized output stream wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_ospanstream`](/docs/cpp/library/io/basic_ospanstream) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>implements fixed character buffer output operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_iostream`](/docs/cpp/library/io/basic_iostream)</DescriptionTerm>
+    <DescriptionBody>wraps a given abstract device ([`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf)) and provides high-level input/output interface (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_fstream`](/docs/cpp/library/io/basic_fstream)</DescriptionTerm>
+    <DescriptionBody>implements high-level file stream input/output operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_stringstream`](/docs/cpp/library/io/basic_stringstream)</DescriptionTerm>
+    <DescriptionBody>implements high-level string stream input/output operations (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_spanstream`](/docs/cpp/library/io/basic_spanstream) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>implements fixed character buffer input/output operations (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**Stream iterators**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`istream_iterator`](/docs/cpp/library/iterator/istream_iterator)</DescriptionTerm>
+    <DescriptionBody>input iterator that reads from [`std::basic_istream`](/docs/cpp/library/io/basic_istream) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostream_iterator`](/docs/cpp/library/iterator/ostream_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**Stream buffers**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_streambuf`](/docs/cpp/library/io/basic_streambuf)</DescriptionTerm>
+    <DescriptionBody>abstracts a raw device (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_filebuf`](/docs/cpp/library/io/basic_filebuf)</DescriptionTerm>
+    <DescriptionBody>implements raw file device (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_stringbuf`](/docs/cpp/library/io/basic_stringbuf)</DescriptionTerm>
+    <DescriptionBody>implements raw string device (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_syncbuf`](/docs/cpp/library/io/basic_syncbuf) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>synchronized output device wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_spanbuf`](/docs/cpp/library/io/basic_spanbuf) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>implements raw fixed character buffer device (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**Stream buffer iterators**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`istreambuf_iterator`](/docs/cpp/library/iterator/istreambuf_iterator)</DescriptionTerm>
+    <DescriptionBody>input iterator that reads from [`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostreambuf_iterator`](/docs/cpp/library/iterator/ostreambuf_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-named-req-chartraits:0008 */}
+CharTraits is satisfied by the following standard library explicit specializations of [`std::char_traits`](/docs/cpp/library/string/char_traits):
+
+{/* source:cpp-named-req-chartraits:0009 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template<> class char_traits<char>;
+template<> class char_traits<wchar_t>;
+template<> class char_traits<char8_t>;
+template<> class char_traits<char16_t>;
+
+template<> class char_traits<char32_t>;`} />
+</DeclarationDoc>
+
+<InlineRevision since="C++20" /> <InlineRevision since="C++11" /> <InlineRevision since="C++11" />
+
+### Defect reports
+
+{/* source:cpp-named-req-chartraits:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-chartraits:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={335} standard="C++98"><PublishedBehavior>the requirements on the binary overload of `assign` did not prevent assignments to rvalues</PublishedBehavior><CorrectedBehavior>its first argument can only be an lvalue</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={352} standard="C++98"><PublishedBehavior>`X::state_type` was only required to be [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible)</PublishedBehavior><CorrectedBehavior>it is also required to be [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) and [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={3085} standard="C++98"><PublishedBehavior>`X::copy(s, p, n)` only required `p` not in `[s, s + n)`, which is too weak[1]</PublishedBehavior><CorrectedBehavior>requires `[p, p + n)` and `[s, s + n)` not to overlap</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-named-req-chartraits:0012 */}
+1. ↑ `[p, p + n)` and `[s, s + n)` can overlap, using [`std::memcpy`](/docs/cpp/library/text/byte/memcpy) to implement `X::copy` results in undefined behavior in this case.

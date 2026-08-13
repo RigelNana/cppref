@@ -1,0 +1,131 @@
+---
+title: "C++ named requirements: LiteralType (since C++11)"
+description: "Specifies that a type is a literal type."
+source_url: "https://en.cppreference.com/w/cpp/named_req/LiteralType"
+language: "C++"
+---
+
+{/* source:cpp-named-req-literaltype:0000 */}
+Specifies that a type is a *literal type*. Literal types are the types of [`constexpr` variables](/docs/cpp/language/declarations/constexpr#constexpr_variable) and they can be constructed, manipulated, and returned from [`constexpr` functions](/docs/cpp/language/declarations/constexpr#constexpr_function).
+
+{/* source:cpp-named-req-literaltype:0001 */}
+Note: the standard doesn't define a named requirement with this name. This is a type category defined by the core language. It is included here as a named requirement only for consistency.
+
+## Requirements
+
+{/* source:cpp-named-req-literaltype:0002 */}
+A literal type is any of the following:
+
+{/* source:cpp-named-req-literaltype:0003 */}
+- possibly cv-qualified `void` (so that `constexpr` functions can return void); <InlineRevision since="C++14" />
+
+{/* source:cpp-named-req-literaltype:0004 */}
+- [scalar type](/docs/cpp/library/named_req/ScalarType);
+- [reference type](/docs/cpp/language/declarations/reference);
+- an [array](/docs/cpp/language/declarations/array) of literal type;
+- possibly cv-qualified class type that has all of the following properties:
+  {/* source:cpp-named-req-literaltype:0005 */}
+  - has a <InlineRevision until="C++20">trivial</InlineRevision> <InlineRevision since="C++20">constexpr</InlineRevision> [destructor](/docs/cpp/language/classes/destructor),
+  - all of its non-static non-variant data members and base classes are of non-volatile literal types, and
+  - is one of
+    {/* source:cpp-named-req-literaltype:0006 */}
+    - a [lambda type](/docs/cpp/language/functions/lambda), <InlineRevision since="C++17" />
+    {/* source:cpp-named-req-literaltype:0007 */}
+    - an [aggregate](/docs/cpp/language/initialization/aggregate_initialization#Definitions) union type that
+      - has no [variant members](/docs/cpp/language/classes/union#Union-like_classes), or
+      - has at least one variant member of non-volatile literal type,
+    - a non-union [aggregate](/docs/cpp/language/initialization/aggregate_initialization#Definitions) type, and each of its [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions) members
+      - has no [variant members](/docs/cpp/language/classes/union#Union-like_classes), or
+      - has at least one variant member of non-volatile literal type,
+    - a type with at least one `constexpr` (possibly template) constructor that is not a copy or move constructor.
+
+## Notes
+
+{/* source:cpp-named-req-literaltype:0008 */}
+A type can be literal even if all of its constexpr constructors are deleted, inaccessible, or cannot participate in overload resolution.
+
+{/* source:cpp-named-req-literaltype:0009 */}
+```cpp
+struct A { constexpr A(int) = delete; char c; }; // A is a literal type
+constexpr A v = std::bit_cast<A>('0'); // OK in C++20
+                                       // v has literal type and thus can be constexpr
+```
+
+## Example
+
+{/* source:cpp-named-req-literaltype:0010 */}
+Literal type that extends string literals:
+
+```cpp
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+ 
+class conststr // conststr is a literal type
+{
+    const char* p;
+    std::size_t sz;
+public:
+    template<std::size_t N>
+    constexpr conststr(const char(&a)[N]) : p(a), sz(N - 1) {}
+ 
+    constexpr char operator[](std::size_t n) const
+    {
+        return n < sz ? p[n] : throw std::out_of_range("");
+    }
+ 
+    constexpr std::size_t size() const { return sz; }
+};
+ 
+constexpr std::size_t count_lower(conststr s)
+{
+    std::size_t c{};
+    for (std::size_t n{}; n != s.size(); ++n)
+        if ('a' <= s[n] && s[n] <= 'z')
+            ++c;
+    return c;
+}
+ 
+// An output function that requires a compile-time constant N, for testing
+template<int N>
+struct constN
+{
+    constN() { std::cout << N << '\n'; }
+};
+ 
+int main()
+{
+    std::cout << "The number of lowercase letters in \"Hello, world!\" is ";
+    constN<count_lower("Hello, world!")>(); // the string literal is implicitly
+                                            // converted to conststr
+}
+```
+
+Output:
+
+```text
+The number of lowercase letters in "Hello, world!" is 9
+```
+
+## Defect reports
+
+{/* source:cpp-named-req-literaltype:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-literaltype:0012 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1453} standard="C++11"><PublishedBehavior>a literal class could have volatile data members</PublishedBehavior><CorrectedBehavior>not allowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1951} standard="C++11 C++14"><PublishedBehavior>it was unclear whether cv-qualified `void` (C++14) and class types (C++11) are literal types</PublishedBehavior><CorrectedBehavior>they are</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2096} standard="C++11"><PublishedBehavior>for a union type to be literal, all its non-static data members must be literal</PublishedBehavior><CorrectedBehavior>only one non-static data member needs to be</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2598} standard="C++11"><PublishedBehavior>for a union type to be literal, it must have at least one non-static data member</PublishedBehavior><CorrectedBehavior>it can have no non-static data member</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-named-req-literaltype:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_literal_type`](/docs/cpp/library/meta/is_literal_type) <InlineRevision since="C++11" /> <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a literal type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

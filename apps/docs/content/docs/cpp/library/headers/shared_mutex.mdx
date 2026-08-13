@@ -1,0 +1,168 @@
+---
+title: "Standard library header <shared_mutex> (C++14)"
+description: "This header is part of the thread support library."
+source_url: "https://en.cppreference.com/w/cpp/header/shared_mutex"
+language: "C++"
+---
+
+{/* source:cpp-header-shared-mutex:0000 */}
+This header is part of the [thread support](/docs/cpp/library/atomic) library.
+
+{/* source:cpp-header-shared-mutex:0001 */}
+## Classes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_mutex`](/docs/cpp/library/atomic/shared_mutex) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_timed_mutex`](/docs/cpp/library/atomic/shared_timed_mutex) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility and implements locking with a timeout (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_lock`](/docs/cpp/library/atomic/shared_lock) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>implements movable shared mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::shared_lock)`](/docs/cpp/library/atomic/shared_lock/swap2) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Synopsis
+
+{/* source:cpp-header-shared-mutex:0002 */}
+```cpp
+namespace std {
+  class shared_mutex;
+  class shared_timed_mutex;
+  template<class Mutex> class shared_lock;
+  template<class Mutex>
+    void swap(shared_lock<Mutex>& x, shared_lock<Mutex>& y) noexcept;
+}
+```
+
+### Class std::shared_mutex
+
+{/* source:cpp-header-shared-mutex:0003 */}
+```cpp
+namespace std {
+  class shared_mutex {
+  public:
+    shared_mutex();
+    ~shared_mutex();
+ 
+    shared_mutex(const shared_mutex&) = delete;
+    shared_mutex& operator=(const shared_mutex&) = delete;
+ 
+    // exclusive ownership
+    void lock();                // blocking
+    bool try_lock();
+    void unlock();
+ 
+    // shared ownership
+    void lock_shared();         // blocking
+    bool try_lock_shared();
+    void unlock_shared();
+ 
+    using native_handle_type = /* implementation-defined */;
+    native_handle_type native_handle();
+  };
+}
+```
+
+### Class std::shared_timed_mutex
+
+{/* source:cpp-header-shared-mutex:0004 */}
+```cpp
+namespace std {
+  class shared_timed_mutex {
+  public:
+    shared_timed_mutex();
+    ~shared_timed_mutex();
+ 
+    shared_timed_mutex(const shared_timed_mutex&) = delete;
+    shared_timed_mutex& operator=(const shared_timed_mutex&) = delete;
+ 
+    // exclusive ownership
+    void lock();                // blocking
+    bool try_lock();
+    template<class Rep, class Period>
+      bool try_lock_for(const chrono::duration<Rep, Period>& rel_time);
+    template<class Clock, class Duration>
+      bool try_lock_until(const chrono::time_point<Clock, Duration>& abs_time);
+    void unlock();
+ 
+    // shared ownership
+    void lock_shared();         // blocking
+    bool try_lock_shared();
+    template<class Rep, class Period>
+      bool try_lock_shared_for(const chrono::duration<Rep, Period>& rel_time);
+    template<class Clock, class Duration>
+      bool try_lock_shared_until(const chrono::time_point<Clock, Duration>& abs_time);
+    void unlock_shared();
+  };
+}
+```
+
+### Class template std::shared_lock
+
+{/* source:cpp-header-shared-mutex:0005 */}
+```cpp
+namespace std {
+  template<class Mutex>
+  class shared_lock {
+  public:
+    using mutex_type = Mutex;
+ 
+    // construct/copy/destroy
+    shared_lock() noexcept;
+    explicit shared_lock(mutex_type& m);        // blocking
+    shared_lock(mutex_type& m, defer_lock_t) noexcept;
+    shared_lock(mutex_type& m, try_to_lock_t);
+    shared_lock(mutex_type& m, adopt_lock_t);
+    template<class Clock, class Duration>
+      shared_lock(mutex_type& m, const chrono::time_point<Clock, Duration>& abs_time);
+    template<class Rep, class Period>
+      shared_lock(mutex_type& m, const chrono::duration<Rep, Period>& rel_time);
+    ~shared_lock();
+ 
+    shared_lock(const shared_lock&) = delete;
+    shared_lock& operator=(const shared_lock&) = delete;
+ 
+    shared_lock(shared_lock&& u) noexcept;
+    shared_lock& operator=(shared_lock&& u) noexcept;
+ 
+    // locking
+    void lock();                                // blocking
+    bool try_lock();
+    template<class Rep, class Period>
+      bool try_lock_for(const chrono::duration<Rep, Period>& rel_time);
+    template<class Clock, class Duration>
+      bool try_lock_until(const chrono::time_point<Clock, Duration>& abs_time);
+    void unlock();
+ 
+    // modifiers
+    void swap(shared_lock& u) noexcept;
+    mutex_type* release() noexcept;
+ 
+    // observers
+    bool owns_lock() const noexcept;
+    explicit operator bool () const noexcept;
+    mutex_type* mutex() const noexcept;
+ 
+  private:
+    mutex_type* pm;                             // exposition only
+    bool owns;                                  // exposition only
+  };
+ 
+  template<class Mutex>
+    void swap(shared_lock<Mutex>& x, shared_lock<Mutex>& y) noexcept;
+}
+```

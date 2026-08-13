@@ -1,0 +1,129 @@
+---
+title: "C++ named requirements: Container"
+description: "A Container is an object used to store other objects and taking care of the management of the memory used by the objects it contains."
+source_url: "https://en.cppreference.com/w/cpp/named_req/Container"
+language: "C++"
+---
+
+{/* source:cpp-named-req-container:0000 */}
+A Container is an object used to store other objects and taking care of the management of the memory used by the objects it contains.
+
+### Requirements
+
+{/* source:cpp-named-req-container:0001 */}
+Given the following types and values:
+
+{/* source:cpp-named-req-container:0002 */}
+| Type | Definition |
+| --- | --- |
+| `T` | an object type |
+| `C` | a container class containing objects of type `T` |
+| **Value** | **Definition** |
+| `u`, `v` | values of type `C` or `const C` |
+| `mv` | a value of type `C` |
+| `cv` | a value of type `const C` |
+| `lhs`, `rhs` | lvalues of type `C` |
+| `i`, `j` | values of type `C::iterator` or `const C::iterator` |
+
+{/* source:cpp-named-req-container:0003 */}
+`C` satisfies the requirements of Container if the following types, statements, and expressions are well-formed and have the specified semantics:
+
+#### Types
+
+{/* source:cpp-named-req-container:0004 */}
+| Type | Definition | Requirements |
+| --- | --- | --- |
+| `typename C::value_type` | `T` | `T` is <InlineRevision until="C++11">[CopyConstructible](/docs/cpp/library/named_req/CopyConstructible)</InlineRevision><InlineRevision since="C++11">[Erasable](/docs/cpp/library/named_req/Erasable) from `C`</InlineRevision>. |
+| `typename C::reference` | `T&` | No explicit requirement |
+| `typename C::const_reference` | `const T&` | No explicit requirement |
+| `typename C::iterator` | an iterator type | `C::iterator` is a [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator), and its [value type](/docs/cpp/library/iterator#Types_and_writability) is `T`. `C::iterator` is convertible to `C::const_iterator`. |
+| `typename C::const_iterator` | a constant iterator type | `C::const_iterator` is a [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator), and its [value type](/docs/cpp/library/iterator#Types_and_writability) is `T`. |
+| `typename C::difference_type` | a signed integer type | `C::difference_type` is the same as the [difference type](/docs/cpp/library/iterator#Types_and_writability) of `C::iterator` and `C::const_iterator`. |
+| `typename C::size_type` | an unsigned integer type | `C::size_type` is large enough to represent all non-negative values of `C::difference_type`. |
+
+#### Statements
+
+{/* source:cpp-named-req-container:0005 */}
+| Statement | Semantics | Complexity |
+| --- | --- | --- |
+| `C c;` `C c = C();` | Postcondition: `c.empty()` is `true`. | constant |
+| `C c(v);` `C c = C(v);` | Precondition: If `v` is not an rvalue of type `C`, `T` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `C`. <InlineRevision since="C++11" /> | linear[1] |
+| `C c(v);` `C c = C(v);` | Postcondition: If `v` is an lvalue, `c == v` is `true`. If `v` is an rvalue<InlineRevision since="C++11">, and `c` and `v` do not refer to the same object</InlineRevision>, `c` is equal to the value that `v` had before this construction. | linear[1] |
+
+Notes
+
+↑ If `v` is an rvalue of type `C`, and `C` is not a specialization of [`std::array`](/docs/cpp/library/container/array) or [`std::inplace_vector`](/docs/cpp/library/container/inplace_vector), the complexity is constant.
+
+#### Expressions
+
+{/* source:cpp-named-req-container:0006 */}
+| Expression | Type | Semantics | Complexity |
+| --- | --- | --- | --- |
+| `C()` | `C` | Postcondition: `C().empty()` is `true`. | constant |
+| `C(v)` | `C` | Precondition: If `v` is not an rvalue of type `C`, `T` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `C`. <InlineRevision since="C++11" /> | constant[1] |
+| `C(v)` | `C` | Postcondition: If `v` is an lvalue, `C(v) == v` is `true`. If `v` is an rvalue<InlineRevision since="C++11">, and `C(v)` and `v` do not refer to the same object</InlineRevision>, `C(v)` is equal to the value that `v` had before this construction. | constant[1] |
+| `lhs = v` | `C&` | Postcondition: If `v` is an lvalue, `lhs == v` is `true`. If `v` is an rvalue<InlineRevision since="C++11">, and `lv` and `v` do not refer to the same object</InlineRevision>, `lhs` is equal to the value that `v` had before this assignment. | linear |
+| `v.~C()` | `void` | Effect: Destroys all elements of `v` and deallocates all memory obtained. | linear |
+| `mv.begin()` | `C::iterator` | Effect: Returns an iterator pointing to the first element of `mv`. | constant |
+| `cv.begin()` | `C::const_iterator` | Effect: Returns an iterator pointing to the first element of `cv`. | constant |
+| `mv.end()` | `C::iterator` | Effect: Returns the past-the-end iterator of `mv`. | constant |
+| `cv.end()` | `C::const_iterator` | Effect: Returns the past-the-end iterator of `cv`. | constant |
+| `v.cbegin()` <InlineRevision since="C++11" /> | `C::const_iterator` | Effect: Returns `const_cast<const C&>(v).begin()`. | constant |
+| `v.cend()` <InlineRevision since="C++11" /> | `C::const_iterator` | Effect: Returns `const_cast<const C&>(v).end()`. | constant |
+| `i <=> j` <InlineRevision since="C++20" /> | [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering) | Constraint: This expression is only required to be well-formed if `C::iterator` satisfies the random access iterator requirements. | constant |
+| `u == v` | `bool` | Effect: Returns `u.size() == v.size() && std::equal(u.begin(), u.end(), v.begin())` <InlineRevision until="C++14" />; `std::equal(u.begin(), u.end(), v.begin(), v.end())` <InlineRevision since="C++14" /> | linear[2] |
+| `u != v` | | Effect: Equivalent to `!(u == v)`. | |
+| `lhs.swap(rhs)` `swap(lhs, rhs)` | `void` | Effect: Exchanges the contents of `lhs` and `rhs`. | constant[3] |
+| `v.size()` | `C::size_type` | Effect: Returns the number of elements[4] of `v`. | constant |
+| `v.max_size()` | `C::size_type` | Effect: Returns the number of elements of the largest possible container of type `C`. | constant |
+| `v.empty()` | `bool` | Effect: Returns `v.begin() == v.end()`. | constant |
+
+**Optional container requirements** (only provided for some types of containers)
+
+| Expression | Type | Semantics | Complexity |
+| --- | --- | --- | --- |
+| `u <=> v` <InlineRevision since="C++20" /> | [*synth-three-way-result*](/docs/cpp/library/standard_library/synth-three-way) `<C::value_type>` | Precondition: Either `T` models [`three_way_comparable`](/docs/cpp/library/utility/compare/three_way_comparable), or `operator<` is a total ordering relationship defined for values of type `T` and `const T`. | linear |
+| `u <=> v` <InlineRevision since="C++20" /> | [*synth-three-way-result*](/docs/cpp/library/standard_library/synth-three-way) `<C::value_type>` | Effect: Returns `std::lexicographical_compare_three_way`(`u.begin(), u.end()`, `v.begin(), v.end()`, [*synth-three-way*](/docs/cpp/library/standard_library/synth-three-way))[5]. | linear |
+
+**Notes**
+
+↑ If `v` is an rvalue of type `C`, and `C` is a specialization of [`std::array`](/docs/cpp/library/container/array) or [`std::inplace_vector`](/docs/cpp/library/container/inplace_vector), the complexity is linear. ↑ If `u.size() != v.size()` is `true`, the complexity is constant. ↑ If `C` is a specialization of [`std::array`](/docs/cpp/library/container/array) or [`std::inplace_vector`](/docs/cpp/library/container/inplace_vector), the complexity is linear. ↑ The number of elements is defined by the rules of constructors, inserts, and erases. It is equal to the value of `std::distance(v.begin(), v.end())`. ↑ If the iterators passed to [`std::lexicographical_compare_three_way`](/docs/cpp/library/algorithm/lexicographical_compare_three_way) are [ConstexprIterators](/docs/cpp/library/named_req/ConstexprIterator), the operation is implemented by `constexpr` functions.
+
+{/* source:cpp-named-req-container:0007 */}
+In the expressions `i == j`, `i != j`, `i < j`, `i <= j`, `i >= j`, `i > j` and `i - j`, if `i` and/or `j` are replaced by iterators of type `C::const_iterator` pointing to the same element respectively, the semantics remain the same.
+
+### Container data races
+
+{/* source:cpp-named-req-container:0008 */}
+See [container thread safety](/docs/cpp/library/container#Thread_safety).
+
+### Defect reports
+
+{/* source:cpp-named-req-container:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-container:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={179} standard="C++98"><PublishedBehavior>`iterator` and `const_iterator` types might be incomparable</PublishedBehavior><CorrectedBehavior>required to be comparable</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={276} standard="C++98"><PublishedBehavior>`T` was required to be [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable)</PublishedBehavior><CorrectedBehavior>`T` is required to be [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={322} standard="C++98"><PublishedBehavior>the value types of `iterator` and `const_iterator` were not specified</PublishedBehavior><CorrectedBehavior>specified as `T`</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={774} standard="C++98"><PublishedBehavior>there was no requirement on `swap(a, b)`</PublishedBehavior><CorrectedBehavior>added</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={883} standard="C++98"><PublishedBehavior>`a.swap(b)` was defined as `swap(a, b)`, resulted in circular definition</PublishedBehavior><CorrectedBehavior>defined as exchanging the values of `a` and `b`</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={1319} standard="C++98"><PublishedBehavior>`iterator` and `const_iterator` might not have multipass guarantee</PublishedBehavior><CorrectedBehavior>they are required to satisfy the requirements of [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2114} standard="C++98"><PublishedBehavior>non-`bool` return types of some functions were allowed</PublishedBehavior><CorrectedBehavior>disallowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2182} standard="C++98"><PublishedBehavior>the types deonted by `reference` and `const_reference` were poorly specified</PublishedBehavior><CorrectedBehavior>improved wording</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2257} standard="C++98"><PublishedBehavior>two containers required linear time to compare equal even if they have different sizes</PublishedBehavior><CorrectedBehavior>only requires constant time in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2263} standard="C++11"><PublishedBehavior>the resolution of [LWG issue 179](https://cplusplus.github.io/LWG/issue179) was accidentally dropped in C++11</PublishedBehavior><CorrectedBehavior>restored</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2839} standard="C++11"><PublishedBehavior>self move assignment of standard containers was not allowed</PublishedBehavior><CorrectedBehavior>allowed but the result is unspecified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="N3346" standard="C++11"><PublishedBehavior>`C::value_type` was required to be [Destructible](/docs/cpp/library/named_req/Destructible)</PublishedBehavior><CorrectedBehavior>required to be [Erasable](/docs/cpp/library/named_req/Erasable) from `C`</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-named-req-container:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C++ documentation](/docs/cpp/library/container)</DescriptionTerm>
+    <DescriptionBody>for Containers library</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

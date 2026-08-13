@@ -1,0 +1,89 @@
+---
+title: "C++ named requirements: FormattedOutputFunction"
+description: "A FormattedOutputFunction is a stream output function that performs the following:"
+source_url: "https://en.cppreference.com/w/cpp/named_req/FormattedOutputFunction"
+language: "C++"
+---
+
+### Requirements
+
+{/* source:cpp-named-req-formattedoutputfunction:0000 */}
+A *FormattedOutputFunction* is a stream output function that performs the following:
+
+{/* source:cpp-named-req-formattedoutputfunction:0001 */}
+- Constructs an object of type [`basic_ostream::sentry`](/docs/cpp/library/io/basic_ostream/sentry) with automatic storage duration, which performs the following: {/* source:cpp-named-req-formattedoutputfunction:0002 */}
+  - if `eofbit` or `badbit` are set on the output stream, sets the `failbit` as well, and if exceptions on `failbit` are enabled in this output stream's [exception mask](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & failbit) != 0`), throws [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure).
+  - flushes the `tie()`'d output stream, if applicable.
+
+{/* source:cpp-named-req-formattedoutputfunction:0003 */}
+- Checks the status of the sentry by calling `sentry::operator bool()`, which is equivalent to [`basic_ios::good`](/docs/cpp/library/io/basic_ios/good).
+- If the sentry returned `false` or sentry's constructor threw an exception, no output takes place.
+- If the sentry returned `true`, attempts to perform the desired output by inserting the characters into the output stream as if by calling `rdbuf()->sputc()`. Other public members of [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) may also be used, but virtual members of `rdbuf()` except [`overflow()`](/docs/cpp/library/io/basic_streambuf/overflow), [`xsputn()`](/docs/cpp/library/io/basic_streambuf/sputn) and [`sync()`](/docs/cpp/library/io/basic_streambuf/pubsync) will never be called. {/* source:cpp-named-req-formattedoutputfunction:0004 */}
+  - If the output could not be generated, sets `failbit`. If exceptions on `failbit` are enabled in this stream's [exception mask](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & failbit) != 0`), throws [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure).
+  - if an exception is thrown during output, sets `badbit` in the output stream. If exceptions on `badbit` are enabled in this stream's [exception mask](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & badbit) != 0`), the exception is also rethrown.
+  - If no exception was thrown, returns `*this`.
+
+{/* source:cpp-named-req-formattedoutputfunction:0005 */}
+- In any event, whether terminating by exception or returning, the sentry's destructor is called before leaving this function.
+
+### Padding
+
+{/* source:cpp-named-req-formattedoutputfunction:0006 */}
+<Revision until="C++14">
+Formatted output functions determine padding according to [`std::num_put::do_put()`](/docs/cpp/library/text/locale/num_put/put) stage 3.
+</Revision>
+
+<Revision since="C++14">
+If a formatted output function of a stream `os` determines padding, it does so as follows.
+
+Given a `CharT` character sequence `seq` where `CharT` is the [character container type](/docs/cpp/library/string) of `os`, if the length of `seq` is less than `os.width()`, then enough copies of `os.fill()` are added to this sequence as necessary to pad to a width of `os.width()` characters.
+
+If `(os.flags() & std::ios_base::adjustfield) == std::ios_base::left` is `true`, the fill characters are placed after the character sequence; otherwise, they are placed before the character sequence.
+</Revision>
+
+### Standard library
+
+{/* source:cpp-named-req-formattedoutputfunction:0007 */}
+The following standard library functions are *FormattedOutputFunctions*.
+
+{/* source:cpp-named-req-formattedoutputfunction:0008 */}
+- [`basic_ostream::operator<<(std::basic_ostream&, int / long / double / void* / bool)`](/docs/cpp/library/io/basic_ostream/operator_ltlt)
+- [`operator<<(std::basic_ostream&, char)`](/docs/cpp/library/io/basic_ostream/operator_ltlt2)
+- [`operator<<(std::basic_ostream&, char*)`](/docs/cpp/library/io/basic_ostream/operator_ltlt2)
+- [`operator<<(std::basic_ostream&, const std::bitset&)`](/docs/cpp/library/utility/bitset/operator_ltltgtgt2)
+- [`operator<<(std::basic_ostream&, const std::basic_string&)`](/docs/cpp/library/string/basic_string/operator_ltltgtgt)
+- `operator<<`, when called on the return value of [`std::put_money`](/docs/cpp/library/io/manip/put_money)
+
+{/* source:cpp-named-req-formattedoutputfunction:0009 */}
+<Revision since="C++17">
+- [`operator<<(std::basic_ostream&, std::basic_string_view)`](/docs/cpp/library/string/basic_string_view/operator_ltlt)
+</Revision>
+
+{/* source:cpp-named-req-formattedoutputfunction:0010 */}
+<Revision since="C++23">
+- [`print(std::ostream&, std::format_string<Args...>, Args&&...)`](/docs/cpp/library/io/basic_ostream/print),
+- [`println(std::ostream&, std::format_string<Args...>, Args&&...)`](/docs/cpp/library/io/basic_ostream/println),
+- [`vprint_unicode(std::ostream&, std::string_view, std::format_args)`](/docs/cpp/library/io/basic_ostream/vprint_unicode),
+- [`vprint_nonunicode(std::ostream&, std::string_view, std::format_args)`](/docs/cpp/library/io/basic_ostream/vprint_nonunicode),
+
+except that (given `os` is an output stream object):
+- any exception thrown by the call to [`std::vformat`](/docs/cpp/library/text/format/vformat) is propagated without regard to the value of `os.exceptions()` and without turning on [`ios_base::badbit`](/docs/cpp/library/io/ios_base/iostate) in the error state of `os`;
+- if inserting into `os` fails, calls `os.setstate(ios_base::badbit)` (which may throw [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure)).
+</Revision>
+
+### Defect reports
+
+{/* source:cpp-named-req-formattedoutputfunction:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-formattedoutputfunction:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={160} standard="C++98">
+    <PublishedBehavior>the process of determining whether the exception caught is rethrown mentioned a non-existing function `exception()`</PublishedBehavior>
+    <CorrectedBehavior>corrected to [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={165} standard="C++98">
+    <PublishedBehavior>the only virtual member allowed to be called on `rdbuf()` was `overflow()`</PublishedBehavior>
+    <CorrectedBehavior>also allowed `xsputn()` and `sync()`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

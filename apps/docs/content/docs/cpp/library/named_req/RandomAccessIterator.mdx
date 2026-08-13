@@ -1,0 +1,113 @@
+---
+title: "C++ named requirements: LegacyRandomAccessIterator"
+description: "A LegacyRandomAccessIterator is a LegacyBidirectionalIterator that can be moved to point to any element in constant time."
+source_url: "https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-randomaccessiterator:0000 */}
+A LegacyRandomAccessIterator is a [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator) that can be moved to point to any element in constant time.
+
+{/* source:cpp-named-req-randomaccessiterator:0001 */}
+If a LegacyRandomAccessIterator `it` originates from a [Container](/docs/cpp/library/named_req/Container), then it's value_type is the same as the container's, so dereferencing (`*it`) obtains the container's value_type.
+
+{/* source:cpp-named-req-randomaccessiterator:0002 */}
+A pointer to an element of an array satisfies all requirements of LegacyRandomAccessIterator.
+
+## Requirements
+
+{/* source:cpp-named-req-randomaccessiterator:0003 */}
+The type It satisfies LegacyRandomAccessIterator if
+
+{/* source:cpp-named-req-randomaccessiterator:0004 */}
+- The type `It` satisfies [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator)
+
+{/* source:cpp-named-req-randomaccessiterator:0005 */}
+And, given
+
+{/* source:cpp-named-req-randomaccessiterator:0006 */}
+- `value_type`, the type denoted by `std::iterator_traits<It>::value_type`
+- `difference_type`, the type denoted by `std::iterator_traits<It>::difference_type`
+- `reference`, the type denoted by `std::iterator_traits<It>::reference`
+- `i`, `a`, `b`, objects of type `It` or `const It`
+- `r`, an lvalue of type `It`
+- `n`, an integer of type `difference_type`
+
+{/* source:cpp-named-req-randomaccessiterator:0007 */}
+The following expressions must be valid and have their specified effects:
+
+{/* source:cpp-named-req-randomaccessiterator:0008 */}
+| Expression | Return type | Operational semantics | Notes |
+| --- | --- | --- | --- |
+| `r += n` | `It&` | `difference_type m = n; if (m >= 0) while (m--) ++r; else while (m++) --r; return r;` | - `n` can be both positive or negative<br />- The complexity is constant (that is, the implementation cannot actually execute the while loop shown in operational semantics) |
+| `a + n`<br />`n + a` | `It` | `It temp = a; return temp += n;` | - `n` can be both positive or negative<br />- `a + n == n + a` |
+| `r -= n` | `It&` | `return r += -n;` | The absolute value of `n` must be within the range of representable values of `difference_type`. |
+| `i - n` | `It` | `It temp = i; return temp -= n;` | |
+| `b - a` | `difference_type` | `return n;` (see the precondition) | Precondition:<br />- there exists a value `n` of type `difference_type` such that `a + n == b`<br />Postcondition:<br />- `b == a + (b - a)`. |
+| `i[n]` | convertible to `reference` | `*(i + n)` | |
+| `a < b` | <Revision until="C++20">meets [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable)</Revision><Revision since="C++20">models [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> | Equivalent to `return b - a > 0;` | Precondition:<br />- same as of `b - a`<br />Strict total ordering relation:<br />- `!(a < a)`<br />- if `a < b` then `!(b < a)`<br />- if `a < b` and `b < c` then `a < c`<br />- `a < b` or `b < a` or `a == b` (exactly one of the expressions is true) |
+| `a > b` | <Revision until="C++20">meets [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable)</Revision><Revision since="C++20">models [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> | `b < a` | Total ordering relation opposite to `a < b` |
+| `a >= b` | <Revision until="C++20">meets [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable)</Revision><Revision since="C++20">models [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> | `!(a < b)` | |
+| `a <= b` | <Revision until="C++20">meets [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable)</Revision><Revision since="C++20">models [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> | `!(a > b)` | |
+
+{/* source:cpp-named-req-randomaccessiterator:0009 */}
+The above rules imply that LegacyRandomAccessIterator also implements [LessThanComparable](/docs/cpp/library/named_req/LessThanComparable).
+
+{/* source:cpp-named-req-randomaccessiterator:0010 */}
+A mutable LegacyRandomAccessIterator is a LegacyRandomAccessIterator that additionally satisfies the [LegacyOutputIterator](/docs/cpp/library/named_req/OutputIterator) requirements.
+
+{/* source:cpp-named-req-randomaccessiterator:0011 */}
+<Revision since="C++20">
+### Concept
+
+For the definition of [`std::iterator_traits`](/docs/cpp/library/iterator/iterator_traits), the following exposition-only concept is defined.
+
+```cpp
+template<class I>
+concept __LegacyRandomAccessIterator =
+    __LegacyBidirectionalIterator<I> && std::totally_ordered<I> &&
+        requires(I i, typename std::incrementable_traits<I>::difference_type n)
+        {
+            { i += n } -> std::same_as<I&>;
+            { i -= n } -> std::same_as<I&>;
+            { i +  n } -> std::same_as<I>;
+            { n +  i } -> std::same_as<I>;
+            { i -  n } -> std::same_as<I>;
+            { i -  i } -> std::same_as<decltype(n)>;
+            {  i[n]  } -> std::convertible_to<std::iter_reference_t<I>>;
+
+        };
+```
+
+where the exposition-only concept `__LegacyBidirectionalIterator` is described in [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator#Concept).
+</Revision>
+
+## Defect reports
+
+{/* source:cpp-named-req-randomaccessiterator:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-randomaccessiterator:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={299} standard="C++98"><PublishedBehavior>the return type of `a[n]` was required to be convertible to `const value_type&`</PublishedBehavior><CorrectedBehavior>the return type is required to be convertible to `reference`</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={448} standard="C++98"><PublishedBehavior>the return type of `a[n]` was required to be convertible to `value_type`</PublishedBehavior><CorrectedBehavior>the return type is required to be convertible to `const value_type&` [1]</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={1079} standard="C++98"><PublishedBehavior>`b - a` was defined using `a < b`, resulted in circular definition</PublishedBehavior><CorrectedBehavior>removed `a < b` from the definition</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2114} standard="C++98"><PublishedBehavior>convertibility to `bool` was too weak to reflect the expectation of implementations ([P2167R3](https://wg21.link/P2167R3))</PublishedBehavior><CorrectedBehavior>requirements strengthened</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-named-req-randomaccessiterator:0014 */}
+↑ [LWG issue 299](https://cplusplus.github.io/LWG/issue299) was reopened after this resolution.
+
+## See also
+
+{/* source:cpp-named-req-randomaccessiterator:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator) is a random-access iterator, supporting advancement in constant time and subscripting (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[Iterator library](/docs/cpp/library/iterator)</DescriptionTerm>
+    <DescriptionBody>provides definitions for iterators, iterator traits, adaptors, and utility functions</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

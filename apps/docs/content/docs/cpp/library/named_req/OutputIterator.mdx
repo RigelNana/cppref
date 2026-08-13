@@ -1,0 +1,102 @@
+---
+title: "C++ named requirements: LegacyOutputIterator"
+description: "A LegacyOutputIterator is a LegacyIterator that can write to the pointed-to element."
+source_url: "https://en.cppreference.com/w/cpp/named_req/OutputIterator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-outputiterator:0000 */}
+A LegacyOutputIterator is a [LegacyIterator](/docs/cpp/library/named_req/Iterator) that can write to the pointed-to element.
+
+{/* source:cpp-named-req-outputiterator:0001 */}
+An example of a type that implements LegacyOutputIterator is [`std::ostream_iterator`](/docs/cpp/library/iterator/ostream_iterator).
+
+{/* source:cpp-named-req-outputiterator:0002 */}
+When [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator), [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator), or [LegacyRandomAccessIterator](/docs/cpp/library/named_req/RandomAccessIterator) satisfies the LegacyOutputIterator requirements in addition to its own requirements, it is described as *mutable*.
+
+## Requirements
+
+{/* source:cpp-named-req-outputiterator:0003 */}
+The type X satisfies LegacyOutputIterator if
+
+{/* source:cpp-named-req-outputiterator:0004 */}
+- The type `X` satisfies [LegacyIterator](/docs/cpp/library/named_req/Iterator)
+- `X` is a class type or a pointer type
+
+{/* source:cpp-named-req-outputiterator:0005 */}
+And, given
+
+{/* source:cpp-named-req-outputiterator:0006 */}
+- `o`, a value of some type that is writable to the output iterator (there may be multiple types that are writable, e.g. if `operator=` may be a template. There is no notion of `value_type` as for the input iterators)
+- `r`, an lvalue of type `X`,
+
+{/* source:cpp-named-req-outputiterator:0007 */}
+The following expressions must be valid and have their specified effects
+
+{/* source:cpp-named-req-outputiterator:0008 */}
+| Expression | Return | Equivalent expression | Pre-condition | Post-conditions | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `*r = o` | (not used) | | `r` is dereferenceable | `r` is incrementable | After this operation `r` is not required to be dereferenceable and any copies of the previous value of `r` are no longer required to be dereferenceable or incrementable. |
+| `++r` | `X&` | | `r` is incrementable | `r` and `++r` designate the same iterator object, `r` is dereferenceable or past-the-end | After this operation `r` is not required to be incrementable and any copies of the previous value of `r` are no longer required to be dereferenceable or incrementable. |
+| `r++` | convertible to `const X&` | `X temp = r; ++r; return temp;` | | | |
+| `*r++ = o` | (not used) | `*r = o; ++r;` | | | |
+
+## Notes
+
+{/* source:cpp-named-req-outputiterator:0009 */}
+The only valid use of `operator*` with an output iterator is on the left of an assignment: `operator*` may return a proxy object, which defines a member `operator=` (which may be a template).
+
+{/* source:cpp-named-req-outputiterator:0010 */}
+Equality and inequality may not be defined for output iterators. Even if an `operator==` is defined, `x == y` need not imply `++x == ++y`.
+
+{/* source:cpp-named-req-outputiterator:0011 */}
+Assignment through the same value of an output iterator happens only once: algorithms on output iterators must be single-pass algorithms.
+
+{/* source:cpp-named-req-outputiterator:0012 */}
+Assignment through an output iterator is expected to alternate with incrementing. Double-increment is undefined behavior (C++ standard currently claims that double increment is supported, contrary to the STL documentation; this is [LWG issue 2035](https://cplusplus.github.io/LWG/issue2035)).
+
+{/* source:cpp-named-req-outputiterator:0013 */}
+Pure output-only iterator is allowed to declare its `iterator_traits<X>::value_type`, `iterator_traits<X>::difference_type`, `iterator_traits<X>::pointer`, and `iterator_traits<X>::reference` to be `void` (and iterators such as [`std::back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator) do just that <InlineRevision since="C++20">except for difference_type, which is now defined to satisfy [`std::output_iterator`](/docs/cpp/library/iterator/output_iterator)</InlineRevision>).
+
+## Standard library
+
+{/* source:cpp-named-req-outputiterator:0014 */}
+The following standard library iterators are output iterators that are not forward iterators:
+
+{/* source:cpp-named-req-outputiterator:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostream_iterator`](/docs/cpp/library/iterator/ostream_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostreambuf_iterator`](/docs/cpp/library/iterator/ostreambuf_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_iterator`](/docs/cpp/library/iterator/insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion into a container (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion at the end of a container (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front_insert_iterator`](/docs/cpp/library/iterator/front_insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion at the front of a container (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## See also
+
+{/* source:cpp-named-req-outputiterator:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`output_iterator`](/docs/cpp/library/iterator/output_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an output iterator for a given value type, that is, values of that type can be written to it and it can be both pre- and post-incremented (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[Iterator library](/docs/cpp/library/iterator)</DescriptionTerm>
+    <DescriptionBody>provides definitions for iterators, iterator traits, adaptors, and utility functions</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

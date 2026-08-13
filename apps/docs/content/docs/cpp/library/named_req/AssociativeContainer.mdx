@@ -1,0 +1,179 @@
+---
+title: "C++ named requirements: AssociativeContainer"
+description: "An AssociativeContainer is an ordered Container that provides fast lookup of objects based on keys."
+source_url: "https://en.cppreference.com/w/cpp/named_req/AssociativeContainer"
+language: "C++"
+---
+
+{/* source:cpp-named-req-associativecontainer:0000 */}
+An AssociativeContainer is an ordered [Container](/docs/cpp/library/named_req/Container) that provides fast lookup of objects based on keys.
+
+{/* source:cpp-named-req-associativecontainer:0001 */}
+An associative container supports *unique keys* if it may contain at most one element for each key. Otherwise, it supports *equivalent keys*.
+
+### Requirements
+
+{/* source:cpp-named-req-associativecontainer:0002 */}
+**Legend**
+
+| Type | Definition |
+| --- | --- |
+| `X` | An associative container class |
+| `T` | The element type of `X` |
+| `A` | The allocator type of `X`: `X::allocator_type` if it exists, otherwise `std::allocator<X::value_type>` |
+| `a` | A value of type `X` |
+| `a2` | A value of a type `Y` whose [node handles](/docs/cpp/library/container/node_handle) are compatible with `X` |
+| `b` | A value of type `X` or `const X` |
+| `u` | A name of a variable beging declared |
+| `a_uniq` | A value of type `X` when `X` supports unique keys |
+| `a_eq` | A value of type `X` when `X` supports equivalent keys |
+| `a_tran` | A value of type `X` or const X when type `X::key_compare::is_transparent` exists |
+| `i`, `j` | The [LegacyInputIterators](/docs/cpp/library/named_req/InputIterator) referring to elements implicitly convertible to `X::value_type` |
+| `[i, j)` | A valid range |
+| `rg` <InlineRevision since="C++23" /> | A value of a type `R` that models [`container-compatible-range`](/docs/cpp/library/ranges/to#container_compatible_range)`<value_type>` |
+| `p` | A valid constant iterator to `a` |
+| `q` | A valid dereferenceable constant iterator to `a` |
+| `r` | A valid dereferenceable iterator to `a` |
+| `q1`, `q2` | A valid range of const iterators in `a` |
+| `il` | An object of type `std::initializer_list<X::value_type>` |
+| `t` | A value of type `X::value_type` |
+| `k` | A value of type `X::key_type` |
+| `c` | A value of type `X::key_compare` or const `X::key_compare` |
+| `kl` | A value such that `a` is partitioned with respect to `c(x, kl)`, with `x` the key value of `e` and `e` in `a` |
+| `ku` | A value such that `a` is partitioned with respect to `!c(ku, x)`, with `x` the key value of `e` and `e` in `a` |
+| `ke` | A value such that `a` is partitioned with respect to `c(x, ke)` and `!c(ke, x)`, with `c(x, ke)` implying `!c(ke, x)` and with `x` the key value of `e` and `e` in `a` |
+| `kx` <InlineRevision since="C++23" /> | A value such that: `a` is partitioned with respect to `c(x, kx)` and `!c(kx, x)`, with `c(x, kx)` implying `!c(kx, x)` and with `x` the key value of `e` and `e` in `a`, and `kx` is not convertible to either `X::iterator` or `X::const_iterator` |
+| `m` | An allocator of a type convertible to `A` |
+| `nh` | A non-const rvalue of type `X::node_type` |
+
+{/* source:cpp-named-req-associativecontainer:0003 */}
+The type `X` satisfies AssociativeContainer if
+
+{/* source:cpp-named-req-associativecontainer:0004 */}
+- The type `X` satisfies <InlineRevision until="C++11">[Container](/docs/cpp/library/named_req/Container)</InlineRevision><InlineRevision since="C++11">[AllocatorAwareContainer](/docs/cpp/library/named_req/AllocatorAwareContainer)</InlineRevision>,
+- Is parameterized on `Key` and an ordering relation `Compare` that induces a [strict weak ordering](/docs/cpp/library/named_req/Compare) on elements of `Key`, and
+  - In addition, [`std::map`](/docs/cpp/library/container/map) and [`std::multimap`](/docs/cpp/library/container/multimap) associate an arbitrary *mapped type* `T` with the `Key`.
+  - The object of type `Compare` is called the *comparison object* of a container of type `X`.
+  - The following expressions must be valid and have their specified effects for all associative containers:
+
+#### Types
+
+{/* source:cpp-named-req-associativecontainer:0005 */}
+| Name | Type | Requirements |
+| --- | --- | --- |
+| `key_type` | `Key` | |
+| `mapped_type` | `T` (for [`std::map`](/docs/cpp/library/container/map) and [`std::multimap`](/docs/cpp/library/container/multimap) only) | |
+| `value_type` | `Key` (for [`std::set`](/docs/cpp/library/container/set) and [`std::multiset`](/docs/cpp/library/container/multiset) only); `std::pair<const Key, T>` (for [`std::map`](/docs/cpp/library/container/map) and [`std::multimap`](/docs/cpp/library/container/multimap) only) | [Erasable](/docs/cpp/library/named_req/Erasable) from `X` |
+| `key_compare` | `Compare` | [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible) |
+| `value_compare` | same as `key_compare` (for [`std::set`](/docs/cpp/library/container/set) and [`std::multiset`](/docs/cpp/library/container/multiset)); an ordering relation on pairs induced by the first component (i.e. `Key`) (for [`std::map`](/docs/cpp/library/container/map) and [`std::multimap`](/docs/cpp/library/container/multimap)) | [BinaryPredicate](/docs/cpp/library/named_req/BinaryPredicate) |
+| `node_type` | A specialization of the [node-handle class template](/docs/cpp/library/container/node_handle), such that the public nested types are the same types as the corresponding types in `X`. | |
+
+#### Member functions and operators
+
+{/* source:cpp-named-req-associativecontainer:0006 */}
+| Expression | Result | Preconditions | Effects | Returns | Complexity |
+| --- | --- | --- | --- | --- | --- |
+| `X(c)` | | | Constructs an empty container. Uses a copy of `c` as a comparison object | | Constant |
+| `X u = X();` `X u;` | | `key_compare` meets the [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible) requirements | Constructs an empty container. Uses `Compare()` as a comparison object | | Constant |
+| `X(i, j, c)` | | `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `*i` | Constructs an empty container and inserts elements from the range `[i, j)` into it; uses `c` as a comparison object | | `N·log(N)` in general, where `N` has the value `std::distance(i, j)`; linear if `[i, j)` is sorted with respect to `value_comp()` |
+| `X(i, j)` | | `key_compare` meets the [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible) requirements. `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `*i` | Constructs an empty container and inserts elements from the range `[i, j)` into it; uses `Compare()` as a comparison object | | `N·log(N)` in general, where `N` has the value `std::distance(i, j)`; linear if `[i, j)` is sorted with respect to `value_comp()` |
+| `X(from_range, rg, c)` <InlineRevision since="C++23" /> | | `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `*ranges::begin(rg)` | Constructs an empty container and inserts each element from `rg` into it. Uses `c` as the comparison object | | `N·log(N)` in general, where `N` has the value `ranges::distance(rg)`; linear if `rg` is sorted with respect to `value_comp()` |
+| `X(from_range, rg)` <InlineRevision since="C++23" /> | | `key_compare` meets the [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible) requirements. `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `*ranges::begin(rg)` | Constructs an empty container and inserts each element from `rg` into it. Uses `Compare()` as the comparison object | | `N·log(N)` in general, where `N` has the value `ranges::distance(rg)`; linear if `rg` is sorted with respect to `value_comp()` |
+| `X(il, c)` | | | `X(il.begin(), il.end(), c)` | | |
+| `X(il)` | | | `X(il.begin(), il.end())` | | |
+| `a = il` | `X&` | `value_type` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `X` and [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) | Assigns the range `[il.begin(), il.end())` into `a`. All existing elements of `a` are either assigned to or destroyed | | `N·log(N)` in general, where `N` has the value `il.size() + a.size()`; linear if `[il.begin(), il.end())` is sorted with respect to `value_comp()` |
+| `b.key_comp()` | `X::key_compare` | | | The comparison object out of which `b` was constructed | Constant |
+| `b.value_comp()` | `X::value_compare` | | | An object of `value_compare` constructed out of the comparison object | Constant |
+| `a_uniq.emplace(args)` | `std::pair<iterator, bool>` | `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `args` | Inserts a `value_type` object `t` constructed with `std::forward<Args>(args)...` if and only if there is no element in the container with key equivalent to the key of `t` | The bool component of the returned pair is `true` if and only if the insertion takes place, and the iterator component of the pair points to the element with key equivalent to the key of `t` | Logarithmic |
+| `a_eq.emplace(args)` | `iterator` | `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `args` | Inserts a `value_type` object `t` constructed with `std::forward<Args>(args)...`. If a range containing elements equivalent to `t` exists in `a_eq`, `t` is inserted at the end of that range | An iterator pointing to the newly inserted element | Logarithmic |
+| `a.emplace_hint(p, args)` | `iterator` | | Equivalent to `a.emplace(std::forward<Args>(args)...)`, except that the element is inserted as close as possible to the position just prior to `p` | An iterator pointing to the element with the key equivalent to the newly inserted element | Logarithmic in general, but amortized constant if the element is inserted right before `p` |
+| `a_uniq.insert(t)` | `std::pair<iterator, bool>` | If `t` is a non-const rvalue, `value_type` is [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) into `X`; otherwise, `value_type` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `X` | Inserts `t` if and only if there is no element in the container with key equivalent to the key of `t` | The bool component of the returned pair is `true` if and only if the insertion takes place, and the `iterator` component of the pair points to the element with key equivalent to the key of `t` | Logarithmic |
+| `a_eq.insert(t)` | `iterator` | If `t` is a non-const rvalue, `value_type` is [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) into `X`; otherwise, `value_type` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `X` | Inserts `t` and returns the iterator pointing to the newly inserted element. If a range containing elements equivalent to `t` exists in `a_eq`, `t` is inserted at the end of that range | | Logarithmic |
+| `a.insert(p, t)` | `iterator` | If `t` is a non-const rvalue, `value_type` is [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) into `X`; otherwise, `value_type` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `X` | Inserts `t` if and only if there is no element with key equivalent to the key of `t` in containers with unique keys; always inserts `t` in containers with equivalent keys. `t` is inserted as close as possible to the position just prior to `p` | An iterator pointing to the element with key equivalent to the key of `t` | Logarithmic in general, but amortized constant if `t` is inserted right before `p` |
+| `a.insert(i, j)` | `void` | `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `*i`. Neither `i` nor `j` are iterators into `a` | Inserts each element from the range `[i, j)` if and only if there is no element with key equivalent to the key of that element in containers with unique keys; always inserts that element in containers with equivalent keys | | `N·log(a.size() + N)`, where `N` has the value `std::distance(i, j)` |
+| `a.insert_range(rg)` <InlineRevision since="C++23" /> | `void` | `value_type` is [EmplaceConstructible](/docs/cpp/library/named_req/EmplaceConstructible) into `X` from `*ranges::begin(rg)`. `rg` and `a` do not overlap | Inserts each element from `rg` if and only if there is no element with key equivalent to the key of that element in containers with unique keys; always inserts that element in containers with equivalent keys | | `N·log(a.size() + N)`, where `N` has the value `ranges::distance(rg)` |
+| `a.insert(il)` | | | `a.insert(il.begin(), il.end())` | | |
+| `a_uniq.insert(nh)` | `insert_return_type` | `nh` is empty or `a_uniq.get_allocator() == nh.get_allocator()` is `true` | If `nh` is empty, has no effect. Otherwise, inserts the element owned by `nh` if and only if there is no element in the container with a key equivalent to `nh.key()` | If `nh` is empty, `inserted` is `false`, `position` is `end()`, and `node` is empty. Otherwise if the insertion took place, `inserted` is `true`, `position` points to the inserted element, and `node` is empty; if the insertion failed, `inserted` is `false`, `node` has the previous value of `nh`, and `position` points to an element with a key equivalent to `nh.key()` | Logarithmic |
+| `a_eq.insert(nh)` | `iterator` | `nh` is empty or `a_eq.get_allocator() == nh.get_allocator()` is `true` | If `nh` is empty, has no effect and returns `a_eq.end()`. Otherwise, inserts the element owned by `nh` and returns an iterator pointing to the newly inserted element. If a range containing elements with keys equivalent to `nh.key()` exists in `a_eq`, the element is inserted at the end of that range. Ensures: `nh` is empty | | Logarithmic |
+| `a.insert(p, nh)` | `iterator` | `nh` is empty or `a.get_allocator() == nh.get_allocator()` is `true` | If `nh` is empty, has no effect and returns `a.end()`. Otherwise, inserts the element owned by `nh` if and only if there is no element with key equivalent to `nh.key()` in containers with unique keys; always inserts the element owned by `nh` in containers with equivalent keys. The element is inserted as close as possible to the position just prior to `p`. Ensures: `nh` is empty if insertion succeeds, unchanged if insertion fails | An iterator pointing to the element with key equivalent to `nh.key()` | Logarithmic in general, but amortized constant if the element is inserted right before `p` |
+| `a.extract(k)` | `node_type` | | Removes the first element in the container with key equivalent to `k` | A `node_type` owning the element if found, otherwise an empty `node_type` | `log(a.size())` |
+| `a_tran.extract(kx)` <InlineRevision since="C++23" /> | `node_type` | | Removes the first element in the container with key `r` such that `!c(r, kx) && !c(kx, r)` is `true` | A `node_type` owning the element if found, otherwise an empty `node_type` | `log(a_tran.size())` |
+| `a.extract(q)` | `node_type` | | Removes the element pointed to by `q` | A `node_type` owning that element | Amortized constant |
+| `a.merge(a2)` | `void` | `a.get_allocator() == a2.get_allocator()` | Attempts to extract each element in `a2` and insert it into `a` using the comparison object of `a`. In containers with unique keys, if there is an element in `a` with key equivalent to the key of an element from `a2`, then that element is not extracted from `a2`. Ensures: Pointers and references to the transferred elements of `a2` refer to those same elements but as members of `a`. Iterators referring to the transferred elements will continue to refer to their elements, but they now behave as iterators into `a`, not into `a2`. Throws: Nothing unless the comparison object throws | | `N·log(a.size() + N)`, where `N` has the value `a2.size()` |
+| `a.erase(k)` | `size_type` | | Erases all elements in the container with key equivalent to `k` | The number of erased elements | `log(a.size()) + a.count(k)` |
+| `a_tran.erase(kx)` <InlineRevision since="C++23" /> | `size_type` | | Erases all elements in the container with key `r` such that `!c(r, kx) && !c(kx, r)` is `true` | The number of erased elements | `log(a_tran.size()) + a_tran.count(kx)` |
+| `a.erase(q)` | `iterator` | | Erases the element pointed to by `q` | An iterator pointing to the element immediately following `q` prior to the element being erased. If no such element exists, returns `a.end()` | Amortized constant |
+| `a.erase(r)` | `iterator` | | Erases the element pointed to by `r` | An iterator pointing to the element immediately following `r` prior to the element being erased. If no such element exists, returns `a.end()` | Amortized constant |
+| `a.erase(q1, q2)` | `iterator` | | Erases all the elements in the range `[q1, q2)` | An iterator pointing to the element pointed to by `q2` prior to any elements being erased. If no such element exists, `a.end()` is returned | `log(a.size()) + N`, where `N` has the value `std::distance(q1, q2)` |
+| `a.clear()` | | | `a.erase(a.begin(), a.end())`. Ensures: `a.empty()` is `true` | | Linear in `a.size()` |
+| `b.find(k)` | `iterator`; `const_iterator` for constant `b` | | | An iterator pointing to an element with the key equivalent to `k`, or `b.end()` if such an element is not found | Logarithmic |
+| `a_tran.find(ke)` | `iterator`; `const_iterator` for constant `a_tran` | | | An iterator pointing to an element with key `r` such that `!c(r, ke) && !c(ke, r)` is `true`, or `a_tran.end()` if such an element is not found | Logarithmic |
+| `b.count(k)` | `size_type` | | | The number of elements with key equivalent to `k` | `log(b.size()) + b.count(k)` |
+| `a_tran.count(ke)` | `size_type` | | | The number of elements with key `r` such that `!c(r, ke) && !c(ke, r)` | `log(a_tran.size()) + a_tran.count(ke)` |
+| `b.contains(k)` | `bool` | | `return b.find(k) != b.end();` | | |
+| `a_tran.contains(ke)` | `bool` | | `return a_tran.find(ke) != a_tran.end();` | | |
+| `b.lower_bound(k)` | `iterator`; `const_iterator` for constant `b` | | | An iterator pointing to the first element with key not less than `k`, or `b.end()` if such an element is not found | Logarithmic |
+| `a_tran.lower_bound(kl)` | `iterator`; `const_iterator` for constant `a_tran` | | | An iterator pointing to the first element with key `r` such that `!c(r, kl)`, or `a_tran.end()` if such an element is not found | Logarithmic |
+| `b.upper_bound(k)` | `iterator`; `const_iterator` for constant `b` | | | An iterator pointing to the first element with key greater than `k`, or `b.end()` if such an element is not found | Logarithmic |
+| `a_tran.upper_bound(ku)` | `iterator`; `const_iterator` for constant `a_tran` | | | An iterator pointing to the first element with key `r` such that `c(ku, r)`, or `a_tran.end()` if such an element is not found | Logarithmic |
+| `b.equal_range(k)` | `std::pair<iterator, iterator>`; `std::pair<const_iterator, const_iterator>` for constant `b` | | Equivalent to: `return std::make_pair(b.lower_bound(k), b.upper_bound(k));` | | Logarithmic |
+| `a_tran.equal_range(ke)` | `std::pair<iterator, iterator>`; `std::pair<const_iterator, const_iterator>` for constant `a_tran` | | Equivalent to: `return std::make_pair(a_tran.lower_bound(ke), a_tran.upper_bound(ke));` | | Logarithmic |
+
+#### Iterators
+
+{/* source:cpp-named-req-associativecontainer:0007 */}
+Iterators of associative containers satisfy the requirements of [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator).
+
+{/* source:cpp-named-req-associativecontainer:0008 */}
+For associative containers where `value_type` is the same as `key_type`, both `iterator` and `const_iterator` are constant iterators. It is unspecified whether or not `iterator` and `const_iterator` are the same type.
+
+{/* source:cpp-named-req-associativecontainer:0009 */}
+Iterators of associative containers iterate through the containers in the non-descending order of keys where non-descending is defined by the comparison that was used to construct the containers. That is, given
+
+{/* source:cpp-named-req-associativecontainer:0010 */}
+- `a`, an associative container
+- `i` and `j`, dereferenceable iterators to `a`.
+
+{/* source:cpp-named-req-associativecontainer:0011 */}
+If the distance from `i` to `j` is positive, then `a.value_comp()(*j, *i) == false`. Additionally, if `a` is an associative container with unique keys, the stronger condition `a.value_comp()(*i, *j) != false` holds.
+
+{/* source:cpp-named-req-associativecontainer:0012 */}
+This section is incomplete
+
+Reason: Finish requirements.
+
+### Standard library
+
+{/* source:cpp-named-req-associativecontainer:0013 */}
+The following standard library containers satisfy the AssociativeContainer requirements:
+
+{/* source:cpp-named-req-associativecontainer:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`set`](/docs/cpp/library/container/set)</DescriptionTerm>
+    <DescriptionBody>collection of unique keys, sorted by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`multiset`](/docs/cpp/library/container/multiset)</DescriptionTerm>
+    <DescriptionBody>collection of keys, sorted by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`map`](/docs/cpp/library/container/map)</DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, sorted by keys, keys are unique (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`multimap`](/docs/cpp/library/container/multimap)</DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, sorted by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Defect reports
+
+{/* source:cpp-named-req-associativecontainer:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-associativecontainer:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={354} standard="C++98"><PublishedBehavior>`lower_bound` and `upper_bound` did not return the end iterator if no element is found</PublishedBehavior><CorrectedBehavior>they return the end iterator in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={589} standard="C++98"><PublishedBehavior>the elements that `i` and `j` refer to had the type `X::value_type`</PublishedBehavior><CorrectedBehavior>the elements are implicitly convertible to `X::value_type`</CorrectedBehavior></DefectReport>
+</DefectReportList>

@@ -1,0 +1,119 @@
+---
+title: "C++ named requirements: Swappable"
+description: "Any lvalue or rvalue of this type can be swapped with any lvalue or rvalue of some other type, using unqualified function call swap() in the context where both std::swap and the user-defined swap()s are visible."
+source_url: "https://en.cppreference.com/w/cpp/named_req/Swappable"
+language: "C++"
+---
+
+{/* source:cpp-named-req-swappable:0000 */}
+Any lvalue or rvalue of this type can be swapped with any lvalue or rvalue of some other type, using unqualified function call `swap()` in the context where both [`std::swap`](/docs/cpp/library/algorithm/swap) and the user-defined `swap()`s are visible.
+
+### Requirements
+
+{/* source:cpp-named-req-swappable:0001 */}
+Type U is swappable with type T if, for any object u of type U and any object t of type T,
+
+{/* source:cpp-named-req-swappable:0002 */}
+| Expression | Requirements | Semantics |
+| --- | --- | --- |
+| `#include <algorithm> // until C++11` `#include <utility> // since C++11` `using std::swap;` `swap(u, t);` | After the call, the value of `t` is the value held by `u` before the call, and the value of `u` is the value held by `t` before the call. | Calls the function named `swap()` found by overload resolution among all functions with that name that are found by [`argument-dependent lookup`](/docs/cpp/language/functions/adl) and the two [`std::swap`](/docs/cpp/library/algorithm/swap) templates defined in the header <InlineRevision until="C++11">[`<algorithm>`](/docs/cpp/library/headers/algorithm)</InlineRevision><InlineRevision since="C++11">[`<utility>`](/docs/cpp/library/headers/utility)</InlineRevision>. |
+| `#include <algorithm> // until C++11` `#include <utility> // since C++11` `using std::swap;` `swap(t, u);` | Same | Same |
+
+{/* source:cpp-named-req-swappable:0003 */}
+Many standard library functions (for example, many algorithms) expect their arguments to satisfy *Swappable*, which means that any time the standard library performs a swap, it uses the equivalent of `using std::swap; swap(t, u);`.
+
+{/* source:cpp-named-req-swappable:0004 */}
+Typical implementations either
+
+{/* source:cpp-named-req-swappable:0005 */}
+1. Define a non-member swap in the enclosing namespace, which may forward to a member swap if access to non-public data members is required.
+
+{/* source:cpp-named-req-swappable:0006 */}
+2. Define a [`friend function`](/docs/cpp/language/classes/friend) in-class (this approach hides the class-specific swap from name lookup other than ADL).
+
+### Notes
+
+{/* source:cpp-named-req-swappable:0007 */}
+It is unspecified whether <InlineRevision until="C++11">[`<algorithm>`](/docs/cpp/library/headers/algorithm)</InlineRevision><InlineRevision since="C++11">[`<utility>`](/docs/cpp/library/headers/utility)</InlineRevision> is actually included when the standard library functions perform the swap, so the user-provided `swap()` should not expect it to be included.
+
+### Example
+
+{/* source:cpp-named-req-swappable:0008 */}
+```cpp
+#include <iostream>
+#include <vector>
+ 
+struct IntVector
+{
+    std::vector<int> v;
+ 
+    IntVector& operator=(IntVector) = delete; // not assignable
+ 
+    void swap(IntVector& other)
+    {
+        v.swap(other.v);
+    }
+ 
+    void operator()(auto rem, auto term = " ")
+    {
+        std::cout << rem << "{{";
+        for (int n{}; int e : v)
+            std::cout << (n++ ? ", " : "") << e;
+        std::cout << "}}" << term;
+    }
+};
+ 
+void swap(IntVector& v1, IntVector& v2)
+{
+    v1.swap(v2);
+}
+ 
+int main()
+{
+    IntVector v1{{1, 1, 1, 1}}, v2{{2222, 2222}};
+ 
+    auto prn = [&]{ v1("v1", ", "), v2("v2", ";\n"); };
+ 
+//  std::swap(v1, v2); // Compiler error! std::swap requires MoveAssignable
+    prn();
+    std::iter_swap(&v1, &v2); // OK: library calls unqualified swap()
+    prn();
+    std::ranges::swap(v1, v2); // OK: library calls unqualified swap()
+    prn();
+}
+```
+
+Output:
+
+```text
+v1{{1, 1, 1, 1}}, v2{{2222, 2222}};
+v1{{2222, 2222}}, v2{{1, 1, 1, 1}};
+v1{{1, 1, 1, 1}}, v2{{2222, 2222}};
+```
+
+### Defect reports
+
+{/* source:cpp-named-req-swappable:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-swappable:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={226} standard="C++98">
+    <PublishedBehavior>it was unclear how the standard library uses `swap`</PublishedBehavior>
+    <CorrectedBehavior>clarified to use both `std::` and ADL-found `swap`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-named-req-swappable:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_swappable_with is_swappable is_nothrow_swappable_with is_nothrow_swappable`](/docs/cpp/library/meta/is_swappable) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks if objects of a type can be swapped with objects of same or different type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swappable swappable_with`](/docs/cpp/library/concepts/swappable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type can be swapped or that two types can be swapped with each other (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,98 @@
+---
+title: "C++ named requirements: LegacyBidirectionalIterator"
+description: "A LegacyBidirectionalIterator is a LegacyForwardIterator that can be moved in both directions (i.e. incremented and decremented)."
+source_url: "https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-bidirectionaliterator:0000 */}
+A LegacyBidirectionalIterator is a [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator) that can be moved in both directions (i.e. incremented and decremented).
+
+{/* source:cpp-named-req-bidirectionaliterator:0001 */}
+If a LegacyBidirectionalIterator `it` originates from a [Container](/docs/cpp/library/named_req/Container), then `it`'s `value_type` is the same as the container's, so dereferencing (`*it`) obtains the container's `value_type`.
+
+### Requirements
+
+{/* source:cpp-named-req-bidirectionaliterator:0002 */}
+The type `It` satisfies LegacyBidirectionalIterator if
+
+{/* source:cpp-named-req-bidirectionaliterator:0003 */}
+- The type `It` satisfies [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator)
+
+{/* source:cpp-named-req-bidirectionaliterator:0004 */}
+And, given
+
+{/* source:cpp-named-req-bidirectionaliterator:0005 */}
+- `a` and `b`, lvalues of type `It`
+- `reference`, the type denoted by `std::iterator_traits<It>::reference`
+
+{/* source:cpp-named-req-bidirectionaliterator:0006 */}
+The following expressions must be valid and have their specified effects:
+
+{/* source:cpp-named-req-bidirectionaliterator:0007 */}
+| Expression | Return | Equivalent expression | Notes |
+| --- | --- | --- | --- |
+| `--a` | `It&` | | Preconditions: `a` is decrementable (there exists such `b` that `a == ++b`). Postconditions: `a` is [dereferenceable](/docs/cpp/library/iterator#Dereferenceability_and_validity); `--(++a) == a`; If `--a == --b` then `a == b`; `a` and `--a` designate the same iterator object |
+| `a--` | convertible to `const It&` | `It temp = a; --a; return temp;` | |
+| `*a--` | `reference` | | |
+
+{/* source:cpp-named-req-bidirectionaliterator:0008 */}
+A *mutable* LegacyBidirectionalIterator is a LegacyBidirectionalIterator that additionally satisfies the [LegacyOutputIterator](/docs/cpp/library/named_req/OutputIterator) requirements.
+
+### Notes
+
+{/* source:cpp-named-req-bidirectionaliterator:0009 */}
+The begin iterator is not decrementable and the behavior is undefined if `--container.begin()` is evaluated.
+
+{/* source:cpp-named-req-bidirectionaliterator:0010 */}
+A bidirectional iterator does not have to be dereferenceable to be decrementable (in particular, the end iterator is not dereferenceable but is decrementable).
+
+{/* source:cpp-named-req-bidirectionaliterator:0011 */}
+<Revision since="C++20">
+### Concept
+
+For the definition of [`std::iterator_traits`](/docs/cpp/library/iterator/iterator_traits), the following exposition-only concept is defined.
+
+```cpp
+template<class I>
+concept __LegacyBidirectionalIterator =
+    __LegacyForwardIterator<I> && requires(I i)
+    {
+        {  --i } -> std::same_as<I&>;
+        {  i-- } -> std::convertible_to<const I&>;
+        { *i-- } -> std::same_as<std::iter_reference_t<I>>;
+
+    };
+```
+
+where the exposition-only concept `__LegacyForwardIterator` is described in [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator#Concept).
+</Revision>
+
+### Defect reports
+
+{/* source:cpp-named-req-bidirectionaliterator:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-bidirectionaliterator:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={299} standard="C++98"><PublishedBehavior>the return type of `*a--` was required to be convertible to `T`</PublishedBehavior><CorrectedBehavior>changed the return type to `reference`[1]</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={383} standard="C++98"><PublishedBehavior>`b` was required to be dereferenceable after `--a`</PublishedBehavior><CorrectedBehavior>`a` is required to be dereferenceable instead</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={1212} standard="C++98"><PublishedBehavior>the return type of `*a--` did not match the return type of `*a++` required by [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator)</PublishedBehavior><CorrectedBehavior>changed the return type to `reference`</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-named-req-bidirectionaliterator:0014 */}
+1. ↑ This issue was initially resolved by [N2758](https://wg21.link/N2758) (iterator concepts), which was dropped later from the C++ standard.
+
+### See also
+
+{/* source:cpp-named-req-bidirectionaliterator:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) is a bidirectional iterator, supporting movement backwards (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[Iterator library](/docs/cpp/library/iterator)</DescriptionTerm>
+    <DescriptionBody>provides definitions for iterators, iterator traits, adaptors, and utility functions</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

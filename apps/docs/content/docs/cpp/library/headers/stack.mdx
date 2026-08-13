@@ -1,0 +1,181 @@
+---
+title: "Standard library header <stack>"
+description: "This header is part of the containers library."
+source_url: "https://en.cppreference.com/w/cpp/header/stack"
+language: "C++"
+---
+
+{/* source:cpp-header-stack:0000 */}
+This header is part of the [`containers`](/docs/cpp/library/container) library.
+
+{/* source:cpp-header-stack:0001 */}
+## Includes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`<compare>`](/docs/cpp/library/headers/compare) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>[Three-way comparison operator](/docs/cpp/language/expressions/operator_comparison#Three-way_comparison) support</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`<initializer_list>`](/docs/cpp/library/headers/initializer_list) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>[`std::initializer_list`](/docs/cpp/library/utility/initializer_list) class template</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Classes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`stack`](/docs/cpp/library/container/stack)</DescriptionTerm>
+    <DescriptionBody>adapts a container to provide stack (LIFO data structure) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::uses_allocator<std::stack>`](/docs/cpp/library/container/stack/uses_allocator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::uses_allocator`](/docs/cpp/library/memory/uses_allocator) type trait (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==, operator!=, operator<, operator<=, operator>, operator>=, operator<=>`](/docs/cpp/library/container/stack/operator_cmp) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares the values of two stacks (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::stack)`](/docs/cpp/library/container/stack/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Synopsis
+
+{/* source:cpp-header-stack:0002 */}
+```cpp
+#include <compare>
+#include <initializer_list>
+ 
+namespace std {
+  // class template stack
+  template<class T, class Container = deque<T>>
+  class stack;
+ 
+  template<class T, class Container>
+  bool operator==(const stack<T, Container>& x, const stack<T, Container>& y);
+  template<class T, class Container>
+  bool operator!=(const stack<T, Container>& x, const stack<T, Container>& y);
+  template<class T, class Container>
+  bool operator<(const stack<T, Container>& x, const stack<T, Container>& y);
+  template<class T, class Container>
+  bool operator>(const stack<T, Container>& x, const stack<T, Container>& y);
+  template<class T, class Container>
+  bool operator<=(const stack<T, Container>& x, const stack<T, Container>& y);
+  template<class T, class Container>
+  bool operator>=(const stack<T, Container>& x, const stack<T, Container>& y);
+  template<class T, three_way_comparable Container>
+  compare_three_way_result_t<Container> operator<=>(const stack<T, Container>& x,
+                                                    const stack<T, Container>& y);
+ 
+  template<class T, class Container>
+  void swap(stack<T, Container>& x, stack<T, Container>& y) noexcept(noexcept(x.swap(y)));
+  template<class T, class Container, class Alloc>
+  struct uses_allocator<stack<T, Container>, Alloc>;
+ 
+  // formatter specialization for stack
+  template<class CharT, class T, formattable<CharT> Container>
+  struct formatter<stack<T, Container>, CharT>;
+}
+```
+
+### Class template std::stack
+
+{/* source:cpp-header-stack:0003 */}
+```cpp
+namespace std {
+  template<class T, class Container = deque<T>>
+  class stack
+  {
+  public:
+    using value_type      = typename Container::value_type;
+    using reference       = typename Container::reference;
+    using const_reference = typename Container::const_reference;
+    using size_type       = typename Container::size_type;
+    using container_type  = Container;
+ 
+  protected:
+    Container c;
+ 
+  public:
+    stack()
+      : stack(Container())
+    {
+    }
+    explicit stack(const Container&);
+    explicit stack(Container&&);
+    template<class InputIter>
+    stack(InputIter first, InputIter last);
+    template<container-compatible-range<T> R>
+    stack(from_range_t, R&& rg);
+    template<class Alloc>
+    explicit stack(const Alloc&);
+    template<class Alloc>
+    stack(const Container&, const Alloc&);
+    template<class Alloc>
+    stack(Container&&, const Alloc&);
+    template<class Alloc>
+    stack(const stack&, const Alloc&);
+    template<class Alloc>
+    stack(stack&&, const Alloc&);
+    template<class InputIter, class Alloc>
+    stack(InputIter first, InputIter last, const Alloc&);
+    template<container-compatible-range<T> R, class Alloc>
+    stack(from_range_t, R&& rg, const Alloc&);
+ 
+    bool empty() const { return c.empty(); }
+    size_type size() const { return c.size(); }
+    reference top() { return c.back(); }
+    const_reference top() const { return c.back(); }
+    void push(const value_type& x) { c.push_back(x); }
+    void push(value_type&& x) { c.push_back(std::move(x)); }
+    template<container-compatible-range<T> R>
+    void push_range(R&& rg);
+    template<class... Args>
+    decltype(auto) emplace(Args&&... args)
+    {
+      return c.emplace_back(std::forward<Args>(args)...);
+    }
+    void pop() { c.pop_back(); }
+    void swap(stack& s) noexcept(is_nothrow_swappable_v<Container>)
+    {
+      using std::swap;
+      swap(c, s.c);
+    }
+  };
+ 
+  template<class Container>
+  stack(Container) -> stack<typename Container::value_type, Container>;
+ 
+  template<class InputIter>
+  stack(InputIter, InputIter) -> stack</*iter-value-type*/<InputIter>>;
+ 
+  template<ranges::input_range R>
+  stack(from_range_t, R&&) -> stack<ranges::range_value_t<R>>;
+ 
+  template<class Container, class Allocator>
+  stack(Container, Allocator) -> stack<typename Container::value_type, Container>;
+ 
+  template<class InputIter, class Allocator>
+  stack(InputIter, InputIter, Allocator)
+    -> stack</*iter-value-type*/<InputIter>,
+             deque</*iter-value-type*/<InputIter>, Allocator>>;
+ 
+  template<ranges::input_range R, class Allocator>
+  stack(from_range_t, R&&, Allocator)
+    -> stack<ranges::range_value_t<R>, deque<ranges::range_value_t<R>, Allocator>>;
+ 
+  template<class T, class Container, class Alloc>
+  struct uses_allocator<stack<T, Container>, Alloc>
+    : uses_allocator<Container, Alloc>::type
+  {};
+}
+```

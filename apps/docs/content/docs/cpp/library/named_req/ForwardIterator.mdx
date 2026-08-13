@@ -1,0 +1,154 @@
+---
+title: "C++ named requirements: LegacyForwardIterator"
+description: "A LegacyForwardIterator is a LegacyIterator that can read data from the pointed-to element."
+source_url: "https://en.cppreference.com/w/cpp/named_req/ForwardIterator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-forwarditerator:0000 */}
+A *LegacyForwardIterator* is a [*LegacyIterator*](/docs/cpp/library/named_req/Iterator) that can read data from the pointed-to element.
+
+{/* source:cpp-named-req-forwarditerator:0001 */}
+Unlike [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) and [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator), it can be used in multipass algorithms.
+
+{/* source:cpp-named-req-forwarditerator:0002 */}
+If a *LegacyForwardIterator* `it` originates from a [*Container*](/docs/cpp/library/named_req/Container), then `it`'s value type is the same as the container's, so dereferencing (`*it`) obtains the container's value type.
+
+### Requirements
+
+{/* source:cpp-named-req-forwarditerator:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`X`</DescriptionTerm>
+    <DescriptionBody>A forward iterator type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`T`</DescriptionTerm>
+    <DescriptionBody>The [value type](/docs/cpp/library/iterator#Types_and_writability) of `X` (i.e. `std::iterator_traits<X>::value_type`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Ref`</DescriptionTerm>
+    <DescriptionBody>`std::iterator_traits<X>::reference`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`i`, `j`</DescriptionTerm>
+    <DescriptionBody>Values of type `X` or `const X`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`r`</DescriptionTerm>
+    <DescriptionBody>A value of type `X&`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-named-req-forwarditerator:0004 */}
+`X` satisfies *LegacyForwardIterator* if all following conditions are satisfied:
+
+{/* source:cpp-named-req-forwarditerator:0005 */}
+- `X` satisfies [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `X` satisfies [*DefaultConstructible*](/docs/cpp/library/named_req/DefaultConstructible).
+- If `X` is a [mutable iterator](/docs/cpp/library/iterator), `Ref` is a reference to `T`.
+- If `X` is a constant iterator, `Ref` is a reference to `const T`.
+- Objects of the type `X` provide [multi-pass guarantee](/docs/cpp/library/named_req/ForwardIterator#Multi-pass_guarantee).
+- If `i` and `j` are equal, then either `i` and `j` are both [dereferenceable](/docs/cpp/library/iterator#Dereferenceability_and_validity) or else neither is dereferenceable.
+- If `i` and `j` are both dereferenceable, then `i == j` if and only if `*i` and `*j` are bound to the same object.
+- The following expressions must be valid and have their specified effects:
+
+{/* source:cpp-named-req-forwarditerator:0006 */}
+<table>
+<thead><tr><th>Expression</th><th>Type</th><th>Effects</th></tr></thead>
+<tbody>
+<tr>
+<td>`r++`</td>
+<td>convertible to `const X&`</td>
+<td>Equivalent to `X x = r;`<br />`++r;`<br />`return x;`.</td>
+</tr>
+<tr>
+<td>`*i++`</td>
+<td>`Ref`</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+### Equality domain
+
+{/* source:cpp-named-req-forwarditerator:0007 */}
+The [domain](/docs/cpp/library/named_req/InputIterator#Equality_domain) of `==` for forward iterators is that of iterators over the same [underlying sequence](/docs/cpp/library/iterator#Dereferenceability_and_validity).
+
+{/* source:cpp-named-req-forwarditerator:0008 */}
+<Revision since="C++14">
+However, [value-initialized](/docs/cpp/language/initialization/value_initialization) forward iterators can be compared, and must compare equal to other value-initialized iterators of the same type.
+
+In other words, value-initialized forward iterators behave as if they refer past the end of the same empty sequence.
+</Revision>
+
+### Multi-pass guarantee
+
+{/* source:cpp-named-req-forwarditerator:0009 */}
+Two dereferenceable iterators `a` and `b` of type `X` offer the *multi-pass guarantee* if all following conditions are satisfied:
+
+{/* source:cpp-named-req-forwarditerator:0010 */}
+- `a == b` implies `++a == ++b`.
+- Any of the following conditions is satisfied: {/* source:cpp-named-req-forwarditerator:0011 */}
+  - `X` is a pointer type.
+  - The expression `(void)++X(a), *a` is equivalent to the expression `*a`.
+
+{/* source:cpp-named-req-forwarditerator:0012 */}
+<Revision since="C++20">
+### Concept
+
+For the definition of [`std::iterator_traits`](/docs/cpp/library/iterator/iterator_traits), the following exposition-only concept is defined.
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template<class It>
+concept __LegacyForwardIterator =
+    __LegacyInputIterator<It> && std::constructible_from<It> &&
+    std::is_reference_v<std::iter_reference_t<It>> &&
+    std::same_as<
+        std::remove_cvref_t<std::iter_reference_t<It>>,
+        typename std::indirectly_readable_traits<It>::value_type> &&
+    requires(It it) {
+        {  it++ } -> std::convertible_to<const It&>;
+        { *it++ } -> std::same_as<std::iter_reference_t<It>>;
+
+    };`} />
+</DeclarationDoc>
+
+where the exposition-only concept `__LegacyInputIterator<T>` is described in [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator#Concept).
+</Revision>
+
+### Notes
+
+{/* source:cpp-named-req-forwarditerator:0013 */}
+Unlike the [`std::forward_iterator`](/docs/cpp/library/iterator/forward_iterator) concept, the *LegacyForwardIterator* requirements requires dereference to return a reference.
+
+### Defect reports
+
+{/* source:cpp-named-req-forwarditerator:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-forwarditerator:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={1212} standard="C++98">
+    <PublishedBehavior>the type of `*i++` did not match the type of `*i--` required by [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator)</PublishedBehavior>
+    <CorrectedBehavior>changed the type to `Ref`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1311} standard="C++98">
+    <PublishedBehavior>"`a == b` implies `++a == ++b`" alone did not offer multipass guarantee</PublishedBehavior>
+    <CorrectedBehavior>also requires "`a == b` implies `++a != b`"</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3798} standard="C++20">
+    <PublishedBehavior>`__LegacyForwardIterator` required `std::iter_reference_t<It>` to be an lvalue reference type</PublishedBehavior>
+    <CorrectedBehavior>also allows rvalue reference types</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-named-req-forwarditerator:0016 */}
+1. ↑ In the scenario where `a` and `b` use the same underlying iterator, evaluating the expression `++a == ++b` actually increments the underlying container twice, but the result is still `true`.
+2. ↑ Formally also requires implying `++b != a`.
+
+### See also
+
+{/* source:cpp-named-req-forwarditerator:0017 */}
+- [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) <InlineRevision since="C++20" /> — specifies that an [input_iterator](/docs/cpp/library/iterator/input_iterator) is a forward iterator, supporting equality comparison and multi-pass (concept)
+- [**Iterator library**](/docs/cpp/library/iterator) — provides definitions for iterators, iterator traits, adaptors, and utility functions

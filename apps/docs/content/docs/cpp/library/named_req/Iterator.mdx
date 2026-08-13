@@ -1,0 +1,78 @@
+---
+title: "C++ named requirements: LegacyIterator"
+description: "The LegacyIterator requirements describe types that can be used to identify and traverse the elements of a container."
+source_url: "https://en.cppreference.com/w/cpp/named_req/Iterator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-iterator:0000 */}
+The *LegacyIterator* requirements describe types that can be used to identify and traverse the elements of a container.
+
+{/* source:cpp-named-req-iterator:0001 */}
+*LegacyIterator* is the base set of requirements used by other iterator types: [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator), [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator), [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator), [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator), and [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator). Iterators can be thought of as an abstraction of pointers.
+
+{/* source:cpp-named-req-iterator:0002 */}
+All the categories of iterators require only those functions that are realizable for a given category in constant time (amortized). Therefore, requirement tables <InlineRevision since="C++20">and concept definitions</InlineRevision>for the iterators do not specify complexity.
+
+### Requirements
+
+{/* source:cpp-named-req-iterator:0003 */}
+The type `It` satisfies *LegacyIterator* if
+
+{/* source:cpp-named-req-iterator:0004 */}
+- The type `It` satisfies [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible), and
+- The type `It` satisfies [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable), and
+- The type `It` satisfies [*Destructible*](/docs/cpp/library/named_req/Destructible), and
+- The type `It` satisfies [*Swappable*](/docs/cpp/library/named_req/Swappable), and
+- `std::iterator_traits<It>` has member typedefs <InlineRevision until="C++20">`value_type`</InlineRevision>, `difference_type`, `reference`, `pointer`, and `iterator_category`, and
+- Given `r`, an lvalue of type `It`, the following expressions must be valid and have their specified effects:
+
+{/* source:cpp-named-req-iterator:0005 */}
+| Expression | Return Type | Precondition |
+| --- | --- | --- |
+| `*r` | unspecified | `r` is [dereferenceable](/docs/cpp/library/iterator#Dereferenceability_and_validity) |
+| `++r` | `It&` | `r` is *incrementable* (the behavior of the expression `++r` is defined) |
+
+{/* source:cpp-named-req-iterator:0006 */}
+<Revision since="C++20">
+### Concept
+
+For the definition of [`std::iterator_traits`](/docs/cpp/library/iterator/iterator_traits), the following exposition-only concept is defined.
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template<class I>
+concept __LegacyIterator =
+    requires(I i)
+    {
+        {   *i } -> __Referenceable;
+        {  ++i } -> std::same_as<I&>;
+        { *i++ } -> __Referenceable;
+
+    } && std::copyable<I>;`} />
+</DeclarationDoc>
+
+where the exposition-only concept `__Referenceable<T>` is satisfied if and only if `T&` is a valid type (in particular, `T` must not be `void`).
+</Revision>
+
+### Defect reports
+
+{/* source:cpp-named-req-iterator:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-iterator:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2437} standard="C++98">
+    <PublishedBehavior>`*r` is required to be `reference`</PublishedBehavior>
+    <CorrectedBehavior>not required for output iterators</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3420} standard="C++20">
+    <PublishedBehavior>the exposition-only concept checks `copyable` first</PublishedBehavior>
+    <CorrectedBehavior>`copyable` is checked only if the requires-expression yields true</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-named-req-iterator:0009 */}
+- [`input_or_output_iterator`](/docs/cpp/library/iterator/input_or_output_iterator) <InlineRevision since="C++20" /> — specifies that objects of a type can be incremented and dereferenced (concept)
+- [**Iterator library**](/docs/cpp/library/iterator) — provides definitions for iterators, iterator traits, adaptors, and utility functions

@@ -1,0 +1,98 @@
+---
+title: "Standard library header <hazard_pointer> (C++26)"
+description: "This header is part of the thread support library."
+source_url: "https://en.cppreference.com/w/cpp/header/hazard_pointer"
+language: "C++"
+---
+
+{/* source:cpp-header-hazard-pointer:0000 */}
+This header is part of the [`thread support`](/docs/cpp/library/atomic) library.
+
+{/* source:cpp-header-hazard-pointer:0001 */}
+## Classes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`hazard_pointer_obj_base`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/hazard_pointer_obj_base&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>allows an object to be hazard-protectable (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`hazard_pointer`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/hazard_pointer&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>single-writer multi-reader pointer that can be owned by at most one thread at any point of time (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_hazard_pointer`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/make_hazard_pointer&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>constructs a hazard pointer (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::hazard_pointer)`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/hazard_pointer/swap2&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+
+## Synopsis
+
+{/* source:cpp-header-hazard-pointer:0002 */}
+```cpp
+namespace std {
+  // hazard_pointer_obj_base
+  template<class T, class D = default_delete<T>> class hazard_pointer_obj_base;
+ 
+  // hazard_pointer
+  class hazard_pointer;
+ 
+  // make_hazard_pointer
+  hazard_pointer make_hazard_pointer();
+  void swap(hazard_pointer&, hazard_pointer&) noexcept;
+}
+```
+
+### Class template std::hazard_pointer_obj_base
+
+{/* source:cpp-header-hazard-pointer:0003 */}
+```cpp
+namespace std {
+  template<class T, class D = default_delete<T>>
+  class hazard_pointer_obj_base {
+  public:
+    void retire(D d = D()) noexcept;
+  protected:
+    hazard_pointer_obj_base() = default;
+    hazard_pointer_obj_base(const hazard_pointer_obj_base&) = default;
+    hazard_pointer_obj_base(hazard_pointer_obj_base&&) = default;
+    hazard_pointer_obj_base& operator=(const hazard_pointer_obj_base&) = default;
+    hazard_pointer_obj_base& operator=(hazard_pointer_obj_base&&) = default;
+    ~hazard_pointer_obj_base() = default;
+  private:
+    D deleter;      // exposition only
+  };
+}
+```
+
+### Class std::hazard_pointer
+
+{/* source:cpp-header-hazard-pointer:0004 */}
+```cpp
+namespace std {
+  class hazard_pointer {
+  public:
+    hazard_pointer() noexcept;
+    hazard_pointer(hazard_pointer&&) noexcept;
+    hazard_pointer& operator=(hazard_pointer&&) noexcept;
+    ~hazard_pointer();
+ 
+    bool empty() const noexcept;
+    template<class T> T* protect(const atomic<T*>& src) noexcept;
+    template<class T> bool try_protect(T*& ptr, const atomic<T*>& src) noexcept;
+    template<class T> void reset_protection(const T* ptr) noexcept;
+    void reset_protection(nullptr_t = nullptr) noexcept;
+    void swap(hazard_pointer&) noexcept;
+  };
+}
+```

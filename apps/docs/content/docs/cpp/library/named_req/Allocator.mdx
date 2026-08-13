@@ -1,0 +1,311 @@
+---
+title: "C++ named requirements: Allocator"
+description: "Encapsulates strategies for access/addressing, allocation/deallocation and construction/destruction of objects."
+source_url: "https://en.cppreference.com/w/cpp/named_req/Allocator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-allocator:0000 */}
+Encapsulates strategies for access/addressing, allocation/deallocation and construction/destruction of objects.
+
+{/* source:cpp-named-req-allocator:0001 */}
+Every standard library component that may need to allocate or release storage, from [`std::string`](/docs/cpp/library/string/basic_string), [`std::vector`](/docs/cpp/library/container/vector), and every container, <InlineRevision since="C++11">, except [`std::array`](/docs/cpp/library/container/array)</InlineRevision><InlineRevision since="C++26"> and `std::inplace_vector`</InlineRevision>, to [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr)<InlineRevision until="C++17"> and [`std::function`](/docs/cpp/library/utility/functional/function)</InlineRevision>, does so through an Allocator: an object of a class type that satisfies the following requirements.
+
+{/* source:cpp-named-req-allocator:0002 */}
+The implementation of many allocator requirements is optional because all [AllocatorAwareContainer](/docs/cpp/library/named_req/AllocatorAwareContainer) access allocators indirectly through [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits), and [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits) supplies the default implementation of those requirements.
+
+### Requirements
+
+{/* source:cpp-named-req-allocator:0003 */}
+Given
+
+{/* source:cpp-named-req-allocator:0004 */}
+- `T`, a <InlineRevision until="C++11">non-const, non-reference type</InlineRevision><InlineRevision since="C++11" until="C++17">non-const object type</InlineRevision><InlineRevision since="C++17">cv-unqualified object type</InlineRevision>,
+- `A`, an Allocator type for type `T`,
+- `a`, an object of type `A`,
+- `B`, the corresponding Allocator type for some cv-unqualified object type `U` (as obtained by rebinding `A`),
+- `b`, an object of type `B`,
+- `p`, a value of type `std::allocator_traits<A>::pointer`, obtained by calling `std::allocator_traits<A>::allocate()`,
+- `cp`, a value of type `std::allocator_traits<A>::const_pointer`, obtained by conversion from `p`,
+- `vp`, a value of type `std::allocator_traits<A>::void_pointer`, obtained by conversion from `p`,
+- `cvp`, a value of type `std::allocator_traits<A>::const_void_pointer`, obtained by conversion from `cp` or from `vp`,
+- `xp`, a dereferenceable pointer to some cv-unqualified object type `X`,
+- `r`, an lvalue of type `T` obtained by the expression `*p`,
+- `n`, a value of type `std::allocator_traits<A>::size_type`.
+
+{/* source:cpp-named-req-allocator:0005 */}
+**Inner types**
+
+| Type-id | Aliased type | Requirements |
+| --- | --- | --- |
+| `A::pointer` (optional) | *(unspecified)*[1] | Satisfies [NullablePointer](/docs/cpp/library/named_req/NullablePointer), [LegacyRandomAccessIterator](/docs/cpp/library/named_req/RandomAccessIterator), and [LegacyContiguousIterator](/docs/cpp/library/named_req/ContiguousIterator). |
+| `A::const_pointer` (optional) | *(unspecified)* | Satisfies [NullablePointer](/docs/cpp/library/named_req/NullablePointer), [LegacyRandomAccessIterator](/docs/cpp/library/named_req/RandomAccessIterator), and [LegacyContiguousIterator](/docs/cpp/library/named_req/ContiguousIterator). `A::pointer` is convertible to `A::const_pointer`. |
+| `A::void_pointer` (optional) | *(unspecified)* | Satisfies [NullablePointer](/docs/cpp/library/named_req/NullablePointer). `A::pointer` is convertible to `A::void_pointer`. `B::void_pointer` and `A::void_pointer` are the same type. |
+| `A::const_void_pointer` (optional) | *(unspecified)* | Satisfies [NullablePointer](/docs/cpp/library/named_req/NullablePointer). `A::pointer`, `A::const_pointer`, and `A::void_pointer` are convertible to `A::const_void_pointer`. `B::const_void_pointer` and `A::const_void_pointer` are the same type. |
+| `A::value_type` | `T` | |
+| `A::size_type` (optional) | *(unspecified)* | An unsigned integer type. Can represent the size of the largest object `A` can allocate. |
+| `A::difference_type` (optional) | *(unspecified)* | A signed integer type. Can represent the difference of any two pointers to the objects allocated by `A`. |
+| `A::template rebind<U>::other` (optional)[2] | `B` | For any `U`, `B::template rebind<T>::other` is `A`. |
+
+{/* source:cpp-named-req-allocator:0006 */}
+**Operations on pointers**
+
+| Expression | Return type | Requirements |
+| --- | --- | --- |
+| `*p` | `T&` | |
+| `*cp` | `const T&` | `*cp` and `*p` identify the same object. |
+| `p->m` | *(as is)* | Same as `(*p).m`, if `(*p).m` is well-defined. |
+| `cp->m` | *(as is)* | Same as `(*cp).m`, if `(*cp).m` is well-defined. |
+| `static_cast<A::pointer>(vp)` | *(as is)* | `static_cast<A::pointer>(vp) == p` |
+| `static_cast<A::const_pointer>(cvp)` | *(as is)* | `static_cast<A::const_pointer>(cvp) == cp` |
+| `std::pointer_traits<A::pointer>::pointer_to(r)` | *(as is)* | |
+
+{/* source:cpp-named-req-allocator:0007 */}
+**Storage and lifetime operations**
+
+| Expression | Return type | Requirements |
+| --- | --- | --- |
+| `a.allocate(n)` | `A::pointer` | Allocates storage suitable for an array object of type `T[n]` and creates the array, but does not construct array elements. May throw exceptions. If `n == 0`, the return value is unspecified. |
+| `a.allocate(n, cvp)` (optional) | `A::pointer` | Same as `a.allocate(n)`, but may use `cvp` (`nullptr` or a pointer obtained from `a.allocate()`) in unspecified manner to aid locality. |
+| `a.allocate_at_least(n)` (optional) <InlineRevision since="C++23" /> | `std::allocation_result<A::pointer>` | Allocates storage suitable for an array object of type `T[cnt]` and creates the array, but does not construct array elements, then returns `{p, cnt}`, where `p` points to the storage and `cnt` is not less than `n`. May throw exceptions. |
+| `a.deallocate(p, n)` | *(not used)* | Deallocates storage pointed to `p`, which must be a value returned by a previous call to `allocate`<InlineRevision since="C++23">or `allocate_at_least`</InlineRevision> that has not been invalidated by an intervening call to `deallocate`. `n` must match the value previously passed to `allocate`<InlineRevision since="C++23">or be between the request and returned number of elements via `allocate_at_least` (may be equal to either bound)</InlineRevision>. Does not throw exceptions. |
+| `a.max_size()` (optional) | `A::size_type` | The largest value that can be passed to `A::allocate()`. |
+| `a.construct(xp, args...)` (optional) | *(not used)* | Constructs an object of type `X` in previously-allocated storage at the address pointed to by `xp`, using `args...` as the constructor arguments. |
+| `a.destroy(xp)` (optional) | *(not used)* | Destructs an object of type `X` pointed to by `xp`, but does not deallocate any storage. |
+
+{/* source:cpp-named-req-allocator:0008 */}
+**Relationship between instances**
+
+| Expression | Return type | Requirements |
+| --- | --- | --- |
+| `a1 == a2` | `bool` | `true` only if the storage allocated by the allocator `a1` can be deallocated through `a2`. Establishes reflexive, symmetric, and transitive relationship. Does not throw exceptions. |
+| `a1 != a2` | `bool` | Same as `!(a1 == a2)`. |
+| **Declaration** | **Effect** | **Requirements** |
+| `A a1(a)` | Copy-constructs `a1` such that `a1 == a`. (Note: Every Allocator also satisfies [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible).) | Does not throw exceptions. |
+| `A a1 = a` | Copy-constructs `a1` such that `a1 == a`. (Note: Every Allocator also satisfies [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible).) | Does not throw exceptions. |
+| `A a(b)` | Constructs `a` such that `B(a) == b` and `A(b) == a`. (Note: This implies that all allocators related by `rebind` maintain each other's resources, such as memory pools.) | Does not throw exceptions. |
+| `A a1(std::move(a))` | Constructs `a1` such that it equals the prior value of `a`. | Does not throw exceptions. The value of `a` is unchanged and `a1 == a`. |
+| `A a1 = std::move(a)` | Constructs `a1` such that it equals the prior value of `a`. | Does not throw exceptions. The value of `a` is unchanged and `a1 == a`. |
+| `A a(std::move(b))` | Constructs `a` such that it equals the prior value of `A(b)`. | Does not throw exceptions. |
+| **Type-id** | **Aliased type** | **Requirements** |
+| `A::is_always_equal` (optional) | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or [`std::false_type`](/docs/cpp/library/meta/integral_constant) or derived from such. | `true` if any two allocators of type `A` always compare equal. (If not provided, [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits) defaults this to `std::is_empty<A>::type`.) |
+
+{/* source:cpp-named-req-allocator:0009 */}
+**Influence on container operations**
+
+| Expression | Return type | Description |
+| --- | --- | --- |
+| `a.select_on_container_copy_construction()` (optional) | `A` | Provides an instance of `A` to be used by the container that is copy-constructed from the one that uses `a` currently. (Usually returns either a copy of `a` or a default-constructed `A`.) |
+| **Type-id** | **Aliased type** | **Description** |
+| `A::propagate_on_container_copy_assignment` (optional) | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or [`std::false_type`](/docs/cpp/library/meta/integral_constant) or derived from such. | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or derived from it if the allocator of type `A` needs to be copied when the container that uses it is copy-assigned. If this member is [`std::true_type`](/docs/cpp/library/meta/integral_constant) or derived from it, then `A` must satisfy [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) and the copy operation must not throw exceptions. Note that if the allocators of the source and the target containers do not compare equal, copy assignment has to deallocate the target's memory using the old allocator and then allocate it using the new allocator before copying the elements (and the allocator). |
+| `A::propagate_on_container_move_assignment` (optional) | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or [`std::false_type`](/docs/cpp/library/meta/integral_constant) or derived from such. | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or derived from it if the allocator of type `A` needs to be moved when the container that uses it is move-assigned. If this member is [`std::true_type`](/docs/cpp/library/meta/integral_constant) or derived from it, then `A` must satisfy [MoveAssignable](/docs/cpp/library/named_req/MoveAssignable) and the move operation must not throw exceptions. If this member is not provided or derived from [`std::false_type`](/docs/cpp/library/meta/integral_constant) and the allocators of the source and the target containers do not compare equal, move assignment cannot take ownership of the source memory and must move-assign or move-construct the elements individually, resizing its own memory as needed. |
+| `A::propagate_on_container_swap` (optional) | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or [`std::false_type`](/docs/cpp/library/meta/integral_constant) or derived from such. | [`std::true_type`](/docs/cpp/library/meta/integral_constant) or derived from it if the allocators of type `A` need to be swapped when two containers that use them are swapped. If this member is [`std::true_type`](/docs/cpp/library/meta/integral_constant) or derived from it, type `A` must satisfy [Swappable](/docs/cpp/library/named_req/Swappable) and the swap operation must not throw exceptions. If this member is not provided or derived from [`std::false_type`](/docs/cpp/library/meta/integral_constant) and the allocators of the two containers do not compare equal, the behavior of container swap is undefined. |
+
+{/* source:cpp-named-req-allocator:0010 */}
+Notes:
+
+{/* source:cpp-named-req-allocator:0011 */}
+1. ↑ See also [fancy pointers](/docs/cpp/library/named_req/Allocator#Fancy_pointers) below.
+2. ↑ `rebind` is only optional (provided by [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits)) if this allocator is a template of the form `SomeAllocator<T, Args>`, where `Args` is zero or more additional template type parameters.
+
+{/* source:cpp-named-req-allocator:0012 */}
+Given
+
+{/* source:cpp-named-req-allocator:0013 */}
+- `x1` and `x2`, objects of (possibly different) types `X::void_pointer`, `X::const_void_pointer`, `X::pointer`, or `X::const_pointer`
+
+{/* source:cpp-named-req-allocator:0014 */}
+Then, `x1` and `x2` are *equivalently-valued* pointer values, if and only if both `x1` and `x2` can be explicitly converted to the two corresponding objects `px1` and `px2` of type `X::const_pointer`, using a sequence of `static_casts` using only these four types, and the expression `px1 == px2` evaluates to `true`.
+
+{/* source:cpp-named-req-allocator:0015 */}
+Given
+
+{/* source:cpp-named-req-allocator:0016 */}
+- `w1` and `w2`, objects of type `X::void_pointer`
+
+{/* source:cpp-named-req-allocator:0017 */}
+Then, for the expression `w1 == w2` and `w1 != w2` either or both objects may be replaced by an *equivalently-valued* object of type `X::const_void_pointer` with no change in semantics.
+
+{/* source:cpp-named-req-allocator:0018 */}
+Given
+
+{/* source:cpp-named-req-allocator:0019 */}
+- `p1` and `p2`, objects of type `X::pointer`
+
+{/* source:cpp-named-req-allocator:0020 */}
+Then, for the expressions `p1 == p2`, `p1 != p2`, `p1 < p2`, `p1 <= p2`, `p1 >= p2`, `p1 > p2`, `p1 - p2` either or both objects may be replaced by an *equivalently-valued* object of type `X::const_pointer` with no change in semantics.
+
+{/* source:cpp-named-req-allocator:0021 */}
+The above requirements make it possible to compare [Container](/docs/cpp/library/named_req/Container)'s `iterators` and `const_iterators`.
+
+{/* source:cpp-named-req-allocator:0022 */}
+<Revision since="C++17">
+#### Allocator completeness requirements
+
+An allocator type `X` for type `T` additionally satisfies the *allocator completeness requirements* if both of the following are true regardless of whether `T` is a complete type:
+
+- `X` is a complete type.
+- Except for `value_type`, all the member types of `std::allocator_traits<X>` are complete types.
+</Revision>
+
+### Stateful and stateless allocators
+
+{/* source:cpp-named-req-allocator:0023 */}
+Every Allocator type is either *stateful* or *stateless*. Generally, a stateful allocator type can have unequal values which denote distinct memory resources, while a stateless allocator type denotes a single memory resource.
+
+{/* source:cpp-named-req-allocator:0024 */}
+<Revision until="C++11">Although custom allocators are not required to be stateless, whether and how the use of stateful allocators in the standard library is implementation-defined. Use of unequal allocator values may result in implementation-defined runtime errors or undefined behavior if the implementation does not support such usage.</Revision>
+
+<Revision since="C++11">Custom allocators may contain state. Each container or another allocator-aware object stores an instance of the supplied allocator and controls allocator replacement through [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits).</Revision>
+
+{/* source:cpp-named-req-allocator:0025 */}
+Instances of a stateless allocator type always compare equal. Stateless allocator types are typically implemented as empty classes and suitable for [empty base class optimization](/docs/cpp/language/classes/ebo).
+
+{/* source:cpp-named-req-allocator:0026 */}
+<Revision since="C++11">The member type `is_always_equal` of [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits) is intendedly used for determining whether an allocator type is stateless.</Revision>
+
+### Fancy pointers
+
+{/* source:cpp-named-req-allocator:0027 */}
+When the member type `pointer` is not a raw pointer type, it is commonly referred to as a ["fancy pointer"](https://wg21.link/P0773R0). Such pointers were introduced to support segmented memory architectures and are used today to access objects allocated in address spaces that differ from the homogeneous virtual address space that is accessed by raw pointers. An example of a fancy pointer is the mapping address-independent pointer [`boost::interprocess::offset_ptr`](https://www.boost.org/doc/libs/release/doc/html/interprocess/offset_ptr.html), which makes it possible to allocate node-based data structures such as [`std::set`](/docs/cpp/library/container/set) in shared memory and memory mapped files mapped in different addresses in every process. Fancy pointers can be used independently of the allocator that provided them<InlineRevision since="C++11">, through the class template [`std::pointer_traits`](/docs/cpp/library/memory/pointer_traits)</InlineRevision>. <InlineRevision since="C++20">The function `std::to_address` can be used to obtain a raw pointer from a fancy pointer.</InlineRevision>
+
+{/* source:cpp-named-req-allocator:0028 */}
+<Revision until="C++11">Use of fancy pointers and customized size/different type in the standard libary are conditionally supported. Implementations may require that member type `pointer`, `const_pointer`, `size_type`, and `difference_type` are `value_type*`, `const value_type*`, [`std::size_t`](/docs/cpp/library/utility/types/size_t), and [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t), respectively.</Revision>
+
+{/* source:cpp-named-req-allocator:0029 */}
+<Revision since="C++26">
+### Concept
+
+For the definition of the query object `std::get_allocator`, the following exposition-only concept is defined.
+
+```cpp
+template<class Alloc>
+concept /*simple-allocator*/ = requires(Alloc alloc, std::size_t n)
+{
+    { *alloc.allocate(n) } -> std::same_as<typename Alloc::value_type&>;
+    { alloc.deallocate(alloc.allocate(n), n) }; 
+} && std::copy_constructible<Alloc>
+
+    && std::equality_comparable<Alloc>;
+```
+
+The exposition-only concept `/*simple-allocator*/` defines the minimal usability constraints of the Allocator requirement.
+</Revision>
+
+### Standard library
+
+{/* source:cpp-named-req-allocator:0030 */}
+The following standard library components satisfy the Allocator requirements:
+
+{/* source:cpp-named-req-allocator:0031 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocator`](/docs/cpp/library/memory/allocator)</DescriptionTerm>
+    <DescriptionBody>the default allocator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`scoped_allocator_adaptor`](/docs/cpp/library/memory/scoped_allocator_adaptor) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements multi-level allocator for multi-level containers (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`polymorphic_allocator`](/docs/cpp/library/memory/polymorphic_allocator) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>an allocator that supports run-time polymorphism based on the [`std::pmr::memory_resource`](/docs/cpp/library/memory/memory_resource) it is constructed with (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Examples
+
+{/* source:cpp-named-req-allocator:0032 */}
+Demonstrates a C++11 allocator, except for [`[[nodiscard]]`](/docs/cpp/language/declarations/attributes/nodiscard) added to match C++20 style.
+
+```cpp
+#include <cstdlib>
+#include <iostream>
+#include <limits>
+#include <new>
+#include <vector>
+ 
+template<class T>
+struct Mallocator
+{
+    typedef T value_type;
+ 
+    Mallocator() = default;
+ 
+    template<class U>
+    constexpr Mallocator(const Mallocator <U>&) noexcept {}
+ 
+    [[nodiscard]] T* allocate(std::size_t n)
+    {
+        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+            throw std::bad_array_new_length();
+ 
+        if (auto p = static_cast<T*>(std::malloc(n * sizeof(T))))
+        {
+            report(p, n);
+            return p;
+        }
+ 
+        throw std::bad_alloc();
+    }
+ 
+    void deallocate(T* p, std::size_t n) noexcept
+    {
+        report(p, n, 0);
+        std::free(p);
+    }
+private:
+    void report(T* p, std::size_t n, bool alloc = true) const
+    {
+        std::cout << (alloc ? "Alloc: " : "Dealloc: ") << sizeof(T) * n
+                  << " bytes at " << std::hex << std::showbase
+                  << reinterpret_cast<void*>(p) << std::dec << '\n';
+    }
+};
+ 
+template<class T, class U>
+bool operator==(const Mallocator <T>&, const Mallocator <U>&) { return true; }
+ 
+template<class T, class U>
+bool operator!=(const Mallocator <T>&, const Mallocator <U>&) { return false; }
+ 
+int main()
+{
+    std::vector<int, Mallocator<int>> v(8);
+    v.push_back(42);
+}
+```
+
+Possible output:
+
+```text
+Alloc: 32 bytes at 0x2020c20
+Alloc: 64 bytes at 0x2023c60
+Dealloc: 32 bytes at 0x2020c20
+Dealloc: 64 bytes at 0x2023c60
+```
+
+### Defect reports
+
+{/* source:cpp-named-req-allocator:0033 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-allocator:0034 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={179} standard="C++98"><PublishedBehavior>`pointer` and `const_pointer` were not required to be comparable with each other</PublishedBehavior><CorrectedBehavior>required</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={199} standard="C++98"><PublishedBehavior>the return value of `a.allocate(0)` was unclear</PublishedBehavior><CorrectedBehavior>it is unspecified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={258} standard="C++98"><PublishedBehavior>the equality relationship between allocators were not required to be reflexive, symmetric or transitive</PublishedBehavior><CorrectedBehavior>required to be reflexive, symmetric and transitive</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={274} standard="C++98"><PublishedBehavior>`T` could be a const-qualified type or reference type, making [`std::allocator`](/docs/cpp/library/memory/allocator) possibly ill-formed[1]</PublishedBehavior><CorrectedBehavior>prohibited these types</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2016} standard="C++11"><PublishedBehavior>the copy, move and swap operations of allocator might be throwing when used</PublishedBehavior><CorrectedBehavior>required to be non-throwing</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2081} standard="C++98 C++11"><PublishedBehavior>allocators were not required to support copy assignment (C++98) and move assignment (C++11)</PublishedBehavior><CorrectedBehavior>required</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2108} standard="C++11"><PublishedBehavior>there was no way to show an allocator is stateless</PublishedBehavior><CorrectedBehavior>`is_always_equal` provided</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2263} standard="C++11"><PublishedBehavior>the resolution of [LWG issue 179](https://cplusplus.github.io/LWG/issue179) was accidently dropped in C++11 and not generalized to `void_pointer` and `const_void_pointer`</PublishedBehavior><CorrectedBehavior>restored and generalized</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2447} standard="C++11"><PublishedBehavior>`T` could be a volatile-qualified object type</PublishedBehavior><CorrectedBehavior>prohibited these types</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2593} standard="C++11"><PublishedBehavior>moving from an allocator might modify its value</PublishedBehavior><CorrectedBehavior>modification forbidden</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P0593R6" standard="C++98"><PublishedBehavior>`allocate` were not required to create an array object in the storage it allocated</PublishedBehavior><CorrectedBehavior>required</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-named-req-allocator:0035 */}
+1. ↑ The member types `reference` and `const_reference` of [`std::allocator`](/docs/cpp/library/memory/allocator) are defined as `T&` and `const T&` respectively.
+   - If `T` is a reference type, `reference` and `const_reference` are ill-formed because reference to reference cannot be formed ([reference collapsing](/docs/cpp/language/declarations/reference#Reference_collapsing) was introduced in C++11).
+   - If `T` is const-qualified, `reference` and `const_reference` are the same, and the overload set of [`address()`](/docs/cpp/library/memory/allocator/address) is ill-formed.

@@ -1,0 +1,110 @@
+---
+title: "C++ named requirements: NullablePointer (since C++11)"
+description: "Specifies that the type is a pointer-like object which can be compared to std::nullptr_t objects."
+source_url: "https://en.cppreference.com/w/cpp/named_req/NullablePointer"
+language: "C++"
+---
+
+{/* source:cpp-named-req-nullablepointer:0000 */}
+Specifies that the type is a pointer-like object which can be compared to [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) objects.
+
+## Requirements
+
+{/* source:cpp-named-req-nullablepointer:0001 */}
+The type must meet all of the following requirements:
+
+{/* source:cpp-named-req-nullablepointer:0002 */}
+- [EqualityComparable](/docs/cpp/library/named_req/EqualityComparable)
+- [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible)
+- [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible)
+- [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable)
+- [Swappable](/docs/cpp/library/named_req/Swappable)
+- [Destructible](/docs/cpp/library/named_req/Destructible)
+
+{/* source:cpp-named-req-nullablepointer:0003 */}
+In addition, a value-initialized object of the type must produce a null value of that type. This null value shall only be equivalent to itself. Default initialization of the type may have an [indeterminate](/docs/cpp/language/initialization/default_initialization#Indeterminate_and_erroneous_values) <InlineRevision since="C++26">or erroneous</InlineRevision> value.
+
+{/* source:cpp-named-req-nullablepointer:0004 */}
+A value of the type must be [contextually convertible](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions) to `bool`. The effect of this conversion returns `false` if the value is equivalent to its null value and `true` otherwise.
+
+{/* source:cpp-named-req-nullablepointer:0005 */}
+None of the operations that this type performs may throw exceptions.
+
+{/* source:cpp-named-req-nullablepointer:0006 */}
+The type must satisfy the following additional expressions, given two values `p` and `q` that are of the type, and that `np` is a value of [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) type (possibly const-qualified):
+
+{/* source:cpp-named-req-nullablepointer:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`Type p(np);`<br />`Type p = np;`</DescriptionTerm>
+    <DescriptionBody>Afterwards, `p` is equivalent to `nullptr`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Type(np)`</DescriptionTerm>
+    <DescriptionBody>A temporary object that is equivalent to `nullptr`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`p = np`</DescriptionTerm>
+    <DescriptionBody>Must return a `Type&`, and afterwards, `p` is equivalent to `nullptr`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`p != q`</DescriptionTerm>
+    <DescriptionBody><Revision until="C++20">Type and value meet the [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable) requirements</Revision><Revision since="C++20">`decltype(p != q)` models [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> The effect is `!(p == q)`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`p == np`<br />`np == p`</DescriptionTerm>
+    <DescriptionBody><Revision until="C++20">Type and value of both expressions the [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable) requirements</Revision><Revision since="C++20">`decltype(p == np)` and `decltype(np == p)` each model [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> The effect is `(p == Type())`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`p != np`<br />`np != p`</DescriptionTerm>
+    <DescriptionBody><Revision until="C++20">Type and value of both expressions the [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable) requirements</Revision><Revision since="C++20">`decltype(p != np)` and `decltype(np != p)` each model [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable)</Revision> The effect is `!(p == np)`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Notes
+
+{/* source:cpp-named-req-nullablepointer:0008 */}
+Note that dereferencing (`operator*` or `operator->`) is not required for a NullablePointer type. A minimalistic type that satisfies these requirements is
+
+{/* source:cpp-named-req-nullablepointer:0009 */}
+```cpp
+class handle
+{
+    int id = 0;
+public:
+    handle() = default;
+    handle(std::nullptr_t) {}
+    explicit operator bool() const { return id != 0; }
+    friend bool operator==(handle l, handle r) { return l.id == r.id; }
+    friend bool operator!=(handle l, handle r) { return !(l == r); }
+    // or only a defaulted operator== (since C++20)
+};
+```
+
+## Standard library
+
+{/* source:cpp-named-req-nullablepointer:0010 */}
+The following types satisfy NullablePointer:
+
+{/* source:cpp-named-req-nullablepointer:0011 */}
+- [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr).
+
+{/* source:cpp-named-req-nullablepointer:0012 */}
+The following types must satisfy NullablePointer in order to communicate with standard library components:
+
+{/* source:cpp-named-req-nullablepointer:0013 */}
+- The member types `X::pointer`, `X::const_pointer`, `X::void_pointer` and `X::const_void_pointer` of every [Allocator](/docs/cpp/library/named_req/Allocator) type `X`.
+- The member type `pointer` of [`std::unique_ptr`](/docs/cpp/library/memory/unique_ptr).
+
+{/* source:cpp-named-req-nullablepointer:0014 */}
+- The adapted pointer type of [`std::inout_ptr_t`](/docs/cpp/library/memory/inout_ptr_t) and [`std::out_ptr_t`](/docs/cpp/library/memory/out_ptr_t). <InlineRevision since="C++23" />
+
+## Defect reports
+
+{/* source:cpp-named-req-nullablepointer:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-nullablepointer:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2114} standard="C++11"><PublishedBehavior>contextual convertibility to `bool` was too weak to reflect the expectation of implementations ([P2167R3](https://wg21.link/P2167R3))</PublishedBehavior><CorrectedBehavior>requirements strengthened</CorrectedBehavior></DefectReport>
+</DefectReportList>

@@ -1,0 +1,100 @@
+---
+title: "Standard library header <rcu> (C++26)"
+description: "This header is part of the thread support library."
+source_url: "https://en.cppreference.com/w/cpp/header/rcu"
+language: "C++"
+---
+
+{/* source:cpp-header-rcu:0000 */}
+This header is part of the [thread support](/docs/cpp/library/atomic) library.
+
+{/* source:cpp-header-rcu:0001 */}
+## Classes
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_obj_base`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_obj_base&action=edit&redlink=1) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>allows an object to be protected by RCU (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_domain`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_domain&action=edit&redlink=1) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>provides regions of RCU protection (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_default_domain`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_default_domain&action=edit&redlink=1) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>returns a reference to a static-duration object of type `std::rcu_domain` (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_synchronize`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_synchronize&action=edit&redlink=1) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>blocks until a protection region unlocks on a RCU domain (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_barrier`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_barrier&action=edit&redlink=1) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>may evaluate scheduled operations on a RCU domain and blocks until all preceding evaluations are complete (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_retire`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_retire&action=edit&redlink=1) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>schedules the evaluation of a specified function on a RCU domain, potentially allocating memory, and invoking scheduled evaluations (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Synopsis
+
+{/* source:cpp-header-rcu:0002 */}
+```cpp
+namespace std {
+  template<class T, class D = default_delete<T>> class rcu_obj_base;
+ 
+  class rcu_domain;
+ 
+  rcu_domain& rcu_default_domain() noexcept;
+  void rcu_synchronize(rcu_domain& dom = rcu_default_domain()) noexcept;
+  void rcu_barrier(rcu_domain& dom = rcu_default_domain()) noexcept;
+  template<class T, class D = default_delete<T>>
+    void rcu_retire(T* p, D d = D(), rcu_domain& dom = rcu_default_domain());
+}
+```
+
+### Class template std::rcu_obj_base
+
+{/* source:cpp-header-rcu:0003 */}
+```cpp
+namespace std {
+  template<class T, class D = default_delete<T>>
+  class rcu_obj_base {
+  public:
+    void retire(D d = D(), rcu_domain& dom = rcu_default_domain()) noexcept;
+  protected:
+    rcu_obj_base() = default;
+    rcu_obj_base(const rcu_obj_base&) = default;
+    rcu_obj_base(rcu_obj_base&&) = default;
+    rcu_obj_base& operator=(const rcu_obj_base&) = default;
+    rcu_obj_base& operator=(rcu_obj_base&&) = default;
+    ~rcu_obj_base() = default;
+  private:
+    D deleter;            // exposition only
+  };
+}
+```
+
+### Class std::rcu_domain
+
+{/* source:cpp-header-rcu:0004 */}
+```cpp
+namespace std {
+  class rcu_domain {
+  public:
+    rcu_domain(const rcu_domain&) = delete;
+    rcu_domain& operator=(const rcu_domain&) = delete;
+ 
+    void lock() noexcept;
+    bool try_lock() noexcept;
+    void unlock() noexcept;
+  };
+}
+```

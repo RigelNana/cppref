@@ -1,0 +1,138 @@
+---
+title: "C++ named requirements: RandomNumberEngine (since C++11)"
+description: "A random number engine is a function object returning unsigned integer values such that each value in the range of possible results has (ideally) equal probability."
+source_url: "https://en.cppreference.com/w/cpp/named_req/RandomNumberEngine"
+language: "C++"
+---
+
+{/* source:cpp-named-req-randomnumberengine:0000 */}
+A random number engine is a function object returning unsigned integer values such that each value in the range of possible results has (ideally) equal probability.
+
+{/* source:cpp-named-req-randomnumberengine:0001 */}
+Any random number engine is also a [UniformRandomBitGenerator](/docs/cpp/library/named_req/UniformRandomBitGenerator), and therefore may be plugged into any [random number distribution](/docs/cpp/library/numeric/random) in order to obtain a random number (formally, a random variate).
+
+## Requirements
+
+{/* source:cpp-named-req-randomnumberengine:0002 */}
+A type satisfies RandomNumberEngine if it satisfies [UniformRandomBitGenerator](/docs/cpp/library/named_req/UniformRandomBitGenerator) and, given the following types and values, the semantic and complexity requirements in the table below are satisfied:
+
+{/* source:cpp-named-req-randomnumberengine:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`E`</DescriptionTerm>
+    <DescriptionBody>a RandomNumberEngine type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`T`</DescriptionTerm>
+    <DescriptionBody>`E::result_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`e`</DescriptionTerm>
+    <DescriptionBody>a value of type `E`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`v`</DescriptionTerm>
+    <DescriptionBody>an lvalue of type `E`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`x`, `y`</DescriptionTerm>
+    <DescriptionBody>values of type (possibly const-qualified) `E`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`s`</DescriptionTerm>
+    <DescriptionBody>a value of type `T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`q`</DescriptionTerm>
+    <DescriptionBody>a [SeedSequence](/docs/cpp/library/named_req/SeedSequence) lvalue</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`z`</DescriptionTerm>
+    <DescriptionBody>a value of type `unsigned long long`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`os`</DescriptionTerm>
+    <DescriptionBody>an lvalue whose type is a specialization of [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`is`</DescriptionTerm>
+    <DescriptionBody>an lvalue whose type is a specialization of [`std::basic_istream`](/docs/cpp/library/io/basic_istream)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`n`</DescriptionTerm>
+    <DescriptionBody>the [size](/docs/cpp/library/numeric/random#Random_number_engines) of `E`'s state</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`TA`</DescriptionTerm>
+    <DescriptionBody>the [transition algorithm](/docs/cpp/library/numeric/random#Random_number_engines) of `E`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`GA`</DescriptionTerm>
+    <DescriptionBody>the [generation algorithm](/docs/cpp/library/numeric/random#Random_number_engines) of `E`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-named-req-randomnumberengine:0004 */}
+| Expression | Return type | Semantics | Complexity |
+| --- | --- | --- | --- |
+| `E()` | N/A | Creates an engine with the same initial state as all other default-constructed engines of type `E`. | `O(n)` |
+| `E(x)` | N/A | Creates an engine that compares equal to `x`. | `O(n)` |
+| `E(s)` | N/A | Creates an engine whose initial state is determined by `s`. | `O(n)` |
+| `E(q)` | N/A | Creates an engine whose initial state is determined by a single call to `q.generate`. | same as the complexity of `q.generate` called on a sequence whose length is `n` |
+| `e.seed()` | `void` | Postcondition: `e == E()`. | same as `E()` |
+| `e.seed(s)` | `void` | Postcondition: `e == E(s)`. | same as `E(s)` |
+| `e.seed(q)` | `void` | Postcondition: `e == E(q)`. | same as `E(q)` |
+| `e()` | `T` | Advances `e`'s state from ei to ei+1 (i.e. `TA(e i)`) and returns `GA(e i)`. | amortized constant |
+| `e.discard(z)` | `void` | Advances `e`'s state from ei to ei+z by any means equivalent to `z` consecutive calls of `e()`. | no worse than the complexity of `z` consecutive calls of `e()` |
+| `x == y` | `bool` | For all positive integer i, if the ith consecutive calls of `x()` and `y()` return the same value, returns `true`. Otherwise returns `false`. | `O(n)` |
+| `x != y` | `bool` | `!(x == y)` | `O(n)` |
+| `os << x` | `decltype(os)&` | With fmtflags set to `std::ios_base::dec | std::ios_base::left` and the fill character set to the space character, writes to `os` the textual representation of `x`'s current state. Postcondition: `os`'s fmtflags and the fill character are the same as before. | `O(n)` |
+| `is >> v` | `decltype(is)&` | With fmtflags set to `std::ios_base::dec`, reads from `is` the textual representation of `v`'s current state. If bad input is encountered, ensures that `v`'s state is unchanged by the operation and calls `is.setstate(std::ios_base::failbit)` (which may throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure)). Precondition: `is` provides a textual representation that was previously written using an output stream `pr` satisfying all following conditions:<br />- `is.getloc() == pr.getloc()` is true.<br />- `std::is_same<decltype(is)::char_type, decltype(pr)::char_type>::value` is true.<br />- `std::is_same<decltype(is)::traits_type, decltype(pr)::traits_type>::value` is true.<br />Postcondition: `is`'s fmtflags are the same as before. | `O(n)` |
+
+## Standard library
+
+{/* source:cpp-named-req-randomnumberengine:0005 */}
+The following standard library facilities satisfy RandomNumberEngine:
+
+{/* source:cpp-named-req-randomnumberengine:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`linear_congruential_engine`](/docs/cpp/library/numeric/random/linear_congruential_engine) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements [linear congruential](https://en.wikipedia.org/wiki/Linear_congruential_generator) algorithm (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mersenne_twister_engine`](/docs/cpp/library/numeric/random/mersenne_twister_engine) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements [Mersenne twister](https://en.wikipedia.org/wiki/Mersenne_twister) algorithm (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`subtract_with_carry_engine`](/docs/cpp/library/numeric/random/subtract_with_carry_engine) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements a subtract-with-carry ([lagged Fibonacci](https://en.wikipedia.org/wiki/Lagged_Fibonacci_generator)) algorithm (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`philox_engine`](/docs/cpp/library/numeric/random/philox_engine) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>a counter-based parallelizable generator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`discard_block_engine`](/docs/cpp/library/numeric/random/discard_block_engine) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>discards some output of a random number engine (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`independent_bits_engine`](/docs/cpp/library/numeric/random/independent_bits_engine) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>packs the output of a random number engine into blocks of a specified number of bits (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shuffle_order_engine`](/docs/cpp/library/numeric/random/shuffle_order_engine) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>delivers the output of a random number engine in a different order (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-named-req-randomnumberengine:0007 */}
+The following standard library facilities satisfy [UniformRandomBitGenerator](/docs/cpp/library/named_req/UniformRandomBitGenerator) but not RandomNumberEngine:
+
+{/* source:cpp-named-req-randomnumberengine:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`random_device`](/docs/cpp/library/numeric/random/random_device) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>non-deterministic random number generator using hardware entropy source (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,56 @@
+---
+title: "C++ named requirements: FormattedInputFunction"
+description: "A FormattedInputFunction is a stream input function that performs the following:"
+source_url: "https://en.cppreference.com/w/cpp/named_req/FormattedInputFunction"
+language: "C++"
+---
+
+### Requirements
+
+{/* source:cpp-named-req-formattedinputfunction:0000 */}
+A *FormattedInputFunction* is a stream input function that performs the following:
+
+{/* source:cpp-named-req-formattedinputfunction:0001 */}
+- Constructs an object of type [`basic_istream::sentry`](/docs/cpp/library/io/basic_istream/sentry) with automatic storage duration and with the `noskipws` argument set to `false`, which performs the following: {/* source:cpp-named-req-formattedinputfunction:0002 */}
+  - if [`eofbit`](/docs/cpp/library/io/ios_base/iostate) or [`badbit`](/docs/cpp/library/io/ios_base/iostate) are set on the input stream, sets the `failbit` as well, and if exceptions on `failbit` are enabled in this input stream's [exception mask](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & failbit) != 0`), throws [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure).
+  - flushes the `tie()`'d output stream, if applicable.
+  - if `ios_base::skipws` flag is set on this input stream, extracts and discards characters from the input stream until one of the following becomes true:
+    - the next available character on the input stream is not a whitespace character, as tested by the [`std::ctype`](/docs/cpp/library/text/locale/ctype) facet of the locale currently imbued in this input stream. The non-whitespace character is not extracted.
+    - the end of the stream is reached, in which case `failbit` and `eofbit` are set and if the stream is on for exceptions on one of these bits, [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure) is thrown.
+
+{/* source:cpp-named-req-formattedinputfunction:0003 */}
+- Checks the status of the sentry by calling `sentry::operator bool()`, which is equivalent to [`basic_ios::good`](/docs/cpp/library/io/basic_ios/good).
+- If the sentry returned `false` or sentry's constructor threw an exception, no input takes place.
+- If the sentry returned `true`, performs the input as if by calling `rdbuf()->sbumpc()` or `rdbuf()->sgetc()`. {/* source:cpp-named-req-formattedinputfunction:0004 */}
+  - if the end of the stream is reached (the call to `rdbuf()->sbumpc()` or `rdbuf()->sgetc()` returns `Traits::eof()`), sets `eofbit`. If exceptions on `eofbit` are enabled in this stream's [exception mask](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & eofbit) != 0`), throws [`ios_base::failure`](/docs/cpp/library/io/ios_base/failure).
+  - if an exception is thrown during input, sets `badbit` in the input stream. If exceptions on `badbit` are enabled in this stream's [exception mask](/docs/cpp/library/io/basic_ios/exceptions) (`(exceptions() & badbit) != 0`), the exception is also rethrown.
+  - If no exception was thrown, returns `*this`.
+
+{/* source:cpp-named-req-formattedinputfunction:0005 */}
+- In any event, whether terminating by exception or returning, the sentry's destructor is called before leaving this function.
+
+### Standard library
+
+{/* source:cpp-named-req-formattedinputfunction:0006 */}
+The following standard library functions are *FormattedInputFunctions*.
+
+{/* source:cpp-named-req-formattedinputfunction:0007 */}
+- [`basic_istream::operator>>(int, long, double, void*, bool)`](/docs/cpp/library/io/basic_istream/operator_gtgt)
+- [`operator>>(std::basic_istream, char&)`](/docs/cpp/library/io/basic_istream/operator_gtgt2)
+- [`operator>>(std::basic_istream, char*)`](/docs/cpp/library/io/basic_istream/operator_gtgt2)
+- [`operator>>(std::basic_istream, std::bitset)`](/docs/cpp/library/utility/bitset/operator_ltltgtgt2)
+- [`operator>>(std::basic_istream, std::string)`](/docs/cpp/library/string/basic_string/operator_ltltgtgt)
+- `operator>>`, when called on the return value of [`std::get_money`](/docs/cpp/library/io/manip/get_money)
+
+### Defect reports
+
+{/* source:cpp-named-req-formattedinputfunction:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-formattedinputfunction:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={160} standard="C++98">
+    <PublishedBehavior>the process of determining whether the exception caught is rethrown mentioned a non-existing function `exception()`</PublishedBehavior>
+    <CorrectedBehavior>corrected to [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

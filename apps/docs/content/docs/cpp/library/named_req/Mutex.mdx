@@ -1,0 +1,104 @@
+---
+title: "C++ named requirements: Mutex (since C++11)"
+description: "The Mutex requirements extends the Lockable requirements to include inter-thread synchronization."
+source_url: "https://en.cppreference.com/w/cpp/named_req/Mutex"
+language: "C++"
+---
+
+{/* source:cpp-named-req-mutex:0000 */}
+The Mutex requirements extends the [Lockable](/docs/cpp/library/named_req/Lockable) requirements to include inter-thread synchronization.
+
+## Requirements
+
+{/* source:cpp-named-req-mutex:0001 */}
+- [Lockable](/docs/cpp/library/named_req/Lockable)
+- [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible)
+- [Destructible](/docs/cpp/library/named_req/Destructible)
+- not copyable
+- not movable
+
+{/* source:cpp-named-req-mutex:0002 */}
+For an object m of Mutex type:
+
+{/* source:cpp-named-req-mutex:0003 */}
+- The expression `m.lock()` has the following properties
+
+{/* source:cpp-named-req-mutex:0004 */}
+  - Behaves as an atomic operation.
+  - Blocks the calling thread until exclusive ownership of the mutex can be obtained.
+  - Prior `m.unlock()` operations on the same mutex *synchronize-with* this lock operation (equivalent to release-acquire [`std::memory_order`](/docs/cpp/library/atomic/memory_order)).
+  - The behavior is undefined if the calling thread already owns the mutex (except if m is [`std::recursive_mutex`](/docs/cpp/library/atomic/recursive_mutex) or [`std::recursive_timed_mutex`](/docs/cpp/library/atomic/recursive_timed_mutex)).
+  - Exception of type [`std::system_error`](/docs/cpp/library/error/system_error) may be thrown on errors, with the following error codes:
+    - [`std::errc::operation_not_permitted`](/docs/cpp/library/error/errc) if the calling thread does not have required privileges.
+    - [`std::errc::resource_deadlock_would_occur`](/docs/cpp/library/error/errc) if the implementation detects that this operation would lead to deadlock.
+
+{/* source:cpp-named-req-mutex:0005 */}
+- The expression `m.try_lock()` has the following properties
+
+{/* source:cpp-named-req-mutex:0006 */}
+  - Behaves as an atomic operation.
+  - Attempts to obtain exclusive ownership of the mutex for the calling thread without blocking. If ownership is not obtained, returns immediately. The function is allowed to spuriously fail and return even if the mutex is not currently owned by another thread.
+  - If `try_lock()` succeeds, prior `unlock()` operations on the same object *synchronize-with* this operation (equivalent to release-acquire [`std::memory_order`](/docs/cpp/library/atomic/memory_order)). `lock()` does not synchronize with a failed `try_lock()`.
+  - Does not throw exceptions.
+
+{/* source:cpp-named-req-mutex:0007 */}
+- The expression `m.unlock()` has the following properties
+
+{/* source:cpp-named-req-mutex:0008 */}
+  - Behaves as an atomic operation.
+  - Releases the calling thread's ownership of the mutex and *synchronizes-with* the subsequent successful lock operations on the same object.
+  - The behavior is undefined if the calling thread does not own the mutex.
+  - Does not throw exceptions.
+
+{/* source:cpp-named-req-mutex:0009 */}
+- All lock and unlock operations on a single mutex occur in a single total order that can be viewed as [modification order](/docs/cpp/library/atomic/memory_order#Modification_order) of an atomic variable: the order is specific to this individual mutex.
+
+## Standard library
+
+{/* source:cpp-named-req-mutex:0010 */}
+The following standard library types satisfy Mutex requirements:
+
+{/* source:cpp-named-req-mutex:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`mutex`](/docs/cpp/library/atomic/mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides basic mutual exclusion facility (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`recursive_mutex`](/docs/cpp/library/atomic/recursive_mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which can be locked recursively by the same thread (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`recursive_timed_mutex`](/docs/cpp/library/atomic/recursive_timed_mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which can be locked recursively by the same thread and implements locking with a timeout (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_mutex`](/docs/cpp/library/atomic/shared_mutex) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_timed_mutex`](/docs/cpp/library/atomic/shared_timed_mutex) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility and implements locking with a timeout (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`timed_mutex`](/docs/cpp/library/atomic/timed_mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which implements locking with a timeout (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Defect reports
+
+{/* source:cpp-named-req-mutex:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-mutex:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2309} standard="C++11"><PublishedBehavior>`lock` might throw [`std::system_error`](/docs/cpp/library/error/system_error) with error code [`std::errc::device_or_resource_busy`](/docs/cpp/library/error/errc)</PublishedBehavior><CorrectedBehavior>not allowed</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-named-req-mutex:0014 */}
+- [Thread support library](/docs/cpp/library/atomic)
+- [Lockable](/docs/cpp/library/named_req/Lockable)
+- [TimedMutex](/docs/cpp/library/named_req/TimedMutex)

@@ -1,0 +1,159 @@
+---
+title: "C++ named requirements: AllocatorAwareContainer (since C++11)"
+description: "An AllocatorAwareContainer is a Container that holds an instance of an Allocator and uses that instance in all its member functions to allocate and deallocate memory and to construct and destroy objects in that memory (such objects may be container elements, nodes, or, for unordered containers, bucket arrays)."
+source_url: "https://en.cppreference.com/w/cpp/named_req/AllocatorAwareContainer"
+language: "C++"
+---
+
+{/* source:cpp-named-req-allocatorawarecontainer:0000 */}
+An AllocatorAwareContainer is a [Container](/docs/cpp/library/named_req/Container) that holds an instance of an [Allocator](/docs/cpp/library/named_req/Allocator) and uses that instance in all its member functions to allocate and deallocate memory and to construct and destroy objects in that memory (such objects may be container elements, nodes, or, for unordered containers, bucket arrays)<InlineRevision since="C++23">, except that [`std::basic_string`](/docs/cpp/library/string/basic_string) specializations do not use the allocators for construction/destruction of their elements</InlineRevision>.
+
+{/* source:cpp-named-req-allocatorawarecontainer:0001 */}
+The following rules apply to container construction:
+
+{/* source:cpp-named-req-allocatorawarecontainer:0002 */}
+- Copy constructors of AllocatorAwareContainers obtain their instances of the allocator by calling `std::allocator_traits<allocator_type>::select_on_container_copy_construction` on the allocator of the container being copied.
+- Move constructors obtain their instances of allocators by move-constructing from the allocator belonging to the old container.
+- All other constructors take a `const allocator_type&` parameter.
+
+{/* source:cpp-named-req-allocatorawarecontainer:0003 */}
+The only way to replace an allocator is copy-assignment, move-assignment, and swap:
+
+{/* source:cpp-named-req-allocatorawarecontainer:0004 */}
+- Copy-assignment will replace the allocator only if `std::allocator_traits<allocator_type>::propagate_on_container_copy_assignment::value` is `true`.
+- Move-assignment will replace the allocator only if `std::allocator_traits<allocator_type>::propagate_on_container_move_assignment::value` is `true`.
+- Swap will replace the allocator only if `std::allocator_traits<allocator_type>::propagate_on_container_swap::value` is `true`. Specifically, it will exchange the allocator instances through an unqualified call to the non-member function swap, see [Swappable](/docs/cpp/library/named_req/Swappable).
+
+{/* source:cpp-named-req-allocatorawarecontainer:0005 */}
+Note: The behavior of swapping two containers with unequal allocators if `propagate_on_container_swap` is `false` is undefined.
+
+{/* source:cpp-named-req-allocatorawarecontainer:0006 */}
+- The accessor `get_allocator()` obtains a copy of the allocator that was used to construct the container or installed by the most recent allocator replacement operation.
+
+### Requirements
+
+{/* source:cpp-named-req-allocatorawarecontainer:0007 */}
+A type satisfies AllocatorAwareContainer if it satisfies [Container](/docs/cpp/library/named_req/Container) and, given the following types and values, the semantic and complexity requirements in the tables below are satisfied:
+
+{/* source:cpp-named-req-allocatorawarecontainer:0008 */}
+| Type | Definition |
+| --- | --- |
+| `X` | an AllocatorAwareContainer type |
+| `T` | the `value_type` of `X` |
+| `A` | the allocator type used by `X` |
+| **Value** | **Definition** |
+| `a`, `b` | non-const lvalues of type `X` |
+| `c` | an lvalue of type `const X` |
+| `t` | an lvalue or a const rvalue of type `X` |
+| `rv` | a non-const rvalue of type `X` |
+| `m` | a value of type `A` |
+
+#### Types
+
+{/* source:cpp-named-req-allocatorawarecontainer:0009 */}
+| Name | Type | Requirement |
+| --- | --- | --- |
+| `typename X::allocator_type` | `A` | `X::allocator_type::value_type` and `X::value_type` are the same. |
+
+#### Statements
+
+{/* source:cpp-named-req-allocatorawarecontainer:0010 */}
+| Statement | Semantics | Complexity |
+| --- | --- | --- |
+| `X u;` `X u = X();` | Precondition: `A` is [DefaultConstructible](/docs/cpp/library/named_req/DefaultConstructible). | Constant |
+| `X u;` `X u = X();` | Postcondition: `u.empty()` and `u.get_allocator() == A()` are both `true`. | Constant |
+| `X u(m);` | Postcondition: `u.empty()` and `u.get_allocator() == m` are both `true`. | Constant |
+| `X u(t, m);` | Precondition: `T` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `X`. | Linear |
+| `X u(t, m);` | Postcondition: `u == t` and `u.get_allocator() == m` are both `true`. | Linear |
+| `X u(rv);` | Postcondition: `u` has the same elements as `rv` had before this construction. The value of `u.get_allocator()` is the same as the value of `rv.get_allocator()` before this construction. | Constant |
+| `X u(rv, m);` | Precondition: `T` is [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) into `X`. | Constant if `m == rv.get_allocator()` is `true`. Otherwise linear. |
+| `X u(rv, m);` | Postcondition: `u` has the same elements, or copies of the elements, that `rv` had before this construction. `u.get_allocator() == m` is `true`. | Constant if `m == rv.get_allocator()` is `true`. Otherwise linear. |
+
+#### Expressions
+
+{/* source:cpp-named-req-allocatorawarecontainer:0011 */}
+| Expression | Type | Semantics | Complexity |
+| --- | --- | --- | --- |
+| `c.get_allocator()` | `A` | No direct semantic requirement. | Constant |
+| `a = t` | `X&` | Precondition: `T` is [CopyInsertable](/docs/cpp/library/named_req/CopyInsertable) into `X` and [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable). | Linear |
+| `a = t` | `X&` | Postcondition: `a == t` is `true`. | Linear |
+| `a = rv` | `X&` | Precondition: If the allocator will **not** be replaced by move-assignment (see [above](/docs/cpp/library/named_req/AllocatorAwareContainer#Replacing_allocator)), then `T` is [MoveInsertable](/docs/cpp/library/named_req/MoveInsertable) into `X` and [MoveAssignable](/docs/cpp/library/named_req/MoveAssignable). | Linear |
+| `a = rv` | `X&` | Effect: All existing elements of `a` are either move assigned to or destroyed. | Linear |
+| `a = rv` | `X&` | Postcondition: If `a` and `rv` do not refer the same object, `a` is equal to the value that `rv` had before the assignment. | Linear |
+| `a.swap(b)` | `void` | Effect: Exchanges the contents of `a` and `b`. | Constant |
+
+### Notes
+
+{/* source:cpp-named-req-allocatorawarecontainer:0012 */}
+AllocatorAwareContainers always call `std::allocator_traits<A>::construct(m, p, args)` to construct an object of type `T` at `p` using `args`, with `m == get_allocator()`. <InlineRevision until="C++20">The default `construct` in [`std::allocator`](/docs/cpp/library/memory/allocator) calls `::new((void*)p) T(args)`</InlineRevision><InlineRevision since="C++20">[`std::allocator`](/docs/cpp/library/memory/allocator) has no `construct` member and `std::construct_at(p, args)` is called when constructing elements</InlineRevision>, but specialized allocators may choose a different definition.
+
+### Standard library
+
+{/* source:cpp-named-req-allocatorawarecontainer:0013 */}
+All standard library string types and containers (except [`std::array`](/docs/cpp/library/container/array) and `std::inplace_vector`) are AllocatorAwareContainers:
+
+{/* source:cpp-named-req-allocatorawarecontainer:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_string`](/docs/cpp/library/string/basic_string)</DescriptionTerm>
+    <DescriptionBody>stores and manipulates sequences of characters (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`deque`](/docs/cpp/library/container/deque)</DescriptionTerm>
+    <DescriptionBody>double-ended queue (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_list`](/docs/cpp/library/container/forward_list) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>singly-linked list (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`list`](/docs/cpp/library/container/list)</DescriptionTerm>
+    <DescriptionBody>doubly-linked list (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`vector`](/docs/cpp/library/container/vector)</DescriptionTerm>
+    <DescriptionBody>dynamic contiguous array (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`map`](/docs/cpp/library/container/map)</DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, sorted by keys, keys are unique (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`multimap`](/docs/cpp/library/container/multimap)</DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, sorted by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`set`](/docs/cpp/library/container/set)</DescriptionTerm>
+    <DescriptionBody>collection of unique keys, sorted by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`multiset`](/docs/cpp/library/container/multiset)</DescriptionTerm>
+    <DescriptionBody>collection of keys, sorted by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unordered_map`](/docs/cpp/library/container/unordered_map) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, hashed by keys, keys are unique (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unordered_multimap`](/docs/cpp/library/container/unordered_multimap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>collection of key-value pairs, hashed by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unordered_set`](/docs/cpp/library/container/unordered_set) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>collection of unique keys, hashed by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unordered_multiset`](/docs/cpp/library/container/unordered_multiset) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>collection of keys, hashed by keys (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Defect reports
+
+{/* source:cpp-named-req-allocatorawarecontainer:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-allocatorawarecontainer:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2839} standard="C++11"><PublishedBehavior>self move assignment of standard containers was not allowed</PublishedBehavior><CorrectedBehavior>allowed but the result is unspecified</CorrectedBehavior></DefectReport>
+</DefectReportList>

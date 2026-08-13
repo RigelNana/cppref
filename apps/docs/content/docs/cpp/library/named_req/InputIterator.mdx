@@ -1,0 +1,168 @@
+---
+title: "C++ named requirements: LegacyInputIterator"
+description: "A LegacyInputIterator is a LegacyIterator that can read from the pointed-to element."
+source_url: "https://en.cppreference.com/w/cpp/named_req/InputIterator"
+language: "C++"
+---
+
+{/* source:cpp-named-req-inputiterator:0000 */}
+A *LegacyInputIterator* is a [*LegacyIterator*](/docs/cpp/library/named_req/Iterator) that can read from the pointed-to element. *LegacyInputIterators* only guarantee validity for single pass algorithms: once a *LegacyInputIterator* `i` has been incremented, all copies of its previous value may be invalidated.
+
+### Requirements
+
+{/* source:cpp-named-req-inputiterator:0001 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`X`</DescriptionTerm>
+    <DescriptionBody>An input iterator type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`T`</DescriptionTerm>
+    <DescriptionBody>The [value type](/docs/cpp/library/iterator#Types_and_writability) of `X` (i.e. `std::iterator_traits<X>::value_type`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`R`</DescriptionTerm>
+    <DescriptionBody>`std::iterator_traits<X>::reference`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`i`, `j`</DescriptionTerm>
+    <DescriptionBody>Values of type `X` or `const X`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`r`</DescriptionTerm>
+    <DescriptionBody>A value of type `X&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`m`</DescriptionTerm>
+    <DescriptionBody>An identifier which possibly denotes a data member or member function</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-named-req-inputiterator:0002 */}
+`X` satisfies *LegacyInputIterator* if all following conditions are satisfied:
+
+{/* source:cpp-named-req-inputiterator:0003 */}
+- `X` satisfies [*LegacyIterator*](/docs/cpp/library/named_req/Iterator).
+- `X` satisfies [*EqualityComparable*](/docs/cpp/library/named_req/EqualityComparable).
+- The following expressions are well-formed and have the specified semantics:
+
+{/* source:cpp-named-req-inputiterator:0004 */}
+<table>
+<thead><tr><th>Expression</th><th>Type</th><th colSpan={2}>Semantics</th></tr></thead>
+<tbody>
+<tr>
+<td rowSpan={2}>`i != j`</td>
+<td rowSpan={2}>a type satisfying [*BooleanTestable*](/docs/cpp/library/named_req/BooleanTestable) <InlineRevision until="C++20" /><br />a type modeling [`boolean-testable`](/docs/cpp/library/concepts/boolean-testable) <InlineRevision since="C++20" /></td>
+<td>Precondition</td>
+<td>`i` and `j` are in the [domain](/docs/cpp/library/named_req/InputIterator#Equality_domain) of `==`.</td>
+</tr>
+<tr>
+<td>Effect</td>
+<td>Equivalent to `!(i == j)`.</td>
+</tr>
+<tr>
+<td rowSpan={2}>`*i`</td>
+<td rowSpan={2}>`R`, convertible to `T`</td>
+<td>Precondition</td>
+<td>`i` is [dereferenceable](/docs/cpp/library/iterator#Dereferenceability_and_validity).</td>
+</tr>
+<tr>
+<td>Effect</td>
+<td>The expression `(void)*i, *i` is equivalent to `*i`.<br />If `i` and `j` are in the domain of `==`, and `i == j`, then `*i` is equivalent to `*j`.</td>
+</tr>
+<tr>
+<td rowSpan={2}>`i->m`</td>
+<td rowSpan={2}></td>
+<td>Precondition</td>
+<td>`i` is dereferenceable.</td>
+</tr>
+<tr>
+<td>Effect</td>
+<td>Equivalent to `(*i).m`.</td>
+</tr>
+<tr>
+<td rowSpan={2}>`++r`</td>
+<td rowSpan={2}>`X&`</td>
+<td>Precondition</td>
+<td>`r` is dereferenceable.</td>
+</tr>
+<tr>
+<td>Postcondition</td>
+<td>`r` is dereferenceable or `r` is past-the-end.<br />Any copies of the previous value of `r` are no longer required to be either dereferenceable or to be in the domain of `==`.</td>
+</tr>
+<tr>
+<td>`(void)r++`</td>
+<td></td>
+<td>Effect</td>
+<td>Equivalent to `(void)++r`.</td>
+</tr>
+<tr>
+<td>`*r++`</td>
+<td>convertible to `T`</td>
+<td>Effect</td>
+<td>Equivalent to `T x = *r; ++r; return x;`.</td>
+</tr>
+</tbody>
+</table>
+
+### Equality domain
+
+{/* source:cpp-named-req-inputiterator:0005 */}
+The term *the domain of `==`* is used in the ordinary mathematical sense to denote the set of values which can be compared using `==`. This set can change over time.
+
+{/* source:cpp-named-req-inputiterator:0006 */}
+Each algorithm places additional requirements on the equality domain for the iterator values it uses. These requirements can be inferred from the uses that algorithm makes of `==` and `!=`.
+
+### Notes
+
+{/* source:cpp-named-req-inputiterator:0007 */}
+For an input iterator `X` that is not a [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator), `std::iterator_traits<X>::reference` does not have to be a reference type: dereferencing an input iterator may return a proxy object or `std::iterator_traits<X>::value_type` itself by value (as in the case of [`std::istreambuf_iterator`](/docs/cpp/library/iterator/istreambuf_iterator)).
+
+{/* source:cpp-named-req-inputiterator:0008 */}
+<Revision since="C++20">
+### Concept
+
+For the definition of [`std::iterator_traits`](/docs/cpp/library/iterator/iterator_traits), the following exposition-only concept is defined.
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template<class I>
+concept __LegacyInputIterator =
+__LegacyIterator<I> && std::equality_comparable<I> && requires(I i)
+{
+    typename std::incrementable_traits<I>::difference_type;
+    typename std::indirectly_readable_traits<I>::value_type;
+    typename std::common_reference_t<std::iter_reference_t<I>&&,
+                                     typename std::indirectly_readable_traits<I>::value_type&>;
+    *i++;
+    typename std::common_reference_t<decltype(*i++)&&,
+                                     typename std::indirectly_readable_traits<I>::value_type&>;
+    requires std::signed_integral<typename std::incrementable_traits<I>::difference_type>;
+
+};`} />
+</DeclarationDoc>
+
+where the exposition-only concept `__LegacyIterator` is described in [LegacyIterator](/docs/cpp/library/named_req/Iterator#Concept).
+</Revision>
+
+### Defect reports
+
+{/* source:cpp-named-req-inputiterator:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-named-req-inputiterator:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={98} standard="C++98">
+    <PublishedBehavior>the return type of `*i++` was required to be `T`</PublishedBehavior>
+    <CorrectedBehavior>it can be any type convertible to `T`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2114} standard="C++98">
+    <PublishedBehavior>convertibility to `bool` was too weak to reflect the expectation of implementations</PublishedBehavior>
+    <CorrectedBehavior>requirements strengthened</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-named-req-inputiterator:0011 */}
+- [`input_iterator`](/docs/cpp/library/iterator/input_iterator) <InlineRevision since="C++20" /> — specifies that a type is an input iterator, that is, its referenced values can be read and it can be both pre- and post-incremented (concept)
+- [**Iterator library**](/docs/cpp/library/iterator) — provides definitions for iterators, iterator traits, adaptors, and utility functions

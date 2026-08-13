@@ -1,0 +1,72 @@
+---
+title: "C++ named requirements: SharedMutex (since C++17)"
+description: "The SharedMutex requirements extend the Mutex requirements to include shared lock ownership mode."
+source_url: "https://en.cppreference.com/w/cpp/named_req/SharedMutex"
+language: "C++"
+---
+
+{/* source:cpp-named-req-sharedmutex:0000 */}
+The *SharedMutex* requirements extend the [`Mutex`](/docs/cpp/library/named_req/Mutex) requirements to include shared lock ownership mode.
+
+### Requirements
+
+{/* source:cpp-named-req-sharedmutex:0001 */}
+- [`Mutex`](/docs/cpp/library/named_req/Mutex)
+
+{/* source:cpp-named-req-sharedmutex:0002 */}
+Additionally, an object `m` of *SharedMutex* type supports another mode of ownership: shared. Multiple threads (or, more generally, execution agents) can simultaneously own this mutex in shared mode, but no thread may obtain shared ownership if there is a thread that owns it in exclusive mode and no thread may obtain exclusive ownership if there is a thread that owns it in shared mode. If more than implementation-defined number of threads (no less than 10000) hold a shared lock, another attempt to acquire the mutex in shared mode blocks until the number of shared owners drops down below that threshold.
+
+{/* source:cpp-named-req-sharedmutex:0003 */}
+- The expression `m.lock_shared()` has the following properties:
+
+{/* source:cpp-named-req-sharedmutex:0004 */}
+  - Behaves as an atomic operation.
+  - Blocks the calling thread until shared ownership of the mutex can be obtained.
+  - Prior `m.unlock()` operations on the same mutex *synchronize-with* this lock operation (equivalent to release-acquire [`std::memory_order`](/docs/cpp/library/atomic/memory_order)).
+  - The behavior is undefined if the calling thread already owns the mutex in any mode.
+  - If an exception is thrown, the shared lock is not acquired.
+
+{/* source:cpp-named-req-sharedmutex:0005 */}
+- The expression `m.try_lock_shared()` has the following properties:
+
+{/* source:cpp-named-req-sharedmutex:0006 */}
+  - Behaves as an atomic operation.
+  - Attempts to obtain shared ownership of the mutex for the calling thread without blocking. If ownership is not obtained, returns immediately. The function is allowed to spuriously fail and return even if the mutex is not currently owned by any threads in any mode.
+  - If `try_lock_shared()` succeeds, prior `unlock()` operations on the same object *synchronize-with* this operation (equivalent to release-acquire [`std::memory_order`](/docs/cpp/library/atomic/memory_order)).
+  - The behavior is undefined if the calling thread already owns the mutex in any mode.
+
+{/* source:cpp-named-req-sharedmutex:0007 */}
+- The expression `m.unlock_shared()` has the following properties:
+
+{/* source:cpp-named-req-sharedmutex:0008 */}
+  - Behaves as an atomic operation.
+  - Releases the calling thread's ownership of the mutex and *synchronizes-with* the subsequent successful lock operations on the same object.
+  - The behavior is undefined if the calling thread does not own the mutex.
+
+{/* source:cpp-named-req-sharedmutex:0009 */}
+- All lock and unlock operations on a single mutex occur in a single total order.
+
+### Standard library
+
+{/* source:cpp-named-req-sharedmutex:0010 */}
+The following standard library types satisfy *SharedMutex* requirements:
+
+{/* source:cpp-named-req-sharedmutex:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_mutex`](/docs/cpp/library/atomic/shared_mutex) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_timed_mutex`](/docs/cpp/library/atomic/shared_timed_mutex) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility and implements locking with a timeout (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### See also
+
+{/* source:cpp-named-req-sharedmutex:0012 */}
+- [`Thread support library`](/docs/cpp/library/atomic)
+- [`Mutex`](/docs/cpp/library/named_req/Mutex)
+- [`TimedMutex`](/docs/cpp/library/named_req/TimedMutex)
+- [`SharedTimedMutex`](/docs/cpp/library/named_req/SharedTimedMutex)

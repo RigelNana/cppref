@@ -1,0 +1,205 @@
+---
+title: "C++ named requirements: LayoutMapping (since C++23)"
+description: "LayoutMapping controls the mapping of a multidimensional index to a one-dimensional offset to data handle in std::mdspan."
+source_url: "https://en.cppreference.com/w/cpp/named_req/LayoutMapping"
+language: "C++"
+---
+
+{/* source:cpp-named-req-layoutmapping:0000 */}
+*LayoutMapping* controls the mapping of a multidimensional index to a one-dimensional offset to data handle in `std::mdspan`.
+
+### Requirements
+
+{/* source:cpp-named-req-layoutmapping:0001 */}
+A type `M` satisfies *LayoutMapping* if it models [`copyable`](/docs/cpp/library/concepts/copyable) and [`equality_comparable`](/docs/cpp/library/concepts/equality_comparable), and the following are `true`:
+
+{/* source:cpp-named-req-layoutmapping:0002 */}
+- `std::is_nothrow_move_constructible_v<M>`
+- `std::is_nothrow_move_assignable_v<M>`
+- `std::is_nothrow_swappable_v<M>`
+
+{/* source:cpp-named-req-layoutmapping:0003 */}
+And, given the following types and values, the expressions shown in the table below are valid and have the indicated semantics:
+
+#### Legend
+
+{/* source:cpp-named-req-layoutmapping:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`M`</DescriptionTerm>
+    <DescriptionBody>a layout mapping class</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`m`</DescriptionTerm>
+    <DescriptionBody>a value of type (possibly const-qualified) `M`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`i`, `j`</DescriptionTerm>
+    <DescriptionBody>packs of (possibly const-qualified) integers that are multidimensional indices in `m.extents()`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`r`</DescriptionTerm>
+    <DescriptionBody>a (possibly const-qualified) rank index of `typename M::extents_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`d_r`</DescriptionTerm>
+    <DescriptionBody>a pack of (possibly const-qualified) integers for which `sizeof...(d_r) == M::extents_type::rank()` is `true`, the element at rank index `r` is equal to `1`, and all other elements are equal to `0`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Member types
+
+{/* source:cpp-named-req-layoutmapping:0005 */}
+<table>
+<thead><tr><th>Name</th><th>Type</th><th>Requirements</th></tr></thead>
+<tbody>
+<tr>
+<td>`M::extents_type`</td>
+<td>Specialization of class template `std::extents`</td>
+<td></td>
+</tr>
+<tr>
+<td>`M::index_type`</td>
+<td>`typename M::extents_type::index_type`</td>
+<td></td>
+</tr>
+<tr>
+<td>`M::rank_type`</td>
+<td>`typename M::extents_type::rank_type`</td>
+<td></td>
+</tr>
+<tr>
+<td>`M::layout_type`</td>
+<td>Layout mapping policy `MP` where `typename MP::template mapping<E>` is `M`<br />for some extents type `E`</td>
+<td>[*LayoutMappingPolicy*](/docs/cpp/library/named_req/LayoutMappingPolicy) for which `M` is mapping type of `MP`</td>
+</tr>
+</tbody>
+</table>
+
+#### Member functions and operators
+
+{/* source:cpp-named-req-layoutmapping:0006 */}
+<table>
+<thead><tr><th>Expression</th><th>Return type</th><th>Semantics</th></tr></thead>
+<tbody>
+<tr>
+<td>`m.extents()`</td>
+<td>`const typename M::extents_type&`</td>
+<td>Returns constant reference to associated multidimensional index space</td>
+</tr>
+<tr>
+<td>`m(i...)`</td>
+<td>`typename M::index_type`</td>
+<td>Returns a nonnegative integer `o` such that `o < std::numeric_limits<typename M::index_type>::max()` and `o <= std::numeric_limits<std::size_t>::max()` are both `true`.<br />Such expression is equivalent to `m(static_cast<typename M::index_type>(i)...)`.</td>
+</tr>
+<tr>
+<td>`m.required_span_size()`</td>
+<td>`typename M::index_type`</td>
+<td>Returns `1` plus the maximum value of `m(i...)` for all `i` if the size of the multidimensional index space `m.extents()` is not 0.<br />Otherwise, returns `0`.</td>
+</tr>
+<tr>
+<td>`m.is_unique()`</td>
+<td>`bool`</td>
+<td>Returns `true` only if for every `i` and `j` where `(i != j || ...)` is true, `m(i...) != m(j...)` is true. [note 1]</td>
+</tr>
+<tr>
+<td>`m.is_exhaustive()`</td>
+<td>`bool`</td>
+<td>Returns `true` only if for all `k` in the range `[0, m.required_span_size())`, there exists an `i` such that `m(i...)` equals `k`. [note 2]</td>
+</tr>
+<tr>
+<td>`m.is_strided()`</td>
+<td>`bool`</td>
+<td>Returns `true` only if for every rank index `r` of `m.extents()`, there exists an integer `s_r` such that, for all `i` where `(i + d_r)` is a multidimensional index in `m.extents()`, `m((i + d_r)...) - m(i...)` equals `s_r`. [note 3]</td>
+</tr>
+<tr>
+<td>`m.stride(r)`</td>
+<td>`typename M::index_type`</td>
+<td>The precondition is that `m.is_strided()` is `true`.<br />Returns a stride `s_r` at rank index `r` as defined in `m.is_strided()` above.</td>
+</tr>
+<tr>
+<td>`M::is_always_unique()`</td>
+<td>`bool`</td>
+<td>Returns `true` only if `m.is_unique()` is `true` for all possible objects `m` of type `M`. [note 4]<br />The return value is always a constant expression.</td>
+</tr>
+<tr>
+<td>`M::is_always_exhaustive()`</td>
+<td>`bool`</td>
+<td>Returns `true` only if `m.is_exhaustive()` is `true` for all possible objects `m` of type `M`. [note 5]<br />The return value is always a constant expression.</td>
+</tr>
+<tr>
+<td>`M::is_always_strided()`</td>
+<td>`bool`</td>
+<td>Returns `true` only if `m.is_strided()` is `true` for all possible objects `m` of type `M`. [note 6]<br />The return value is always a constant expression.</td>
+</tr>
+</tbody>
+</table>
+
+1. ↑ A mapping can return `false` even if the condition is met. For certain layouts, it is possibly not feasible to determine efficiently whether the layout is unique.
+2. ↑ Same as above, but in the case of exhaustive layouts.
+3. ↑ Same as above, but in the case of strided layouts.
+4. ↑ A mapping can return `false` even if the condition is met. For certain layout mappings, it is possibly not feasible to determine whether every instance is unique.
+5. ↑ Same as above, but in the case of exhaustive instances.
+6. ↑ Same as above, but in the case of strided instances.
+
+### Concept
+
+{/* source:cpp-named-req-layoutmapping:0007 */}
+For the constraints uses under `std::layout_stride::mapping`, the following exposition-only concept is defined.
+
+{/* source:cpp-named-req-layoutmapping:0008 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class M >
+concept /*layout-mapping-alike*/ = requires 
+{
+    requires /*is-extents*/<typename M::extents_type>;
+    { M::is_always_strided() }    -> std::same_as<bool>;
+    { M::is_always_exhaustive() } -> std::same_as<bool>;
+    { M::is_always_unique() }     -> std::same_as<bool>;
+    std::bool_constant<M::is_always_strided()>::value;
+    std::bool_constant<M::is_always_exhaustive()>::value;
+    std::bool_constant<M::is_always_unique()>::value;
+
+};`} />
+</DeclarationDoc>
+(exposition only*)
+
+{/* source:cpp-named-req-layoutmapping:0009 */}
+Defines the minimal usability constraints of the *LayoutMapping* requirement. This concept checks that the predicate mapping trait functions above exist, are constant expressions, and have a return type of `bool`.
+
+{/* source:cpp-named-req-layoutmapping:0010 */}
+`/*is-extents*/<E>` is `true` if and only if `E` is a specialization of `std::extents`.
+
+### Standard library
+
+{/* source:cpp-named-req-layoutmapping:0011 */}
+The following standard library types satisfy *LayoutMapping* requirements:
+
+{/* source:cpp-named-req-layoutmapping:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`mapping`](/docs/cpp/library/container/mdspan/layout_left/mapping)</DescriptionTerm>
+    <DescriptionBody>a layout mapping of `layout_left` (public member class template of `std::layout_left`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mapping`](/docs/cpp/library/container/mdspan/layout_right/mapping)</DescriptionTerm>
+    <DescriptionBody>a layout mapping of `layout_right` (public member class template of `std::layout_right`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mapping`](/docs/cpp/library/container/mdspan/layout_stride/mapping)</DescriptionTerm>
+    <DescriptionBody>a layout mapping of `layout_stride` (public member class template of `std::layout_stride`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mapping`](https://en.cppreference.com/mwiki/index.php?title=cpp/container/mdspan/layout_left_padded/mapping&action=edit&redlink=1)</DescriptionTerm>
+    <DescriptionBody>a layout mapping of `layout_left_padded` (public member class template of `std::layout_left_padded<PaddingValue>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mapping`](https://en.cppreference.com/mwiki/index.php?title=cpp/container/mdspan/layout_right_padded/mapping&action=edit&redlink=1)</DescriptionTerm>
+    <DescriptionBody>a layout mapping of `layout_right_padded` (public member class template of `std::layout_right_padded<PaddingValue>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### See also
+
+{/* source:cpp-named-req-layoutmapping:0013 */}
+- [*LayoutMappingPolicy*](/docs/cpp/library/named_req/LayoutMappingPolicy)
