@@ -2,8 +2,10 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const withMDX = createMDX();
 
-const repository = process.env.GITHUB_REPOSITORY?.split("/")[1];
-const basePath = process.env.GITHUB_ACTIONS === "true" && repository ? `/${repository}` : "";
+// The site is served at the domain root (https://cppref.cc). Set
+// NEXT_PUBLIC_BASE_PATH=/cppref in the workflow only when deploying to a
+// GitHub Pages subpath again (e.g. https://user.github.io/cppref/).
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 process.env.NEXT_PUBLIC_BASE_PATH = basePath;
 
 /** @type {import("next").NextConfig} */

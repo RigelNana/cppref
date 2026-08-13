@@ -27,7 +27,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body>
-        <RootProvider>{children}</RootProvider>
+        <RootProvider
+          search={{
+            options: { type: "static", api: "/search.json" },
+          }}
+        >
+          {children}
+        </RootProvider>
       </body>
     </html>
   );
