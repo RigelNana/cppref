@@ -62,7 +62,14 @@ const cString: TableCell = {
   links: [["memcpy", "/docs/c/string/byte/memcpy"]],
 };
 
-const cppStandards = ["C++11", "C++14", "C++17", "C++20", "C++23", "C++26"] as const;
+const cppStandards = [
+  ["C++11", "/docs/cpp/language/11"],
+  ["C++14", "/docs/cpp/language/14"],
+  ["C++17", "/docs/cpp/language/17"],
+  ["C++20", "/docs/cpp/language/20"],
+  ["C++23", "/docs/cpp/language/23"],
+  ["C++26", "/docs/cpp/language/26"],
+] as const;
 
 function ReferenceTable({
   title,
@@ -70,7 +77,7 @@ function ReferenceTable({
   cells,
 }: {
   title: string;
-  standards?: readonly string[];
+  standards?: readonly (readonly [string, string])[];
   cells: readonly TableCell[];
 }) {
   return (
@@ -80,10 +87,10 @@ function ReferenceTable({
           <h2 className="text-base font-semibold">{title}</h2>
           {standards ? (
             <p className="text-sm text-fd-muted-foreground">
-              {standards.map((standard, index) => (
+              {standards.map(([standard, href], index) => (
                 <span key={standard}>
                   {index > 0 && <span aria-hidden="true">, </span>}
-                  <Link className="transition-colors hover:text-fd-primary" href="/docs/cpp/language/history">
+                  <Link className="transition-colors hover:text-fd-primary" href={href}>
                     {standard}
                   </Link>
                 </span>
