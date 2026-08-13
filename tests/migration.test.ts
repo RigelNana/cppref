@@ -10,7 +10,8 @@ import { validateDirectMdx } from "../packages/migrate/src/validate-mdx.ts";
 const cppSource = "ref/cppreference-en/reference/en/cpp/language/default_arguments.html";
 const cSource = "ref/cppreference-en/reference/en/c/string/byte/memcpy.html";
 const vectorSource = "ref/cppreference-en/reference/en/cpp/container/vector.html";
-const vectorMdx = "apps/docs/content/docs/cpp/container/vector.mdx";
+const assertSource = "ref/cppreference-en/reference/en/cpp/language/static_assert.html";
+const assertMdx = "apps/docs/content/docs/cpp/language/declarations/static_assert.mdx";
 
 test("external migration tasks expose files, rules, contracts, and deterministic validation", async () => {
   const page = extractEnglishPage(await readFile(cppSource, "utf8"), { sourcePath: cppSource });
@@ -42,9 +43,9 @@ test("direct MDX validation enforces source coverage and rejects raw HTML escape
   expect(report.issues.some((issue) => issue.message.includes("forbidden raw-HTML"))).toBe(true);
 });
 
-test("the migrated vector page preserves ordered source coverage without raw HTML escape hatches", async () => {
-  const source = extractEnglishPage(await readFile(vectorSource, "utf8"), { sourcePath: vectorSource });
-  const mdx = await readFile(vectorMdx, "utf8");
+test("the migrated static_assert page preserves ordered source coverage without raw HTML escape hatches", async () => {
+  const source = extractEnglishPage(await readFile(assertSource, "utf8"), { sourcePath: assertSource });
+  const mdx = await readFile(assertMdx, "utf8");
   const report = validateDirectMdx(source, mdx);
   const structuralIssues = report.issues.filter((issue) =>
     ["duplicate-source", "unknown-source", "order-mismatch", "needs-review"].includes(issue.code),
