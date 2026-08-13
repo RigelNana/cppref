@@ -1,0 +1,104 @@
+---
+title: "C++ keyword: reflexpr (reflection TS)"
+description: "Gets the member list of a class type, or the enumerator list of an enum type."
+source_url: "https://en.cppreference.com/w/cpp/keyword/reflexpr"
+language: "C++"
+---
+
+### Usage
+
+{/* source:cpp-keyword-reflexpr:0000 */}
+1. Gets the member list of a [`class`](/docs/cpp/language/keywords/class) type, or the enumerator list of an [`enum`](/docs/cpp/language/keywords/enum) type.
+
+{/* source:cpp-keyword-reflexpr:0001 */}
+2. Gets the name of type and member.
+
+{/* source:cpp-keyword-reflexpr:0002 */}
+3. Detects whether a data member is [`static`](/docs/cpp/language/keywords/static) or [`constexpr`](/docs/cpp/language/keywords/constexpr).
+
+{/* source:cpp-keyword-reflexpr:0003 */}
+4. Detects whether member function is [`virtual`](/docs/cpp/language/keywords/virtual), [`public`](/docs/cpp/language/keywords/public), [`protected`](/docs/cpp/language/keywords/protected) or [`private`](/docs/cpp/language/keywords/private).
+
+{/* source:cpp-keyword-reflexpr:0004 */}
+5. Get the *row* and *column* of the source code when the type defines.
+
+### Example
+
+{/* source:cpp-keyword-reflexpr:0005 */}
+`reflexpr` provides us the meta info of the object via *meta-object types*. Note that `std::reflect::get_data_members_t` make programmers able to visit any class just like [`std::tuple`](/docs/cpp/library/utility/tuple).
+
+```cpp
+#include <string>
+#include <vector>
+
+struct S
+{
+    int b;
+    std::string s;
+    std::vector<std::string> v;
+};
+
+// Reflection TS
+#include <experimental/reflect>
+using meta_S = reflexpr(S);
+using mem = std::reflect::get_data_members_t<meta_S>;
+using meta = std::reflect::get_data_members_t<mem>;
+static_assert(std::reflect::is_public_v<meta>); // successful
+
+int main() {}
+```
+
+{/* source:cpp-keyword-reflexpr:0006 */}
+We can also know the name info from `reflexpr`:
+
+```cpp
+#include <iostream>
+#include <string>
+#include <string_view>
+// Reflection TS
+#include <experimental/reflect>
+
+template<typename Tp>
+constexpr std::string_view nameof()
+{
+    using TpInfo = reflexpr(Tp);
+    using aliased_Info = std::experimental::reflect::get_aliased_t<TpInfo>;
+    return std::experimental::reflect::get_name_v<aliased_Info>;
+}
+
+int main()
+{
+    std::cout << nameof<std::string>() << '\n';
+    static_assert(nameof<std::string>() == "basic_string"); // successful
+}
+```
+
+{/* source:cpp-keyword-reflexpr:0007 */}
+This is an example of getting the *scope* of a type in the [`Reflection TS`](/docs/cpp/library/experimental/reflect).
+
+```cpp
+namespace Foo
+{
+    struct FooFoo
+    {
+        int FooFooFoo;
+    };
+}
+namespace Bar
+{
+    using BarBar = ::Foo::FooFoo;
+}
+using BarBarInfo = reflexpr(::Bar::BarBar);
+using BarBarScope = ::std::experimental::reflect::get_scope_t<BarBarInfo>; // Bar, not Foo
+
+struct Spam
+{
+    int SpamSpam;
+};
+struct Grok
+{
+    using GrokGrok = Spam::SpamSpam;
+};
+using GrokGrokInfo = reflexpr(::Grok::GrokGrok);
+using GrokGrokScope = std::experimental::reflect::get_scope_t<GrokGrokInfo>; // Grok, not Spam
+```

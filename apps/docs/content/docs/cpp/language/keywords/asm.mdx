@@ -1,0 +1,44 @@
+---
+title: "C++ keyword: asm"
+description: "Declaration of an inline assembly block"
+source_url: "https://en.cppreference.com/w/cpp/keyword/asm"
+language: "C++"
+---
+
+### Usage
+
+{/* source:cpp-keyword-asm:0000 */}
+- [Declaration of an inline assembly block](/docs/cpp/language/declarations/asm)
+
+### Example
+
+{/* source:cpp-keyword-asm:0001 */}
+Note that while this example works well with GCC/Clang on x86_64 platform under Linux, it's not guaranteed elsewhere as `asm` declaration is <InlineRevision since="C++11">conditionally-supported and</InlineRevision> [implementation defined](/docs/cpp/language/declarations/asm#References).
+
+```cpp
+#include <cstring>
+ 
+int main() noexcept
+{
+    const char* const c_string = "Hello, world!\n";
+    asm
+    (R"(
+        movq $1, %%rax                 # syscall number for sys_write
+        movq $1, %%rdi                 # file descriptor 1 (stdout)
+        movq %0, %%rsi                 # pointer to the c‐string
+        movq %1, %%rdx                 # length of the c‐string
+        syscall                        # invokes an OS system-call handler
+    )"
+    :                                  // no output operands
+    :   "r"(c_string),                 // input: pointer to the c‐string
+        "r"(std::strlen(c_string))     // input: size of the c‐string
+    :   "%rax", "%rdi", "%rsi", "%rdx" // clobbered registers
+    );
+}
+```
+
+Output:
+
+```text
+Hello, world!
+```
