@@ -732,10 +732,10 @@ WG21 paper 缺陷报告（如 `P2372R3`）使用同一结构，`kind="paper"`、
 
 ## 24. 参考实现
 
-当前可作为结构和视觉参考的完整容器页面：
+当前可作为结构和视觉参考的完整页面：
 
 ```text
-apps/docs/content/docs/cpp/container/vector.mdx
+apps/docs/content/docs/cpp/language/declarations/static_assert.mdx
 ```
 
 参考时只能复用其组件边界和版式规则。具体内容、版本、链接、声明数量和章节必须始终来自正在迁移页面自身的 Lossless Page IR。

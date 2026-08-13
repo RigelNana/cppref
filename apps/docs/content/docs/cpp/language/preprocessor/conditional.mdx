@@ -1,0 +1,185 @@
+---
+title: "Conditional inclusion"
+description: "The preprocessor supports conditional compilation of parts of source file."
+source_url: "https://en.cppreference.com/w/cpp/preprocessor/conditional"
+language: "C++"
+---
+
+{/* source:cpp-preprocessor-conditional:0000 */}
+The preprocessor supports conditional compilation of parts of source file. This behavior is controlled by `#if`, `#else`, `#elif`, `#ifdef`, `#ifndef`<InlineRevision since="C++23">, `#elifdef`, `#elifndef`</InlineRevision>, and `#endif` directives.
+
+## Syntax
+
+{/* source:cpp-preprocessor-conditional:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="#if expression" />
+  <Declaration id="2" language="cpp" grammar code="#ifdef identifier" />
+  <Declaration id="3" language="cpp" grammar code="#ifndef identifier" />
+  <Declaration id="4" language="cpp" grammar code="#elif expression" />
+  <Declaration id="5" language="cpp" since="C++23" grammar code="#elifdef identifier" />
+  <Declaration id="6" language="cpp" since="C++23" grammar code="#elifndef identifier" />
+  <Declaration id="7" language="cpp" grammar code="#else" />
+  <Declaration id="8" language="cpp" grammar code="#endif" />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-preprocessor-conditional:0002 */}
+The conditional preprocessing block starts with `#if`, `#ifdef` or `#ifndef` directive, then optionally includes any number of `#elif`<InlineRevision since="C++23">, `#elifdef`, or `#elifndef`</InlineRevision> directives, then optionally includes at most one `#else` directive and is terminated with `#endif` directive. Any inner conditional preprocessing blocks are processed separately.
+
+{/* source:cpp-preprocessor-conditional:0003 */}
+Each of `#if`, `#ifdef`, `#ifndef`, `#elif`<InlineRevision since="C++23">, `#elifdef`, `#elifndef`</InlineRevision>, and `#else` directives control the code block until the first `#elif`<InlineRevision since="C++23">, `#elifdef`, `#elifndef`</InlineRevision>, `#else`, `#endif` directive not belonging to any inner conditional preprocessing blocks.
+
+{/* source:cpp-preprocessor-conditional:0004 */}
+`#if`, `#ifdef` and `#ifndef` directives test the specified condition (see below) and if it evaluates to true, compiles the controlled code block. In that case subsequent `#else`<InlineRevision since="C++23">, `#elifdef`, `#elifndef`,</InlineRevision> and `#elif` directives are ignored. Otherwise, if the specified condition evaluates false, the controlled code block is skipped and the subsequent `#else`<InlineRevision since="C++23">, `#elifdef`, `#elifndef`,</InlineRevision> or `#elif` directive (if any) is processed. If the subsequent directive is `#else`, the code block controlled by the `#else` directive is unconditionally compiled. Otherwise, the `#elif`<InlineRevision since="C++23">, `#elifdef`, or `#elifndef`</InlineRevision> directive acts as if it was `#if` directive: checks for condition, compiles or skips the controlled code block based on the result, and in the latter case processes subsequent `#elif`<InlineRevision since="C++23">, `#elifdef`, `#elifndef`,</InlineRevision> and `#else` directives. The conditional preprocessing block is terminated by `#endif` directive.
+
+## Condition evaluation
+
+#### `#if, #elif`
+
+{/* source:cpp-preprocessor-conditional:0005 */}
+The expression may contain:
+
+{/* source:cpp-preprocessor-conditional:0006 */}
+- unary operators in form `defined identifier` or `defined ( identifier )`. The result is `1` if the `identifier` was [defined as a macro name](/docs/cpp/language/preprocessor/replace), otherwise the result is `0`. <InlineRevision since="C++17">`__has_include`<InlineRevision since="C++20">and `__has_cpp_attribute`</InlineRevision> are treated as if they were the names of defined macros in this context.</InlineRevision>
+- <InlineRevision since="C++17" />[`__has_include`](/docs/cpp/language/preprocessor/include) expressions, which detects whether a header or source file exists.
+- <InlineRevision since="C++20" />[`__has_cpp_attribute`](/docs/cpp/library/feature_test#Attributes) expressions, which detects whether a given attribute token is supported and its supported version.
+
+{/* source:cpp-preprocessor-conditional:0007 */}
+After all macro expansion and evaluation of `defined`<InlineRevision since="C++17">, `__has_include`</InlineRevision><InlineRevision since="C++20">, and `__has_cpp_attribute`</InlineRevision> expressions, any identifier which is not a [boolean literal](/docs/cpp/language/expressions/bool_literal) is replaced with the number `0` (this includes identifiers that are lexically keywords, but not alternative tokens like `and`).
+
+{/* source:cpp-preprocessor-conditional:0008 */}
+Then the expression is evaluated as an [integral constant expression](/docs/cpp/language/expressions/constant_expression#Integral_constant_expression).
+
+{/* source:cpp-preprocessor-conditional:0009 */}
+If the expression evaluates to nonzero value, the controlled code block is included and skipped otherwise.
+
+{/* source:cpp-preprocessor-conditional:0010 */}
+Note: Until the resolution of [CWG issue 1955](https://cplusplus.github.io/CWG/issues/1955.html), `#if cond1` ... `#elif cond2` is different from `#if cond1` ... `#else` followed by `#if cond2` because if `cond1` is true, the second `#if` is skipped and `cond2` does not need to be well-formed, while `#elif`'s `cond2` must be a valid expression. As of CWG 1955, `#elif` that leads the skipped code block is also skipped.
+
+#### Combined directives
+
+{/* source:cpp-preprocessor-conditional:0011 */}
+Checks if the identifier was [defined as a macro name](/docs/cpp/language/preprocessor/replace).
+
+{/* source:cpp-preprocessor-conditional:0012 */}
+`#ifdef identifier` is essentially equivalent to `#if defined identifier`.
+
+{/* source:cpp-preprocessor-conditional:0013 */}
+`#ifndef identifier` is essentially equivalent to `#if !defined identifier`.
+
+{/* source:cpp-preprocessor-conditional:0014 */}
+<Revision since="C++23">
+`#elifdef identifier` is essentially equivalent to `#elif defined identifier`.
+
+`#elifndef identifier` is essentially equivalent to `#elif !defined identifier`.
+</Revision>
+
+## Notes
+
+{/* source:cpp-preprocessor-conditional:0015 */}
+While `#elifdef` and `#elifndef` directives target C++23, implementations are encouraged to backport them to the older language modes as conforming extensions.
+
+## Example
+
+{/* source:cpp-preprocessor-conditional:0016 */}
+```cpp
+#define ABCD 2
+#include <iostream>
+ 
+int main()
+{
+ 
+#ifdef ABCD
+    std::cout << "1: yes\n";
+#else
+    std::cout << "1: no\n";
+#endif
+ 
+#ifndef ABCD
+    std::cout << "2: no1\n";
+#elif ABCD == 2
+    std::cout << "2: yes\n";
+#else
+    std::cout << "2: no2\n";
+#endif
+ 
+#if !defined(DCBA) && (ABCD < 2*4-3)
+    std::cout << "3: yes\n";
+#endif
+ 
+ 
+// Note that if a compiler does not support C++23's #elifdef/#elifndef
+// directives then the "unexpected" block (see below) will be selected.
+#ifdef CPU
+    std::cout << "4: no1\n";
+#elifdef GPU
+    std::cout << "4: no2\n";
+#elifndef RAM
+    std::cout << "4: yes\n"; // expected block
+#else
+    std::cout << "4: no!\n"; // unexpectedly selects this block by skipping
+                             // unknown directives and "jumping" directly
+                             // from "#ifdef CPU" to this "#else" block
+#endif
+ 
+// To fix the problem above we may conditionally define the
+// macro ELIFDEF_SUPPORTED only if the C++23 directives
+// #elifdef/#elifndef are supported.
+#if 0
+#elifndef UNDEFINED_MACRO
+#define ELIFDEF_SUPPORTED
+#else
+#endif
+ 
+#ifdef ELIFDEF_SUPPORTED
+    #ifdef CPU
+        std::cout << "4: no1\n";
+    #elifdef GPU
+        std::cout << "4: no2\n";
+    #elifndef RAM
+        std::cout << "4: yes\n"; // expected block
+    #else
+        std::cout << "4: no3\n";
+    #endif
+#else // when #elifdef unsupported use old verbose `#elif defined`
+    #ifdef CPU
+        std::cout << "4: no1\n";
+    #elif defined GPU
+        std::cout << "4: no2\n";
+    #elif !defined RAM
+        std::cout << "4: yes\n"; // expected block
+    #else
+        std::cout << "4: no3\n";
+    #endif
+#endif
+}
+```
+
+Possible output:
+
+```text
+1: yes
+2: yes
+3: yes
+4: no!
+4: yes
+```
+
+## Defect reports
+
+{/* source:cpp-preprocessor-conditional:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-preprocessor-conditional:0018 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1955} standard="C++98">
+    <PublishedBehavior>failed `#elif`'s expression was required to be valid</PublishedBehavior>
+    <CorrectedBehavior>failed `#elif` is skipped</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-preprocessor-conditional:0019 */}
+[C documentation](/docs/c/language/preprocessor/conditional) for Conditional inclusion

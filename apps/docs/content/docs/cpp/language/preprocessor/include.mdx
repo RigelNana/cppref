@@ -1,0 +1,209 @@
+---
+title: "Source file inclusion"
+description: "Includes other source file into current source file at the line immediately after the directive."
+source_url: "https://en.cppreference.com/w/cpp/preprocessor/include"
+language: "C++"
+---
+
+{/* source:cpp-preprocessor-include:0000 */}
+Includes other source file into current source file at the line immediately after the directive.
+
+## Syntax
+
+{/* source:cpp-preprocessor-include:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="#include < h-char-sequence > new-line" />
+  <Declaration id="2" language="cpp" grammar code={`#include " q-char-sequence " new-line`} />
+  <Declaration id="3" language="cpp" grammar code="#include pp-tokens new-line" />
+  <Declaration id="4" language="cpp" since="C++17" grammar code={`__has_include ( " q-char-sequence " )
+__has_include ( < h-char-sequence > )`} />
+  <Declaration id="5" language="cpp" since="C++17" grammar code={`__has_include ( string-literal )
+__has_include ( < h-pp-tokens > )`} />
+</DeclarationDoc>
+
+{/* source:cpp-preprocessor-include:0002 */}
+1. Searches for a header identified uniquely by `h-char-sequence` and replaces the directive by the entire contents of the header.
+
+{/* source:cpp-preprocessor-include:0003 */}
+2. Searches for a source file identified by `q-char-sequence` and replaces the directive by the entire contents of the source file. It may fallback to (1) and treat `q-char-sequence` as a header identifier.
+
+{/* source:cpp-preprocessor-include:0004 */}
+3. If neither (1) nor (2) is matched, `pp-tokens` will undergo macro replacement. The directive after replacement will be tried to match with (1) or (2) again.
+
+{/* source:cpp-preprocessor-include:0005 */}
+4. Checks whether a header or source file is available for inclusion.
+
+{/* source:cpp-preprocessor-include:0006 */}
+5. If (4) is not matched, `h-pp-tokens` will undergo macro replacement. The directive after replacement will be tried to match with (4) again.
+
+{/* source:cpp-preprocessor-include:0007 */}
+<ParameterList>
+  <Parameter name="new-line">
+    The new-line character
+  </Parameter>
+  <Parameter name="h-char-sequence">
+    A sequence of one or more `h-chars`, where the appearance of any of the following is conditionally-supported with implementation-defined semantics:
+
+    - the character `'`
+    - the character `"`
+    - the character `\`
+    - the character sequence `//`
+    - the character sequence `/*`
+  </Parameter>
+  <Parameter name="h-char">
+    Any member of the <InlineRevision until="C++23">[source character set](/docs/cpp/language/basic_concepts/translation_phases#Phase_5)</InlineRevision><InlineRevision since="C++23">[translation character set](/docs/cpp/language/basic_concepts/charset#Translation_character_set)</InlineRevision> except new-line and `>`
+  </Parameter>
+  <Parameter name="q-char-sequence">
+    A sequence of one or more `q-chars`, where the appearance of any of the following is conditionally-supported with implementation-defined semantics:
+
+    - the character `'`
+    - the character `\`
+    - the character sequence `//`
+    - the character sequence `/*`
+  </Parameter>
+  <Parameter name="q-char">
+    Any member of the <InlineRevision until="C++23">[source character set](/docs/cpp/language/basic_concepts/translation_phases#Phase_5)</InlineRevision><InlineRevision since="C++23">[translation character set](/docs/cpp/language/basic_concepts/charset#Translation_character_set)</InlineRevision> except new-line and `"`
+  </Parameter>
+  <Parameter name="pp-tokens">
+    A sequence of one or more [preprocessing tokens](/docs/cpp/language/basic_concepts/translation_phases#Phase_3)
+  </Parameter>
+  <Parameter name="string-literal">
+    A [string literal](/docs/cpp/language/expressions/string_literal)
+  </Parameter>
+  <Parameter name="h-pp-tokens">
+    A sequence of one or more [preprocessing tokens](/docs/cpp/language/basic_concepts/translation_phases#Phase_3) except `>`
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-preprocessor-include:0008 */}
+1. Searches a sequence of implementation-defined places for a header identified uniquely by `h-char-sequence`, and causes the replacement of that directive by the entire contents of the header. How the places are specified or the header identified is implementation-defined.
+
+{/* source:cpp-preprocessor-include:0009 */}
+2. Causes the replacement of that directive by the entire contents of the source file identified by `q-char-sequence`. The named source file is searched for in an implementation-defined manner. If this search is not supported, or if the search fails, the directive is reprocessed as if it reads syntax (1) with the identical contained sequence (including `>` characters, if any) from the original directive.
+
+{/* source:cpp-preprocessor-include:0010 */}
+3. The preprocessing tokens after include in the directive are processed just as in normal text (i.e., each identifier currently defined as a macro name is replaced by its replacement list of preprocessing tokens). If the directive resulting after all replacements does not match one of the two previous forms, the behavior is undefined. The method by which a sequence of preprocessing tokens between a `<` and a `>` preprocessing token pair or a pair of `"` characters is combined into a single header name preprocessing token is implementation-defined.
+
+{/* source:cpp-preprocessor-include:0011 */}
+4. The header or source file identified by `h-char-sequence` or `q-char-sequence` is searched for as if that preprocessing token sequence were the `pp-tokens` in syntax (3), except that no further macro expansion is performed. If such a directive would not satisfy the syntactic requirements of an `#include` directive, the program is ill-formed. The `__has_include` expression evaluates to `1` if the search for the source file succeeds, and to `0` if the search fails.
+
+{/* source:cpp-preprocessor-include:0012 */}
+5. This form is considered only if syntax (4) does not match, in which case the preprocessing tokens are processed just as in normal text.
+
+{/* source:cpp-preprocessor-include:0013 */}
+<Revision since="C++20">
+If the header identified by the `header-name` (i.e., `<` `h-char-sequence` `>` or `"` `q-char-sequence` `"`) denotes an importable header, it is implementation-defined whether the `#include` preprocessing directive is instead replaced by an [import directive](/docs/cpp/language/basic_concepts/modules#Importing_modules_and_headers) of the form
+
+`import header-name ; new-line`
+</Revision>
+
+{/* source:cpp-preprocessor-include:0014 */}
+`__has_include` can be expanded in the expression of [`#if`](/docs/cpp/language/preprocessor/conditional) and [`#elif`](/docs/cpp/language/preprocessor/conditional). It is treated as a defined macro by [`#ifdef`](/docs/cpp/language/preprocessor/conditional), [`#ifndef`](/docs/cpp/language/preprocessor/conditional)<InlineRevision since="C++23">, [`#elifdef`](/docs/cpp/language/preprocessor/conditional), [`#elifndef`](/docs/cpp/language/preprocessor/conditional)</InlineRevision> and [`defined`](/docs/cpp/language/preprocessor/conditional) but cannot be used anywhere else.
+
+## Notes
+
+{/* source:cpp-preprocessor-include:0015 */}
+Typical implementations search only standard include directories for syntax (1). The standard C++ library and the standard C library are implicitly included in these standard include directories. The standard include directories usually can be controlled by the user through compiler options.
+
+{/* source:cpp-preprocessor-include:0016 */}
+The intent of syntax (2) is to search for the files that are not controlled by the implementation. Typical implementations first search the directory where the current file resides then falls back to (1).
+
+{/* source:cpp-preprocessor-include:0017 */}
+When a file is included, it is processed by [translation phases](/docs/cpp/language/basic_concepts/translation_phases) 1-4, which may include, recursively, expansion of the nested `#include` directives, up to an implementation-defined nesting limit. To avoid repeated inclusion of the same file and endless recursion when a file includes itself, perhaps transitively, header guards are commonly used: the entire header is wrapped in
+
+{/* source:cpp-preprocessor-include:0018 */}
+```cpp
+#ifndef FOO_H_INCLUDED /* any name uniquely mapped to file name */
+#define FOO_H_INCLUDED
+// contents of the file are here
+#endif
+```
+
+{/* source:cpp-preprocessor-include:0019 */}
+Many compilers also implement the non-standard [`pragma`](/docs/cpp/language/preprocessor/impl) `#pragma once` with similar effects: it disables processing of a file if the same file (where file identity is determined in OS-specific way) has already been included.
+
+{/* source:cpp-preprocessor-include:0020 */}
+A sequence of characters that resembles an escape sequence in `q-char-sequence` or `h-char-sequence` might result in an error, be interpreted as the character corresponding to the escape sequence, or have a completely different meaning, depending on the implementation.
+
+{/* source:cpp-preprocessor-include:0021 */}
+A `__has_include` result of `1` only means that a header or source file with the specified name exists. It does not mean that the header or source file, when included, would not cause an error or would contain anything useful. For example, on a C++ implementation that supports both C++14 and C++17 modes (and provides `__has_include` in its C++14 mode as a conforming extension), `__has_include(<optional>)` may be `1` in C++14 mode, but actually `#include <optional>` may cause an error.
+
+## Example
+
+{/* source:cpp-preprocessor-include:0022 */}
+```cpp
+#if __has_include(<optional>)
+    #include <optional>
+    #define has_optional 1
+    template<class T>
+    using optional_t = std::optional<T>;
+#elif __has_include(<experimental/optional>)
+    #include <experimental/optional>
+    #define has_optional -1
+    template<class T>
+    using optional_t = std::experimental::optional<T>;
+#else
+    #define has_optional 0
+    template<class V>
+    class optional_t
+    {
+        V v{};
+        bool has{};
+ 
+    public:
+        optional_t() = default;
+        optional_t(V&& v) : v(v), has{true} {}
+        V value_or(V&& alt) const&
+        {
+            return has ? v : alt;
+        }
+        // etc.
+    };
+#endif
+ 
+#include <iostream>
+ 
+int main()
+{
+    if (has_optional > 0)
+        std::cout << "<optional> is present\n";
+    else if (has_optional < 0)
+        std::cout << "<experimental/optional> is present\n";
+    else
+        std::cout << "<optional> is not present\n";
+ 
+    optional_t<int> op;
+    std::cout << "op = " << op.value_or(-1) << '\n';
+    op = 42;
+    std::cout << "op = " << op.value_or(-1) << '\n';
+}
+```
+
+Output:
+
+```text
+<optional> is present
+op = -1
+op = 42
+```
+
+## Defect reports
+
+{/* source:cpp-preprocessor-include:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-preprocessor-include:0024 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={787} standard="C++98">
+    <PublishedBehavior>the behavior is undefined if an escape sequence is resembled in `q-char-sequence` or `h-char-sequence`</PublishedBehavior>
+    <CorrectedBehavior>it is conditionally-supported</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-preprocessor-include:0025 */}
+- [A list of C++ Standard Library header files](/docs/cpp/library/headers)
+- [C documentation](/docs/c/language/preprocessor/include) for Source file inclusion
