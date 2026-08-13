@@ -132,6 +132,27 @@ describe("cppreference link normalization", () => {
     });
   });
 
+  test("decodes encoded operator paths and emits static-host-safe slugs", () => {
+    const slugMap = new Map([
+      ["cpp/container/vector/operator=", "cpp/library/container/vector/operator="],
+      ["cpp/container/mdspan/extents/operator==", "cpp/library/container/mdspan/extents/operator=="],
+    ]);
+    expect(normalizeCppreferenceLink("operator%3D.html", "cpp/container/vector/assign", slugMap)).toEqual({
+      href: "cpp/library/container/vector/operator_assignment",
+      kind: "internal",
+    });
+    expect(
+      normalizeCppreferenceLink(
+        "https://en.cppreference.com/w/cpp/container/mdspan/extents/operator%3D%3D",
+        "cpp/container/mdspan/extents",
+        slugMap,
+      ),
+    ).toEqual({
+      href: "cpp/library/container/mdspan/extents/operator_eq",
+      kind: "internal",
+    });
+  });
+
   test("preserves page fragments and external URLs", () => {
     expect(normalizeCppreferenceLink("#Defect_reports", "cpp/language/default_arguments")).toEqual({
       href: "#Defect_reports",

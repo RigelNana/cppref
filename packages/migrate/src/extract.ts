@@ -178,13 +178,30 @@ function removeHtmlSuffix(pathname: string): string {
   return pathname.replace(/\.html$/iu, "").replace(/\/index$/iu, "");
 }
 
+function decodePathSegments(pathname: string): string {
+  return pathname
+    .split("/")
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join("/");
+}
+
 function canonicalTargetSlug(sourceSlug: string): string {
   return sourceSlug.split("/").map((segment) => segment.replaceAll("_", "-")).join("/");
 }
 
 function resolveRelativeSlug(href: string, currentSlug: string): string {
   const base = new URL(`https://en.cppreference.com/w/${currentSlug}`);
-  return removeHtmlSuffix(new URL(href, `${base.href.slice(0, base.href.lastIndexOf("/") + 1)}`).pathname.replace(/^\/w\//u, "").replace(/^\/reference\/en\//u, "").replace(/^\//u, ""));
+  const pathname = new URL(href, `${base.href.slice(0, base.href.lastIndexOf("/") + 1)}`).pathname
+    .replace(/^\/w\//u, "")
+    .replace(/^\/reference\/en\//u, "")
+    .replace(/^\//u, "");
+  return removeHtmlSuffix(decodePathSegments(pathname));
 }
 
 export function normalizeCppreferenceLink(
@@ -210,9 +227,9 @@ export function normalizeCppreferenceLink(
     }
     hash = parsed.hash;
     if (parsed.pathname.startsWith("/w/")) {
-      sourceSlug = removeHtmlSuffix(parsed.pathname.slice(3));
+      sourceSlug = removeHtmlSuffix(decodePathSegments(parsed.pathname.slice(3)));
     } else if (parsed.pathname.startsWith("/reference/en/")) {
-      sourceSlug = removeHtmlSuffix(parsed.pathname.slice("/reference/en/".length));
+      sourceSlug = removeHtmlSuffix(decodePathSegments(parsed.pathname.slice("/reference/en/".length)));
     } else {
       return { href: trimmed, kind: "external" };
     }
@@ -227,7 +244,14 @@ export function normalizeCppreferenceLink(
     return { href: trimmed, kind: "external" };
   }
   const mappedSlug = slugMap?.get(sourceSlug);
-  const destinationSlug = mappedSlug ?? canonicalTargetSlug(sourceSlug);
+  const destinationSlug = (mappedSlug ?? canonicalTargetSlug(sourceSlug))
+    .split("/")
+    .map((segment) => {
+      if (segment === "operator=") return "operator_assignment";
+      if (segment === "operator==") return "operator_eq";
+      return segment;
+    })
+    .join("/");
   return {
     href: `${destinationSlug.replace(/^\//u, "")}${hash}`,
     kind: "internal",
