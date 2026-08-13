@@ -1,10 +1,41 @@
 import Link from "next/link";
+import { Heading } from "fumadocs-ui/components/heading";
 import { highlight } from "fumadocs-core/highlight";
-import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
+import type { ComponentProps, ReactElement, PropsWithChildren, ReactNode } from "react";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import { CxxSyntax } from "./cxx-syntax";
 import { RevisionMark } from "./revision-mark";
+
+
+function containsAnchor(node: ReactNode): boolean {
+  if (node === null || node === undefined) return false;
+  if (typeof node === "string" || typeof node === "number" || typeof node === "boolean") return false;
+  if (Array.isArray(node)) return node.some(containsAnchor);
+  const element = node as ReactElement<{ children?: ReactNode; href?: unknown }>;
+  // MDX renders links through a componentized `a` (next/link or a relative-link
+  // wrapper), so detect links by their href prop rather than the element type.
+  if (element.type === "a" || element.props?.href !== undefined) return true;
+  return containsAnchor(element.props?.children);
+}
+
+/**
+ * The fumadocs Heading component wraps its children in an anchor link, which
+ * is invalid when the heading text itself contains a link (e.g. cppreference's
+ * `Inherited from <parent>` template headings). Render such headings natively
+ * while keeping the id so TOC and deep links keep working.
+ */
+function AnchorSafeHeading(props: ComponentProps<typeof Heading>) {
+  if (containsAnchor(props.children)) {
+    const As = props.as ?? "h2";
+    return (
+      <As id={props.id} className={props.className}>
+        {props.children}
+      </As>
+    );
+  }
+  return <Heading {...props} />;
+}
 
 
 interface RevisionProps extends PropsWithChildren {
@@ -188,6 +219,12 @@ export function PaperLink({ paper, children }: PropsWithChildren<{ paper: string
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    h1: (props) => <AnchorSafeHeading as="h1" {...props} />,
+    h2: (props) => <AnchorSafeHeading as="h2" {...props} />,
+    h3: (props) => <AnchorSafeHeading as="h3" {...props} />,
+    h4: (props) => <AnchorSafeHeading as="h4" {...props} />,
+    h5: (props) => <AnchorSafeHeading as="h5" {...props} />,
+    h6: (props) => <AnchorSafeHeading as="h6" {...props} />,
     DocLink,
     HeaderRef,
     BehaviorTerm,
