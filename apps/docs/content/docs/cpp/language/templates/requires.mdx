@@ -1,0 +1,319 @@
+---
+title: "requires expression (since C++20)"
+description: "Yields a prvalue expression of type bool that describes the constraints."
+source_url: "https://en.cppreference.com/w/cpp/language/requires"
+language: "C++"
+---
+
+{/* source:cpp-language-requires:0000 */}
+Yields a prvalue expression of type `bool` that describes the constraints.
+
+## Syntax
+
+{/* source:cpp-language-requires:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="requires { requirement-seq }" />
+  <Declaration id="2" language="cpp" grammar code="requires ( parameter-list (optional) ) { requirement-seq }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-requires:0002 */}
+<ParameterList>
+  <Parameter name="parameter-list">
+    a [parameter list](/docs/cpp/language/functions/function#Parameter_list)
+  </Parameter>
+  <Parameter name="requirement-seq">
+    sequence of *requirements*, each requirement is one of the following:
+
+    - [simple requirement](/docs/cpp/language/templates/requires#Simple_requirements)
+    - [type requirement](/docs/cpp/language/templates/requires#Type_requirements)
+    - [compound requirement](/docs/cpp/language/templates/requires#Compound_requirements)
+    - [nested requirement](/docs/cpp/language/templates/requires#Nested_requirements)
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-requires:0003 */}
+Requirements may refer to the template parameters that are in scope, to the parameters of *parameter-list*, and to any other declarations that are visible from the enclosing context.
+
+{/* source:cpp-language-requires:0004 */}
+The substitution of template arguments into a `requires` expression used in a declaration of a [templated entity](/docs/cpp/language/templates#Templated_entity) may result in the formation of invalid types or expressions in its requirements, or the violation of semantic constraints of those requirements. In such cases, the `requires` expression evaluates to `false` and does not cause the program to be ill-formed. The substitution and semantic constraint checking proceeds in lexical order and stops when a condition that determines the result of the requires expression is encountered. If substitution (if any) and semantic constraint checking succeed, the requires expression evaluates to `true`.
+
+{/* source:cpp-language-requires:0005 */}
+If a substitution failure would occur in a `requires` expression for every possible template argument, the program is ill-formed, no diagnostic required:
+
+{/* source:cpp-language-requires:0006 */}
+```cpp
+template<class T>
+concept C = requires
+{
+    new int[-(int)sizeof(T)]; // invalid for every T: ill-formed, no diagnostic required
+};
+```
+
+{/* source:cpp-language-requires:0007 */}
+If a `requires` expression contains invalid types or expressions in its requirements, and it does not appear within the declaration of a [templated entity](/docs/cpp/language/templates#Templated_entity), then the program is ill-formed.
+
+## Local parameters
+
+{/* source:cpp-language-requires:0008 */}
+A `requires` expression can introduce local parameters using a [parameter list](/docs/cpp/language/functions/function#Parameter_list). These parameters have no linkage, storage, or lifetime; they are only used as notation for the purpose of defining requirements.
+
+{/* source:cpp-language-requires:0009 */}
+The type of each parameter is determined by the same way as [determining the actual type](/docs/cpp/language/functions/function#Function_type) of function parameters:
+
+{/* source:cpp-language-requires:0010 */}
+```cpp
+template<typename T>
+concept C = requires(T p[2])
+{
+    (decltype(p))nullptr; // OK, p has type T*
+};
+```
+
+{/* source:cpp-language-requires:0011 */}
+If any of the following conditions is satisfied, the program is ill-formed:
+
+{/* source:cpp-language-requires:0012 */}
+- A local parameter has a [default argument](/docs/cpp/language/functions/default_arguments).
+- The parameter list terminate with an ellipsis.
+
+{/* source:cpp-language-requires:0013 */}
+```cpp
+template<typename T>
+concept C1 = requires(T t = 0)  // Error: t has a default argument
+{
+    t;
+};
+
+template<typename T>
+concept C2 = requires(T t, ...) // Error: terminates with an ellipsis
+{
+    t;
+};
+```
+
+## Simple requirements
+
+{/* source:cpp-language-requires:0014 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="expression ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-requires:0015 */}
+<ParameterList>
+  <Parameter name="expression">
+    an expression which does not start with `requires`
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-requires:0016 */}
+A simple requirement asserts that *expression* is valid. *expression* is an [unevaluated operand](/docs/cpp/language/expressions#Potentially-evaluated_expressions).
+
+{/* source:cpp-language-requires:0017 */}
+```cpp
+template<typename T>
+concept Addable = requires (T a, T b)
+{
+    a + b; // "the expression “a + b” is a valid expression that will compile"
+};
+
+template<class T, class U = T>
+concept Swappable = requires(T&& t, U&& u)
+{
+    swap(std::forward<T>(t), std::forward<U>(u));
+    swap(std::forward<U>(u), std::forward<T>(t));
+};
+```
+
+{/* source:cpp-language-requires:0018 */}
+A requirement that starts with the keyword `requires` is always interpreted as a nested requirement. Thus a simple requirement cannot start with an unparenthesized requires expression.
+
+## Type requirements
+
+{/* source:cpp-language-requires:0019 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="typename identifier ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-requires:0020 */}
+<ParameterList>
+  <Parameter name="identifier">
+    a (possibly qualified) [identifier](/docs/cpp/language/basic_concepts/name) (including [simple template identifier](/docs/cpp/language/templates#Template_identifiers))
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-requires:0021 */}
+A type requirement asserts that the type named by *identifier* is valid: this can be used to verify that a certain named nested type exists, or that a class/alias template specialization names a type. A type requirement naming a class template specialization does not require the type to be complete.
+
+{/* source:cpp-language-requires:0022 */}
+```cpp
+template<typename T>
+using Ref = T&;
+
+template<typename T>
+concept C = requires
+{
+    typename T::inner; // required nested member name
+    typename S<T>;     // required class template specialization
+    typename Ref<T>;   // required alias template substitution
+};
+
+template<class T, class U>
+using CommonType = std::common_type_t<T, U>;
+
+template<class T, class U>
+concept Common = requires (T&& t, U&& u)
+{
+    typename CommonType<T, U>; // CommonType<T, U> is valid and names a type
+    { CommonType<T, U>{std::forward<T>(t)} }; 
+    { CommonType<T, U>{std::forward<U>(u)} }; 
+};
+```
+
+## Compound requirements
+
+{/* source:cpp-language-requires:0023 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="{ expression };" />
+  <Declaration id="2" language="cpp" grammar code="{ expression } noexcept ;" />
+  <Declaration id="3" language="cpp" grammar code="{ expression } -> type-constraint ;" />
+  <Declaration id="4" language="cpp" grammar code="{ expression } noexcept -> type-constraint ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-requires:0024 */}
+<ParameterList>
+  <Parameter name="expression">
+    an expression
+  </Parameter>
+  <Parameter name="type-constraint">
+    a [constraint](/docs/cpp/language/templates/constraints#Constraints)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-requires:0025 */}
+A compound requirement asserts properties of *expression*. Substitution and semantic constraint checking proceeds in the following order:
+
+{/* source:cpp-language-requires:0026 */}
+1. Template arguments (if any) are substituted into *expression*.
+
+{/* source:cpp-language-requires:0027 */}
+2. If `noexcept` is present, *expression* must not be [potentially throwing](/docs/cpp/language/exceptions/noexcept).
+
+{/* source:cpp-language-requires:0028 */}
+3. If *type-constraint* is present, then:
+
+{/* source:cpp-language-requires:0029 */}
+   - a) Template arguments are substituted into *type-constraint*.
+
+{/* source:cpp-language-requires:0030 */}
+   - b) `decltype((`*expression*`))` must satisfy the constraint imposed by *type-constraint*. Otherwise, the enclosing `requires` expression is `false`.
+
+{/* source:cpp-language-requires:0031 */}
+*expression* is an [unevaluated operand](/docs/cpp/language/expressions#Potentially-evaluated_expressions).
+
+{/* source:cpp-language-requires:0032 */}
+```cpp
+template<typename T>
+concept C2 = requires(T x)
+{
+    // the expression *x must be valid
+    // AND the type T::inner must be valid
+    // AND the result of *x must be convertible to T::inner
+    {*x} -> std::convertible_to<typename T::inner>;
+
+    // the expression x + 1 must be valid
+    // AND std::same_as<decltype((x + 1)), int> must be satisfied
+    // i.e., (x + 1) must be a prvalue of type int
+    {x + 1} -> std::same_as<int>;
+
+    // the expression x * 1 must be valid
+    // AND its result must be convertible to T
+    {x * 1} -> std::convertible_to<T>;
+};
+```
+
+## Nested requirements
+
+{/* source:cpp-language-requires:0033 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="requires constraint-expression ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-requires:0034 */}
+<ParameterList>
+  <Parameter name="constraint-expression">
+    an expression representing [constraints](/docs/cpp/language/templates/constraints)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-requires:0035 */}
+A nested requirement can be used to specify additional constraints in terms of local parameters. *constraint-expression* must be satisfied by the substituted template arguments, if any. Substitution of template arguments into a nested requirement causes substitution into *constraint-expression* only to the extent needed to determine whether *constraint-expression* is satisfied.
+
+{/* source:cpp-language-requires:0036 */}
+```cpp
+template<class T>
+concept Semiregular = DefaultConstructible<T> &&
+    CopyConstructible<T> && CopyAssignable<T> && Destructible<T> &&
+requires(T a, std::size_t n)
+{  
+    requires Same<T*, decltype(&a)>; // nested: "Same<...> evaluates to true"
+    { a.~T() } noexcept; // compound: "a.~T()" is a valid expression that doesn't throw
+    requires Same<T*, decltype(new T)>; // nested: "Same<...> evaluates to true"
+    requires Same<T*, decltype(new T[n])>; // nested
+    { delete new T }; // compound
+    { delete new T[n] }; // compound
+};
+```
+
+## Note
+
+{/* source:cpp-language-requires:0037 */}
+The keyword `requires` is also used to introduce [requires clauses](/docs/cpp/language/templates/constraints#Requires_clauses).
+
+{/* source:cpp-language-requires:0038 */}
+```cpp
+template<typename T>
+concept Addable = requires (T x) { x + x; }; // requires expression
+
+template<typename T> requires Addable<T> // requires clause, not requires expression
+T add(T a, T b) { return a + b; }
+
+template<typename T>
+    requires requires (T x) { x + x; } // ad-hoc constraint, note keyword used twice
+T add(T a, T b) { return a + b; }
+```
+
+## Keywords
+
+{/* source:cpp-language-requires:0039 */}
+[`requires`](/docs/cpp/language/keywords/requires)
+
+## Defect reports
+
+{/* source:cpp-language-requires:0040 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-requires:0041 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2560} standard="C++20"><PublishedBehavior>it was unclear whether parameter types are adjusted in `requires` expressions</PublishedBehavior><CorrectedBehavior>also adjusted</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2911} standard="C++20"><PublishedBehavior>all expressions appearing within `requires` expressions were unevaluated operands</PublishedBehavior><CorrectedBehavior>only some expressions are</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-requires:0042 */}
+C++23 standard (ISO/IEC 14882:2024): 7.5.7 Requires expressions [expr.prim.req]
+
+{/* source:cpp-language-requires:0043 */}
+C++20 standard (ISO/IEC 14882:2020): 7.5.7 Requires expressions [expr.prim.req]
+
+## See also
+
+{/* source:cpp-language-requires:0044 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[Constraints and concepts](/docs/cpp/language/templates/constraints) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies the requirements on template arguments</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

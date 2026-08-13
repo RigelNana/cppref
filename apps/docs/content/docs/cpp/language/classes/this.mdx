@@ -1,0 +1,175 @@
+---
+title: "The this pointer"
+description: "The expression this is a prvalue expression whose value is the address of the implicit object parameter (object on which the implicit object member function is being called)."
+source_url: "https://en.cppreference.com/w/cpp/language/this"
+language: "C++"
+---
+
+## Syntax
+
+{/* source:cpp-language-this:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="this" />
+</DeclarationDoc>
+
+{/* source:cpp-language-this:0001 */}
+The expression `this` is a [prvalue](/docs/cpp/language/expressions/value_category#prvalue) [expression](/docs/cpp/language/expressions) whose value is the address of the [implicit object parameter](/docs/cpp/language/functions/overload_resolution#Implicit_object_parameter) (object on which the implicit object member function is being called). It can appear in the following contexts:
+
+{/* source:cpp-language-this:0002 */}
+1. Within the body of any [implicit object member function](/docs/cpp/language/classes/member_functions), including [member initializer list](/docs/cpp/language/classes/initializer_list)<InlineRevision since="C++11">, and [lambda expression body](/docs/cpp/language/functions/lambda#closure_type_fun_operator)</InlineRevision>.
+
+{/* source:cpp-language-this:0003 */}
+2. Within the [declaration](/docs/cpp/language/functions/function) of any implicit object member function anywhere after the (optional) cv-qualifier sequence, including the [exception specification](/docs/cpp/language/exceptions)<InlineRevision since="C++11"> and the trailing return type</InlineRevision>.
+
+{/* source:cpp-language-this:0004 */}
+<Revision since="C++11">
+3. Within [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization).
+4. Within [capture list](/docs/cpp/language/functions/lambda#Lambda_capture) of a lambda expression.
+</Revision>
+
+## Explanation
+
+{/* source:cpp-language-this:0005 */}
+`this` can only associate with the innermost enclosing class of its appearance, even if the appearance is invalid in the context:
+
+{/* source:cpp-language-this:0006 */}
+```cpp
+class Outer
+{
+    int a[sizeof(*this)];            // Error: not inside a member function
+    unsigned int sz = sizeof(*this); // OK: in default member initializer
+
+    void f()
+    {
+        int b[sizeof(*this)];     // OK
+
+        struct Inner
+        {
+            int c[sizeof(*this)]; // Error: not inside a member function of Inner
+                                  // “this” is not associated with Outer
+                                  // even if it is inside a member function of Outer
+        };
+    }
+};
+```
+
+{/* source:cpp-language-this:0007 */}
+The type of `this` in a member function of class `X` is `X*` (pointer to X). If the member function is [declared with a cv-qualifier sequence](/docs/cpp/language/classes/member_functions#member_functions_with_cv-qualifiers) *cv*, the type of `this` is `cv X*` (pointer to identically cv-qualified X). Since constructors and destructors cannot be declared with cv-qualifiers, the type of `this` in them is always `X*`, even when constructing or destroying a const object.
+
+{/* source:cpp-language-this:0008 */}
+In class templates, `this` is a [dependent expression](/docs/cpp/language/templates/dependent_name), and explicit `this->` may be used to force another expression to become dependent.
+
+{/* source:cpp-language-this:0009 */}
+```cpp
+template<typename T>
+struct B
+{
+    int var;
+};
+
+template<typename T>
+struct D : B<T>
+{
+    D()
+    {
+        // var = 1;    // Error: “var” was not declared in this scope
+        this->var = 1; // OK
+    }
+};
+```
+
+{/* source:cpp-language-this:0010 */}
+[During construction](/docs/cpp/language/classes/initializer_list) of an object, if the value of the object or any of its subobjects is accessed through a glvalue that is not obtained, directly or indirectly, from the constructor's `this` pointer, the value of the object or subobject thus obtained is unspecified. In other words, the this pointer cannot be aliased in a constructor:
+
+{/* source:cpp-language-this:0011 */}
+```cpp
+extern struct D d;
+
+struct D
+{
+    D(int a) : a(a), b(d.a) {} // b(a) or b(this->a) would be correct
+    int a, b;
+};
+
+D d = D(1); // because b(d.a) did not obtain a through this, d.b is now unspecified
+```
+
+{/* source:cpp-language-this:0012 */}
+It is possible to execute `delete this;`, if the program can guarantee that the object was allocated by `new`, however, this renders every pointer to the deallocated object invalid, including the `this` pointer itself: after `delete this;` returns, such member function cannot refer to a member of a class (since this involves an implicit dereference of `this`) and no other member function may be called.
+
+{/* source:cpp-language-this:0013 */}
+This can be used in the member function of the reference-counting pointer <InlineRevision since="C++11">(for example, [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr))</InlineRevision> responsible for decrementing the reference count, when the last reference to the managed object goes out of scope.
+
+{/* source:cpp-language-this:0014 */}
+```cpp
+class ref
+{
+    // ...
+    void incRef() { ++mnRef; }
+    void decRef() { if (--mnRef == 0) delete this; }
+};
+```
+
+## Keywords
+
+{/* source:cpp-language-this:0015 */}
+[`this`](/docs/cpp/language/keywords/this)
+
+## Example
+
+{/* source:cpp-language-this:0016 */}
+```cpp
+class T
+{
+    int x;
+
+    void foo()
+    {
+        x = 6;       // same as this->x = 6;
+        this->x = 5; // explicit use of this->
+    }
+
+    void foo() const
+    {
+    //  x = 7; // Error: *this is constant
+    }
+
+    void foo(int x) // parameter x shadows the member with the same name
+    {
+        this->x = x; // unqualified x refers to the parameter
+                     // “this->” is required for disambiguation
+    }
+
+    int y;
+    T(int x) : x(x),      // uses parameter x to initialize member x
+               y(this->x) // uses member x to initialize member y
+    {}
+
+    T& operator=(const T& b)
+    {
+        x = b.x;
+        return *this; // many overloaded operators return *this
+    }
+};
+```
+
+## Defect reports
+
+{/* source:cpp-language-this:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-this:0018 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={760} standard="C++98">
+    <PublishedBehavior>when `this` is used in a nested class, it was unspecified whether it is associated with the nested class or the enclosing class</PublishedBehavior>
+    <CorrectedBehavior>`this` always associates with the innermost nested class, regardless of whether it is in a non-static member function</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2271} standard="C++98">
+    <PublishedBehavior>`this` could be aliased when constructing a non-const object</PublishedBehavior>
+    <CorrectedBehavior>alias is also prohibited in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2869} standard="C++98">
+    <PublishedBehavior>it was unclear whether `this` could be used in a static member function of a non-associated class</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

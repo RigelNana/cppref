@@ -55,9 +55,36 @@ function compact(value: string): string {
   return normalize(value);
 }
 
+const technicalSpecificationLabels: Record<string, string> = {
+  "tm": "TM TS",
+  "tm-ts": "TM TS",
+  "concepts": "Concepts TS",
+  "concepts-ts": "Concepts TS",
+  "fs": "Filesystem TS",
+  "fs-ts": "Filesystem TS",
+  "libfund": "Library Fundamentals TS",
+  "libfund-ts": "Library Fundamentals TS",
+  "libfund-2": "Library Fundamentals TS v2",
+  "libfund-ts-2": "Library Fundamentals TS v2",
+  "libfund-3": "Library Fundamentals TS v3",
+  "libfund-ts-3": "Library Fundamentals TS v3",
+  "parallelism": "Parallelism TS",
+  "parallelism-ts": "Parallelism TS",
+  "parallelism-2": "Parallelism TS v2",
+  "parallelism-ts-2": "Parallelism TS v2",
+  "ranges": "Ranges TS",
+  "ranges-ts": "Ranges TS",
+  "reflection": "Reflection TS",
+  "reflection-ts": "Reflection TS",
+  "networking": "Networking TS",
+  "concurrency": "Concurrency TS",
+};
+
 function revisionValue(token: string): string {
   if (token === "t-rev-inl" || token === "t-rev-begin") return "";
-  return token.replace(/^t-(?:since|until|rev)-/u, "").replace(/^cxx/u, "C++").replace(/^c/u, "C");
+  const name = token.replace(/^t-(?:since|until|rev)-/u, "").replace(/_/gu, "-");
+  if (name.startsWith("cxx")) return `C++${name.slice(3)}`;
+  return technicalSpecificationLabels[name] ?? (name.startsWith("c") ? `C${name.slice(1)}` : "");
 }
 
 function countByValue(values: readonly string[]): Map<string, number> {
@@ -110,7 +137,7 @@ export function validateDirectMdx(source: LosslessPage, mdx: string): Validation
       }
     }
     for (const inlineRevision of block.immutable.inlineRevisions) {
-      if (!mdx.includes("<InlineRevision") || !normalizedMdx.includes(normalize(inlineRevision.text))) {
+      if (!mdx.includes("<InlineRevision") || !containsTokens(mdx, inlineRevision.text)) {
         issues.push({ severity: "error", code: "missing-inline-revision", sourceId: block.sourceId, message: `Inline revision scope ${JSON.stringify(inlineRevision.text)} from ${block.sourceId} is missing or flattened.` });
       }
     }

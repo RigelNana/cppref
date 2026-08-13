@@ -1,0 +1,383 @@
+---
+title: "switch statement"
+description: "Transfers control to one of several statements, depending on the value of a condition."
+source_url: "https://en.cppreference.com/w/cpp/language/switch"
+language: "C++"
+---
+
+{/* source:cpp-language-switch:0000 */}
+Transfers control to one of several statements, depending on the value of a condition.
+
+## Syntax
+
+{/* source:cpp-language-switch:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="attr (optional) switch ( init-statement (optional) condition ) statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-switch:0002 */}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="init-statement">
+    <InlineRevision since="C++17" /> any of the following:
+    - an [expression statement](/docs/cpp/language/statements#Expression_statements) (which may be a null statement `;`)
+    - a [simple declaration](/docs/cpp/language/declarations#Simple_declaration), typically a declaration of a variable with initializer, but it may declare arbitrarily many variables or [structured bindings](/docs/cpp/language/declarations/structured_binding)
+    - an [alias declaration](/docs/cpp/language/declarations/type_alias) <InlineRevision since="C++23" />
+
+    Note that any init-statement must end with a semicolon. This is why it is often described informally as an expression or a declaration followed by a semicolon.
+  </Parameter>
+  <Parameter name="condition">
+    a [condition](/docs/cpp/language/statements/switch#Condition)
+  </Parameter>
+  <Parameter name="statement">
+    a statement (typically a compound statement)
+  </Parameter>
+</ParameterList>
+
+## Condition
+
+{/* source:cpp-language-switch:0003 */}
+A condition can either be an [expression](/docs/cpp/language/expressions) or a [simple declaration](/docs/cpp/language/declarations#Simple_declaration).
+
+{/* source:cpp-language-switch:0004 */}
+<Revision since="C++26">
+- If it can be syntactically resolved as a [structured binding](/docs/cpp/language/declarations/structured_binding) declaration, it is interpreted as a structured binding declaration.
+</Revision>
+
+{/* source:cpp-language-switch:0005 */}
+- If it can be syntactically resolved as an expression, it is treated as an expression. Otherwise, it is treated as a declaration<InlineRevision since="C++26"> that is not a structured binding declaration</InlineRevision>.
+
+{/* source:cpp-language-switch:0006 */}
+When control reaches condition, the condition will yield a value, which is used to determine which label the control will go to.
+
+### Expression
+
+{/* source:cpp-language-switch:0007 */}
+If condition is an expression, the value it yields is the the value of the expression.
+
+### Declaration
+
+{/* source:cpp-language-switch:0008 */}
+If condition is a simple declaration, the value it yields is the value of the decision variable (see below).
+
+#### Non-structured binding declaration
+
+{/* source:cpp-language-switch:0009 */}
+The declaration has the following restrictions:
+
+{/* source:cpp-language-switch:0010 */}
+- Syntactically conforms to the following form:
+
+{/* source:cpp-language-switch:0011 */}
+<Revision until="C++11">
+- type-specifier-seq declarator = assignment-expression
+</Revision>
+
+<Revision since="C++11">
+- attribute-specifier-seq (optional) decl-specifier-seq declarator brace-or-equal-initializer
+</Revision>
+
+{/* source:cpp-language-switch:0012 */}
+- The declarator cannot specify a [function](/docs/cpp/language/functions/function) or an [array](/docs/cpp/language/declarations/array).
+- The <InlineRevision until="C++11">[type specifier sequence](/docs/cpp/language/declarations#Specifiers)</InlineRevision><InlineRevision since="C++11">[declaration specifier sequence](/docs/cpp/language/declarations#Specifiers) can only contain type specifiers and `constexpr`, and it</InlineRevision> cannot define a [class](/docs/cpp/language/classes/class) or [enumeration](/docs/cpp/language/declarations/enum).
+
+{/* source:cpp-language-switch:0013 */}
+The decision variable of the declaration is the declared variable.
+
+{/* source:cpp-language-switch:0014 */}
+<Revision since="C++26">
+#### Structured binding declaration
+
+The declaration has the following restrictions:
+
+- The expression in its [initializer](/docs/cpp/language/initialization) cannot be of an array type.
+- The [declaration specifier sequence](/docs/cpp/language/declarations#Specifiers) can only contain type specifiers and `constexpr`.
+
+The decision variable of the declaration is the invented variable `e` [introduced by the declaration](/docs/cpp/language/declarations/structured_binding).
+</Revision>
+
+### Type
+
+{/* source:cpp-language-switch:0015 */}
+condition can only yield the following types:
+
+{/* source:cpp-language-switch:0016 */}
+- integral types
+- enumeration types
+- class types
+
+{/* source:cpp-language-switch:0017 */}
+If the yielded value is of a class type, it is contextually implicitly converted to an integral or enumeration type.
+
+{/* source:cpp-language-switch:0018 */}
+If the (possibly converted) type is subject to [integral promotions](/docs/cpp/language/expressions/implicit_cast#Integral_promotion), the yielded value is converted to the promoted type.
+
+## Labels
+
+{/* source:cpp-language-switch:0019 */}
+Any statement within the `switch` statement can be labeled with one or more following labels:
+
+{/* source:cpp-language-switch:0020 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) case constant-expression :" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) default:" />
+</DeclarationDoc>
+
+{/* source:cpp-language-switch:0021 */}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="constant-expression">
+    a [converted constant expression](/docs/cpp/language/expressions/constant_expression#Converted_constant_expression) of the adjusted type of the `switch` condition
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-switch:0022 */}
+A `case` or `default` label is associated with the innermost `switch` statement enclosing it.
+
+{/* source:cpp-language-switch:0023 */}
+If any of the following conditions is satisfied, the program is ill-formed:
+
+{/* source:cpp-language-switch:0024 */}
+- A `switch` statement is associated with multiple `case` labels whose constant-expressions have the same value after conversions.
+- A `switch` statement is associated with multiple `default` labels.
+
+## Control flow transfer
+
+{/* source:cpp-language-switch:0025 */}
+When the condition of a `switch` statement yields a (possibly converted) value:
+
+{/* source:cpp-language-switch:0026 */}
+- If one of the associated `case` label constants has the same value, control is passed to the statement labeled by the matched `case` label.
+- Otherwise, if there is an associated `default` label, control is passed to the statement labeled by the `default` label.
+- Otherwise, none of the statements in the `switch` statement will be executed.
+
+{/* source:cpp-language-switch:0027 */}
+`case` and `default` labels in themselves do not alter the flow of control. To exit from a `switch` statement from the middle, see [`break` statements](/docs/cpp/language/statements/break).
+
+{/* source:cpp-language-switch:0028 */}
+Compilers may issue warnings on fallthrough (reaching the next `case` or `default` label without a `break`)<InlineRevision since="C++17"> unless the attribute [`[[fallthrough]]`](/docs/cpp/language/declarations/attributes/fallthrough) appears immediately before the `case` label to indicate that the fallthrough is intentional</InlineRevision>.
+
+{/* source:cpp-language-switch:0029 */}
+```cpp
+switch (1)
+{
+    case 1:
+        std::cout << '1'; // prints "1",
+    case 2:
+        std::cout << '2'; // then prints "2"
+}
+```
+
+{/* source:cpp-language-switch:0030 */}
+```cpp
+switch (1)
+{
+    case 1:
+        std::cout << '1'; // prints "1"
+        break;            // and exits the switch
+    case 2:
+        std::cout << '2';
+        break;
+}
+```
+
+{/* source:cpp-language-switch:0031 */}
+<Revision since="C++17">
+### switch statements with initializer
+
+If init-statement is used, the switch statement is equivalent to
+
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code={`{
+    init-statement
+    switch ( condition ) statement
+}`} />
+</DeclarationDoc>
+
+Except that names declared by the init-statement (if init-statement is a declaration) and names declared by condition (if condition is a declaration) are in the same scope, which is also the scope of statement.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-switch:0032 */}
+Because transfer of control is [not permitted to enter the scope](/docs/cpp/language/statements/goto) of a variable, if a declaration statement is encountered inside the statement, it has to be scoped in its own compound statement:
+
+{/* source:cpp-language-switch:0033 */}
+```cpp
+switch (1)
+{
+    case 1:
+        int x = 0; // initialization
+        std::cout << x << '\n';
+        break;
+    default:
+        // compilation error: jump to default:
+        // would enter the scope of 'x' without initializing it
+        std::cout << "default\n";
+        break;
+}
+```
+
+{/* source:cpp-language-switch:0034 */}
+```cpp
+switch (1)
+{
+    case 1:
+        {
+            int x = 0;
+            std::cout << x << '\n';
+            break;
+        } // scope of 'x' ends here
+    default:
+        std::cout << "default\n"; // no error
+        break;
+}
+```
+
+## Keywords
+
+{/* source:cpp-language-switch:0035 */}
+[`switch`](/docs/cpp/language/keywords/switch), [`case`](/docs/cpp/language/keywords/case), [`default`](/docs/cpp/language/keywords/default)
+
+## Example
+
+{/* source:cpp-language-switch:0036 */}
+The following code shows several usage cases of the `switch` statement:
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    const int i = 2;
+    switch (i)
+    {
+        case 1:
+            std::cout << '1';
+        case 2:              // execution starts at this case label
+            std::cout << '2';
+        case 3:
+            std::cout << '3';
+            [[fallthrough]]; // C++17 attribute to silent the warning on fallthrough
+        case 5:
+            std::cout << "45";
+            break;           // execution of subsequent statements is terminated
+        case 6:
+            std::cout << '6';
+    }
+
+    std::cout << '\n';
+
+    switch (i)
+    {
+        case 4:
+            std::cout << 'a';
+        default:
+            std::cout << 'd'; // there are no applicable constant expressions 
+                              // therefore default is executed
+    }
+
+    std::cout << '\n';
+
+    switch (i)
+    {
+        case 4:
+            std::cout << 'a'; // nothing is executed
+    }
+
+    // when enumerations are used in a switch statement, many compilers
+    // issue warnings if one of the enumerators is not handled
+    enum color { RED, GREEN, BLUE };
+    switch (RED)
+    {
+        case RED:
+            std::cout << "red\n";
+            break;
+        case GREEN:
+            std::cout << "green\n";
+            break;
+        case BLUE:
+            std::cout << "blue\n";
+            break;
+    }
+
+    // the C++17 init-statement syntax can be helpful when there is
+    // no implicit conversion to integral or enumeration type
+    struct Device
+    {
+        enum State { SLEEP, READY, BAD };
+        auto state() const { return m_state; }
+
+        /* ... */
+
+    private:
+        State m_state{};
+    };
+
+    switch (auto dev = Device{}; dev.state())
+    {
+        case Device::SLEEP:
+            /* ... */
+            break;
+        case Device::READY:
+            /* ... */
+            break;
+        case Device::BAD:
+            /* ... */
+            break;
+    }
+
+    // pathological examples
+
+    // the statement does not have to be a compound statement
+    switch (0)
+        std::cout << "this does nothing\n";
+
+    // labels do not require a compound statement either
+    switch (int n = 1)
+        case 0:
+        case 1:
+            std::cout << n << '\n';
+}
+```
+
+Output:
+
+```text
+2345
+d
+red
+1
+```
+
+## Defect reports
+
+{/* source:cpp-language-switch:0037 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-switch:0038 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1767} standard="C++98">
+    <PublishedBehavior>conditions of types that are not subject to integral promotion could not be promoted</PublishedBehavior>
+    <CorrectedBehavior>do not promote conditions of these types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2629} standard="C++98">
+    <PublishedBehavior>condition could be a declaration of a floating-point variable</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-switch:0039 */}
+[C documentation](/docs/c/language/statements/switch) for `switch`
+
+## External links
+
+{/* source:cpp-language-switch:0040 */}
+1. [Loop unrolling using Duff's Device](https://en.wikipedia.org/wiki/Duff%27s_device)
+2. [Duff's device can be used to implement coroutines in C/C++](https://en.wikipedia.org/wiki/Coroutine#C)

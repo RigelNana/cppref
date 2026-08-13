@@ -1,0 +1,98 @@
+---
+title: "Exceptions"
+description: "Exception handling provides a way of transferring control and information from some point in the execution of a program to a handler associated with a point previously passed by the execution (in other words, exception handling transfers control up the call stack)."
+source_url: "https://en.cppreference.com/w/cpp/language/exceptions"
+language: "C++"
+---
+
+{/* source:cpp-language-exceptions:0000 */}
+Exception handling provides a way of transferring control and information from some point in the execution of a program to a handler associated with a point previously passed by the execution (in other words, exception handling transfers control up the call stack).
+
+{/* source:cpp-language-exceptions:0001 */}
+Evaluating a [`throw expression`](/docs/cpp/language/exceptions/throw#throw_expressions) will throw an exception. Exceptions can also be thrown in [other contexts](/docs/cpp/language/exceptions/throw).
+
+{/* source:cpp-language-exceptions:0002 */}
+In order for an exception to be caught, the throw expression has to be inside a [`try block`](/docs/cpp/language/exceptions/try), and the try block has to contain a [`handler`](/docs/cpp/language/exceptions/catch) that matches the type of the exception object.
+
+{/* source:cpp-language-exceptions:0003 */}
+When declaring a function, the following specification(s) may be provided to limit the types of the exceptions a function may throw:
+
+{/* source:cpp-language-exceptions:0004 */}
+<Revision until="C++17">
+- [dynamic exception specifications](/docs/cpp/language/exceptions/except_spec)
+</Revision>
+
+{/* source:cpp-language-exceptions:0005 */}
+<Revision since="C++11">
+- [noexcept specifications](/docs/cpp/language/exceptions/noexcept_spec)
+</Revision>
+
+{/* source:cpp-language-exceptions:0006 */}
+Errors that arise during exception handling are handled by [`std::terminate`](/docs/cpp/library/error/terminate)<InlineRevision until="C++17"> and [`std::unexpected`](/docs/cpp/library/error/unexpected)</InlineRevision>.
+
+## Usage
+
+{/* source:cpp-language-exceptions:0007 */}
+While throw expression can be used to transfer control to an arbitrary block of code up the execution stack, for arbitrary reasons (similar to [`std::longjmp`](/docs/cpp/library/utility/program/longjmp)), its intended usage is error handling.
+
+### Error handling
+
+{/* source:cpp-language-exceptions:0008 */}
+Throwing an exception is used to signal errors from functions, where "errors" are typically limited to only the following[^1] [^2] [^3]:
+
+{/* source:cpp-language-exceptions:0009 */}
+1. Failures to meet the postconditions, such as failing to produce a valid return value object.
+2. Failures to meet the preconditions of another function that must be called.
+3. (for non-private member functions) Failures to (re)establish a class invariant.
+
+{/* source:cpp-language-exceptions:0010 */}
+In particular, this implies that the failures of constructors (see also [RAII](/docs/cpp/language/raii)) and most operators should be reported by throwing exceptions.
+
+{/* source:cpp-language-exceptions:0011 */}
+In addition, so-called wide contract functions use exceptions to indicate unacceptable inputs, for example, [`std::basic_string::at`](/docs/cpp/library/string/basic_string/at) has no preconditions, but throws an exception to indicate index out of range.
+
+### Exception safety
+
+{/* source:cpp-language-exceptions:0012 */}
+After the error condition is reported by a function, additional guarantees may be provided with regards to the state of the program. The following four levels of exception guarantee are generally recognized[^4] [^5] [^6], which are strict supersets of each other:
+
+{/* source:cpp-language-exceptions:0013 */}
+1. *Nothrow (or nofail) exception guarantee* — the function never throws exceptions. Nothrow (errors are reported by other means or concealed) is expected of [`destructors`](/docs/cpp/language/classes/destructor) and other functions that may be called during stack unwinding. <InlineRevision since="C++11">The [`destructors`](/docs/cpp/language/classes/destructor) are [`noexcept`](/docs/cpp/language/exceptions/noexcept) by default.</InlineRevision> Nofail (the function always succeeds) is expected of swaps, [`move constructors`](/docs/cpp/language/classes/move_constructor), and other functions used by those that provide strong exception guarantee.
+2. *Strong exception guarantee* — If the function throws an exception, the state of the program is rolled back to the state just before the function call (for example, [`std::vector::push_back`](/docs/cpp/library/container/vector/push_back)).
+3. *Basic exception guarantee* — If the function throws an exception, the program is in a valid state. No resources are leaked, and all objects' invariants are intact.
+4. *No exception guarantee* — If the function throws an exception, the program may not be in a valid state: resource leaks, memory corruption, or other invariant-destroying errors may have occurred.
+
+{/* source:cpp-language-exceptions:0014 */}
+Generic components may, in addition, offer exception-neutral guarantee: if an exception is thrown from a template parameter (e.g. from the Compare function object of [`std::sort`](/docs/cpp/library/algorithm/sort) or from the constructor of `T` in [`std::make_shared`](/docs/cpp/library/memory/shared_ptr/make_shared)), it is propagated, unchanged, to the caller.
+
+## Exception objects
+
+{/* source:cpp-language-exceptions:0015 */}
+While objects of any complete type and cv pointers to `void` may be thrown as exception objects, all standard library functions throw unnamed objects by value, and the types of those objects are derived (directly or indirectly) from [`std::exception`](/docs/cpp/library/error/exception). User-defined exceptions usually follow this pattern.[^7] [^8] [^9]
+
+{/* source:cpp-language-exceptions:0016 */}
+To avoid unnecessary copying of the exception object and object slicing, the best practice for handlers is to catch by reference.[^10] [^11] [^12] [^13]
+
+## Notes
+
+{/* source:cpp-language-exceptions:0017 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_constexpr_exceptions`](/docs/cpp/library/feature_test#cpp_constexpr_exceptions) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_constexpr_exceptions_202411L) | (C++26) | constexpr exceptions |
+
+## External links
+
+{/* source:cpp-language-exceptions:0018 */}
+[^1]: H. Sutter (2004) ["When and How to Use Exceptions"](https://www.drdobbs.com/when-and-how-to-use-exceptions/184401836) in Dr. Dobb's
+[^2]: H. Sutter, A. Alexandrescu (2004), "C++ Coding Standards", Item 70
+[^3]: C++ Core Guidelines [I.10: Use exceptions to signal a failure to perform a required task](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-except)
+[^4]: B. Stroustrup (2000), "The C++ Programming Language" [Appendix E](https://stroustrup.com/3rd_safe.pdf)
+[^5]: H. Sutter (2000) "Exceptional C++"
+[^6]: D. Abrahams (2001) ["Exception Safety in Generic Components"](https://www.boost.org/community/exception_safety.html)
+[^7]: D. Abrahams (2001) ["Error and Exception Handling"](https://www.boost.org/community/error_handling.html)
+[^8]: isocpp.org Super-FAQ ["What should I throw?"](https://isocpp.org/wiki/faq/exceptions#what-to-throw)
+[^9]: C++ Core Guidelines [E.14: Use purpose-designed user-defined types as exceptions (not built-in types)](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Re-exception-types)
+[^10]: C++ Core Guidelines [E.15: Throw by value, catch exceptions from a hierarchy by reference](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Re-exception-ref)
+[^11]: S. Meyers (1996) "More Effective C++" Item 13
+[^12]: isocpp.org Super-FAQ ["What should I catch?"](https://isocpp.org/wiki/faq/exceptions#what-to-catch)
+[^13]: H. Sutter, A. Alexandrescu (2004) "C++ Coding Standards" Item 73

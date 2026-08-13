@@ -1,0 +1,347 @@
+---
+title: "Default comparisons (since C++20)"
+description: "Comparison operator functions can be explicitly defaulted to request the compiler to generate the corresponding default comparison for a class."
+source_url: "https://en.cppreference.com/w/cpp/language/default_comparisons"
+language: "C++"
+---
+
+{/* source:cpp-language-default-comparisons:0000 */}
+Comparison operator functions can be explicitly defaulted to request the compiler to generate the corresponding default comparison for a class.
+
+## Definition
+
+{/* source:cpp-language-default-comparisons:0001 */}
+A *defaulted comparison operator function* is a non-template comparison operator function (i.e. `<=>`, `==`, `!=`, `<`, `>`, `<=`, or `>=`) satisfying all following conditions:
+
+{/* source:cpp-language-default-comparisons:0002 */}
+- It is a [non-static member](/docs/cpp/language/classes/member_functions) or [friend](/docs/cpp/language/classes/friend) of some class `C`.
+- It is [defined as defaulted](/docs/cpp/language/functions/function#Function_definition) in `C` or in a context where `C` is [complete](/docs/cpp/language/basic_concepts/type-id#Incomplete_type).
+- It has two parameters of type `const C&` or two parameters of type `C`, where the [implicit object parameter](/docs/cpp/language/functions/overload_resolution#Additional_rules_for_member_function_candidates) (if any) is considered to be the first parameter.
+
+{/* source:cpp-language-default-comparisons:0003 */}
+Such a comparison operator function is termed a *defaulted comparison operator function for class `C`*.
+
+{/* source:cpp-language-default-comparisons:0004 */}
+```cpp
+struct X
+{
+    bool operator==(const X&) const = default; // OK
+    bool operator==(const X&) = default;       // Error: the implicit object
+                                               //        parameter type is X&
+    bool operator==(this X, X) = default;      // OK
+};
+
+struct Y
+{
+    friend bool operator==(Y, Y) = default;        // OK
+    friend bool operator==(Y, const Y&) = default; // Error: different parameter types
+};
+
+bool operator==(const Y&, const Y&) = default;     // Error: not a friend of Y
+```
+
+{/* source:cpp-language-default-comparisons:0005 */}
+Name lookups and access checks in the implicit definition of a comparison operator function are performed from a context equivalent to its function body. A definition of a comparison operator function as defaulted that appears in a class must be the first declaration of that function.
+
+## Default comparison order
+
+{/* source:cpp-language-default-comparisons:0006 */}
+Given a class `C`, a subobject list is formed by the following subjects in order:
+
+{/* source:cpp-language-default-comparisons:0007 */}
+- The direct base class subobjects of `C`, in declaration order.
+- The non-static [data members](/docs/cpp/language/classes/data_members) of `C`, in declaration order.
+
+{/* source:cpp-language-default-comparisons:0008 */}
+If any member subobject is of array type, it is expanded to the sequence of its elements, in the order of increasing subscript. The expansion is recursive: array elements of array types will be expanded again until there is no subobject of array type.
+
+{/* source:cpp-language-default-comparisons:0009 */}
+For any object `x` of type `C`, in the following descriptions:
+
+{/* source:cpp-language-default-comparisons:0010 */}
+- Let `n` be the number of subobjects in the (expanded) subobject list for `x`.
+- Let `x_i` be the ith subobject in the (expanded) subobject list for `x`, where `x_i` is formed by a sequence of [derived-to-base conversions](/docs/cpp/language/functions/overload_resolution#Ranking_of_implicit_conversion_sequences), [class member access expressions](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators), and [array subscript expressions](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) applied to `x`.
+
+{/* source:cpp-language-default-comparisons:0011 */}
+```cpp
+struct S {};
+
+struct T : S
+{
+    int arr[2][2];
+} t;
+
+// The subobject list for “t” consists of the following 5 subobjects in order:
+// (S)t → t[0][0] → t[0][1] → t[1][0] → t[1][1]
+```
+
+## Three-way comparison
+
+{/* source:cpp-language-default-comparisons:0012 */}
+An `operator<=>` for a class type can be defined as defaulted with any return type.
+
+### Comparison category types
+
+{/* source:cpp-language-default-comparisons:0013 */}
+There are three comparison category types:
+
+{/* source:cpp-language-default-comparisons:0014 */}
+- [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering)
+- [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering)
+- [`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering)
+
+{/* source:cpp-language-default-comparisons:0015 */}
+| Type | Equivalent values are.. | Incomparable values are.. |
+| --- | --- | --- |
+| [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering) | indistinguishable | not allowed |
+| [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering) | distinguishable | not allowed |
+| [`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering) | distinguishable | allowed |
+
+### Synthesized three-way comparison
+
+{/* source:cpp-language-default-comparisons:0016 */}
+The *synthesized three-way comparison* of type `T` between glvalues `a` and `b` of the same type is defined as follows:
+
+{/* source:cpp-language-default-comparisons:0017 */}
+- If the overload resolution for `a <=> b` results in a usable candidate, and can be explicitly converted to `T` using [`static_cast`](/docs/cpp/language/expressions/static_cast), the synthesized comparison is `static_cast<T>(a <=> b)`.
+- Otherwise, if any of the following condition is satisfied, the synthesized comparison is not defined:
+
+{/* source:cpp-language-default-comparisons:0018 */}
+  - The overload resolution for `a <=> b` finds at least one viable candidate.
+  - `T` is not a comparison category type.
+  - The overload resolution for `a == b` does not result in a usable candidate.
+  - The overload resolution for `a < b` does not result in a usable candidate.
+
+{/* source:cpp-language-default-comparisons:0019 */}
+- Otherwise, if `T` is [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering), the synthesized comparison is
+
+{/* source:cpp-language-default-comparisons:0020 */}
+```cpp
+a == b ? std::strong_ordering::equal :
+a < b  ? std::strong_ordering::less :
+         std::strong_ordering::greater
+```
+
+{/* source:cpp-language-default-comparisons:0021 */}
+- Otherwise, if `T` is [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering), the synthesized comparison is
+
+{/* source:cpp-language-default-comparisons:0022 */}
+```cpp
+a == b ? std::weak_ordering::equivalent :
+a < b  ? std::weak_ordering::less :
+         std::weak_ordering::greater
+```
+
+{/* source:cpp-language-default-comparisons:0023 */}
+- Otherwise (`T` is [`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering)), the synthesized comparison is
+
+{/* source:cpp-language-default-comparisons:0024 */}
+```cpp
+a == b ? std::partial_ordering::equivalent :
+a < b  ? std::partial_ordering::less :
+b < a  ? std::partial_ordering::greater : 
+         std::partial_ordering::unordered
+```
+
+### Placeholder return type
+
+{/* source:cpp-language-default-comparisons:0025 */}
+If the declared return type of a defaulted three-way comparison operator function (`operator<=>`) for a class type `C` is `auto`, the return type is deduced from the return types of the three-way comparisons between the corresponding subobjects of an object `x` of type `C`.
+
+{/* source:cpp-language-default-comparisons:0026 */}
+For each subobject `x_i` in the [(expanded) subobject list](/docs/cpp/language/expressions/default_comparisons#Default_comparison_order) for `x`:
+
+{/* source:cpp-language-default-comparisons:0027 */}
+1. Perform overload resolution for `x_i <=> x_i`, if the overload resolution does not result in a usable candidate, the defaulted `operator<=>` is defined as deleted.
+2. Denote the cv-unqualified version of the type of `x_i <=> x_i` as `R_i`, if `R_i` is not a comparison category type, the defaulted `operator<=>` is defined as deleted.
+
+{/* source:cpp-language-default-comparisons:0028 */}
+If the defaulted `operator<=>` is not defined as deleted, its return type is deduced as `std::common_comparison_category_t<R_1, R_2, ..., R_n>`.
+
+### Non-placeholder return type
+
+{/* source:cpp-language-default-comparisons:0029 */}
+If the declared return type of the defaulted `operator<=>` is not `auto`, it cannot contain any [placeholder type](/docs/cpp/language/declarations/auto) (e.g. `decltype(auto)`).
+
+{/* source:cpp-language-default-comparisons:0030 */}
+If there is a subobject `x_i` in the (expanded) subobject list for `x` such that the [synthesized three-way comparison](/docs/cpp/language/expressions/default_comparisons#Synthesized_three-way_comparison) of the declared return type between `x_i` and `x_i` is not defined, the defaulted `operator<=>` is defined as deleted.
+
+### Comparison result
+
+{/* source:cpp-language-default-comparisons:0031 */}
+Let `x` and `y` be the parameters of a defaulted `operator<=>`, denote each subobject in the (expanded) subobject list for `x` and `y` as `x_i` and `y_i` respectively. The default three-way comparison between `x` and `y` is performed by comparing corresponding subobjects `x_i` and `y_i` with increasing `i` order.
+
+{/* source:cpp-language-default-comparisons:0032 */}
+Let `R` be the (possibly-deduced) return type, the comparison result between `x_i` and `y_i` is the result of the synthesized three-way comparison of type `R` between `x_i` and `y_i`.
+
+{/* source:cpp-language-default-comparisons:0033 */}
+- During the default three-way comparison between `x` and `y`, if a subobject-wise comparison between `x_i` and `y_i` generates a result `v_i` such that contextually converting `v_i != 0` to `bool` yields `true`, the return value is a copy of `v_i` (the remaining subobjects will not be compared).
+- Otherwise, the return value is `static_cast<R>(std::strong_ordering::equal)`.
+
+{/* source:cpp-language-default-comparisons:0034 */}
+```cpp
+#include <compare>
+#include <iostream>
+#include <set>
+
+struct Point
+{
+    int x;
+    int y;
+    auto operator<=>(const Point&) const = default;
+    /* non-comparison functions */
+};
+
+int main()
+{
+    Point pt1{1, 1}, pt2{1, 2};
+    std::set<Point> s; // OK
+    s.insert(pt1);     // OK
+
+    // two-way comparison operator functions are not required to be explicitly defined:
+    // operator== is implicitly declared (see below)
+    // the overload resolutions of other candidates will select rewritten candidates 
+    std::cout << std::boolalpha
+        << (pt1 == pt2) << ' '  // false
+        << (pt1 != pt2) << ' '  // true
+        << (pt1 <  pt2) << ' '  // true
+        << (pt1 <= pt2) << ' '  // true
+        << (pt1 >  pt2) << ' '  // false
+        << (pt1 >= pt2) << ' '; // false
+}
+```
+
+## Equality comparison
+
+### Explicit declaration
+
+{/* source:cpp-language-default-comparisons:0035 */}
+An `operator==` for a class type can be defined as defaulted with return type `bool`.
+
+{/* source:cpp-language-default-comparisons:0036 */}
+Given a class `C` and an object `x` of type `C`, if there is a subobject `x_i` in the (expanded) subobject list for `x` such that the overload resolution for `x_i == x_i` does not result in a usable candidate, the defaulted `operator==` is defined as deleted.
+
+{/* source:cpp-language-default-comparisons:0037 */}
+Let `x` and `y` be the parameters of a defaulted `operator==`, denote each subobject in the (expanded) subobject list for `x` and `y` as `x_i` and `y_i` respectively. The default equality comparison between `x` and `y` is performed by comparing corresponding subobjects `x_i` and `y_i` with increasing `i` order.
+
+{/* source:cpp-language-default-comparisons:0038 */}
+The comparison result between `x_i` and `y_i` is the result of `x_i == y_i`.
+
+{/* source:cpp-language-default-comparisons:0039 */}
+- During the default equality comparison between `x` and `y`, if a subobject-wise comparison between `x_i` and `y_i` generates a result `v_i` such that contextually converting `v_i` to `bool` yields `false`, the return value is `false` (the remaining subobjects will not be compared).
+- Otherwise, the return value is `true`.
+
+{/* source:cpp-language-default-comparisons:0040 */}
+```cpp
+#include <iostream>
+
+struct Point
+{
+    int x;
+    int y;
+    bool operator==(const Point&) const = default;
+    /* non-comparison functions */
+};
+
+int main()
+{
+    Point pt1{3, 5}, pt2{2, 5};
+    std::cout << std::boolalpha
+        << (pt1 != pt2) << '\n'  // true
+        << (pt1 == pt1) << '\n'; // true
+
+    struct [[maybe_unused]] { int x{}, y{}; } p, q;
+    // if (p == q) {} // Error: operator== is not defined
+}
+```
+
+### Implicit declaration
+
+{/* source:cpp-language-default-comparisons:0041 */}
+If a class `C` does not explicitly declare any member or friend named `operator==`, an operator function is declared implicitly for each `operator<=>` defined as defaulted. Each implicity-declared `operator==` have the same access and [function definition](/docs/cpp/language/functions/function#Function_definition) and in the same [class scope](/docs/cpp/language/basic_concepts/scope#Class_scope) as the respective defaulted `operator<=>`, with the following changes:
+
+{/* source:cpp-language-default-comparisons:0042 */}
+- The [declarator identifier](/docs/cpp/language/declarations#Declarators) is replaced with `operator==`.
+- The return type is replaced with `bool`.
+
+{/* source:cpp-language-default-comparisons:0043 */}
+```cpp
+template<typename T>
+struct X
+{
+    friend constexpr std::partial_ordering operator<=>(X, X)
+        requires (sizeof(T) != 1) = default;
+    // implicitly declares: friend constexpr bool operator==(X, X)
+    //                          requires (sizeof(T) != 1) = default;
+
+    [[nodiscard]] virtual std::strong_ordering operator<=>(const X&) const = default;
+    // implicitly declares: [[nodiscard]] virtual bool
+    //                          operator==(const X&) const = default;
+};
+```
+
+## Secondary comparison
+
+{/* source:cpp-language-default-comparisons:0044 */}
+A secondary comparison operator function (`!=`, `<`, `>`, `<=`, or `>=`) for a class type can be defined as defaulted with return type `bool`.
+
+{/* source:cpp-language-default-comparisons:0045 */}
+Let `@` be one of the five secondary comparison operators, for each defaulted `operator@` with parameters `x` and `y`, up to two overloads resolutions are performed (not considering the defaulted `operator@` as a candidate) to determine whether it is defined as deleted.
+
+{/* source:cpp-language-default-comparisons:0046 */}
+- The first overload resolution is performed for `x @ y`. If the overload resolution does not result in a usable candidate, or the selected candidate is not a [rewritten candidate](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), the defaulted `operator@` is defined as deleted. There is no second overload resolution in these cases.
+- The second overload resolution is performed for the selected rewritten candidate of `x @ y`. If the overload resolution does not result in a usable candidate, the defaulted `operator@` is defined as deleted.
+
+{/* source:cpp-language-default-comparisons:0047 */}
+If is `x @ y` cannot be implicitly converted to `bool`, the defaulted `operator@` is defined as deleted.
+
+{/* source:cpp-language-default-comparisons:0048 */}
+If the defaulted `operator@` is not defined as deleted, it yields `x @ y`.
+
+{/* source:cpp-language-default-comparisons:0049 */}
+```cpp
+struct HasNoRelational {};
+
+struct C
+{
+    friend HasNoRelational operator<=>(const C&, const C&);
+    bool operator<(const C&) const = default; // OK, function is defaulted
+};
+```
+
+## Keywords
+
+{/* source:cpp-language-default-comparisons:0050 */}
+[`default`](/docs/cpp/language/keywords/default)
+
+## Defect reports
+
+{/* source:cpp-language-default-comparisons:0051 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-default-comparisons:0052 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2539} standard="C++20">
+    <PublishedBehavior>the synthesized three-way comparison would choose `static_cast` even if the explicit conversion is not available</PublishedBehavior>
+    <CorrectedBehavior>does not choose `static_cast` in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2546} standard="C++20">
+    <PublishedBehavior>the defaulted secondary `operator@` was not defined as deleted if the overload resolution of `x @ y` selects a non-usable rewritten candidate</PublishedBehavior>
+    <CorrectedBehavior>defined as deleted in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2547} standard="C++20">
+    <PublishedBehavior>it was unclear whether comparison operator functions for non-classes can be defaulted</PublishedBehavior>
+    <CorrectedBehavior>they cannot be defaulted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2568} standard="C++20">
+    <PublishedBehavior>the implicit definition of comparison operator functions might violate member access rules</PublishedBehavior>
+    <CorrectedBehavior>access checks are performed from a context equivalent to their function bodies</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-default-comparisons:0053 */}
+- [overload resolution](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator) in a call to an overloaded operator
+- Built-in [three-way comparison operator](/docs/cpp/language/expressions/operator_comparison#Three-way_comparison)
+- [Operator overloading](/docs/cpp/language/expressions/operators#Comparison_operators) for comparison operators

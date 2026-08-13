@@ -1,0 +1,361 @@
+---
+title: "Access specifiers"
+description: "In a member-specification of a class/struct or union, define the accessibility of subsequent members."
+source_url: "https://en.cppreference.com/w/cpp/language/access"
+language: "C++"
+---
+
+{/* source:cpp-language-access:0000 */}
+In a *member-specification* of a [class/struct](/docs/cpp/language/classes/class) or [union](/docs/cpp/language/classes/union), define the accessibility of subsequent members.
+
+{/* source:cpp-language-access:0001 */}
+In a *base-specifier* of a [derived class](/docs/cpp/language/classes/derived_class) declaration, define the accessibility of inherited members of the subsequent base class.
+
+## Syntax
+
+{/* source:cpp-language-access:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="public : member-declarations" />
+  <Declaration id="2" language="cpp" grammar code="protected : member-declarations" />
+  <Declaration id="3" language="cpp" grammar code="private : member-declarations" />
+  <Declaration id="4" language="cpp" grammar code="public base-class" />
+  <Declaration id="5" language="cpp" grammar code="protected base-class" />
+  <Declaration id="6" language="cpp" grammar code="private base-class" />
+</DeclarationDoc>
+
+{/* source:cpp-language-access:0003 */}
+1) The members declared after the access specifier have public member access.
+
+{/* source:cpp-language-access:0004 */}
+2) The members declared after the access specifier have protected member access.
+
+{/* source:cpp-language-access:0005 */}
+3) The members declared after the access specifier have private member access.
+
+{/* source:cpp-language-access:0006 */}
+4) [Public inheritance](/docs/cpp/language/classes/derived_class#Public_inheritance): the public and protected members of the [base class](/docs/cpp/language/classes/derived_class) listed after the access specifier keep their member access in the derived class.
+
+{/* source:cpp-language-access:0007 */}
+5) [Protected inheritance](/docs/cpp/language/classes/derived_class#Protected_inheritance): the public and protected members of the [base class](/docs/cpp/language/classes/derived_class) listed after the access specifier are protected members of the derived class.
+
+{/* source:cpp-language-access:0008 */}
+6) [Private inheritance](/docs/cpp/language/classes/derived_class#Private_inheritance): the public and protected members of the [base class](/docs/cpp/language/classes/derived_class) listed after the access specifier are private members of the derived class.
+
+{/* source:cpp-language-access:0009 */}
+The private members of the base class are always inaccessible to the derived class regardless of public, protected, or private inheritance.
+
+## Explanation
+
+{/* source:cpp-language-access:0010 */}
+The name of every [class](/docs/cpp/language/classes/class) member (static, non-static, function, type, etc) has an associated "member access". When a name of the member is used anywhere a program, its access is checked, and if it does not satisfy the access rules, the program does not compile:
+
+{/* source:cpp-language-access:0011 */}
+```cpp
+#include <iostream>
+
+class Example
+{
+public:             // all declarations after this point are public
+    void add(int x) // member "add" has public access
+    {
+        n += x;     // OK: private Example::n can be accessed from Example::add
+    }
+private:            // all declarations after this point are private
+    int n = 0;      // member "n" has private access
+};
+
+int main()
+{
+    Example e;
+    e.add(1); // OK: public Example::add can be accessed from main
+//  e.n = 7;  // error: private Example::n cannot be accessed from main
+}
+```
+
+{/* source:cpp-language-access:0012 */}
+Access specifiers give the author of the class the ability to decide which class members are accessible to the users of the class (that is, the *interface*) and which members are for internal use of the class (the *implementation*).
+
+## In detail
+
+{/* source:cpp-language-access:0013 */}
+All members of a class (bodies of [member functions](/docs/cpp/language/classes/member_functions), initializers of member objects, and the entire [nested class definitions](/docs/cpp/language/classes/nested_classes)) have access to all names the class can access. A local class within a member function has access to all names the member function can access.
+
+{/* source:cpp-language-access:0014 */}
+A class defined with the keyword `class` has private access for its members and its base classes by default. A class defined with the keyword `struct` has public access for its members and its base classes by default. A [union](/docs/cpp/language/classes/union) has public access for its members by default.
+
+{/* source:cpp-language-access:0015 */}
+To grant access to additional functions or classes to protected or private members, a [friendship declaration](/docs/cpp/language/classes/friend) may be used.
+
+{/* source:cpp-language-access:0016 */}
+Accessibility applies to all names with no regard to their origin, so a name introduced by a [typedef](/docs/cpp/language/declarations/typedef) or [using declarations](/docs/cpp/language/classes/using_declaration) (except inheriting constructors) is checked, not the name it refers to:
+
+{/* source:cpp-language-access:0017 */}
+```cpp
+class A : X
+{
+    class B {};   // B is private in A
+public:
+    typedef B BB; // BB is public
+};
+
+void f()
+{
+    A::B y;  // error: A::B is private
+    A::BB x; // OK: A::BB is public
+}
+```
+
+{/* source:cpp-language-access:0018 */}
+Member access does not affect visibility: names of private and privately-inherited members are visible and considered by overload resolution, implicit conversions to inaccessible base classes are still considered, etc. Member access check is the last step after any given language construct is interpreted. The intent of this rule is that replacing any `private` with `public` never alters the behavior of the program.
+
+{/* source:cpp-language-access:0019 */}
+Access checking for the names used in [default function arguments](/docs/cpp/language/functions/default_arguments) as well as in the default [template parameters](/docs/cpp/language/templates/template_parameters#Default_template_arguments) is performed at the point of declaration, not at the point of use.
+
+{/* source:cpp-language-access:0020 */}
+Access rules for the names of [virtual functions](/docs/cpp/language/classes/virtual) are checked at the call point using the type of the expression used to denote the object for which the member function is called. The access of the final overrider is ignored:
+
+{/* source:cpp-language-access:0021 */}
+```cpp
+struct B
+{
+    virtual int f(); // f is public in B
+};
+
+class D : public B
+{
+private:
+    int f(); // f is private in D
+};
+
+void f()
+{
+    D d;
+    B& b = d;
+
+    b.f(); // OK: B::f is public, D::f is invoked even though it's private
+    d.f(); // error: D::f is private
+}
+```
+
+{/* source:cpp-language-access:0022 */}
+A name that is private according to unqualified [name lookup](/docs/cpp/language/basic_concepts/lookup), may be accessible through qualified name lookup:
+
+{/* source:cpp-language-access:0023 */}
+```cpp
+class A {};
+
+class B : private A {};
+
+class C : public B
+{
+    A* p;   // error: unqualified name lookup finds A as the private base of B
+    ::A* q; // OK: qualified name lookup finds the namespace-level declaration
+};
+```
+
+{/* source:cpp-language-access:0024 */}
+A name that is accessible through multiple paths in the inheritance graph has the access of the path with the most access:
+
+{/* source:cpp-language-access:0025 */}
+```cpp
+class W
+{
+public:
+    void f();
+};
+
+class A : private virtual W {};
+
+class B : public virtual W {};
+
+class C : public A, public B
+{
+    void f()
+    {
+        W::f(); // OK: W is accessible to C through B
+    }
+};
+```
+
+{/* source:cpp-language-access:0026 */}
+Any number of access specifiers may appear within a class, in any order.
+
+{/* source:cpp-language-access:0027 */}
+<Revision until="C++23">
+Member access specifiers may affect [class layout](/docs/cpp/language/classes/data_members#Layout): the addresses of non-static data members are only guaranteed to increase in order of declaration for the members <InlineRevision until="C++11">not separated by an access specifier</InlineRevision><InlineRevision since="C++11">with the same access</InlineRevision>.
+</Revision>
+
+{/* source:cpp-language-access:0028 */}
+<Revision since="C++11">
+For [standard-layout types](/docs/cpp/library/named_req/StandardLayoutType), all non-static data members must have the same access.
+</Revision>
+
+{/* source:cpp-language-access:0029 */}
+When a member is redeclared within the same class, it must do so under the same member access:
+
+{/* source:cpp-language-access:0030 */}
+```cpp
+struct S
+{
+    class A;    // S::A is public
+private:
+    class A {}; // error: cannot change access
+};
+```
+
+## Public member access
+
+{/* source:cpp-language-access:0031 */}
+Public members form a part of the public interface of a class (other parts of the public interface are the non-member functions found by [ADL](/docs/cpp/language/functions/adl)).
+
+{/* source:cpp-language-access:0032 */}
+A public member of a class is accessible anywhere:
+
+{/* source:cpp-language-access:0033 */}
+```cpp
+class S
+{
+public:
+    // n, E, A, B, C, U, f are public members
+    int n;
+    enum E {A, B, C};
+    struct U {};
+    static void f() {}
+};
+
+int main()
+{
+    S::f();     // S::f is accessible in main
+
+    S s;
+    s.n = S::B; // S::n and S::B are accessible in main
+
+    S::U x;     // S::U is accessible in main
+}
+```
+
+## Protected member access
+
+{/* source:cpp-language-access:0034 */}
+Protected members form the interface of a class to its derived classes (which is distinct from the public interface of the class).
+
+{/* source:cpp-language-access:0035 */}
+A protected member of a class is only accessible
+
+{/* source:cpp-language-access:0036 */}
+1) to the members and friends of that class;
+
+{/* source:cpp-language-access:0037 */}
+2) to the members and friends of any derived class of that class, but only when the class of the object through which the protected member is accessed is that derived class or a derived class of that derived class:
+
+{/* source:cpp-language-access:0038 */}
+```cpp
+struct Base
+{
+protected:
+    int i;
+private:
+    void g(Base& b, struct Derived& d);
+};
+
+struct Derived : Base
+{
+    friend void h(Base& b, Derived& d);
+    void f(Base& b, Derived& d) // member function of a derived class
+    {
+        ++d.i;                  // OK: the type of d is Derived
+        ++i;                    // OK: the type of the implied '*this' is Derived
+//      ++b.i;                  // error: can't access a protected member through
+                                // Base (otherwise it would be possible to change
+                                // other derived classes, like a hypothetical
+                                // Derived2, base implementation)
+    }
+};
+
+void Base::g(Base& b, Derived& d) // member function of Base
+{
+    ++i;                          // OK
+    ++b.i;                        // OK
+    ++d.i;                        // OK
+}
+
+void h(Base& b, Derived& d) // Friend of Derived
+{
+    ++d.i;                  // OK: friend of Derived can access a protected 
+                            // member through an object of Derived
+//  ++b.i;                  // error: friend of Derived is not a friend of Base
+}
+
+void x(Base& b, Derived& d) // non-member non-friend
+{
+//  ++b.i;                  // error: no access from non-member
+//  ++d.i;                  // error: no access from non-member
+}
+```
+
+{/* source:cpp-language-access:0039 */}
+When a pointer to a protected member is formed, it must use a derived class in its declaration:
+
+{/* source:cpp-language-access:0040 */}
+```cpp
+struct Base
+{
+protected:
+    int i;
+};
+
+struct Derived : Base
+{
+    void f()
+    {
+//      int Base::* ptr = &Base::i;    // error: must name using Derived
+        int Base::* ptr = &Derived::i; // OK
+    }
+};
+```
+
+## Private member access
+
+{/* source:cpp-language-access:0041 */}
+Private members form the implementation of a class, as well as the private interface for the other members of the class.
+
+{/* source:cpp-language-access:0042 */}
+A private member of a class is only accessible to the members and friends of that class, regardless of whether the members are on the same or different instances:
+
+{/* source:cpp-language-access:0043 */}
+```cpp
+class S
+{
+private:
+    int n; // S::n is private
+public:
+    S() : n(10) {}                    // this->n is accessible in S::S
+    S(const S& other) : n(other.n) {} // other.n is accessible in S::S
+};
+```
+
+{/* source:cpp-language-access:0044 */}
+The [explicit cast](/docs/cpp/language/expressions/explicit_cast) (C-style and function-style) allows casting from a derived lvalue to reference to its private base, or from a pointer to derived to a pointer to its private base.
+
+## Inheritance
+
+{/* source:cpp-language-access:0045 */}
+See [derived classes](/docs/cpp/language/classes/derived_class) for the meaning of public, protected, and private inheritance.
+
+## Keywords
+
+{/* source:cpp-language-access:0046 */}
+[`public`](/docs/cpp/language/keywords/public), [`protected`](/docs/cpp/language/keywords/protected), [`private`](/docs/cpp/language/keywords/private)
+
+## Defect reports
+
+{/* source:cpp-language-access:0047 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-access:0048 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1873} standard="C++98">
+    <PublishedBehavior>protected members were accessible to friends of derived classes</PublishedBehavior>
+    <CorrectedBehavior>made inaccessible</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

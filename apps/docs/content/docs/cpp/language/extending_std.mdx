@@ -1,0 +1,233 @@
+---
+title: "Extending the namespace std"
+description: "It is undefined behavior to add declarations or definitions to namespace std or to any namespace nested within std, with a few exceptions noted below."
+source_url: "https://en.cppreference.com/w/cpp/language/extending_std"
+language: "C++"
+---
+
+## Adding declarations to std
+
+{/* source:cpp-language-extending-std:0000 */}
+It is undefined behavior to add declarations or definitions to namespace `std` or to any namespace nested within `std`, with a few exceptions noted below.
+
+{/* source:cpp-language-extending-std:0001 */}
+```cpp
+#include <utility>
+
+namespace std
+{
+    // a function definition added to namespace std: undefined behavior
+    pair<int, int> operator+(pair<int, int> a, pair<int, int> b)
+    {
+        return {a.first + b.first, a.second + b.second};
+    }
+}
+```
+
+## Adding template specializations
+
+### Class templates
+
+{/* source:cpp-language-extending-std:0002 */}
+It is allowed to add template specializations for any standard library class template to the namespace `std` only if the declaration depends on at least one [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type) and the specialization satisfies all requirements for the original template, except where such specializations are prohibited.
+
+{/* source:cpp-language-extending-std:0003 */}
+```cpp
+// Get the declaration of the primary std::hash template.
+// We are not permitted to declare it ourselves.
+// <typeindex> is guaranteed to provide such a declaration, 
+// and is much cheaper to include than <functional>.
+
+#include <typeindex> 
+
+// Specialize std::hash so that MyType can be used as a key in 
+// std::unordered_set and std::unordered_map.  Opening namespace
+// std can accidentally introduce undefined behavior, and is not
+// necessary for specializing class templates.
+template<>
+struct std::hash<MyType>
+{
+    std::size_t operator()(const MyType& t) const { return t.hash(); }
+};
+```
+
+{/* source:cpp-language-extending-std:0004 */}
+- Specializing the template [`std::complex`](/docs/cpp/library/numeric/complex) for any type other than `float`, `double`, and `long double` is unspecified.
+
+{/* source:cpp-language-extending-std:0005 */}
+- Specializations of [`std::numeric_limits`](/docs/cpp/library/utility/types/numeric_limits) must define all members declared <InlineRevision until="C++11">`static const`</InlineRevision><InlineRevision since="C++11">`static constexpr`</InlineRevision> in the primary template, in such a way that they are usable as [integral constant expressions](/docs/cpp/language/expressions/constant_expression).
+
+{/* source:cpp-language-extending-std:0006 */}
+<Revision since="C++11">
+- None of the templates defined in [`<type_traits>`](/docs/cpp/library/headers/type_traits) may be specialized for a [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type), except for [`std::common_type`](/docs/cpp/library/meta/common_type)<InlineRevision since="C++20"> and [`std::basic_common_reference`](/docs/cpp/library/meta/common_reference#Helper_types)</InlineRevision>. This includes the [type traits](/docs/cpp/library/utility/types) and the class template [`std::integral_constant`](/docs/cpp/library/meta/integral_constant).
+- Specializations of [`std::hash`](/docs/cpp/library/utility/hash) for program-defined types must satisfy [Hash](/docs/cpp/library/named_req/Hash) requirements.
+- Specializations of [`std::atomic`](/docs/cpp/library/atomic/atomic) must have a deleted copy constructor, a deleted copy assignment operator, and a constexpr value constructor.
+- Specializations of [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) and [`std::weak_ptr`](/docs/cpp/library/memory/weak_ptr) must be [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible) and [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable). In addition, specializations of [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) must be [LessThanComparable](/docs/cpp/library/named_req/LessThanComparable), and convertible to `bool`.
+- Specializations of [`std::istreambuf_iterator`](/docs/cpp/library/iterator/istreambuf_iterator) must have a trivial copy constructor, a constexpr default constructor, and a trivial destructor.
+</Revision>
+
+{/* source:cpp-language-extending-std:0007 */}
+<Revision until="C++17">
+- [`std::unary_function`](/docs/cpp/library/utility/functional/unary_function) and [`std::binary_function`](/docs/cpp/library/utility/functional/binary_function) may not be specialized.
+</Revision>
+
+{/* source:cpp-language-extending-std:0008 */}
+It is undefined behavior to declare a full or partial specialization of any member class template of a standard library class or class template.
+
+{/* source:cpp-language-extending-std:0009 */}
+This section is incomplete
+
+Reason: mini-example
+
+### Function templates and member functions of templates
+
+{/* source:cpp-language-extending-std:0010 */}
+<Revision until="C++20">
+It is allowed to add template specializations for any standard library function template to the namespace `std` only if the declaration depends on at least one [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type) and the specialization satisfies all requirements for the original template, except where such specializations are prohibited.
+</Revision>
+
+<Revision since="C++20">
+It is undefined behavior to declare a full specialization of any standard library function template.
+</Revision>
+
+{/* source:cpp-language-extending-std:0011 */}
+This section is incomplete
+
+Reason: mini-example
+
+{/* source:cpp-language-extending-std:0012 */}
+It is undefined behavior to declare a full specialization of any member function of a standard library class template:
+
+{/* source:cpp-language-extending-std:0013 */}
+This section is incomplete
+
+Reason: mini-example
+
+{/* source:cpp-language-extending-std:0014 */}
+It is undefined behavior to declare a full specialization of any member function template of a standard library class or class template:
+
+{/* source:cpp-language-extending-std:0015 */}
+This section is incomplete
+
+Reason: mini-example
+
+### Variable templates
+
+{/* source:cpp-language-extending-std:0016 */}
+<Revision since="C++14">
+It is undefined behavior to declare a full or partial specialization of any standard library variable template, except where explicitly allowed.
+
+This section is incomplete
+
+Reason: mini-example
+</Revision>
+
+<Revision since="C++20">
+Specializations of [`std::disable_sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for), [`std::ranges::disable_sized_range`](/docs/cpp/library/ranges/sized_range), [`std::ranges::enable_view`](/docs/cpp/library/ranges/view) and [`std::ranges::enable_borrowed_range`](/docs/cpp/library/ranges/borrowed_range) shall be usable in constant expressions and have type `const bool`. And `std::disable_sized_sentinel_for` may be specialized for cv-unqualified non-array object types S and I at least one of which is a [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type). `std::ranges::disable_sized_range`, `std::ranges::enable_view` and `std::ranges::enable_borrowed_range` may be specialized for cv-unqualified program-defined types. Every [mathematical constant variable template](/docs/cpp/library/numeric/constants) may be partially or explicitly specialized, provided that the specialization depends on a program-defined type.
+</Revision>
+
+## Explicit instantiation of templates
+
+{/* source:cpp-language-extending-std:0017 */}
+It is allowed to explicitly instantiate a <InlineRevision since="C++20">class</InlineRevision> template defined in the standard library only if the declaration depends on the name of at least one [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type) and the instantiation meets the standard library requirements for the original template.
+
+{/* source:cpp-language-extending-std:0018 */}
+This section is incomplete
+
+Reason: mini-example
+
+## Other restrictions
+
+{/* source:cpp-language-extending-std:0019 */}
+The namespace `std` may not be declared as an [inline namespace](/docs/cpp/language/declarations/namespace#Inline_namespaces).
+
+{/* source:cpp-language-extending-std:0020 */}
+<Revision since="C++20">
+### Addressing restriction
+
+The behavior of a C++ program is unspecified (possibly ill-formed) if it explicitly or implicitly attempts to form a pointer, reference (for free functions and static member functions) or pointer-to-member (for non-static member functions) to a standard library function or an instantiation of a standard library function template, unless it is designated an *addressable function* (see below).
+
+Following code was well-defined in C++17, but leads to unspecified behaviors and possibly fails to compile since C++20:
+
+```cpp
+#include <cmath>
+#include <memory>
+
+int main()
+{
+    // by unary operator&
+    auto fptr0 = &static_cast<float(&)(float, float)>(std::betaf);
+
+    // by std::addressof
+    auto fptr1 = std::addressof(static_cast<float(&)(float, float)>(std::betaf));
+
+    // by function-to-pointer implicit conversion
+    auto fptr2 = static_cast<float(&)(float)>(std::riemann_zetaf);
+
+    // forming a reference
+    auto& fref = static_cast<float(&)(float)>(std::riemann_zetaf);
+}
+```
+
+### Designated addressable functions
+
+- [I/O manipulators](/docs/cpp/library/io/manip):
+  - `fmtflags` manipulators:
+    - [`std::boolalpha`](/docs/cpp/library/io/manip/boolalpha)
+    - [`std::noboolalpha`](/docs/cpp/library/io/manip/boolalpha)
+    - [`std::showbase`](/docs/cpp/library/io/manip/showbase)
+    - [`std::noshowbase`](/docs/cpp/library/io/manip/showbase)
+    - [`std::showpoint`](/docs/cpp/library/io/manip/showpoint)
+    - [`std::noshowpoint`](/docs/cpp/library/io/manip/showpoint)
+    - [`std::showpos`](/docs/cpp/library/io/manip/showpos)
+    - [`std::noshowpos`](/docs/cpp/library/io/manip/showpos)
+    - [`std::skipws`](/docs/cpp/library/io/manip/skipws)
+    - [`std::noskipws`](/docs/cpp/library/io/manip/skipws)
+    - [`std::uppercase`](/docs/cpp/library/io/manip/uppercase)
+    - [`std::nouppercase`](/docs/cpp/library/io/manip/uppercase)
+    - [`std::unitbuf`](/docs/cpp/library/io/manip/unitbuf)
+    - [`std::nounitbuf`](/docs/cpp/library/io/manip/unitbuf)
+  - `adjustfield` manipulators:
+    - [`std::internal`](/docs/cpp/library/io/manip/left)
+    - [`std::left`](/docs/cpp/library/io/manip/left)
+    - [`std::right`](/docs/cpp/library/io/manip/left)
+  - `basefield` manipulators:
+    - [`std::dec`](/docs/cpp/library/io/manip/hex)
+    - [`std::hex`](/docs/cpp/library/io/manip/hex)
+    - [`std::oct`](/docs/cpp/library/io/manip/hex)
+  - `floatfield` manipulators:
+    - [`std::fixed`](/docs/cpp/library/io/manip/fixed)
+    - [`std::scientific`](/docs/cpp/library/io/manip/fixed)
+    - [`std::hexfloat`](/docs/cpp/library/io/manip/fixed)
+    - [`std::defaultfloat`](/docs/cpp/library/io/manip/fixed)
+  - `basic_istream` manipulators:
+    - [`std::ws`](/docs/cpp/library/io/manip/ws)
+  - `basic_ostream` manipulators:
+    - [`std::endl`](/docs/cpp/library/io/manip/endl)
+    - [`std::ends`](/docs/cpp/library/io/manip/ends)
+    - [`std::flush`](/docs/cpp/library/io/manip/flush)
+    - [`std::emit_on_flush`](/docs/cpp/library/io/manip/emit_on_flush)
+    - [`std::noemit_on_flush`](/docs/cpp/library/io/manip/emit_on_flush)
+    - [`std::flush_emit`](/docs/cpp/library/io/manip/flush_emit)
+</Revision>
+
+## Defect reports
+
+{/* source:cpp-language-extending-std:0021 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-extending-std:0022 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={120} standard="C++98">
+    <PublishedBehavior>users could explicitly instantiate standard library templates for non-user defined types</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={232} standard="C++98">
+    <PublishedBehavior>users could explicitly specialize standard library templates if the declaration depends on a user-defined name of external linkage (which can refer to a non-user-defined type)</PublishedBehavior>
+    <CorrectedBehavior>only allowed for user-defined types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={422} standard="C++98">
+    <PublishedBehavior>users could specialize individual members or member templates without specializing the whole standard library class or class template</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

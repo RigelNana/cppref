@@ -1,0 +1,530 @@
+---
+title: "Friend declaration"
+description: "The friend declaration appears in a class body and grants a function or another class access to private and protected members of the class where the friend declaration appears."
+source_url: "https://en.cppreference.com/w/cpp/language/friend"
+language: "C++"
+---
+
+{/* source:cpp-language-friend:0000 */}
+The friend declaration appears in a [class body](/docs/cpp/language/classes/class) and grants a function or another class access to private and protected members of the class where the friend declaration appears.
+
+## Syntax
+
+{/* source:cpp-language-friend:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="friend function-declaration" />
+  <Declaration id="2" language="cpp" grammar code="friend function-definition" />
+  <Declaration id="3" language="cpp" grammar until="C++26" code="friend elaborated-type-specifier ;" />
+  <Declaration id="4" language="cpp" grammar since="C++11" until="C++26" code="friend simple-type-specifier ;" />
+  <Declaration id="4" language="cpp" grammar since="C++11" until="C++26" code="friend typename-specifier ;" />
+  <Declaration id="5" language="cpp" grammar since="C++26" code="friend friend-type-specifier-list ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-friend:0002 */}
+1,2) A function friend declaration.
+
+{/* source:cpp-language-friend:0003 */}
+3-5) A class friend declaration.
+
+{/* source:cpp-language-friend:0004 */}
+<ParameterList>
+  <Parameter name="function-declaration">
+    a [function declaration](/docs/cpp/language/functions/function)
+  </Parameter>
+  <Parameter name="function-definition">
+    a [function definition](/docs/cpp/language/functions/function#Function_definition)
+  </Parameter>
+  <Parameter name="elaborated-type-specifier">
+    an [elaborated type specifier](/docs/cpp/language/declarations/elaborated_type_specifier)
+  </Parameter>
+  <Parameter name="simple-type-specifier">
+    a [simple type specifier](/docs/cpp/language/declarations#Specifiers)
+  </Parameter>
+  <Parameter name="typename-specifier">
+    the keyword `typename` followed by a qualified identifier or qualified [simple template identifier](/docs/cpp/language/templates#Template_identifiers)
+  </Parameter>
+  <Parameter name="friend-type-specifier-list">
+    a non-empty comma-separated list of *simple-type-specifier*, *elaborated-type-specifier*, and *typename-specifier*s, each specifier can be followed by an ellipsis (`...`)
+  </Parameter>
+</ParameterList>
+
+## Description
+
+{/* source:cpp-language-friend:0005 */}
+1) Designates a function or several functions as friends of this class:
+
+```cpp
+class Y
+{
+    int data; // private member
+ 
+    // the non-member function operator<< will have access to Y's private members
+    friend std::ostream& operator<<(std::ostream& out, const Y& o);
+    friend char* X::foo(int); // members of other classes can be friends too
+    friend X::X(char), X::~X(); // constructors and destructors can be friends
+};
+ 
+// friend declaration does not declare a member function
+// this operator<< still needs to be defined, as a non-member
+std::ostream& operator<<(std::ostream& out, const Y& y)
+{
+    return out << y.data; // can access private member Y::data
+}
+```
+
+{/* source:cpp-language-friend:0006 */}
+2) (only allowed in non-[local](/docs/cpp/language/classes/class#Local_classes) class definitions) Defines a non-member function, and makes it a friend of this class at the same time. Such non-member function is always [inline](/docs/cpp/language/declarations/inline)<InlineRevision since="C++20">, unless it is attached to a [named module](/docs/cpp/language/basic_concepts/modules)</InlineRevision>.
+
+```cpp
+class X
+{
+    int a;
+ 
+    friend void friend_set(X& p, int i)
+    {
+        p.a = i; // this is a non-member function
+    }
+public:
+    void member_set(int i)
+    {
+        a = i; // this is a member function
+    }
+};
+```
+
+{/* source:cpp-language-friend:0007 */}
+3,4) Designates a class as a friend of this class. This means that the friend's member declarations and definitions can access private and protected members of this class and also that the friend can inherit from private and protected members of this class.
+
+{/* source:cpp-language-friend:0008 */}
+3) The class is named by *elaborated-type-specifier*. The name of the class that is used in this friend declaration does not need to be previously declared.
+
+{/* source:cpp-language-friend:0009 */}
+4) The class is named by *simple-type-specifier* or *typename-specifier*. If the named type is not a class type, this friend declaration is ignored. This declaration will not forward declare a new type.
+
+{/* source:cpp-language-friend:0010 */}
+5) Designates all classes in *friend-type-specifier-list* as a friend of this class. This means that the friends' member declarations and definitions can access private and protected members of this class and also that the friends can inherit from private and protected members of this class. If a named type is not a class type, it is ignored in this friend declaration.
+
+{/* source:cpp-language-friend:0011 */}
+Each specifier in *friend-type-specifier-list* names a class if the specifier is not followed by an ellipsis, otherwise [pack expansion](/docs/cpp/language/templates/parameter_pack#Friend_declarations) applies.
+
+```cpp
+class Y {};
+ 
+class A
+{
+    int data; // private data member
+ 
+    class B {}; // private nested type
+ 
+    enum { a = 100 }; // private enumerator
+ 
+    friend class X; // friend class forward declaration (elaborated class specifier)
+    friend Y; // friend class declaration (simple type specifier) (since C++11)
+ 
+    // the two friend declarations above can be merged since C++26:
+    // friend class X, Y;
+};
+ 
+class X : A::B // OK: A::B accessible to friend
+{
+    A::B mx; // OK: A::B accessible to member of friend
+ 
+    class Y
+    {
+        A::B my; // OK: A::B accessible to nested member of friend
+    };
+ 
+    int v[A::a]; // OK: A::a accessible to member of friend
+};
+```
+
+## Template friends
+
+{/* source:cpp-language-friend:0012 */}
+Both [function template](/docs/cpp/language/templates/function_template) and [class template](/docs/cpp/language/templates/class_template) declarations may appear with the friend specifier in any non-local class or class template (although only function templates may be defined within the class or class template that is granting friendship). In this case, every specialization of the template becomes a friend, whether it is implicitly instantiated, partially specialized, or explicitly specialized.
+
+{/* source:cpp-language-friend:0013 */}
+```cpp
+class A
+{
+    template<typename T>
+    friend class B; // every B<T> is a friend of A
+ 
+    template<typename T>
+    friend void f(T) {} // every f<T> is a friend of A
+};
+```
+
+{/* source:cpp-language-friend:0014 */}
+Friend declarations cannot refer to partial specializations, but can refer to full specializations:
+
+{/* source:cpp-language-friend:0015 */}
+```cpp
+template<class T>
+class A {};      // primary
+ 
+template<class T>
+class A<T*> {};  // partial
+ 
+template<>
+class A<int> {}; // full
+ 
+class X
+{
+    template<class T>
+    friend class A<T*>;  // Error
+ 
+    friend class A<int>; // OK
+};
+```
+
+{/* source:cpp-language-friend:0016 */}
+When a friend declaration refers to a full specialization of a function template, the keyword `inline`<InlineRevision since="C++11">, `constexpr`</InlineRevision><InlineRevision since="C++20">, `consteval`</InlineRevision> and default arguments cannot be used:
+
+{/* source:cpp-language-friend:0017 */}
+```cpp
+template<class T>
+void f(int);
+ 
+template<>
+void f<int>(int);
+ 
+class X
+{
+    friend void f<int>(int x = 1); // error: default args not allowed
+};
+```
+
+{/* source:cpp-language-friend:0018 */}
+A template friend declaration can name a member of a class template A, which can be either a member function or a member type (the type must use [elaborated-type-specifier](/docs/cpp/language/declarations/elaborated_type_specifier)). Such declaration is only well-formed if the last component in its nested-name-specifier (the name to the left of the last `::`) is a simple-template-id (template name followed by argument list in angle brackets) that names the class template. The template parameters of such template friend declaration must be deducible from the simple-template-id.
+
+{/* source:cpp-language-friend:0019 */}
+In this case, the member of any specialization of either A or partial specializations of A becomes a friend. This does not involve instantiating the primary template A or partial specializations of A: the only requirements are that the deduction of the template parameters of A from that specialization succeeds, and that substitution of the deduced template arguments into the friend declaration produces a declaration that would be a valid redeclaration of the member of the specialization:
+
+{/* source:cpp-language-friend:0020 */}
+```cpp
+// primary template
+template<class T>
+struct A
+{ 
+    struct B {};
+ 
+    void f();
+ 
+    struct D { void g(); };
+ 
+    T h();
+ 
+    template<T U>
+    T i();
+};
+ 
+// full specialization
+template<>
+struct A<int>
+{
+    struct B {};
+ 
+    int f();
+ 
+    struct D { void g(); };
+ 
+    template<int U>
+    int i();
+};
+ 
+// another full specialization
+template<>
+struct A<float*>
+{
+    int *h();
+};
+ 
+// the non-template class granting friendship to members of class template A
+class X
+{
+    template<class T>
+    friend struct A<T>::B; // all A<T>::B are friends, including A<int>::B
+ 
+    template<class T>
+    friend void A<T>::f(); // A<int>::f() is not a friend because its signature
+                           // does not match, but e.g. A<char>::f() is a friend
+ 
+//  template<class T>
+//  friend void A<T>::D::g(); // ill-formed, the last part of the nested-name-specifier,
+//                            // D in A<T>::D::, is not simple-template-id
+ 
+    template<class T>
+    friend int* A<T*>::h(); // all A<T*>::h are friends:
+                            // A<float*>::h(), A<int*>::h(), etc
+ 
+    template<class T> 
+    template<T U>       // all instantiations of A<T>::i() and A<int>::i() are friends, 
+    friend T A<T>::i(); // and thereby all specializations of those function templates
+};
+```
+
+{/* source:cpp-language-friend:0021 */}
+<Revision since="C++11">
+[Default template arguments](/docs/cpp/language/templates/template_parameters#Default_template_arguments) are only allowed on template friend declarations if the declaration is a definition and no other declarations of this function template appear in this translation unit.
+</Revision>
+
+## Template friend operators
+
+{/* source:cpp-language-friend:0022 */}
+A common use case for template friends is declaration of a non-member operator overload that acts on a class template, e.g. `operator<<(std::ostream&, const Foo<T>&)` for some user-defined `Foo<T>`.
+
+{/* source:cpp-language-friend:0023 */}
+Such operator can be defined in the class body, which has the effect of generating a separate non-template `operator<<` for each `T` and makes that non-template `operator<<` a friend of its `Foo<T>`:
+
+{/* source:cpp-language-friend:0024 */}
+```cpp
+#include <iostream>
+ 
+template<typename T>
+class Foo
+{
+public:
+    Foo(const T& val) : data(val) {}
+private:
+    T data;
+ 
+    // generates a non-template operator<< for this T
+    friend std::ostream& operator<<(std::ostream& os, const Foo& obj)
+    {
+        return os << obj.data;
+    }
+};
+ 
+int main()
+{
+    Foo<double> obj(1.23);
+    std::cout << obj << '\n';
+}
+```
+
+Output:
+
+```text
+1.23
+```
+
+{/* source:cpp-language-friend:0025 */}
+or the function template has to be declared as a template before the class body, in which case the friend declaration within `Foo<T>` can refer to the full specialization of `operator<<` for its `T`:
+
+{/* source:cpp-language-friend:0026 */}
+```cpp
+#include <iostream>
+ 
+template<typename T>
+class Foo; // forward declare to make function declaration possible
+ 
+template<typename T> // declaration
+std::ostream& operator<<(std::ostream&, const Foo<T>&);
+ 
+template<typename T>
+class Foo
+{
+public:
+    Foo(const T& val) : data(val) {}
+private:
+    T data;
+ 
+    // refers to a full specialization for this particular T 
+    friend std::ostream& operator<< <> (std::ostream&, const Foo&);
+ 
+    // note: this relies on template argument deduction in declarations
+    // can also specify the template argument with operator<< <T>"
+};
+ 
+// definition
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Foo<T>& obj)
+{
+    return os << obj.data;
+}
+ 
+int main()
+{
+    Foo<double> obj(1.23);
+    std::cout << obj << '\n';
+}
+```
+
+## Linkage
+
+{/* source:cpp-language-friend:0027 */}
+[Storage class specifiers](/docs/cpp/language/declarations/storage_duration) are not allowed in friend declarations.
+
+{/* source:cpp-language-friend:0028 */}
+<Revision since="C++20">
+If a function or function template is first declared and defined in a friend declaration, and the enclosing class is defined within an [exporting declarations](/docs/cpp/language/basic_concepts/modules#Exporting_declarations_and_definitions), its name has the same linkage as the name of the enclosing class.
+</Revision>
+
+{/* source:cpp-language-friend:0029 */}
+<InlineRevision until="C++20">If</InlineRevision><InlineRevision since="C++20">Otherwise, if</InlineRevision> a function or function template is declared in a friend declaration, and a [corresponding non-friend declaration](/docs/cpp/language/declarations/conflicting_declarations#Corresponding_declarations) is reachable, the name has the linkage determined from that prior declaration.
+
+{/* source:cpp-language-friend:0030 */}
+Otherwise, the linkage of the name introduced by a friend declaration is determined as usual.
+
+## Notes
+
+{/* source:cpp-language-friend:0031 */}
+Friendship is not transitive (a friend of your friend is not your friend).
+
+{/* source:cpp-language-friend:0032 */}
+Friendship is not inherited (your friend's children are not your friends, and your friends are not your children's friends).
+
+{/* source:cpp-language-friend:0033 */}
+[Access specifiers](/docs/cpp/language/classes/access) have no effect on the meaning of friend declarations (they can appear in `private:` or in `public:` sections, with no difference).
+
+{/* source:cpp-language-friend:0034 */}
+A friend class declaration cannot define a new class (`friend class X {};` is an error).
+
+{/* source:cpp-language-friend:0035 */}
+When a local class declares an unqualified function or class as a friend, only functions and classes in the innermost non-class scope are [looked up](/docs/cpp/language/basic_concepts/lookup), not the global functions:
+
+{/* source:cpp-language-friend:0036 */}
+```cpp
+class F {};
+ 
+int f();
+ 
+int main()
+{
+    extern int g();
+ 
+    class Local // Local class in the main() function
+    {
+        friend int f(); // Error, no such function declared in main()
+        friend int g(); // OK, there is a declaration for g in main()
+        friend class F; // friends a local F (defined later)
+        friend class ::F; // friends the global F
+    };
+ 
+    class F {}; // local F
+}
+```
+
+{/* source:cpp-language-friend:0037 */}
+A name first declared in a friend declaration within a class or class template X becomes a member of the innermost enclosing namespace of X, but is not visible for lookup (except argument-dependent lookup that considers X) unless a matching declaration at namespace scope is provided - see [namespaces](/docs/cpp/language/declarations/namespace#Namespaces) for details.
+
+{/* source:cpp-language-friend:0038 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_variadic_friend`](/docs/cpp/library/feature_test#cpp_variadic_friend) | [`202403L`](/docs/cpp/library/compiler_support/26#cpp_variadic_friend_202403L) | (C++26) | Variadic friend declarations |
+
+## Keywords
+
+{/* source:cpp-language-friend:0039 */}
+[`friend`](/docs/cpp/language/keywords/friend)
+
+## Example
+
+{/* source:cpp-language-friend:0040 */}
+Stream insertion and extraction operators are often declared as non-member friends:
+
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+class MyClass
+{
+    int i;                   // friends have access to non-public, non-static
+    static inline int id{6}; // and static (possibly inline) members
+ 
+    friend std::ostream& operator<<(std::ostream& out, const MyClass&);
+    friend std::istream& operator>>(std::istream& in, MyClass&);
+    friend void change_id(int);
+public:
+    MyClass(int i = 0) : i(i) {}
+};
+ 
+std::ostream& operator<<(std::ostream& out, const MyClass& mc)
+{
+    return out << "MyClass::id = " << MyClass::id << "; i = " << mc.i;
+}
+ 
+std::istream& operator>>(std::istream& in, MyClass& mc)
+{
+    return in >> mc.i;
+}
+ 
+void change_id(int id) { MyClass::id = id; }
+ 
+int main()
+{
+    MyClass mc(7);
+    std::cout << mc << '\n';
+//  mc.i = 333*2;  // error: i is a private member
+    std::istringstream("100") >> mc;
+    std::cout << mc << '\n';
+//  MyClass::id = 222*3;  // error: id is a private member
+    change_id(9);
+    std::cout << mc << '\n';
+}
+```
+
+Output:
+
+```text
+MyClass::id = 6; i = 7
+MyClass::id = 6; i = 100
+MyClass::id = 9; i = 100
+```
+
+## Defect reports
+
+{/* source:cpp-language-friend:0041 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-friend:0042 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={45} standard="C++98"><PublishedBehavior>members of a class nested in a friend class of `T` have no special access to `T`</PublishedBehavior><CorrectedBehavior>a nested class has the same access as the enclosing class</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={500} standard="C++98"><PublishedBehavior>friend class of `T` cannot inherit from private or protected members of `T`, but its nested class can</PublishedBehavior><CorrectedBehavior>both can inherit from such members</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1439} standard="C++98"><PublishedBehavior>the rule targeting friend declarations in non-local classes did not cover template declarations</PublishedBehavior><CorrectedBehavior>covered</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1477} standard="C++98"><PublishedBehavior>a name first declared in a friend declaration within a class or class template was not visible for lookup if the matching declaration is provided in another namespace scope</PublishedBehavior><CorrectedBehavior>it is visible for lookup in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1804} standard="C++98"><PublishedBehavior>when a member of a class template is friended, the corresponding member of specializations of partial specializations of the class template was not a friend of the class granting friendship</PublishedBehavior><CorrectedBehavior>such members are also friends</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2379} standard="C++11"><PublishedBehavior>friend declarations referring to full specializations of function templates could be declared constexpr</PublishedBehavior><CorrectedBehavior>prohibited</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2588} standard="C++98"><PublishedBehavior>the linkages of names introduced by friend declarations were unclear</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-friend:0043 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 11.8.4 Friends [class.friend]
+  - 13.7.5 Friends [temp.friend]
+
+{/* source:cpp-language-friend:0044 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 11.9.3 Friends [class.friend]
+  - 13.7.4 Friends [temp.friend]
+
+{/* source:cpp-language-friend:0045 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 14.3 Friends [class.friend]
+  - 17.5.4 Friends [temp.friend]
+
+{/* source:cpp-language-friend:0046 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 11.3 Friends [class.friend]
+  - 14.5.4 Friends [temp.friend]
+
+{/* source:cpp-language-friend:0047 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 11.3 Friends [class.friend]
+  - 14.5.4 Friends [temp.friend]
+
+{/* source:cpp-language-friend:0048 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 11.3 Friends [class.friend]
+  - 14.5.3 Friends [temp.friend]
+
+## See also
+
+{/* source:cpp-language-friend:0049 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[Class types](/docs/cpp/language/classes/class)</DescriptionTerm><DescriptionBody>defines types holding several data members</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[Access specifiers](/docs/cpp/language/classes/access)</DescriptionTerm><DescriptionBody>defines visibility of class members</DescriptionBody></DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,368 @@
+---
+title: "Reference declaration"
+description: "Declares a named variable as a reference, that is, an alias to an already-existing object or function."
+source_url: "https://en.cppreference.com/w/cpp/language/reference"
+language: "C++"
+---
+
+{/* source:cpp-language-reference:0000 */}
+Declares a named variable as a reference, that is, an alias to an already-existing object or function.
+
+## Syntax
+
+{/* source:cpp-language-reference:0001 */}
+A reference variable declaration is any simple declaration whose [declarator](/docs/cpp/language/declarations) has the form
+
+{/* source:cpp-language-reference:0002 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" grammar code="& attr(optional) declarator" />
+  <Declaration language="cpp" id="2" grammar code="&& attr(optional) declarator" since="C++11" />
+</DeclarationDoc>
+
+{/* source:cpp-language-reference:0003 */}
+1) Lvalue reference declarator: the declaration `S& D;` declares `D` as an lvalue reference to the type determined by decl-specifier-seq `S`.
+
+{/* source:cpp-language-reference:0004 */}
+2) Rvalue reference declarator: the declaration `S&& D;` declares `D` as an rvalue reference to the type determined by decl-specifier-seq `S`.
+
+{/* source:cpp-language-reference:0005 */}
+<ParameterList>
+  <Parameter name="declarator">
+any [declarator](/docs/cpp/language/declarations) except another reference declarator (there are no references to references)
+  </Parameter>
+  <Parameter name="attr">
+list of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-reference:0006 */}
+A reference is required to be initialized to refer to a valid object or function: see [reference initialization](/docs/cpp/language/initialization/reference_initialization).
+
+{/* source:cpp-language-reference:0007 */}
+The type “reference to (possibly cv-qualified) `void`” cannot be formed.
+
+{/* source:cpp-language-reference:0008 */}
+Reference types cannot be [cv-qualified](/docs/cpp/language/declarations/cv) at the top level; there is no syntax for that in declaration, and if a qualification is added to a typedef-name<InlineRevision since="C++11"> or [`decltype`](/docs/cpp/language/declarations/decltype) specifier,</InlineRevision> or [type template parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter), it is ignored.
+
+{/* source:cpp-language-reference:0009 */}
+References are not objects; they do not necessarily occupy storage, although the compiler may allocate storage if it is necessary to implement the desired semantics (e.g. a non-static data member of reference type usually increases the size of the class by the amount necessary to store a memory address).
+
+{/* source:cpp-language-reference:0010 */}
+Because references are not objects, there are no arrays of references, no pointers to references, and no references to references:
+
+{/* source:cpp-language-reference:0011 */}
+```cpp
+int& a[3]; // error
+int&* p;   // error
+int& &r;   // error
+```
+
+{/* source:cpp-language-reference:0012 */}
+<Revision since="C++11">
+## Reference collapsing
+It is permitted to form references to references through type manipulations in templates or typedefs, in which case the reference collapsing rules apply: rvalue reference to rvalue reference collapses to rvalue reference, all other combinations form lvalue reference:
+```cpp
+typedef int&  lref;
+typedef int&& rref;
+int n;
+
+lref&  r1 = n; // type of r1 is int&
+lref&& r2 = n; // type of r2 is int&
+rref&  r3 = n; // type of r3 is int&
+rref&& r4 = 1; // type of r4 is int&&
+```
+(This, along with special rules for [template argument deduction](/docs/cpp/language/templates/template_argument_deduction) when `T&&` is used in a function template, forms the rules that make [std::forward](/docs/cpp/library/utility/forward) possible.)
+</Revision>
+
+## Lvalue references
+
+{/* source:cpp-language-reference:0013 */}
+Lvalue references can be used to alias an existing object (optionally with different cv-qualification):
+
+{/* source:cpp-language-reference:0014 */}
+```cpp
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::string s = "Ex";
+    std::string& r1 = s;
+    const std::string& r2 = s;
+ 
+    r1 += "ample";           // modifies s
+//  r2 += "!";               // error: cannot modify through reference to const
+    std::cout << r2 << '\n'; // prints s, which now holds "Example"
+}
+```
+
+{/* source:cpp-language-reference:0015 */}
+They can also be used to implement pass-by-reference semantics in function calls:
+
+{/* source:cpp-language-reference:0016 */}
+```cpp
+#include <iostream>
+#include <string>
+ 
+void double_string(std::string& s)
+{
+    s += s; // 's' is the same object as main()'s 'str'
+}
+ 
+int main()
+{
+    std::string str = "Test";
+    double_string(str);
+    std::cout << str << '\n';
+}
+```
+
+{/* source:cpp-language-reference:0017 */}
+When a function's return type is lvalue reference, the function call expression becomes an [lvalue](/docs/cpp/language/expressions/value_category#lvalue) expression:
+
+{/* source:cpp-language-reference:0018 */}
+```cpp
+#include <iostream>
+#include <string>
+ 
+char& char_number(std::string& s, std::size_t n)
+{
+    return s.at(n); // string::at() returns a reference to char
+}
+ 
+int main()
+{
+    std::string str = "Test";
+    char_number(str, 1) = 'a'; // the function call is lvalue, can be assigned to
+    std::cout << str << '\n';
+}
+```
+
+{/* source:cpp-language-reference:0019 */}
+<Revision since="C++11">
+## Rvalue references
+Rvalue references can be used to [extend the lifetimes](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) of temporary objects (note, lvalue references to const can extend the lifetimes of temporary objects too, but they are not modifiable through them):
+```cpp
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::string s1 = "Test";
+//  std::string&& r1 = s1;           // error: can't bind to lvalue
+ 
+    const std::string& r2 = s1 + s1; // okay: lvalue reference to const extends lifetime
+//  r2 += "Test";                    // error: can't modify through reference to const
+ 
+    std::string&& r3 = s1 + s1;      // okay: rvalue reference extends lifetime
+    r3 += "Test";                    // okay: can modify through reference to non-const
+    std::cout << r3 << '\n';
+}
+```
+More importantly, when a function has both rvalue reference and lvalue reference [overloads](/docs/cpp/language/functions/overload_resolution), the rvalue reference overload binds to rvalues (including both prvalues and xvalues), while the lvalue reference overload binds to lvalues:
+```cpp
+#include <iostream>
+#include <utility>
+ 
+void f(int& x)
+{
+    std::cout << "lvalue reference overload f(" << x << ")\n";
+}
+ 
+void f(const int& x)
+{
+    std::cout << "lvalue reference to const overload f(" << x << ")\n";
+}
+ 
+void f(int&& x)
+{
+    std::cout << "rvalue reference overload f(" << x << ")\n";
+}
+ 
+int main()
+{
+    int i = 1;
+    const int ci = 2;
+ 
+    f(i);  // calls f(int&)
+    f(ci); // calls f(const int&)
+    f(3);  // calls f(int&&)
+           // would call f(const int&) if f(int&&) overload wasn't provided
+    f(std::move(i)); // calls f(int&&)
+ 
+    // rvalue reference variables are lvalues when used in expressions
+    int&& x = 1;
+    f(x);            // calls f(int& x)
+    f(std::move(x)); // calls f(int&& x)
+}
+```
+This allows [move constructors](/docs/cpp/language/classes/move_constructor), [move assignment](/docs/cpp/language/classes/move_operator) operators, and other move-aware functions (e.g. [std::vector::push_back()](/docs/cpp/library/container/vector/push_back)) to be automatically selected when suitable.
+Because rvalue references can bind to xvalues, they can refer to non-temporary objects:
+```cpp
+int i2 = 42;
+int&& rri = std::move(i2); // binds directly to i2
+```
+This makes it possible to move out of an object in scope that is no longer needed:
+```cpp
+std::vector<int> v{1, 2, 3, 4, 5};
+std::vector<int> v2(std::move(v)); // binds an rvalue reference to v
+assert(v.empty());
+```
+## Forwarding references
+Forwarding references are a special kind of references that preserve the value category of a function argument, making it possible to forward it by means of [std::forward](/docs/cpp/library/utility/forward). Forwarding references are either:
+1) function parameter of a function template declared as rvalue reference to cv-unqualified [type template parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter) of that same function template:
+```cpp
+template<class T>
+int f(T&& x)                      // x is a forwarding reference
+{
+    return g(std::forward<T>(x)); // and so can be forwarded
+}
+
+int main()
+{
+    int i;
+    f(i); // argument is lvalue, calls f<int&>(int&), std::forward<int&>(x) is lvalue
+    f(0); // argument is rvalue, calls f<int>(int&&), std::forward<int>(x) is rvalue
+}
+
+template<class T>
+int g(const T&& x); // x is not a forwarding reference: const T is not cv-unqualified
+
+template<class T>
+struct A
+{
+    template<class U>
+    A(T&& x, U&& y, int* p); // x is not a forwarding reference: T is not a
+                             // type template parameter of the constructor,
+                             // but y is a forwarding reference
+};
+```
+2) `auto&&` except when deduced from a brace-enclosed initializer list<InlineRevision since="C++17"> or, when representing a template parameter of a class template during [class template argument deduction](/docs/cpp/language/templates/ctad)</InlineRevision>:
+```cpp
+auto&& vec = foo();       // foo() may be lvalue or rvalue, vec is a forwarding reference
+auto i = std::begin(vec); // works either way
+(*i)++;                   // works either way
+
+g(std::forward<decltype(vec)>(vec)); // forwards, preserving value category
+
+for (auto&& x: f())
+{
+    // x is a forwarding reference; this is a common way to use range for in generic code
+}
+
+auto&& z = {1, 2, 3}; // *not* a forwarding reference (special case for initializer lists)
+```
+See also [template argument deduction](/docs/cpp/language/templates/template_argument_deduction#Deduction_from_a_function_call) and [std::forward](/docs/cpp/library/utility/forward).
+</Revision>
+
+## Dangling references
+
+{/* source:cpp-language-reference:0020 */}
+Although references always refer to valid objects or functions upon initialization, it is possible to create a program where the [lifetime](/docs/cpp/language/basic_concepts/lifetime) of the referred-to object ends, but the reference remains accessible (dangling).
+
+{/* source:cpp-language-reference:0021 */}
+Given an expression `expr` of reference type and let `target` be the object or function denoted by the reference:
+
+{/* source:cpp-language-reference:0022 */}
+- If a pointer to `target` would be [valid](/docs/cpp/language/declarations/pointer#Invalid_pointers) in the context of the evalution of `expr`, the result designates `target`.
+- Otherwise, the behavior is undefined.
+
+{/* source:cpp-language-reference:0023 */}
+```cpp
+std::string& f()
+{
+    std::string s = "Example";
+    return s; // exits the scope of s:
+              // its destructor is called and its storage deallocated
+}
+
+std::string& r = f(); // dangling reference
+std::cout << r;       // undefined behavior: reads from a dangling reference
+std::string s = f();  // undefined behavior: copy-initializes from a dangling reference
+```
+
+{/* source:cpp-language-reference:0024 */}
+Note that rvalue references and lvalue references to const extend the lifetimes of temporary objects (see [Reference initialization](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) for rules and exceptions).
+
+{/* source:cpp-language-reference:0025 */}
+If the referred-to object was destroyed (e.g. by explicit destructor call), but the storage was not deallocated, a reference to the out-of-lifetime object may be used in limited ways, and may become valid if the object is recreated in the same storage (see [Access outside of lifetime](/docs/cpp/language/basic_concepts/lifetime#Access_outside_of_lifetime) for details).
+
+## Type-inaccessible references
+
+{/* source:cpp-language-reference:0026 */}
+Attempting to bind a reference to an object where the converted initializer is <InlineRevision until="C++11">an lvalue</InlineRevision><InlineRevision since="C++11">a glvalue</InlineRevision> through which the object is not [type-accessible](/docs/cpp/language/expressions/reinterpret_cast#Type_accessibility) results in undefined behavior:
+
+{/* source:cpp-language-reference:0027 */}
+```cpp
+char x alignas(int);
+
+int& ir = *reinterpret_cast<int*>(&x); // undefined behavior:
+                                       // initializer refers to char object
+```
+
+## Call-incompatible references
+
+{/* source:cpp-language-reference:0028 */}
+Attempting to bind a reference to a function where the converted initializer is <InlineRevision until="C++11">an lvalue</InlineRevision><InlineRevision since="C++11">a glvalue</InlineRevision> whose type is not [call-compatible](/docs/cpp/language/expressions/reinterpret_cast#Call_compatibility) with the type of the function's definition results in undefined behavior:
+
+{/* source:cpp-language-reference:0029 */}
+```cpp
+void f(int);
+
+using F = void(float);
+F& ir = *reinterpret_cast<F*>(&f); // undefined behavior:
+                                   // initializer refers to void(int) function
+```
+
+## Notes
+
+{/* source:cpp-language-reference:0030 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_rvalue_references`](/docs/cpp/library/feature_test#cpp_rvalue_references) | [`200610L`](/docs/cpp/library/compiler_support/11#cpp_rvalue_references_200610L) | (C++11) | [Rvalue references](/docs/cpp/language/declarations/reference#Rvalue_references) |
+
+## Defect reports
+
+{/* source:cpp-language-reference:0031 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-reference:0032 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={453} standard="C++98">
+    <PublishedBehavior>
+    it was unclear which object or function a reference cannot be bound to
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    made clear
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1510} standard="C++11">
+    <PublishedBehavior>
+    cv-qualified references could not be formed in the operand of `decltype`
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    allowed
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2550} standard="C++98">
+    <PublishedBehavior>
+    parameters could have type “reference to `void`”
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    disallowed
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2933} standard="C++98">
+    <PublishedBehavior>
+    the behavior of accessing dangling references was unclear
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    made clear
+    </CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## External links
+
+{/* source:cpp-language-reference:0033 */}
+Thomas Becker, 2013 - [C++ Rvalue References Explained](http://thbecker.net/articles/rvalue_references/section_01.html)

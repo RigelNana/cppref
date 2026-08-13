@@ -1,0 +1,260 @@
+---
+title: "Conflicting declarations"
+description: "Unless otherwise specified, two declarations cannot (re)introduce the same entity. The program is ill-formed if such declarations exist."
+source_url: "https://en.cppreference.com/w/cpp/language/conflicting_declarations"
+language: "C++"
+---
+
+{/* source:cpp-language-conflicting-declarations:0000 */}
+Unless otherwise specified, two declarations cannot (re)introduce the same entity. The program is ill-formed if such declarations exist.
+
+## Corresponding declarations
+
+{/* source:cpp-language-conflicting-declarations:0001 */}
+Two declarations correspond if they (re)introduce the same name, both declare constructors, or both declare destructors, unless
+
+{/* source:cpp-language-conflicting-declarations:0002 */}
+- either is a [`using` declaration](/docs/cpp/language/classes/using_declaration),
+- one declares a type (not a [typedef name](/docs/cpp/language/declarations/typedef)) and the other declares a variable, non-static data member other than of an [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions), enumerator, function, or function template, or
+- each declares a function or function template and they do not declare corresponding overloads.
+
+### Corresponding function overloads
+
+{/* source:cpp-language-conflicting-declarations:0003 */}
+Two [function declarations](/docs/cpp/language/functions/function) declare corresponding overloads if both declare functions satisfying all following conditions:
+
+{/* source:cpp-language-conflicting-declarations:0004 */}
+- They have the same [parameter-type-list](/docs/cpp/language/functions/function#Parameter-type-list) <InlineRevision since="C++23">, omitting the types of [explicit object parameters](/docs/cpp/language/classes/member_functions#Explicit_object_parameter)</InlineRevision>.
+
+{/* source:cpp-language-conflicting-declarations:0005 */}
+<Revision since="C++20">
+- They have [equivalent](/docs/cpp/language/templates/function_template#Function_template_overloading) trailing [`requires` clauses](/docs/cpp/language/templates/constraints#Requires_clauses) (if any, except [friend declarations](/docs/cpp/language/classes/friend)).
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0006 */}
+If both of them are non-static member functions, they need to additionally satisfy one of the following requirements:
+
+{/* source:cpp-language-conflicting-declarations:0007 */}
+<Revision since="C++23">
+- Exactly one of them is an [implicit object member function](/docs/cpp/language/classes/member_functions) without ref-qualifier and the types of their object parameters, after removing top-level references, are the same.
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0008 */}
+- Their object parameters have the same type.
+
+### Corresponding function template overloads
+
+{/* source:cpp-language-conflicting-declarations:0009 */}
+Two [function template declarations](/docs/cpp/language/templates/function_template) declare corresponding overloads if both declare function templates satisfying all following conditions:
+
+{/* source:cpp-language-conflicting-declarations:0010 */}
+- Their template parameter lists have the same length.
+- Their corresponding template parameters are [equivalent](/docs/cpp/language/templates/function_template#Function_template_overloading).
+- They have equivalent [parameter-type-lists](/docs/cpp/language/functions/function#Parameter-type-list) <InlineRevision since="C++23">, omitting the types of [explicit object parameters](/docs/cpp/language/classes/member_functions#Explicit_object_parameter)</InlineRevision>.
+- They have equivalent return types.
+
+{/* source:cpp-language-conflicting-declarations:0011 */}
+<Revision since="C++20">
+- Their corresponding template parameters are either both declared without [constraint](/docs/cpp/language/templates/constraints#Constraints), or both declared with equivalent constraints.
+- They have equivalent trailing [`requires` clauses](/docs/cpp/language/templates/constraints#Requires_clauses) (if any).
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0012 */}
+If both are non-static members function templates, they need to additionally satisfy one of the following requirements:
+
+{/* source:cpp-language-conflicting-declarations:0013 */}
+<Revision since="C++23">
+- Exactly one of them is an [implicit object member function](/docs/cpp/language/classes/member_functions) template without ref-qualifier and the types of their object parameters, after removing all references, are equivalent.
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0014 */}
+- Their object parameters have equivalent types.
+
+{/* source:cpp-language-conflicting-declarations:0015 */}
+```cpp
+struct A
+{
+    friend void c();   // #1
+};
+
+struct B
+{
+    friend void c() {} // corresponds to, and defines, #1
+};
+
+typedef int Int;
+
+enum E : int { a };
+
+void f(int);   // #2
+void f(Int) {} // defines #2
+void f(E) {}   // OK, another overload
+
+struct X
+{
+    static void f();
+    void f() const;   // error: redeclaration
+
+    void g();
+    void g() const;   // OK
+    void g() &;       // error: redeclaration
+
+    void h(this X&, int);
+    void h(int) &&;   // OK, another overload
+
+    void j(this const X&);
+    void j() const &; // error: redeclaration
+
+    void k();
+    void k(this X&);  // error: redeclaration
+};
+```
+
+## Multiple declarations of the same entity
+
+{/* source:cpp-language-conflicting-declarations:0016 */}
+<Revision since="C++26">
+A declaration is *name-independent* if its name is `_` and it declares
+
+- a variable with automatic [storage duration](/docs/cpp/language/declarations/storage_duration),
+- a [structured binding](/docs/cpp/language/declarations/structured_binding) with no [storage class specifier](/docs/cpp/language/declarations/storage_duration) and not [inhabiting](/docs/cpp/language/basic_concepts/scope) a namespace scope,
+- the variable introduced by a [lambda capture](/docs/cpp/language/functions/lambda#Lambda_capture) with an initializer, or
+- a non-static [data member](/docs/cpp/language/classes/data_members) of other than an [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions).
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0017 */}
+Unless otherwise specified, two declarations of entities declare the same entity if all following conditions are satisfied, considering declarations of unnamed types to introduce their [typedef names](/docs/cpp/language/declarations/typedef#typedef_name_for_linkage_purposes) and [enumeration names](/docs/cpp/language/declarations/enum#Enumeration_name_for_linkage_purposes) for linkage purposes (if any exists):
+
+{/* source:cpp-language-conflicting-declarations:0018 */}
+- They correspond.
+- They have the same [target scope](/docs/cpp/language/basic_concepts/scope), which is not a [function parameter scope](/docs/cpp/language/basic_concepts/scope#Function_parameter_scope) or a [template parameter scope](/docs/cpp/language/basic_concepts/scope#Template_parameter_scope).
+
+{/* source:cpp-language-conflicting-declarations:0019 */}
+<Revision since="C++26">
+- Neither is a name-independent declaration.
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0020 */}
+One of the following conditions is satisfied:
+
+{/* source:cpp-language-conflicting-declarations:0021 */}
+- They appear in the same translation unit.
+
+{/* source:cpp-language-conflicting-declarations:0022 */}
+<Revision since="C++20">
+- They both declare names with [module linkage](/docs/cpp/language/declarations/storage_duration#Module_linkage) and are [attached to the same module](/docs/cpp/language/basic_concepts/modules#Module_ownership).
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0023 */}
+- They both declare names with [external linkage](/docs/cpp/language/declarations/storage_duration#External_linkage).
+
+{/* source:cpp-language-conflicting-declarations:0024 */}
+A declaration of an entity or typedef name `X` is a redeclaration of `X` if another declaration of `X` is reachable from it.
+
+### Restrictions
+
+{/* source:cpp-language-conflicting-declarations:0025 */}
+If any two declarations of an entity `E` violate the corresponding restriction below, the program is ill-formed:
+
+{/* source:cpp-language-conflicting-declarations:0026 */}
+- If one declares `E` to be a variable, the other must also declare `E` as a variable of the same type.
+- If one declares `E` to be a [function](/docs/cpp/language/functions/function), the other must also declare `E` as a function of the same type.
+- If one declares `E` to be an [enumerator](/docs/cpp/language/declarations/enum), the other must also declare `E` as an enumerator.
+- If one declares `E` to be a [namespace](/docs/cpp/language/declarations/namespace), the other must also declare `E` as a namespace.
+- If one declares `E` to be a [class type](/docs/cpp/language/classes/class), the other must also declare `E` as a class type.
+- If one declares `E` to be an [enumeration type](/docs/cpp/language/declarations/enum), the other must also declare `E` as an enumeration type.
+- If one declares `E` to be a [class template](/docs/cpp/language/templates/class_template), the other must also declare `E` as a class template with an equivalent template parameter list (see [function template overloading](/docs/cpp/language/templates/function_template#Function_template_overloading)).
+- If one declares `E` to be a [function template](/docs/cpp/language/templates/function_template), the other must also declare `E` as a function template with an equivalent template parameter list and type.
+
+{/* source:cpp-language-conflicting-declarations:0027 */}
+<Revision since="C++11">
+- If one declares `E` to be an [alias template](/docs/cpp/language/declarations/type_alias), the other must also declare `E` as an alias template with an equivalent template parameter list and *type-id*.
+</Revision>
+
+<Revision since="C++14">
+- If one declares `E` to be a (partial specialization of a) [variable template](/docs/cpp/language/templates/variable_template), the other must also declare `E` as a (partial specialization of a) variable template with an equivalent template parameter list and type.
+</Revision>
+
+<Revision since="C++20">
+- If one declares `E` to be a [concept](/docs/cpp/language/templates/constraints), the other must also declare `E` as a concept.
+</Revision>
+
+{/* source:cpp-language-conflicting-declarations:0028 */}
+Types are compared after all adjustments of types (during which [typedefs](/docs/cpp/language/declarations/typedef) are replaced by their definitions). Declarations for an array object can specify array types that differ by the presence or absence of a major array bound. No diagnostic is required if neither declaration is reachable from the other.
+
+{/* source:cpp-language-conflicting-declarations:0029 */}
+```cpp
+void g();      // #1
+void g(int);   // OK, different entity from #1 (they do not correspond)
+int g();       // Error: same entity as #1 with different type
+
+void h();      // #2
+namespace h {} // Error: same entity as #2, but not a function
+```
+
+{/* source:cpp-language-conflicting-declarations:0030 */}
+If a declaration `H` that declares a name with [internal linkage](/docs/cpp/language/declarations/storage_duration#Internal_linkage) precedes a declaration `D` in another translation unit `U` and would declare the same entity as `D` if it appeared in `U`, the program is ill-formed.
+
+## Potentially-conflicting declarations
+
+{/* source:cpp-language-conflicting-declarations:0031 */}
+Two declarations potentially conflict if they correspond but declare different entities.
+
+{/* source:cpp-language-conflicting-declarations:0032 */}
+If, in any scope, a name is bound to two declarations `A` and `B` that potentially conflict<InlineRevision since="C++26">, `B` is not *name-independent*</InlineRevision>, and `A` precedes `B`, the program is ill-formed:
+
+{/* source:cpp-language-conflicting-declarations:0033 */}
+```cpp
+void f()
+{
+    int x, y;
+    void x(); // Error: different entity for x
+    int y;    // Error: redefinition
+}
+
+enum { f };   // Error: different entity for ::f
+
+namespace A {}
+namespace B = A;
+namespace B = A; // OK, no effect
+namespace B = B; // OK, no effect
+namespace A = B; // OK, no effect
+namespace B {}   // Error: different entity for B
+
+void g()
+{
+    int _;
+    _ = 0; // OK
+    int _; // OK since C++26, name-independent declaration
+    _ = 0; // Error: two non-function declarations in the lookup set
+}
+
+void h ()
+{
+    int _;        // #1
+    _ ++;         // OK
+    static int _; // Error: conflicts with #1 because
+                  // static variables are not name-independent
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-conflicting-declarations:0034 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-conflicting-declarations:0035 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={279} standard="C++98">
+    <PublishedBehavior>it was unclear whether an unnamed class or enumeration can be redeclared if it has a typedef name for linkage purposes</PublishedBehavior>
+    <CorrectedBehavior>it can be redeclared</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={338} standard="C++98">
+    <PublishedBehavior>it was unclear whether an unnamed enumeration can be redeclared if it has an enumerator as a name for linkage purposes</PublishedBehavior>
+    <CorrectedBehavior>it can be redeclared</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1884} standard="C++98">
+    <PublishedBehavior>the restrictions applied to multiple declarations of the same entity were unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

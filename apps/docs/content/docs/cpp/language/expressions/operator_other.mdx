@@ -1,0 +1,649 @@
+---
+title: "Other operators"
+description: "The function call operator provides function semantics for any object."
+source_url: "https://en.cppreference.com/w/cpp/language/operator_other"
+language: "C++"
+---
+
+{/* source:cpp-language-operator-other:0000 */}
+| Operator name | Syntax | [Over​load​able](/docs/cpp/language/expressions/operators) | Prototype examples (for `class T`) | |
+| --- | --- | --- | --- | --- |
+| | | | Inside class definition | Outside class definition |
+| function call | `a(a1, a2)` | Yes | `R T::operator()(Arg1 &a1, Arg2 &a2, ...);` | N/A |
+| comma | `a, b` | Yes | `T2& T::operator,(T2 &b);` | `T2& operator,(const T &a, T2 &b);` |
+| conditional operator | `a ? b : c` | No | N/A | N/A |
+
+{/* source:cpp-language-operator-other:0001 */}
+The *function call* operator provides function semantics for any object.
+
+{/* source:cpp-language-operator-other:0002 */}
+The *conditional operator* (colloquially referred to as *ternary conditional*) checks the boolean value of the first expression and, depending on the resulting value, evaluates and returns either the second or the third expression.
+
+## Built-in function call operator
+
+{/* source:cpp-language-operator-other:0003 */}
+Function call expressions have the following form:
+
+{/* source:cpp-language-operator-other:0004 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="function ( arg1 , arg2 , arg3 ,...)" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-other:0005 */}
+<ParameterList>
+  <Parameter name="function">an expression of function type or function pointer type</Parameter>
+  <Parameter name="arg1, arg2, arg3, ...">a possibly empty list of arbitrary expressions <InlineRevision since="C++11">or [brace-enclosed initializer lists](/docs/cpp/language/initialization)</InlineRevision>, except the comma operator is not allowed at the top level to avoid ambiguity</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-operator-other:0006 */}
+For a call to a non-member function or to a [static member function](/docs/cpp/language/classes/static), *function* can be an lvalue that refers to a function (in which case the [function-to-pointer conversion](/docs/cpp/language/expressions/implicit_cast#Function-to-pointer_conversion) is suppressed), or a prvalue of function pointer type.
+
+{/* source:cpp-language-operator-other:0007 */}
+The function (or member) name specified by *function* can be overloaded, [overload resolution](/docs/cpp/language/functions/overload_resolution) rules used to decide which overload is to be called.
+
+{/* source:cpp-language-operator-other:0008 */}
+If *function* specifies a member function, it may be virtual, in which case the final overrider of that function will be called, using dynamic dispatch at runtime.
+
+{/* source:cpp-language-operator-other:0009 */}
+To call the function,
+
+{/* source:cpp-language-operator-other:0010 */}
+<Revision until="C++17">
+The expression *function* as well as all expressions arg1, arg2, arg3, etc, provided as arguments are evaluated in arbitrary order, [unsequenced](/docs/cpp/language/expressions/eval_order) with respect to each other.
+</Revision>
+
+<Revision since="C++17">
+*function* is sequenced before each of arg1, arg2, arg3 as well as [default arguments](/docs/cpp/language/functions/default_arguments), if any. The argument expressions are evaluated in arbitrary order, [indeterminately sequenced](/docs/cpp/language/expressions/eval_order) with respect to each other.
+</Revision>
+
+{/* source:cpp-language-operator-other:0011 */}
+Each function parameter is initialized with its corresponding argument after [implicit conversion](/docs/cpp/language/expressions/implicit_cast) if necessary.
+
+{/* source:cpp-language-operator-other:0012 */}
+- If there is no corresponding argument, the corresponding [default argument](/docs/cpp/language/functions/default_arguments) is used, and if there is none, the program is ill-formed.
+- If the call is made to a member function, then the `this` pointer to current object is converted as if by explicit cast to the `this` pointer expected by the function.
+- The initialization and destruction of each parameter occurs in the context of the [full-expression](/docs/cpp/language/expressions#Full-expressions) where the function call appears, which means, for example, that if a constructor or destructor of a parameter throws an exception, the [function try blocks](/docs/cpp/language/exceptions/try#Function_try_block) of the called function are not considered.
+
+{/* source:cpp-language-operator-other:0013 */}
+If the function is a variadic function, [default argument promotions](/docs/cpp/language/functions/variadic_arguments#Default_conversions) are applied to all arguments matched by the ellipsis parameter.
+
+{/* source:cpp-language-operator-other:0014 */}
+It is implementation-defined whether a parameter is destroyed when the function in which it is defined exits or at the end of the enclosing full-expression. Parameters are always destroyed in the reverse order of their construction.
+
+{/* source:cpp-language-operator-other:0015 */}
+The return type of a function call expression is the return type of the chosen function, decided using static binding (ignoring the `virtual` keyword), even if the overriding function that is actually called returns a different type. This allows the overriding functions to return pointers or references to classes that are derived from the return type returned by the base function, i.e. C++ supports [covariant return types](https://en.wikipedia.org/wiki/Covariant_return_type). If *function* specifies a destructor, the return type is `void`.
+
+{/* source:cpp-language-operator-other:0016 */}
+<Revision since="C++17">
+When an object of class type X is passed to or returned from a function, if each copy constructor, move constructor, and destructor of X is either trivial or deleted, and X has at least one non-deleted copy or move constructor, implementations are permitted to create a temporary object to hold the function parameter or result object. The temporary object is constructed from the function argument or return value, respectively, and the function's parameter or return object is initialized as if by using the non-deleted trivial constructor to copy the temporary (even if that constructor is inaccessible or would not be selected by overload resolution to perform a copy or move of the object). This allows objects of small class types, such as [`std::complex`](/docs/cpp/library/numeric/complex) or std::span, to be passed to or returned from functions in registers.
+</Revision>
+
+{/* source:cpp-language-operator-other:0017 */}
+The value category of a function call expression is lvalue if the function returns an lvalue reference or an rvalue reference to function, is an xvalue if the function returns an rvalue reference to object, and is a prvalue otherwise. If the function call expression is a prvalue of object type, it must have [complete type](/docs/cpp/language/basic_concepts/type-id#Incomplete_type)<InlineRevision since="C++11"> except when used as the operand of [`decltype`](/docs/cpp/language/declarations/decltype) (or as the right operand of a [built-in comma operator](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) that is the operand of `decltype`)</InlineRevision>.
+
+{/* source:cpp-language-operator-other:0018 */}
+Function call expression is similar in syntax to value initialization `T()`, to [function-style cast](/docs/cpp/language/expressions/explicit_cast) expression `T(A1)`, and to direct initialization of a temporary `T(A1, A2, A3, ...)`, where T is the name of a type.
+
+{/* source:cpp-language-operator-other:0019 */}
+```cpp
+#include <cstdio>
+
+struct S
+{
+    int f1(double d)
+    {
+        return printf("%f \n", d); // variable argument function call
+    }
+
+    int f2()
+    {
+        return f1(7); // member function call, same as this->f1()
+                      // integer argument converted to double
+    }
+};
+
+void f()
+{
+    puts("function called"); // function call
+}
+
+int main()
+{
+    f();    // function call
+    S s;
+    s.f2(); // member function call
+}
+```
+
+Output:
+
+```text
+function called
+7.000000
+```
+
+## Built-in comma operator
+
+{/* source:cpp-language-operator-other:0020 */}
+Comma expressions have the following form:
+
+{/* source:cpp-language-operator-other:0021 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="E1 , E2" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-other:0022 */}
+In a comma expression `E1, E2`, the expression `E1` is evaluated, its result is [discarded](/docs/cpp/language/expressions#Discarded-value_expressions) (although if it has class type, it won't be destroyed [until the end of the containing full expression](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime)), and its side effects are completed before evaluation of the expression `E2` begins<InlineRevision until="C++17"> (note that a user-defined `operator,` cannot guarantee sequencing)</InlineRevision>.
+
+{/* source:cpp-language-operator-other:0023 */}
+The type, value, and value category of the result of the comma expression are exactly the type, value, and value category of the second operand, `E2`. If `E2` is a temporary <InlineRevision since="C++17">expression</InlineRevision>, the result of the expression is that temporary <InlineRevision since="C++17">expression</InlineRevision>. If `E2` is a bit-field, the result is a bit-field.
+
+{/* source:cpp-language-operator-other:0024 */}
+The comma in various comma-separated lists, such as function argument lists (`f(a, b, c)`) and initializer lists `int a[] = {1, 2, 3}`, is not the comma operator. If the comma operator needs to be used in such contexts, it has to be parenthesized: `f(a, (n++, n + b), c)`.
+
+{/* source:cpp-language-operator-other:0025 */}
+<Revision since="C++20" until="C++23">
+Using an unparenthesized comma expression as second (right) argument of a [subscript operator](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) is deprecated.
+
+For example, `a[b, c]` is deprecated and `a[(b, c)]` is not.
+</Revision>
+
+<Revision since="C++23">
+An unparenthesized comma expression cannot be second (right) argument of a [subscript operator](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator). For example, `a[b, c]` is either ill-formed or equivalent to `a.operator[](b, c)`.
+
+Parentheses are needed when using a comma expression as the subscript, e.g., `a[(b, c)]`.
+</Revision>
+
+{/* source:cpp-language-operator-other:0026 */}
+```cpp
+#include <iostream>
+
+int main()
+{
+    // comma is often used to execute more than one expression
+    // where the language grammar allows only one expression:
+
+    // * in the third component of the for loop
+    for (int i = 0, j = 10; i <= j; ++i, --j)
+    //            ^list separator      ^comma operator
+        std::cout << "i = " << i << " j = " << j << '\n';
+
+    // * in a return statement
+    // return log("an error!"), -1;
+
+    // * in an initializer expression
+    // MyClass(const Arg& arg)
+    // : member{ throws_if_bad(arg), arg }
+
+    // etc.
+
+    // comma operators can be chained; the result of the last
+    // (rightmost) expression is the result of the whole chain:
+    int n = 1;
+    int m = (++n, std::cout << "n = " << n << '\n', ++n, 2 * n);
+
+    // m is now 6
+    std::cout << "m = " << (++m, m) << '\n';
+}
+```
+
+Output:
+
+```text
+i = 0 j = 10
+i = 1 j = 9
+i = 2 j = 8
+i = 3 j = 7
+i = 4 j = 6
+i = 5 j = 5
+n = 2
+m = 7
+```
+
+## Conditional operator
+
+{/* source:cpp-language-operator-other:0027 */}
+The conditional operator expressions have the form
+
+{/* source:cpp-language-operator-other:0028 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="E1 ? E2 : E3" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-other:0029 */}
+The first operand of the conditional operator is evaluated and [contextually converted](/docs/cpp/language/expressions/implicit_cast) to `bool`. After both the value evaluation and all side effects of the first operand are completed, if the result was `true`, the second operand is evaluated. If the result was `false`, the third operand is evaluated.
+
+{/* source:cpp-language-operator-other:0030 */}
+The type and value category of the conditional expression `E1 ? E2 : E3` are determined according to the following rules:
+
+{/* source:cpp-language-operator-other:0031 */}
+- If either `E2` or `E3` has type `void`:
+
+{/* source:cpp-language-operator-other:0032 */}
+  - If both `E2` and `E3` are of type `void`, the result is a prvalue of type `void`.
+  - Otherwise, if the operand of type `void` is a (possibly parenthesized) [`throw` expression](/docs/cpp/language/exceptions/throw), the result has the type and the value category of the other expression. If the other expression is a [bit-field](/docs/cpp/language/classes/bit_field), the result is a bit-field.[^1]
+  - Otherwise, the program is ill-formed.
+
+{/* source:cpp-language-operator-other:0033 */}
+```cpp
+2 + 2 == 4 ? throw 123 : throw 456;
+
+std::string str = 2 + 2 == 4 ? "OK" : throw std::logic_error("2 + 2 != 4");
+```
+
+{/* source:cpp-language-operator-other:0034 */}
+- Otherwise, if `E2` or `E3` are <InlineRevision until="C++11">lvalue bit-fields</InlineRevision><InlineRevision since="C++11">glvalue bit-fields of the same value category</InlineRevision> and of types cv1 T and cv2 T, respectively, the operands are considered to be of type cv T for the remainder of this section, where cv is the union of cv1 and cv2.
+
+{/* source:cpp-language-operator-other:0035 */}
+- Otherwise, if `E2` and `E3` have different types, at least one of which is a (possibly cv-qualified) class type, or both are <InlineRevision until="C++11">lvalues</InlineRevision><InlineRevision since="C++11">glvalues of the same value category</InlineRevision> and have the same type except for cv-qualification, then an attempt is made to form an [implicit conversion sequence](/docs/cpp/language/expressions/implicit_cast).[^2]
+
+{/* source:cpp-language-operator-other:0036 */}
+  - Attempts are made to form an implicit conversion sequence from an operand expression `X` of type TX to a *target type* related to the type TY of the operand expression `Y` as follows:
+    - If `Y` is an lvalue, the target type is `TY&`, but an implicit conversion sequence can only be formed if the reference would [bind directly](/docs/cpp/language/initialization/reference_initialization#Direct_binding) to <InlineRevision until="C++11">an lvalue</InlineRevision><InlineRevision since="C++11">a glvalue</InlineRevision>.
+
+{/* source:cpp-language-operator-other:0037 */}
+<Revision since="C++11">
+  - If `Y` is an xvalue, the target type is `TY&&`, but an implicit conversion sequence can only be formed if the reference would bind directly.
+</Revision>
+
+{/* source:cpp-language-operator-other:0038 */}
+  - If `Y` is <InlineRevision until="C++11">an rvalue</InlineRevision><InlineRevision since="C++11">a prvalue</InlineRevision> or if none of the conversion sequences above can be formed, and at least one of TX and TY is a (possibly cv-qualified) class type:
+    - If TX and TY are the same class type (ignoring cv-qualification):
+      - If TY is at least as cv-qualified as TX, the target type is TY.
+      - Otherwise, no conversion sequence is formed.
+    - Otherwise, if TY is a base class of TX, the target type is TY with the cv-qualifiers of TX.
+    - Otherwise, the target type is the type of Z, where Z is the value of Y after applying the lvalue-to-rvalue, array-to-pointer, and function-to-pointer [standard conversions](/docs/cpp/language/expressions/implicit_cast).
+    - Otherwise, no conversion sequence is formed.
+
+Using this process, it is determined whether an implicit conversion sequence can be formed from `E2` to the target type determined for the `E3`, and vice versa. If both sequences can be formed, or one can be formed but it is the ambiguous conversion sequence, the program is ill-formed. If no conversion sequence can be formed, the operands are left unchanged. Otherwise, if exactly one conversion sequence can be formed, that conversion is applied to the chosen operand and the converted operand is used in place of the original operand for the remaining process.
+
+{/* source:cpp-language-operator-other:0039 */}
+```cpp
+struct A {};
+
+struct B : A {};
+
+using T = const B;
+
+A a = true ? A() : T(); // Y = A(), TY = A, X = T(), TX = const B, Target = const A
+```
+
+{/* source:cpp-language-operator-other:0040 */}
+<Revision until="C++11">
+- If `E2` and `E3` are lvalues of the same type, then the result is an lvalue of that type, and is a bit-field if at least one of `E2` and `E3` is a bit-field.
+</Revision>
+
+<Revision since="C++11">
+- If `E2` and `E3` are glvalues of the same type and the same value category, then the result has the same type and value category, and is a bit-field if at least one of `E2` and `E3` is a bit-field.
+</Revision>
+
+{/* source:cpp-language-operator-other:0041 */}
+- Otherwise, the result is <InlineRevision until="C++11">an rvalue</InlineRevision><InlineRevision since="C++11">a prvalue</InlineRevision>.
+
+{/* source:cpp-language-operator-other:0042 */}
+- If `E2` and `E3` do not have the same type, and either has (possibly cv-qualified) class type, [overload resolution](/docs/cpp/language/functions/overload_resolution) is performed using the [built-in candidates](/docs/cpp/language/expressions/operator_other#Overloads) to attempt to convert the operands to built-in types. If the overload resolution fails, the program is ill-formed. Otherwise, the selected conversions are applied and the converted operands are used in place of the original operands for the remaining process. The array-to-pointer and function-to-pointer conversions are applied to (possibly-converted) `E2` and `E3`. After those conversions, at least one of the following conditions must hold, otherwise the program is ill-formed:
+  - `E2` and `E3` have the same type. In this case, the result is of that type and the result is [copy-initialized](/docs/cpp/language/initialization/copy_initialization) using the selected operand.
+  - Both `E2` and `E3` have arithmetic or enumeration type. In this case, [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) are applied to bring them to their common type, and the result is of that type.
+  - At least one of `E2` and `E3` is a pointer. In this case, lvalue-to-rvalue, pointer<InlineRevision since="C++17">, function pointer</InlineRevision> and qualification conversions are applied to bring them to their [composite pointer type](/docs/cpp/language/declarations/pointer#Composite_pointer_type), and the result is of that type.
+  - At least one of `E2` and `E3` is a pointer to members. In this case, lvalue-to-rvalue, pointer-to-member<InlineRevision since="C++17">, function pointer</InlineRevision> and qualification conversions are applied to bring them to their [composite pointer type](/docs/cpp/language/declarations/pointer#Composite_pointer_type), and the result is of that type.
+
+{/* source:cpp-language-operator-other:0043 */}
+<Revision since="C++11">
+- Both `E2` and `E3` are null pointer constants, and at least one of which is of type [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t). In this case, the result is of type [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t).
+</Revision>
+
+{/* source:cpp-language-operator-other:0044 */}
+```cpp
+int* intPtr;
+
+using Mixed = decltype(true ? nullptr : intPtr);
+
+static_assert(std::is_same_v<Mixed, int*>); // nullptr becoming int*
+
+struct A
+{
+    int* m_ptr;
+} a;
+
+int* A::* memPtr = &A::m_ptr; // memPtr is a pointer to member m_ptr of A
+
+// memPtr makes nullptr as type of pointer to member m_ptr of A
+static_assert(std::is_same_v<decltype(false ? memPtr : nullptr), int*A::*>);
+
+// a.*memPtr is now just pointer to int and nullptr also becomes pointer to int
+static_assert(std::is_same_v<decltype(false ? a.*memPtr : nullptr), int*>);
+```
+
+{/* source:cpp-language-operator-other:0045 */}
+[^1]: Such conditional operator was commonly used in C++11 [constexpr programming](/docs/cpp/language/declarations/constexpr) prior to C++14.
+[^2]: Member access<InlineRevision since="C++11">, whether a conversion function is deleted</InlineRevision> and whether an operand is a bit-field are ignored.
+
+{/* source:cpp-language-operator-other:0046 */}
+This section is incomplete
+
+Reason: any chance to make this more readable without losing the fine point? At the very least, a one-line micro-example for each bullet point would help tremendously
+
+### Overloads
+
+{/* source:cpp-language-operator-other:0047 */}
+For every pair of promoted arithmetic types L and R and for every type P, where P is a pointer, pointer-to-member, or scoped enumeration type, the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-other:0048 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`LR operator?:(bool, L, R);`} />
+  <Declaration language="cpp" code={`P operator?:(bool, P, P);`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-other:0049 */}
+where LR is the result of [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) performed on L and R.
+
+{/* source:cpp-language-operator-other:0050 */}
+The operator "?:" cannot be overloaded, these function signatures only exist for the purpose of overload resolution.
+
+{/* source:cpp-language-operator-other:0051 */}
+<Revision since="C++11">
+The result type of a conditional operator is also accessible as the binary type trait [`std::common_type`](/docs/cpp/library/meta/common_type).
+</Revision>
+
+{/* source:cpp-language-operator-other:0052 */}
+```cpp
+#include <iostream>
+#include <string>
+
+struct Node
+{
+    Node* next;
+    int data;
+
+    // deep-copying copy constructor
+    Node(const Node& other)
+        : next(other.next ? new Node(*other.next) : NULL)
+        , data(other.data)
+    {}
+
+    Node(int d) : next(NULL), data(d) {}
+
+    ~Node() { delete next; }
+};
+
+int main()
+{   
+    // simple rvalue example
+    int n = 1 > 2 ? 10 : 11;  // 1 > 2 is false, so n = 11
+
+    // simple lvalue example
+    int m = 10; 
+    (n == m ? n : m) = 7; // n == m is false, so m = 7
+
+    //output the result
+    std::cout << "n = " << n << "\nm = " << m;
+}
+```
+
+Output:
+
+```text
+n = 11
+m = 7
+```
+
+## Standard library
+
+{/* source:cpp-language-operator-other:0053 */}
+Many classes in the standard library overload `operator()` to be used as function objects.
+
+{/* source:cpp-language-operator-other:0054 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/memory/default_delete)</DescriptionTerm>
+    <DescriptionBody>deletes the object or array (public member function of `std::default_delete<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/plus)</DescriptionTerm>
+    <DescriptionBody>returns the sum of two arguments (public member function of `std::plus<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/minus)</DescriptionTerm>
+    <DescriptionBody>returns the difference between two arguments (public member function of `std::minus<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/multiplies)</DescriptionTerm>
+    <DescriptionBody>returns the product of two arguments (public member function of `std::multiplies<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/divides)</DescriptionTerm>
+    <DescriptionBody>returns the result of the division of the first argument by the second argument (public member function of `std::divides<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/modulus)</DescriptionTerm>
+    <DescriptionBody>returns the remainder from the division of the first argument by the second argument (public member function of `std::modulus<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/negate)</DescriptionTerm>
+    <DescriptionBody>returns the negation of the argument (public member function of `std::negate<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/equal_to)</DescriptionTerm>
+    <DescriptionBody>checks if the arguments are equal (public member function of `std::equal_to<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/not_equal_to)</DescriptionTerm>
+    <DescriptionBody>checks if the arguments are not equal (public member function of `std::not_equal_to<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/greater)</DescriptionTerm>
+    <DescriptionBody>checks if the first argument is greater than the second (public member function of `std::greater<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/less)</DescriptionTerm>
+    <DescriptionBody>checks if the first argument is less than the second (public member function of `std::less<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/greater_equal)</DescriptionTerm>
+    <DescriptionBody>checks if the first argument is greater than or equal to the second (public member function of `std::greater_equal<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/less_equal)</DescriptionTerm>
+    <DescriptionBody>checks if the first argument is less than or equal to the second (public member function of `std::less_equal<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/logical_and)</DescriptionTerm>
+    <DescriptionBody>returns the logical AND of the two arguments (public member function of `std::logical_and<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/logical_or)</DescriptionTerm>
+    <DescriptionBody>returns the logical OR of the two arguments (public member function of `std::logical_or<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/logical_not)</DescriptionTerm>
+    <DescriptionBody>returns the logical NOT of the argument (public member function of `std::logical_not<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/bit_and)</DescriptionTerm>
+    <DescriptionBody>returns the result of bitwise AND of two arguments (public member function of `std::bit_and<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/bit_or)</DescriptionTerm>
+    <DescriptionBody>returns the result of bitwise OR of two arguments (public member function of `std::bit_or<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/bit_xor)</DescriptionTerm>
+    <DescriptionBody>returns the result of bitwise XOR of two arguments (public member function of `std::bit_xor<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/unary_negate)</DescriptionTerm>
+    <DescriptionBody>returns the logical complement of the result of a call to the stored predicate (public member function of `std::unary_negate<Predicate>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/utility/functional/binary_negate)</DescriptionTerm>
+    <DescriptionBody>returns the logical complement of the result of a call to the stored predicate (public member function of `std::binary_negate<Predicate>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/utility/functional/reference-wrapper/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>calls the stored function (public member function of `std::reference_wrapper<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/utility/functional/function/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>invokes the target (public member function of `std::function<R(Args...)>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/utility/functional/move-only-function/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>invokes the target (public member function of `std::move_only_function`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/utility/functional/copyable-function/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>invokes the target (public member function of `std::copyable_function`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](https://en.cppreference.com/mwiki/index.php?title=cpp/coroutine/coroutine_handle/operator()&action=edit&redlink=1)</DescriptionTerm>
+    <DescriptionBody>resumes execution of the coroutine (public member function of `std::coroutine_handle<Promise>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/locale/locale/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>lexicographically compares two strings using this locale's collate facet (public member function of `std::locale`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/container/map/value_compare)</DescriptionTerm>
+    <DescriptionBody>compares two values of type value_type (public member function of `std::map<Key,T,Compare,Allocator>::value_compare`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/library/container/multimap/value_compare)</DescriptionTerm>
+    <DescriptionBody>compares two values of type value_type (public member function of `std::multimap<Key,T,Compare,Allocator>::value_compare`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/thread/packaged-task/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>executes the function (public member function of `std::packaged_task<R(Args...)>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/numeric/random/linear-congruential-engine/operator%28%29)</DescriptionTerm>
+    <DescriptionBody>advances the engine's state and returns the generated value (public member function of `std::linear_congruential_engine<UIntType,a,c,m>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](/docs/cpp/numeric/random/uniform-int-distribution/operator%28%29) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>generates the next random number in the distribution (public member function of `std::uniform_int_distribution<IntType>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-language-operator-other:0055 */}
+The comma operator is not overloaded by any class in the standard library. The boost library uses `operator,` in [boost.assign](https://www.boost.org/doc/libs/release/libs/assign/doc/index.html#intro), [boost.spirit](https://www.boost.org/doc/libs/release/libs/spirit/doc/html/index.html), and other libraries. The database access library [SOCI](https://soci.sourceforge.net/doc.html) also overloads `operator,`.
+
+## Defect reports
+
+{/* source:cpp-language-operator-other:0056 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-operator-other:0057 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={446} standard="C++98">
+    <PublishedBehavior>it was unspecified whether a temporary is created for an lvalue-to-rvalue conversion on the conditional operator</PublishedBehavior>
+    <CorrectedBehavior>always creates a temporary if the operator returns a class rvalue</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={462} standard="C++98">
+    <PublishedBehavior>if the second operand of a comma operator is a temporary, it was unspecified whether its lifetime will be extended when the result of the comma expression is bound to a reference</PublishedBehavior>
+    <CorrectedBehavior>the result of the comma expression is the temporary in this case (hence its lifetime is extended)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={587} standard="C++98">
+    <PublishedBehavior>when the second and third operands of a conditional operator are lvalues of the same type except for cv-qualification, the result was an lvalue if these operands have class types or an rvalue otherwise</PublishedBehavior>
+    <CorrectedBehavior>the result is always an lvalue in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1029} standard="C++98">
+    <PublishedBehavior>the type of a destructor call was unspecified</PublishedBehavior>
+    <CorrectedBehavior>specified as `void`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1550} standard="C++98">
+    <PublishedBehavior>parenthesized `throw` expressions were not allowed in conditional expressions if other operand is non-`void`</PublishedBehavior>
+    <CorrectedBehavior>accepted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1560} standard="C++98">
+    <PublishedBehavior>`void` operand of conditional operators caused gratuitous lvalue-to-rvalue conversion on the other operand, always resulting in rvalue</PublishedBehavior>
+    <CorrectedBehavior>a conditional expression with a `void` can be lvalue</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1642} standard="C++98">
+    <PublishedBehavior>the expression *function* in a function call expression could be a function pointer lvalue</PublishedBehavior>
+    <CorrectedBehavior>not allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1805} standard="C++98">
+    <PublishedBehavior>when determining the target type for the implicit conversion sequence, the way to convert `Y` to `Z` was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1895} standard="C++98">
+    <PublishedBehavior>unclear if deleted (C++11) or inaccessible (C++98) conversion function prevents conversion in conditional expressions, and conversions from base class to derived class prvalue were not considered</PublishedBehavior>
+    <CorrectedBehavior>handled like overload resolution</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1932} standard="C++98">
+    <PublishedBehavior>same-type bit-fields were missing in conditional expressions</PublishedBehavior>
+    <CorrectedBehavior>handled by underlying types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2226} standard="C++11">
+    <PublishedBehavior>when determining the target type of the other operand of a conditional operator, reference could not bind to an xvalue if that operand is an lvalue</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2283} standard="C++17">
+    <PublishedBehavior>the type completeness requirement for function call operator was accidently removed by [P0135R1](https://wg21.link/P0135R1)</PublishedBehavior>
+    <CorrectedBehavior>restored the requirement</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2321} standard="C++98">
+    <PublishedBehavior>when determining the target type of the other operand of a conditional operator, a derived class type could not be converted to a less cv-qualified base class type</PublishedBehavior>
+    <CorrectedBehavior>allowed to convert to the base class type with the cv-qualification from the derived class operand</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2715} standard="C++98">
+    <PublishedBehavior>the initialization and destruction of each parameter would occur within the context of the calling function, which might not exist[^3]</PublishedBehavior>
+    <CorrectedBehavior>occurs within the context of the enclosing full-expression</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2850} standard="C++98">
+    <PublishedBehavior>the destruction order of parameters was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2865} standard="C++98">
+    <PublishedBehavior>if `TX` and `TY` are the same class type and `TX` is more cv-qualified than `TY`, an implicit conversion sequence could still be formed from a prvalue `Y`</PublishedBehavior>
+    <CorrectedBehavior>no conversion sequence will be formed in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2906} standard="C++98">
+    <PublishedBehavior>lvalue-to-rvalue conversions were unconditionally applied in the rvalue result case for the conditional operator</PublishedBehavior>
+    <CorrectedBehavior>only applied in some cases</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-language-operator-other:0058 */}
+[^3]: For example, functions can be called in the initializer of a namespace-scope variable, there is no "calling function" in this context.
+
+## See also
+
+{/* source:cpp-language-operator-other:0059 */}
+[Operator precedence](/docs/cpp/language/expressions/operator_precedence)
+
+[Operator overloading](/docs/cpp/language/expressions/operators)
+
+{/* source:cpp-language-operator-other:0060 */}
+**Common operators:**
+
+- [assignment](/docs/cpp/language/expressions/operator_assignment): `a = b`, `a += b`, `a -= b`, `a *= b`, `a /= b`, `a %= b`, `a &= b`, `a |= b`, `a ^= b`, `a <<= b`, `a >>= b`
+- [increment decrement](/docs/cpp/language/expressions/operator_incdec): `++a`, `--a`, `a++`, `a--`
+- [arithmetic](/docs/cpp/language/expressions/operator_arithmetic): `+a`, `-a`, `a + b`, `a - b`, `a * b`, `a / b`, `a % b`, `~a`, `a & b`, `a | b`, `a ^ b`, `a << b`, `a >> b`
+- [logical](/docs/cpp/language/expressions/operator_logical): `!a`, `a && b`, `a || b`
+- [comparison](/docs/cpp/language/expressions/operator_comparison): `a == b`, `a != b`, `a < b`, `a > b`, `a <= b`, `a >= b`, `a <=> b`
+- [member access](/docs/cpp/language/expressions/operator_member_access): `a[...]`, `*a`, `&a`, `a->b`, `a.b`, `a->*b`, `a.*b`
+- **other**: function call `a(...)`; comma `a, b`; conditional `a ? b : c`
+
+**Special operators:**
+
+- [`static_cast`](/docs/cpp/language/expressions/static_cast) converts one type to another related type
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) converts within inheritance hierarchies
+- [`const_cast`](/docs/cpp/language/expressions/const_cast) adds or removes [`cv`](/docs/cpp/language/declarations/cv)-qualifiers
+- [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) converts type to unrelated type
+- [C-style cast](/docs/cpp/language/expressions/explicit_cast) converts one type to another by a mix of `static_cast`, `const_cast`, and `reinterpret_cast`
+- [`new`](/docs/cpp/language/expressions/new) creates objects with dynamic storage duration
+- [`delete`](/docs/cpp/language/expressions/delete) destructs objects previously created by the new expression and releases obtained memory area
+- [`sizeof`](/docs/cpp/language/expressions/sizeof) queries the size of a type
+- [`sizeof...`](/docs/cpp/language/templates/sizeof...) queries the size of a [`pack`](/docs/cpp/language/templates/parameter_pack) <InlineRevision since="C++11" />
+- [`typeid`](/docs/cpp/language/expressions/typeid) queries the type information of a type
+- [`noexcept`](/docs/cpp/language/exceptions/noexcept) checks if an expression can throw an exception <InlineRevision since="C++11" />
+- [`alignof`](/docs/cpp/language/expressions/alignof) queries alignment requirements of a type <InlineRevision since="C++11" />
+
+{/* source:cpp-language-operator-other:0061 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/expressions/operator_other)</DescriptionTerm>
+    <DescriptionBody>for Other operators</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,906 @@
+---
+title: "Dependent names"
+description: "Inside the definition of a template (both class template and function template), the meaning of some constructs may differ from one instantiation to another."
+source_url: "https://en.cppreference.com/w/cpp/language/dependent_name"
+language: "C++"
+---
+
+{/* source:cpp-language-dependent-name:0000 */}
+Inside the definition of a [template](/docs/cpp/language/templates) (both [class template](/docs/cpp/language/templates/class_template) and [function template](/docs/cpp/language/templates/function_template)), the meaning of some constructs may differ from one instantiation to another. In particular, types and expressions may depend on types of type template parameters and values of non-type template parameters.
+
+{/* source:cpp-language-dependent-name:0001 */}
+```cpp
+template<typename T>
+struct X : B<T> // “B<T>” is dependent on T
+{
+    typename T::A* pa; // “T::A” is dependent on T
+                       // (see below for the meaning of this use of “typename”)
+
+    void f(B<T>* pb)
+    {
+        static int i = B<T>::i; // “B<T>::i” is dependent on T
+        pb->j++; // “pb->j” is dependent on T
+    }
+};
+```
+
+{/* source:cpp-language-dependent-name:0002 */}
+Name [lookup](/docs/cpp/language/basic_concepts/lookup) and binding are different for dependent names and non-dependent names.
+
+## Binding rules
+
+{/* source:cpp-language-dependent-name:0003 */}
+Non-dependent names are looked up and bound at the point of template definition. This binding holds even if at the point of template instantiation there is a better match:
+
+{/* source:cpp-language-dependent-name:0004 */}
+```cpp
+#include <iostream>
+
+void g(double) { std::cout << "g(double)\n"; }
+
+template<class T>
+struct S
+{
+    void f() const
+    {
+        g(1); // “g” is a non-dependent name, bound now
+    }
+};
+
+void g(int) { std::cout << "g(int)\n"; }
+
+int main()
+{
+    g(1);  // calls g(int)
+
+    S<int> s;
+    s.f(); // calls g(double)
+}
+```
+
+{/* source:cpp-language-dependent-name:0005 */}
+If the meaning of a non-dependent name changes between the definition context and the point of instantiation of a specialization of the template, the program is ill-formed, no diagnostic required. This is possible in the following situations:
+
+{/* source:cpp-language-dependent-name:0006 */}
+- a type used in a non-dependent name is [incomplete](/docs/cpp/language/basic_concepts/incomplete_type) at the point of definition but complete at the point of instantiation
+
+{/* source:cpp-language-dependent-name:0007 */}
+<Revision since="C++17">
+- lookup for a name in the template definition found a [using-declaration](/docs/cpp/language/classes/using_declaration), but the lookup in the corresponding scope in the instantiation does not find any declarations because the using-declaration was a pack expansion and the corresponding pack is empty
+</Revision>
+
+{/* source:cpp-language-dependent-name:0008 */}
+- an instantiation uses a default argument or default template argument that had not been defined at the point of definition
+- a [constant expression](/docs/cpp/language/expressions/constant_expression) at the point of instantiation uses the value of a const object of integral or unscoped enum type<InlineRevision since="C++11">, the value of a constexpr object, the value of a reference, or the definition of a constexpr function</InlineRevision>, and that object<InlineRevision since="C++11">/reference/function</InlineRevision> was not defined at the point of definition
+- the template uses a non-dependent class template specialization<InlineRevision since="C++14"> or variable template specialization</InlineRevision> at the point of instantiation, and this template it uses is either instantiated from a partial specialization that was not defined at the point of definition or names an explicit specialization that was not declared at the point of definition
+
+{/* source:cpp-language-dependent-name:0009 */}
+Binding of dependent names is postponed until lookup takes place.
+
+## Lookup rules
+
+{/* source:cpp-language-dependent-name:0010 */}
+The [lookup](/docs/cpp/language/basic_concepts/lookup) of a dependent name used in a template is postponed until the template arguments are known, at which time
+
+{/* source:cpp-language-dependent-name:0011 */}
+- non-ADL lookup examines function declarations with external linkage that are visible from the template definition context
+- [ADL](/docs/cpp/language/functions/adl) examines function declarations with external linkage that are visible from either the template definition context or the template instantiation context
+
+{/* source:cpp-language-dependent-name:0012 */}
+(in other words, adding a new function declaration after template definition does not make it visible, except via ADL).
+
+{/* source:cpp-language-dependent-name:0013 */}
+The purpose of this rule is to help guard against violations of the [ODR](/docs/cpp/language/basic_concepts/definition#One_Definition_Rule) for template instantiations:
+
+{/* source:cpp-language-dependent-name:0014 */}
+```cpp
+// an external library
+namespace E
+{
+    template<typename T>
+    void writeObject(const T& t)
+    {
+        std::cout << "Value = " << t << '\n';
+    }
+}
+
+// translation unit 1:
+// Programmer 1 wants to allow E::writeObject to work with vector<int>
+namespace P1
+{
+    std::ostream& operator<<(std::ostream& os, const std::vector<int>& v)
+    {
+        for (int n : v)
+            os << n << ' ';
+        return os;
+    }
+
+    void doSomething()
+    {
+        std::vector<int> v;
+        E::writeObject(v); // Error: will not find P1::operator<<
+    }
+}
+
+// translation unit 2:
+// Programmer 2 wants to allow E::writeObject to work with vector<int>
+namespace P2
+{
+    std::ostream& operator<<(std::ostream& os, const std::vector<int>& v)
+    {
+        for (int n : v)
+            os << n << ':';
+        return os << "[]";
+    }
+
+    void doSomethingElse()
+    {
+        std::vector<int> v;
+        E::writeObject(v); // Error: will not find P2::operator<<
+    }
+}
+```
+
+{/* source:cpp-language-dependent-name:0015 */}
+In the above example, if non-ADL lookup for `operator<<` were allowed from the instantiation context, the instantiation of `E::writeObject<vector<int>>` would have two different definitions: one using `P1::operator<<` and one using `P2::operator<<`. Such ODR violation may not be detected by the linker, leading to one or the other being used in both instances.
+
+{/* source:cpp-language-dependent-name:0016 */}
+To make ADL examine a user-defined namespace, either [`std::vector`](/docs/cpp/library/container/vector) should be replaced by a user-defined class or its element type should be a user-defined class:
+
+{/* source:cpp-language-dependent-name:0017 */}
+```cpp
+namespace P1
+{
+    // if C is a class defined in the P1 namespace
+    std::ostream& operator<<(std::ostream& os, const std::vector<C>& v)
+    {
+        for (C n : v)
+            os << n;
+        return os;
+    }
+
+    void doSomething()
+    {
+        std::vector<C> v;
+        E::writeObject(v); // OK: instantiates writeObject(std::vector<P1::C>)
+                           //     which finds P1::operator<< via ADL
+    }
+}
+```
+
+{/* source:cpp-language-dependent-name:0018 */}
+Note: this rule makes it impractical to overload operators for standard library types:
+
+{/* source:cpp-language-dependent-name:0019 */}
+```cpp
+#include <iostream>
+#include <iterator>
+#include <utility>
+#include <vector>
+
+// Bad idea: operator in global namespace, but its arguments are in std::
+std::ostream& operator<<(std::ostream& os, std::pair<int, double> p)
+{
+    return os << p.first << ',' << p.second;
+}
+
+int main()
+{
+    typedef std::pair<int, double> elem_t;
+    std::vector<elem_t> v(10);
+    std::cout << v[0] << '\n'; // OK, ordinary lookup finds ::operator<<
+    std::copy(v.begin(), v.end(),
+              std::ostream_iterator<elem_t>(std::cout, " "));
+    // Error: both ordinary lookup from the point of definition of
+    // std::ostream_iterator and ADL will only consider the std namespace,
+    // and will find many overloads of std::operator<<, so the lookup will be done.
+    // Overload resolution will then fail to find operator<< for elem_t
+    // in the set found by the lookup.
+}
+```
+
+{/* source:cpp-language-dependent-name:0020 */}
+Note: limited lookup (but not binding) of dependent names also takes place at template definition time, as needed to distinguish them from non-dependent names and also to determine whether they are members of the current instantiation or members of unknown specialization. The information obtained by this lookup can be used to detect errors, see below.
+
+## Dependent types
+
+{/* source:cpp-language-dependent-name:0021 */}
+The following types are dependent types:
+
+{/* source:cpp-language-dependent-name:0022 */}
+- template parameter
+- a member of an unknown specialization (see below)
+- a nested class/enum that is a dependent member of unknown specialization (see below)
+- a cv-qualified version of a dependent type
+- a compound type constructed from a dependent type
+- an array type whose element type is dependent or whose bound (if any) is value-dependent
+
+{/* source:cpp-language-dependent-name:0023 */}
+<Revision since="C++11">
+- a function type whose parameters include one or more function [parameter packs](/docs/cpp/language/templates/parameter_pack)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0024 */}
+- a function type whose exception specification is value-dependent
+- a [template-id](/docs/cpp/language/templates#template-id) where either
+
+{/* source:cpp-language-dependent-name:0025 */}
+  - the template name is a template parameter, or
+  - any of template arguments is type-dependent, or value-dependent, <InlineRevision since="C++11">, or is a pack expansion</InlineRevision> (even if the template-id is used without its argument list, as [injected-class-name](/docs/cpp/language/classes/injected-class-name))
+
+{/* source:cpp-language-dependent-name:0026 */}
+<Revision since="C++11">
+- the result of [`decltype`](/docs/cpp/language/declarations/decltype) applied to a type-dependent expression
+
+The result of decltype applied to a type-dependent expression is a unique dependent type. Two such results refer to the same type only if their expressions are [equivalent](/docs/cpp/language/templates/function_template#Function_template_overloading).
+</Revision>
+
+{/* source:cpp-language-dependent-name:0027 */}
+<Revision since="C++26">
+- the [pack indexing specifier](/docs/cpp/language/templates/pack_indexing#Pack_indexing_specifier) applied to a type-dependent constant expression
+
+The pack indexing specifier applied to a type-dependent constant expression is a unique dependent type. Two such pack indexing specifiers refer to the same type only if their constant expressions are equivalent. Otherwise, two such pack indexing specifiers refer to the same type only if their indices have the same value.
+</Revision>
+
+{/* source:cpp-language-dependent-name:0028 */}
+Note: a typedef member of a current instantiation is only dependent when the type it refers to is.
+
+## Type-dependent expressions
+
+{/* source:cpp-language-dependent-name:0029 */}
+The following expressions are type-dependent:
+
+{/* source:cpp-language-dependent-name:0030 */}
+- an expression whose any subexpression is a type-dependent expression
+- `this`, if the class is a dependent type.
+- an [identifier expression](/docs/cpp/language/basic_concepts/name) that <InlineRevision since="C++20">is not a [concept-id](/docs/cpp/language/templates/constraints) and</InlineRevision>
+
+{/* source:cpp-language-dependent-name:0031 */}
+  - contains an identifier for which name lookup finds at least one dependent declaration
+  - contains a dependent [template-id](/docs/cpp/language/templates#template-id)
+
+{/* source:cpp-language-dependent-name:0032 */}
+<Revision since="C++11">
+  - contains the special identifier `__func__` (if some enclosing function is a template, a non-template member of a class template<InlineRevision since="C++14">, or a generic lambda</InlineRevision>)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0033 */}
+  - contains the name of [conversion function](/docs/cpp/language/expressions/cast_operator) to a dependent type
+  - contains a nested name specifier or [qualified-id](/docs/cpp/language/basic_concepts/name) that is a member of unknown specialization
+  - names a dependent member of the current instantiation which is a static data member of type "array of unknown bound"
+
+{/* source:cpp-language-dependent-name:0034 */}
+<Revision since="C++14">
+  - contains an identifier for which name lookup finds one or more declarations of member functions of the current instantiation declared with [return type deduction](/docs/cpp/language/functions/function#Return_type_deduction)
+</Revision>
+
+<Revision since="C++17">
+  - contains an identifier for which name lookup finds a [structured binding declaration](/docs/cpp/language/declarations/structured_binding) whose initializer is type-dependent
+  - contains an identifier for which name lookup finds a non-type template parameter whose type contains the placeholder `auto`
+  - contains an identifier for which by name lookup finds a variable declared with a type that contains a placeholder type (e.g., `auto` static data member), where the initializer is type-dependent,
+</Revision>
+
+<Revision since="C++26">
+  - contains an identifier for which name lookup finds a [pack](/docs/cpp/language/templates/parameter_pack)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0035 */}
+- any cast expression to a dependent type
+- [new expression](/docs/cpp/language/expressions/new) that creates an object of a dependent type
+- member access expression that refers to a member of the current instantiation whose type is dependent
+- member access expression that refers to a member of unknown specialization
+
+{/* source:cpp-language-dependent-name:0036 */}
+<Revision since="C++17">
+- [fold expression](/docs/cpp/language/templates/fold)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0037 */}
+<Revision since="C++26">
+- [pack indexing expression](/docs/cpp/language/templates/pack_indexing#Pack_indexing_expression) if its identifier expression is a type-dependent expression
+</Revision>
+
+{/* source:cpp-language-dependent-name:0038 */}
+The following expressions are never type-dependent because the types of these expressions cannot be:
+
+{/* source:cpp-language-dependent-name:0039 */}
+- [literals](/docs/cpp/language/expressions#Literals)
+- pseudo-destructor calls
+- [`sizeof`](/docs/cpp/language/expressions/sizeof)
+
+{/* source:cpp-language-dependent-name:0040 */}
+<Revision since="C++11">
+- [`sizeof...`](/docs/cpp/language/templates/sizeof...)
+- [`alignof`](/docs/cpp/language/expressions/alignof)
+- [`noexcept`](/docs/cpp/language/exceptions/noexcept)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0041 */}
+- [`throw`](/docs/cpp/language/exceptions/throw)
+- [`typeid`](/docs/cpp/language/expressions/typeid)
+- [`delete`](/docs/cpp/language/expressions/delete)
+
+{/* source:cpp-language-dependent-name:0042 */}
+<Revision since="C++20">
+- [`requires`](/docs/cpp/language/templates/requires)
+</Revision>
+
+## Value-dependent expressions
+
+{/* source:cpp-language-dependent-name:0043 */}
+The following expressions are value-dependent:
+
+{/* source:cpp-language-dependent-name:0044 */}
+- an expression used in context where [constant expression](/docs/cpp/language/expressions/constant_expression) is required, and whose any subexpression is value-dependent
+- an [identifier expression](/docs/cpp/language/basic_concepts/name) that satisfies any of the following conditions:
+
+{/* source:cpp-language-dependent-name:0045 */}
+<Revision since="C++20">
+  - It is a [concept-id](/docs/cpp/language/templates/constraints) and any of its arguments are dependent.
+</Revision>
+
+{/* source:cpp-language-dependent-name:0046 */}
+  - It is type-dependent.
+  - It is a name of a non-type template parameter.
+  - It names a static data member that is a dependent member of the current instantiation and is not initialized.
+  - It names a static member function that is a dependent member of the current instantiation.
+  - It is a constant with a <InlineRevision until="C++11">integer or enumeration</InlineRevision><InlineRevision since="C++11">literal</InlineRevision> type, initialized from a value-dependent expression.
+
+{/* source:cpp-language-dependent-name:0047 */}
+- the following expressions where the operand is a type-dependent expression:
+
+{/* source:cpp-language-dependent-name:0048 */}
+  - [`sizeof`](/docs/cpp/language/expressions/sizeof)
+  - [`typeid`](/docs/cpp/language/expressions/typeid)
+
+{/* source:cpp-language-dependent-name:0049 */}
+<Revision since="C++11">
+  - [`alignof`](/docs/cpp/language/expressions/alignof)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0050 */}
+- the following expressions where the operand is a dependent type-id:
+
+{/* source:cpp-language-dependent-name:0051 */}
+  - [`sizeof`](/docs/cpp/language/expressions/sizeof)
+  - [`typeid`](/docs/cpp/language/expressions/typeid)
+
+{/* source:cpp-language-dependent-name:0052 */}
+- the following expressions where the target type is dependent or the operand is a type-dependent expression:
+
+{/* source:cpp-language-dependent-name:0053 */}
+  - [C-style cast](/docs/cpp/language/expressions/explicit_cast)
+  - [`static_cast`](/docs/cpp/language/expressions/static_cast)
+  - [`const_cast`](/docs/cpp/language/expressions/const_cast)
+  - [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast)
+  - [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)
+
+{/* source:cpp-language-dependent-name:0054 */}
+- [function-style cast](/docs/cpp/language/expressions/explicit_cast) expression where the target type is dependent or a value-dependent expression is enclosed by parentheses <InlineRevision since="C++11">or braces</InlineRevision>
+
+{/* source:cpp-language-dependent-name:0055 */}
+<Revision since="C++11">
+- [`sizeof...`](/docs/cpp/language/templates/sizeof...) expression <InlineRevision since="C++26">where the operand is not a [structured binding pack](/docs/cpp/language/declarations/structured_binding)</InlineRevision>
+</Revision>
+
+<Revision since="C++17">
+- [fold expression](/docs/cpp/language/templates/fold)
+</Revision>
+
+{/* source:cpp-language-dependent-name:0056 */}
+- address-of expression where the argument is a [qualified identifier](/docs/cpp/language/basic_concepts/name) that names a dependent member of the current instantiation
+- address-of expression where the argument is any expression which, evaluated as a core constant expression, refers to a [templated entity](/docs/cpp/language/templates#Templated_entity) that is an object with static<InlineRevision since="C++11"> or thread storage</InlineRevision> duration or a member function.
+
+## Dependent names
+
+{/* source:cpp-language-dependent-name:0057 */}
+This section is incomplete
+
+Reason: the lede from [temp.dep], which is missing (identifier expression followed by parenthesized list...
+
+{/* source:cpp-language-dependent-name:0058 */}
+This section is incomplete
+
+Reason: reword to maybe make it more clear (or at least less intimidating), and while at it, apply [CWG issue 591](https://cplusplus.github.io/CWG/issues/591.html)
+
+## Current instantiation
+
+{/* source:cpp-language-dependent-name:0059 */}
+Within a class template definition (including its member functions and nested classes) some names may be deduced to refer to the current instantiation. This allows certain errors to be detected at the point of definition, rather than instantiation, and removes the requirement on the `typename` and `template` disambiguators for dependent names, see below.
+
+{/* source:cpp-language-dependent-name:0060 */}
+Only the following names can refer to the current instantiation:
+
+{/* source:cpp-language-dependent-name:0061 */}
+- in the definition of a class template, a nested class of a class template, a member of a class template, or a member of a nested class of a class template:
+  - the injected-class-name of the class template or nested class
+- in the definition of a primary class template or a member of a primary class template:
+  - the name of the class template followed by template argument list (or an equivalent alias template specialization) for the primary template where each argument is equivalent (defined below) to its corresponding parameter.
+- in the definition of a nested class of a class template:
+  - the name of the nested class used as a member of the current instantiation
+- in the definition of a class template partial specialization or a member of a class template partial specialization:
+  - the name of the class template followed by template argument list for the partial specialization, where each argument is equivalent to its corresponding parameter
+- in the definition of a [templated function](/docs/cpp/language/templates#Templated_entity):
+  - the name of a [local class](/docs/cpp/language/classes/class#Local_classes)
+
+{/* source:cpp-language-dependent-name:0062 */}
+A template argument is equivalent to a template parameter if
+
+{/* source:cpp-language-dependent-name:0063 */}
+- for a [type parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter), the template argument denotes the same type as the template parameter.
+- for a [non-type parameter](/docs/cpp/language/templates/template_parameters#Non-type_template_parameter), the template argument is an [identifier](/docs/cpp/language/basic_concepts/name) that names a variable that is equivalent to the template parameter. A variable is equivalent to a template parameter if
+
+{/* source:cpp-language-dependent-name:0064 */}
+  - it has the same type as the template parameter (ignoring cv-qualification) and its initializer consists of a single identifier that names the template parameter or, recursively, such a variable.
+
+{/* source:cpp-language-dependent-name:0065 */}
+```cpp
+template<class T>
+class A
+{
+    A* p1;      // A is the current instantiation
+    A<T>* p2;   // A<T> is the current instantiation
+    ::A<T>* p4; // ::A<T> is the current instantiation
+    A<T*> p3;   // A<T*> is not the current instantiation
+
+    class B
+    {
+        B* p1;                 // B is the current instantiation
+        A<T>::B* p2;           // A<T>::B is the current instantiation
+        typename A<T*>::B* p3; // A<T*>::B is not the current instantiation
+    };
+};
+
+template<class T>
+class A<T*>
+{
+    A<T*>* p1; // A<T*> is the current instantiation
+    A<T>* p2;  // A<T> is not the current instantiation
+};
+
+template<int I>
+struct B
+{
+    static const int my_I = I;
+    static const int my_I2 = I + 0;
+    static const int my_I3 = my_I;
+    static const long my_I4 = I;
+    static const int my_I5 = (I);
+
+    B<my_I>* b1;  // B<my_I> is the current instantiation:
+                  //   my_I has the same type as I,
+                  //   and it is initialized with only I
+    B<my_I2>* b2; // B<my_I2> is not the current instantiation:
+                  //   I + 0 is not a single identifier
+    B<my_I3>* b3; // B<my_I3> is the current instantiation:
+                  //   my_I3 has the same type as I,
+                  //   and it is initialized with only my_I (which is equivalent to I)
+    B<my_I4>* b4; // B<my_I4> is not the current instantiation:
+                  //   the type of my_I4 (long) is not the same as the type of I (int)
+    B<my_I5>* b5; // B<my_I5> is not the current instantiation:
+                  //   (I) is not a single identifier
+};
+```
+
+{/* source:cpp-language-dependent-name:0066 */}
+Note that a base class can be the current instantiation if a nested class derives from its enclosing class template. Base classes that are dependent types but are not the current instantiation are dependent base classes:
+
+{/* source:cpp-language-dependent-name:0067 */}
+```cpp
+template<class T>
+struct A
+{
+    typedef int M;
+
+    struct B
+    {
+        typedef void M;
+
+        struct C;
+    };
+};
+
+template<class T>
+struct A<T>::B::C : A<T>
+{
+    M m; // OK, A<T>::M
+};
+```
+
+{/* source:cpp-language-dependent-name:0068 */}
+A name is classified as a member of the current instantiation if it is
+
+{/* source:cpp-language-dependent-name:0069 */}
+- an unqualified name that is found by [unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) in the current instantiation or in its non-dependent base.
+- [qualified name](/docs/cpp/language/basic_concepts/qualified_lookup), if the qualifier (the name to the left of `::`) names the current instantiation and lookup finds the name in the current instantiation or in its non-dependent base
+- a name used in a class member access expression (`y` in `x.y` or `xp->y`), where the object expression (`x` or `*xp`) is the current instantiation and lookup finds the name in the current instantiation or in its non-dependent base
+
+{/* source:cpp-language-dependent-name:0070 */}
+```cpp
+template<class T>
+class A
+{
+    static const int i = 5;
+
+    int n1[i];       // i refers to a member of the current instantiation
+    int n2[A::i];    // A::i refers to a member of the current instantiation
+    int n3[A<T>::i]; // A<T>::i refers to a member of the current instantiation
+
+    int f();
+};
+
+template<class T>
+int A<T>::f()
+{
+    return i; // i refers to a member of the current instantiation
+}
+```
+
+{/* source:cpp-language-dependent-name:0071 */}
+Members of the current instantiation may be both dependent and non-dependent.
+
+{/* source:cpp-language-dependent-name:0072 */}
+If the lookup of a member of current instantiation gives a different result between the point of instantiation and the point of definition, the lookup is ambiguous. Note however that when a member name is used, it is not automatically converted to a class member access expression, only explicit member access expressions indicate members of current instantiation:
+
+{/* source:cpp-language-dependent-name:0073 */}
+```cpp
+struct A { int m; };
+struct B { int m; };
+
+template<typename T>
+struct C : A, T
+{
+    int f() { return this->m; } // finds A::m in the template definition context
+    int g() { return m; }       // finds A::m in the template definition context
+};
+
+template int C<B>::f(); // error: finds both A::m and B::m
+
+template int C<B>::g(); // OK: transformation to class member access syntax
+                        // does not occur in the template definition context
+```
+
+## Unknown specializations
+
+{/* source:cpp-language-dependent-name:0074 */}
+Within a template definition, certain names are deduced to belong to an unknown specialization, in particular,
+
+{/* source:cpp-language-dependent-name:0075 */}
+- a [qualified name](/docs/cpp/language/basic_concepts/qualified_lookup), if any name that appears to the left of `::` is a dependent type that is not a member of the current instantiation
+- a [qualified name](/docs/cpp/language/basic_concepts/qualified_lookup), whose qualifier is the current instantiation, and the name is not found in the current instantiation or any of its non-dependent base classes, and there is a dependent base class
+- a name of a member in a class member access expression (the `y` in `x.y` or `xp->y`), if the type of the object expression (`x` or `*xp`) is a dependent type and is not the current instantiation
+- a name of a member in a class member access expression (the `y` in `x.y` or `xp->y`), if the type of the object expression (`x` or `*xp`) is the current instantiation, and the name is not found in the current instantiation or any of its non-dependent base classes, and there is a dependent base class
+
+{/* source:cpp-language-dependent-name:0076 */}
+```cpp
+template<typename T>
+struct Base {};
+
+template<typename T>
+struct Derived : Base<T>
+{
+    void f()
+    {
+        // Derived<T> refers to current instantiation
+        // there is no “unknown_type” in the current instantiation
+        // but there is a dependent base (Base<T>)
+        // Therefore, “unknown_type” is a member of unknown specialization
+        typename Derived<T>::unknown_type z;
+    }
+};
+
+template<>
+struct Base<int> // this specialization provides it
+{
+    typedef int unknown_type;
+};
+```
+
+{/* source:cpp-language-dependent-name:0077 */}
+This classification allows the following errors to be detected at the point of template definition (rather than instantiation):
+
+{/* source:cpp-language-dependent-name:0078 */}
+- If any template definition has a [qualified name](/docs/cpp/language/basic_concepts/qualified_lookup) in which the qualifier refers to the current instantiation and the name is neither a member of current instantiation nor a member of unknown specialization, the program is ill-formed (no diagnostic required) even if the template is never instantiated.
+
+{/* source:cpp-language-dependent-name:0079 */}
+```cpp
+template<class T>
+class A
+{
+    typedef int type;
+
+    void f()
+    {
+        A<T>::type i; // OK: “type” is a member of the current instantiation
+        typename A<T>::other j; // Error:
+
+        // “other” is not a member of the current instantiation
+        // and it is not a member of an unknown specialization
+        // because A<T> (which names the current instantiation),
+        // has no dependent bases for “other” to hide in.
+    }
+};
+```
+
+{/* source:cpp-language-dependent-name:0080 */}
+- If any template definition has a member access expression where the object expression is the current instantiation, but the name is neither a member of current instantiation nor a member of unknown specialization, the program is ill-formed even if the template is never instantiated.
+
+{/* source:cpp-language-dependent-name:0081 */}
+Members of unknown specialization are always dependent, and are looked up and bound at the point of instantiation as all dependent names (see above)
+
+## The typename disambiguator for dependent names
+
+{/* source:cpp-language-dependent-name:0082 */}
+In a declaration or a definition of a template, including alias template, a name that is not a member of the current instantiation and is dependent on a template parameter is not considered to be a type unless the keyword `typename` is used or unless it was already established as a type name, e.g. with a typedef declaration or by being used to name a base class.
+
+{/* source:cpp-language-dependent-name:0083 */}
+```cpp
+#include <iostream>
+#include <vector>
+
+int p = 1;
+
+template<typename T>
+void foo(const std::vector<T> &v)
+{
+    // std::vector<T>::const_iterator is a dependent name,
+    typename std::vector<T>::const_iterator it = v.begin();
+
+    // without “typename”, the following is parsed as multiplication
+    // of the type-dependent data member “const_iterator”
+    // and some variable “p”. Since there is a global “p” visible
+    // at this point, this template definition compiles.
+    std::vector<T>::const_iterator* p;
+
+    typedef typename std::vector<T>::const_iterator iter_t;
+    iter_t * p2; // “iter_t” is a dependent name, but it is known to be a type name
+}
+
+template<typename T>
+struct S
+{
+    typedef int value_t; // member of current instantiation
+
+    void f()
+    {
+        S<T>::value_t n{}; // S<T> is dependent, but “typename” not needed
+        std::cout << n << '\n';
+    }
+};
+
+int main()
+{
+    std::vector<int> v;
+    foo(v); // template instantiation fails: there is no member variable
+            // called “const_iterator” in the type std::vector<int>
+    S<int>().f();
+}
+```
+
+{/* source:cpp-language-dependent-name:0084 */}
+The keyword `typename` may only be used in this way before qualified names (e.g. `T::x`), but the names need not be dependent.
+
+{/* source:cpp-language-dependent-name:0085 */}
+Usual [qualified name lookup](/docs/cpp/language/basic_concepts/qualified_lookup) is used for the identifier prefixed by `typename`. Unlike the case with [elaborated type specifier](/docs/cpp/language/declarations/elaborated_type_specifier), the lookup rules do not change despite the qualifier:
+
+{/* source:cpp-language-dependent-name:0086 */}
+```cpp
+struct A // A has a nested variable X and a nested type struct X
+{
+    struct X {};
+    int X;
+};
+
+struct B
+{
+    struct X {}; // B has a nested type struct X
+};
+
+template<class T>
+void f(T t)
+{
+    typename T::X x;
+}
+
+void foo()
+{
+    A a;
+    B b;
+    f(b); // OK: instantiates f<B>, T::X refers to B::X
+    f(a); // error: cannot instantiate f<A>:
+          // because qualified name lookup for A::X finds the data member
+}
+```
+
+{/* source:cpp-language-dependent-name:0087 */}
+The keyword `typename` can be used even outside of templates.
+
+{/* source:cpp-language-dependent-name:0088 */}
+```cpp
+#include <vector>
+
+int main()
+{
+    // Both OK (after resolving CWG 382)
+    typedef typename std::vector<int>::const_iterator iter_t;
+    typename std::vector<int> v;
+}
+```
+
+{/* source:cpp-language-dependent-name:0089 */}
+<Revision since="C++20">
+In some contexts, only type names can validly appear. In these contexts, a dependent qualified name is assumed to name a type and no `typename` is required:
+
+- A qualified name that is used as a [declaration specifier](/docs/cpp/language/declarations#Specifiers) in the (top-level) decl-specifier-seq of:
+  - a [simple declaration](/docs/cpp/language/declarations#Simple_declaration) or [function definition](/docs/cpp/language/functions/function#Function_definition) at namespace scope;
+  - a [class member declaration](/docs/cpp/language/classes/class#Member_specification);
+  - a [parameter declaration](/docs/cpp/language/functions/function#Parameter_list) in a [class member declaration](/docs/cpp/language/classes/class#Member_specification) (including friend function declarations), outside of default arguments;
+  - a [parameter declaration](/docs/cpp/language/functions/function#Parameter_list) of a [declarator for a function or function template](/docs/cpp/language/functions/function) whose name is qualified, outside of default arguments;
+  - a [parameter declaration](/docs/cpp/language/functions/function#Parameter_list) of a [lambda expression](/docs/cpp/language/functions/lambda) outside of default arguments;
+  - a parameter declaration of a [requires expression](/docs/cpp/language/templates/constraints#Requires_expressions);
+  - the type in the declaration of a [non-type template parameter](/docs/cpp/language/templates/template_parameters#Non-type_template_parameter);
+- A qualified name that appears in [type-id](/docs/cpp/language/basic_concepts/type-id#Type_naming), where the smallest enclosing type-id is:
+  - the type in a [new expression](/docs/cpp/language/expressions/new) that does not parenthesize its type;
+  - the type-id in an [alias declaration](/docs/cpp/language/declarations/type_alias);
+  - a [trailing return type](/docs/cpp/language/functions/function),
+  - a [default argument of a type template parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter), or
+  - the type-id of a [`static_cast`](/docs/cpp/language/expressions/static_cast), [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast), [`const_cast`](/docs/cpp/language/expressions/const_cast), or [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast).
+</Revision>
+
+## The template disambiguator for dependent names
+
+{/* source:cpp-language-dependent-name:0090 */}
+Similarly, in a template definition, a dependent name that is not a member of the current instantiation is not considered to be a template name unless the disambiguation keyword `template` is used or unless it was already established as a template name:
+
+{/* source:cpp-language-dependent-name:0091 */}
+```cpp
+template<typename T>
+struct S
+{
+    template<typename U>
+    void foo() {}
+};
+
+template<typename T>
+void bar()
+{
+    S<T> s;
+    s.foo<T>();          // error: < parsed as less than operator
+    s.template foo<T>(); // OK
+}
+```
+
+{/* source:cpp-language-dependent-name:0092 */}
+The keyword `template` may only be used in this way after operators `::` (scope resolution), `->` (member access through pointer), and `.` (member access), the following are all valid examples:
+
+{/* source:cpp-language-dependent-name:0093 */}
+- `T::template foo<X>();`
+- `s.template foo<X>();`
+- `this->template foo<X>();`
+- `typename T::template iterator<int>::value_type v;`
+
+{/* source:cpp-language-dependent-name:0094 */}
+As is the case with `typename`, the `template` prefix is allowed even if the name is not dependent or the use does not appear in the scope of a template.
+
+{/* source:cpp-language-dependent-name:0095 */}
+Even if the name to the left of `::` refers to a namespace, the template disambiguator is allowed:
+
+{/* source:cpp-language-dependent-name:0096 */}
+```cpp
+template<typename>
+struct S {};
+
+::template S<void> q; // allowed, but unnecessary
+```
+
+{/* source:cpp-language-dependent-name:0097 */}
+<Revision until="C++23">
+Due to the special rules for [unqualified name lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) for template names in member access expressions, when a non-dependent template name appears in a member access expression (after `->` or after `.`), the disambiguator is unnecessary if there is a <InlineRevision since="C++11">class or alias</InlineRevision> template with the same name found by ordinary lookup in the context of the expression. <InlineRevision until="C++11">However, if the template found by lookup in the context of the expression differs from the one found in the context of the class, the program is ill-formed</InlineRevision>
+
+```cpp
+template<int>
+struct A { int value; };
+
+template<class T>
+void f(T t)
+{
+    t.A<0>::value; // Ordinary lookup of A finds a class template.
+                   // A<0>::value names member of class A<0>
+    // t.A < 0;    // Error: “<” is treated as the start of template argument list
+}
+```
+</Revision>
+
+## Keywords
+
+{/* source:cpp-language-dependent-name:0098 */}
+[`template`](/docs/cpp/language/keywords/template), [`typename`](/docs/cpp/language/keywords/typename)
+
+## Defect reports
+
+{/* source:cpp-language-dependent-name:0099 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-dependent-name:0100 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={206} standard="C++98">
+    <PublishedBehavior>it was unspecified at what point semantic constraints are applied when a type used in a non-dependent name is incomplete at the point at which a template is defined but is complete at the point at which an instantiation is performed</PublishedBehavior>
+    <CorrectedBehavior>the program is ill-formed and no diagnostic is required in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={224} standard="C++98">
+    <PublishedBehavior>the definition of dependent types was based on the form of the name rather than lookup</PublishedBehavior>
+    <CorrectedBehavior>definition revamped</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={382} standard="C++98">
+    <PublishedBehavior>the typename disambiguator was only allowed in template scope</PublishedBehavior>
+    <CorrectedBehavior>also allowed outside of templates</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={468} standard="C++98">
+    <PublishedBehavior>the template disambiguator was only allowed in template scope</PublishedBehavior>
+    <CorrectedBehavior>also allowed outside of templates</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={502} standard="C++98">
+    <PublishedBehavior>it was unspecified whether nested enumerations are dependent</PublishedBehavior>
+    <CorrectedBehavior>dependent as nested classes</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1047} standard="C++98">
+    <PublishedBehavior>`typeid` expressions were never value-dependent</PublishedBehavior>
+    <CorrectedBehavior>value-dependent if the operand is type-dependent</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1160} standard="C++98">
+    <PublishedBehavior>it was unspecified whether a name refers to the current instantiation when a template-id matching a primary template or partial specialization appears in the definition of a member of the template</PublishedBehavior>
+    <CorrectedBehavior>specified</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1413} standard="C++98">
+    <PublishedBehavior>uninitialized static data member, static member function, and address of member of a class template were not listed as value-dependent</PublishedBehavior>
+    <CorrectedBehavior>listed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1471} standard="C++98">
+    <PublishedBehavior>a nested type of a non-dependent base of the current instantiation was dependent</PublishedBehavior>
+    <CorrectedBehavior>it is not dependent</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1850} standard="C++98">
+    <PublishedBehavior>the list of cases that meaning may change between the definition context and the point of instantiation was incomplete</PublishedBehavior>
+    <CorrectedBehavior>made complete</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1929} standard="C++98">
+    <PublishedBehavior>it was not clear whether the template disambiguator can follow a `::` where the name to its left refers to a namespace</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2066} standard="C++98">
+    <PublishedBehavior>`this` was never value-dependent</PublishedBehavior>
+    <CorrectedBehavior>it may be value-dependent</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2100} standard="C++98">
+    <PublishedBehavior>address of a static data member of class template was not listed as value-dependent</PublishedBehavior>
+    <CorrectedBehavior>listed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2109} standard="C++98">
+    <PublishedBehavior>type-dependent identifier expressions might not be value-dependent</PublishedBehavior>
+    <CorrectedBehavior>they are always value-dependent</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2276} standard="C++98">
+    <PublishedBehavior>a function type whose exception specification is value-dependent was not a dependent type</PublishedBehavior>
+    <CorrectedBehavior>it is</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2307} standard="C++98">
+    <PublishedBehavior>a parenthesized non-type template parameter used as a template argument was equivalent to that template parameter</PublishedBehavior>
+    <CorrectedBehavior>not equivalent anymore</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2457} standard="C++11">
+    <PublishedBehavior>a function type with function parameter pack was not a dependent type</PublishedBehavior>
+    <CorrectedBehavior>it is</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2785} standard="C++20">
+    <PublishedBehavior>`requires` expressions might be type-dependent</PublishedBehavior>
+    <CorrectedBehavior>they are never type-dependent</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2905} standard="C++11">
+    <PublishedBehavior>a `noexcept` expression was only value-dependent if its operand is value-dependent</PublishedBehavior>
+    <CorrectedBehavior>it is value-dependent if its operand involves a template parameter</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2936} standard="C++98">
+    <PublishedBehavior>the names of local classes of templated functions were not part of the current instantiation</PublishedBehavior>
+    <CorrectedBehavior>they are</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

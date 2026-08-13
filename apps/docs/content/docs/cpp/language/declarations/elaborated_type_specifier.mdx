@@ -1,0 +1,168 @@
+---
+title: "Elaborated type specifier"
+description: "Elaborated type specifiers may be used to refer to a previously-declared class name (class, struct, or union) or to a previously-declared enum name even if the name was hidden by a non-type declaration."
+source_url: "https://en.cppreference.com/w/cpp/language/elaborated_type_specifier"
+language: "C++"
+---
+
+{/* source:cpp-language-elaborated-type-specifier:0000 */}
+Elaborated type specifiers may be used to refer to a previously-declared class name (class, struct, or union) or to a previously-declared enum name even if the name was [hidden by a non-type declaration](/docs/cpp/language/basic_concepts/lookup). They may also be used to declare new class names.
+
+## Syntax
+
+{/* source:cpp-language-elaborated-type-specifier:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="class-key class-name" />
+  <Declaration id="2" language="cpp" grammar code="enum enum-name" />
+  <Declaration id="3" language="cpp" grammar code="class-key attr (optional) identifier ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-elaborated-type-specifier:0002 */}
+<ParameterList>
+  <Parameter name="class-key">one of [class](/docs/cpp/language/keywords/class), [struct](/docs/cpp/language/keywords/struct), [union](/docs/cpp/language/keywords/union)</Parameter>
+  <Parameter name="class-name">the name of a previously-declared class type, optionally [qualified](/docs/cpp/language/basic_concepts/name#Qualified_identifiers), or an identifier not previously declared as a type name</Parameter>
+  <Parameter name="enum-name">the name of a previously-declared enumeration type, optionally [qualified](/docs/cpp/language/basic_concepts/name#Qualified_identifiers)</Parameter>
+  <Parameter name="attr"><InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes)</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-elaborated-type-specifier:0003 */}
+1. Elaborated type specifier for a class type.
+
+{/* source:cpp-language-elaborated-type-specifier:0004 */}
+2. Elaborated type specifier for an enumeration type.
+
+{/* source:cpp-language-elaborated-type-specifier:0005 */}
+3. A declaration that consists solely of an elaborated type specifier always declares a class type named by identifier in the [scope](/docs/cpp/language/basic_concepts/scope) that contains the declaration.
+
+{/* source:cpp-language-elaborated-type-specifier:0006 */}
+[Opaque enum declaration](/docs/cpp/language/declarations/enum) resembles form (3), but the enum type is a complete type after an opaque enum declaration.
+
+## Explanation
+
+{/* source:cpp-language-elaborated-type-specifier:0007 */}
+Form (3) is a special case of elaborated type specifier, usually referred to as *forward declaration* of classes, for the description of form (3), see [Forward declaration](/docs/cpp/language/classes/class#Forward_declaration). The following only apply to form (1) and (2).
+
+{/* source:cpp-language-elaborated-type-specifier:0008 */}
+The class-name or enum-name in the elaborated type specifier may either be a simple identifier or be a [qualified-id](/docs/cpp/language/basic_concepts/name#Qualified_identifiers). The name is looked up using [unqualified name lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified name lookup](/docs/cpp/language/basic_concepts/qualified_lookup), depending on their appearance. But in either case, non-type names are not considered.
+
+{/* source:cpp-language-elaborated-type-specifier:0009 */}
+```cpp
+class T
+{
+public:
+    class U;
+private:
+    int U;
+};
+
+int main()
+{
+    int T;
+    T t; // error: the local variable T is found
+    class T t; // OK: finds ::T, the local variable T is ignored
+    T::U* u; // error: lookup of T::U finds the private data member
+    class T::U* u; // OK: the data member is ignored
+}
+```
+
+{/* source:cpp-language-elaborated-type-specifier:0010 */}
+If the name lookup does not find a previously declared type name, the elaborated-type-specifier is introduced by `class`, `struct`, or `union` (i.e. not by `enum`), and class-name is an unqualified identifier, then the elaborated-type-specifier is a class declaration of the class-name.
+
+{/* source:cpp-language-elaborated-type-specifier:0011 */}
+```cpp
+template<typename T>
+struct Node
+{
+    struct Node* Next; // OK: lookup of Node finds the injected-class-name
+    struct Data* Data; // OK: declares type Data at global scope
+                       // and also declares the data member Data
+    friend class ::List; // error: cannot introduce a qualified name
+    enum Kind* kind; // error: cannot introduce an enum
+};
+
+Data* p; // OK: struct Data has been declared
+```
+
+{/* source:cpp-language-elaborated-type-specifier:0012 */}
+If the name refers to a [typedef name](/docs/cpp/language/declarations/typedef), a [type alias](/docs/cpp/language/declarations/type_alias), a [template type parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter), or an [alias template specialization](/docs/cpp/language/declarations/type_alias), the program is ill-formed, otherwise the elaborated type specifier introduces the name into the declaration the same way a [simple type specifier](/docs/cpp/language/declarations#Specifiers) introduces its type-name.
+
+{/* source:cpp-language-elaborated-type-specifier:0013 */}
+```cpp
+template<typename T>
+class Node
+{
+    friend class T; // error: type parameter cannot appear in an elaborated type specifier;
+                    // note that similar declaration `friend T;` is OK.
+};
+
+class A {};
+enum b { f, t };
+
+int main()
+{
+    class A a; // OK: equivalent to 'A a;'
+    enum b flag; // OK: equivalent to 'b flag;'
+}
+```
+
+{/* source:cpp-language-elaborated-type-specifier:0014 */}
+The class-key or `enum` keyword present in the elaborated-type-specifier must agree in kind with the declaration to which the name in the elaborated-type-specifier refers.
+
+{/* source:cpp-language-elaborated-type-specifier:0015 */}
+- the `enum` keyword must be used to refer to an [enumeration type](/docs/cpp/language/declarations/enum) (whether scoped or unscoped)
+- the `union` class-key must be used to refer to a [union](/docs/cpp/language/classes/union)
+- either the `class` or `struct` class-key must be used to refer to a non-union class type (the keywords `class` and `struct` are interchangeable here).
+
+{/* source:cpp-language-elaborated-type-specifier:0016 */}
+```cpp
+enum class E { a, b };
+enum E x = E::a; // OK
+enum class E y = E::b; // error: 'enum class' cannot introduce an elaborated type specifier
+
+struct A {};
+class A a; // OK
+```
+
+{/* source:cpp-language-elaborated-type-specifier:0017 */}
+When used as a [template argument](/docs/cpp/language/templates/template_parameters#Template_arguments), `class T` is a type template parameter named `T`, not an unnamed non-type parameter whose type `T` is introduced by elaborated type specifier.
+
+## Keywords
+
+{/* source:cpp-language-elaborated-type-specifier:0018 */}
+[`class`](/docs/cpp/language/keywords/class), [`struct`](/docs/cpp/language/keywords/struct), [`union`](/docs/cpp/language/keywords/union), [`enum`](/docs/cpp/language/keywords/enum)
+
+## References
+
+{/* source:cpp-language-elaborated-type-specifier:0019 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 6.5.6 Elaborated type specifiers [basic.lookup.elab]
+  - 9.2.9.4 Elaborated type specifiers [dcl.type.elab]
+
+{/* source:cpp-language-elaborated-type-specifier:0020 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 6.5.4 Elaborated type specifiers [basic.lookup.elab]
+  - 9.2.8.3 Elaborated type specifiers [dcl.type.elab]
+
+{/* source:cpp-language-elaborated-type-specifier:0021 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 6.4.4 Elaborated type specifiers [basic.lookup.elab]
+  - 10.1.7.3 Elaborated type specifiers [dcl.type.elab]
+
+{/* source:cpp-language-elaborated-type-specifier:0022 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 3.4.4 Elaborated type specifiers [basic.lookup.elab]
+  - 7.1.6.3 Elaborated type specifiers [dcl.type.elab]
+
+{/* source:cpp-language-elaborated-type-specifier:0023 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 3.4.4 Elaborated type specifiers [basic.lookup.elab]
+  - 7.1.6.3 Elaborated type specifiers [dcl.type.elab]
+
+{/* source:cpp-language-elaborated-type-specifier:0024 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 3.4.4 Elaborated type specifiers [basic.lookup.elab]
+  - 7.1.5.3 Elaborated type specifiers [dcl.type.elab]
+
+{/* source:cpp-language-elaborated-type-specifier:0025 */}
+This section is incomplete  
+Reason: probably pull most of 9.1[class.name]/2-3 out of cpp/language/class

@@ -1,0 +1,469 @@
+---
+title: "Undefined behavior"
+description: "Renders the entire program meaningless if certain rules of the language are violated."
+source_url: "https://en.cppreference.com/w/cpp/language/ub"
+language: "C++"
+---
+
+{/* source:cpp-language-ub:0000 */}
+Renders the entire program meaningless if certain rules of the language are violated.
+
+## Explanation
+
+{/* source:cpp-language-ub:0001 */}
+The C++ standard precisely defines the [observable behavior](/docs/cpp/language/basic_concepts/as_if) of every C++ program that does not fall into one of the following classes:
+
+{/* source:cpp-language-ub:0002 */}
+- *ill-formed* - The program has syntax errors or diagnosable semantic errors.
+
+{/* source:cpp-language-ub:0003 */}
+A conforming C++ compiler is required to issue a diagnostic, even if it defines a language extension that assigns meaning to such code (such as with variable-length arrays).
+
+The text of the standard uses *shall*, *shall not*, and *ill-formed* to indicate these requirements.
+
+{/* source:cpp-language-ub:0004 */}
+- *ill-formed, [no diagnostic required](/docs/cpp/language/ndr)* - The program has semantic errors which may not be diagnosable in general case (e.g. violations of the [ODR](/docs/cpp/language/basic_concepts/definition) or other errors that are only detectable at link time).
+
+{/* source:cpp-language-ub:0005 */}
+The behavior is undefined if such program is executed.
+
+{/* source:cpp-language-ub:0006 */}
+- *implementation-defined behavior* - The behavior of the program varies between implementations, and the conforming implementation must document the effects of each behavior.
+
+{/* source:cpp-language-ub:0007 */}
+For example, the type of [`std::size_t`](/docs/cpp/library/utility/types/size_t) or the number of bits in a byte, or the text of [`std::bad_alloc::what`](/docs/cpp/library/memory/new/bad_alloc).
+
+A subset of implementation-defined behavior is *locale-specific behavior*, which depends on the implementation-supplied [locale](/docs/cpp/library/text/locale).
+
+{/* source:cpp-language-ub:0008 */}
+- *unspecified behavior* - The behavior of the program varies between implementations, and the conforming implementation is not required to document the effects of each behavior.
+
+{/* source:cpp-language-ub:0009 */}
+For example, [order of evaluation](/docs/cpp/language/expressions/eval_order), whether identical [string literals](/docs/cpp/language/expressions/string_literal) are distinct, the amount of array allocation overhead, etc.
+
+Each unspecified behavior results in one of a set of valid results.
+
+{/* source:cpp-language-ub:0010 */}
+<Revision since="C++26">
+- *erroneous behavior* - The (incorrect) behavior that the implementation is recommended to diagnose.
+
+Erroneous behavior is always the consequence of incorrect program code.
+
+The evaluation of a constant expression never results in an erroneous behavior.
+
+If the execution contains an operation specified as having erroneous behavior, the implementation is permitted and recommended to issue a diagnostic, and is permitted to terminate the execution at an unspecified time after that operation.
+
+An implementation can issue a diagnostic if it can determine that erroneous behavior is reachable under an implementation-specific set of assumptions about the program behavior, which can result in false positives.
+
+Examples of erroneous behavior
+
+```cpp
+#include <cassert>
+#include <cstring>
+
+void f()
+{   
+    int d1, d2;       // d1, d2 have erroneous values
+    int e1 = d1;      // erroneous behavior
+    int e2 = d1;      // erroneous behavior
+    assert(e1 == e2); // holds
+    assert(e1 == d1); // holds, erroneous behavior
+    assert(e2 == d1); // holds, erroneous behavior
+
+    std::memcpy(&d2, &d1, sizeof(int)); // no erroneous behavior, but
+                                        // d2 has an erroneous value
+
+    assert(e1 == d2); // holds, erroneous behavior
+    assert(e2 == d2); // holds, erroneous behavior
+}
+
+unsigned char g(bool b)
+{
+    unsigned char c;     // c has erroneous value
+    unsigned char d = c; // no erroneous behavior, but d has an erroneous value
+    assert(c == d);      // holds, both integral promotions have erroneous behavior
+    int e = d;           // erroneous behavior
+    return b ? d : 0;    // erroneous behavior if b is true
+}
+```
+</Revision>
+
+{/* source:cpp-language-ub:0011 */}
+- *undefined behavior* - There are no restrictions on the behavior of the program.
+
+{/* source:cpp-language-ub:0012 */}
+Some examples of undefined behavior are data races, memory accesses outside of array bounds, signed integer overflow, null pointer dereference, [more than one](/docs/cpp/language/expressions/eval_order) modifications of the same scalar in an expression <InlineRevision until="C++11">without any intermediate sequence point</InlineRevision><InlineRevision since="C++11">that is unsequenced</InlineRevision>, access to an object through [a pointer of a different type](/docs/cpp/language/expressions/reinterpret_cast#Type_aliasing), etc.
+
+Implementations are not required to diagnose undefined behavior (although many simple situations are diagnosed), and the compiled program is not required to do anything meaningful.
+
+{/* source:cpp-language-ub:0013 */}
+<Revision since="C++11">
+- *runtime-undefined behavior* - The behavior that is undefined except when it occurs during the evaluation of an expression as a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expression).
+</Revision>
+
+## UB and optimization
+
+{/* source:cpp-language-ub:0014 */}
+Because correct C++ programs are free of undefined behavior, compilers may produce unexpected results when a program that actually has UB is compiled with optimization enabled:
+
+{/* source:cpp-language-ub:0015 */}
+For example,
+
+### Signed overflow
+
+{/* source:cpp-language-ub:0016 */}
+```cpp
+int foo(int x)
+{
+    return x + 1 > x; // either true or UB due to signed overflow
+}
+```
+
+{/* source:cpp-language-ub:0017 */}
+may be compiled as ([demo](https://godbolt.org/z/re39h7P1K))
+
+{/* source:cpp-language-ub:0018 */}
+```text
+foo(int):
+        mov     eax, 1
+        ret
+```
+
+### Access out of bounds
+
+{/* source:cpp-language-ub:0019 */}
+```cpp
+int table[4] = {};
+bool exists_in_table(int v)
+{
+    // return true in one of the first 4 iterations or UB due to out-of-bounds access
+    for (int i = 0; i <= 4; i++)
+        if (table[i] == v)
+            return true;
+    return false;
+}
+```
+
+{/* source:cpp-language-ub:0020 */}
+May be compiled as ([demo](https://godbolt.org/z/vMbsdo5az))
+
+{/* source:cpp-language-ub:0021 */}
+```text
+exists_in_table(int):
+        mov     eax, 1
+        ret
+```
+
+### Uninitialized scalar
+
+{/* source:cpp-language-ub:0022 */}
+```cpp
+std::size_t f(int x)
+{
+    std::size_t a;
+    if (x) // either x nonzero or UB
+        a = 42;
+    return a;
+}
+```
+
+{/* source:cpp-language-ub:0023 */}
+May be compiled as ([demo](https://godbolt.org/z/1sraffdM8))
+
+{/* source:cpp-language-ub:0024 */}
+```text
+f(int):
+        mov     eax, 42
+        ret
+```
+
+{/* source:cpp-language-ub:0025 */}
+The output shown was observed on an older version of gcc
+
+```cpp
+#include <cstdio>
+
+int main()
+{
+    bool p; // uninitialized local variable
+    if (p)  // UB access to uninitialized scalar
+        std::puts("p is true");
+    if (!p) // UB access to uninitialized scalar
+        std::puts("p is false");
+}
+```
+
+Possible output:
+
+```text
+p is true
+p is false
+```
+
+### Invalid scalar
+
+{/* source:cpp-language-ub:0026 */}
+```cpp
+int f()
+{
+    bool b = true;
+    unsigned char* p = reinterpret_cast<unsigned char*>(&b);
+    *p = 10;
+    // reading from b is now UB
+    return b == 0;
+}
+```
+
+{/* source:cpp-language-ub:0027 */}
+May be compiled as ([demo](https://godbolt.org/z/4vKxhcea4))
+
+{/* source:cpp-language-ub:0028 */}
+```text
+f():
+        mov     eax, 11
+        ret
+```
+
+### Null pointer dereference
+
+{/* source:cpp-language-ub:0029 */}
+The examples demonstrate reading from the result of dereferencing a null pointer.
+
+{/* source:cpp-language-ub:0030 */}
+```cpp
+int foo(int* p)
+{
+    int x = *p;
+    if (!p)
+        return x; // Either UB above or this branch is never taken
+    else
+        return 0;
+}
+
+int bar()
+{
+    int* p = nullptr;
+    return *p; // Unconditional UB
+}
+```
+
+{/* source:cpp-language-ub:0031 */}
+may be compiled as ([demo](https://godbolt.org/z/edxr5W5T7))
+
+{/* source:cpp-language-ub:0032 */}
+```text
+foo(int*):
+        xor     eax, eax
+        ret
+bar():
+        ret
+```
+
+### Access to pointer passed to std::realloc
+
+{/* source:cpp-language-ub:0033 */}
+Choose clang to observe the output shown
+
+```cpp
+#include <cstdlib>
+#include <iostream>
+
+int main()
+{
+    int* p = (int*)std::malloc(sizeof(int));
+    int* q = (int*)std::realloc(p, sizeof(int));
+    *p = 1; // UB access to a pointer that was passed to realloc
+    *q = 2;
+    if (p == q) // UB access to a pointer that was passed to realloc
+        std::cout << *p << *q << '\n';
+}
+```
+
+Possible output:
+
+```text
+12
+```
+
+### Infinite loop without side-effects
+
+{/* source:cpp-language-ub:0034 */}
+Choose clang or the latest gcc to observe the output shown.
+
+```cpp
+#include <iostream>
+
+bool fermat()
+{
+    const int max_value = 1000;
+
+    // Non-trivial infinite loop with no side effects is UB
+    for (int a = 1, b = 1, c = 1; true; )
+    {
+        if (((a * a * a) == ((b * b * b) + (c * c * c))))
+            return true; // disproved :()
+        a++;
+        if (a > max_value)
+        {
+            a = 1;
+            b++;
+        }
+        if (b > max_value)
+        {
+            b = 1;
+            c++;
+        }
+        if (c > max_value)
+            c = 1;
+    }
+
+    return false; // not disproved
+}
+
+int main()
+{
+    std::cout << "Fermat's Last Theorem ";
+    fermat()
+        ? std::cout << "has been disproved!\n"
+        : std::cout << "has not been disproved.\n";
+}
+```
+
+Possible output:
+
+```text
+Fermat's Last Theorem has been disproved!
+```
+
+## Ill-formed with diagnostic message
+
+{/* source:cpp-language-ub:0035 */}
+Note that compilers are permitted to extend the language in ways that give meaning to ill-formed programs. The only thing C++ standard requires in such cases is a diagnostic message (compiler warning), unless the program was "ill-formed no diagnostic required".
+
+{/* source:cpp-language-ub:0036 */}
+For example, unless language extensions are disabled via `--pedantic-errors`, GCC will compile the following example [with only a warning](https://coliru.stacked-crooked.com/a/3cc6bdd9576df9a5) even though it [appears in the C++ standard](https://eel.is/c++draft/dcl.init.list#example-6) as an example of an "error" (see also [GCC Bugzilla #55783](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55783))
+
+{/* source:cpp-language-ub:0037 */}
+```cpp
+#include <iostream>
+
+// Example tweak, do not use constant
+double a{1.0};
+
+// C++23 standard, §9.4.5 List-initialization [dcl.init.list], Example #6:
+struct S
+{
+    // no initializer-list constructors
+    S(int, double, double); // #1
+    S();                    // #2
+    // ...
+};
+
+S s1 = {1, 2, 3.0}; // OK, invoke #1
+S s2{a, 2, 3}; // error: narrowing
+S s3{}; // OK, invoke #2
+// — end example]
+
+S::S(int, double, double) {}
+S::S() {}
+
+int main()
+{
+    std::cout << "All checks have passed.\n";
+}
+```
+
+Possible output:
+
+```text
+main.cpp:17:6: error: type 'double' cannot be narrowed to 'int' in initializer ⮠
+list [-Wc++11-narrowing]
+S s2{a, 2, 3}; // error: narrowing
+     ^
+main.cpp:17:6: note: insert an explicit cast to silence this issue
+S s2{a, 2, 3}; // error: narrowing
+     ^
+     static_cast<int>( )
+1 error generated.
+```
+
+## References
+
+{/* source:cpp-language-ub:0038 */}
+Extended content
+
+C++23 standard (ISO/IEC 14882:2024):
+
+- 3.25 ill-formed program [defns.ill.formed]
+- 3.26 implementation-defined behavior [defns.impl.defined]
+- 3.66 unspecified behavior [defns.unspecified]
+- 3.68 well-formed program [defns.well.formed]
+
+C++20 standard (ISO/IEC 14882:2020):
+
+- TBD ill-formed program [defns.ill.formed]
+- TBD implementation-defined behavior [defns.impl.defined]
+- TBD unspecified behavior [defns.unspecified]
+- TBD well-formed program [defns.well.formed]
+
+C++17 standard (ISO/IEC 14882:2017):
+
+- TBD ill-formed program [defns.ill.formed]
+- TBD implementation-defined behavior [defns.impl.defined]
+- TBD unspecified behavior [defns.unspecified]
+- TBD well-formed program [defns.well.formed]
+
+C++14 standard (ISO/IEC 14882:2014):
+
+- TBD ill-formed program [defns.ill.formed]
+- TBD implementation-defined behavior [defns.impl.defined]
+- TBD unspecified behavior [defns.unspecified]
+- TBD well-formed program [defns.well.formed]
+
+C++11 standard (ISO/IEC 14882:2011):
+
+- TBD ill-formed program [defns.ill.formed]
+- TBD implementation-defined behavior [defns.impl.defined]
+- TBD unspecified behavior [defns.unspecified]
+- TBD well-formed program [defns.well.formed]
+
+C++98 standard (ISO/IEC 14882:1998):
+
+- TBD ill-formed program [defns.ill.formed]
+- TBD implementation-defined behavior [defns.impl.defined]
+- TBD unspecified behavior [defns.unspecified]
+- TBD well-formed program [defns.well.formed]
+
+## See also
+
+{/* source:cpp-language-ub:0039 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`[[assume(expression)]]`](/docs/cpp/language/declarations/attributes/assume) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>specifies that the *expression* will always evaluate to `true` at a given point (attribute specifier)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`[[indeterminate]]`](/docs/cpp/language/declarations/attributes/indeterminate) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object has an indeterminate value if it is not initialized (attribute specifier)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unreachable`](/docs/cpp/library/utility/program/unreachable) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>marks unreachable point of execution (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/basic_concepts/behavior)</DescriptionTerm>
+    <DescriptionBody>for Undefined behavior</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## External links
+
+{/* source:cpp-language-ub:0040 */}
+1. [The LLVM Project Blog: What Every C Programmer Should Know About Undefined Behavior #1/3](https://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html)
+2. [The LLVM Project Blog: What Every C Programmer Should Know About Undefined Behavior #2/3](https://blog.llvm.org/2011/05/what-every-c-programmer-should-know_14.html)
+3. [The LLVM Project Blog: What Every C Programmer Should Know About Undefined Behavior #3/3](https://blog.llvm.org/2011/05/what-every-c-programmer-should-know_21.html)
+4. [Undefined behavior can result in time travel (among other things, but time travel is the funkiest)](https://devblogs.microsoft.com/oldnewthing/20140627-00/?p=633)
+5. [Understanding Integer Overflow in C/C++](https://www.cs.utah.edu/~regehr/papers/overflow12.pdf)
+6. [Fun with NULL pointers, part 1 (local exploit in Linux 2.6.30 caused by UB due to null pointer dereference)](https://lwn.net/Articles/342330/)
+7. [Undefined Behavior and Fermat’s Last Theorem](https://web.archive.org/web/20201108094235/https://kukuruku.co/post/undefined-behavior-and-fermats-last-theorem/)
+8. [C++ programmer's guide to undefined behavior](https://pvs-studio.com/en/blog/posts/cpp/1129/)

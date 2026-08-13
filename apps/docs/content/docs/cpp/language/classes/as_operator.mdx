@@ -1,0 +1,313 @@
+---
+title: "Copy assignment operator"
+description: "A copy assignment operator is a non-template non-static member function with the name operator= that can be called with an argument of the same class type and copies the content of the argument without mutating the argument."
+source_url: "https://en.cppreference.com/w/cpp/language/as_operator"
+language: "C++"
+---
+
+{/* source:cpp-language-as-operator:0000 */}
+A copy assignment operator is a non-template [non-static member function](/docs/cpp/language/classes/member_functions) with the name `operator=` that can be called with an argument of the same class type and copies the content of the argument without mutating the argument.
+
+## Syntax
+
+{/* source:cpp-language-as-operator:0001 */}
+For the formal copy assignment operator syntax, see [function declaration](/docs/cpp/language/functions/function). The syntax list below only demonstrates a subset of all valid copy assignment operator syntaxes.
+
+{/* source:cpp-language-as-operator:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="return-type operator=( parameter-list );" />
+  <Declaration id="2" language="cpp" grammar code="return-type operator=( parameter-list ) function-body" />
+  <Declaration id="3" language="cpp" since="C++11" grammar code="return-type operator=( parameter-list-no-default ) = default;" />
+  <Declaration id="4" language="cpp" since="C++11" grammar code="return-type operator=( parameter-list ) = delete;" />
+  <Declaration id="5" language="cpp" grammar code="return-type class-name :: operator=( parameter-list ) function-body" />
+  <Declaration id="6" language="cpp" since="C++11" grammar code="return-type class-name :: operator=( parameter-list-no-default ) = default;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-as-operator:0003 */}
+<ParameterList>
+  <Parameter name="class-name">
+    the class whose copy assignment operator is being declared, the class type is given as `T` in the descriptions below
+  </Parameter>
+  <Parameter name="parameter-list">
+    a [parameter list](/docs/cpp/language/functions/function#Parameter_list) of only one parameter, which is of type `T`, `T&`, `const T&`, `volatile T&` or `const volatile T&`
+  </Parameter>
+  <Parameter name="parameter-list-no-default">
+    a [parameter list](/docs/cpp/language/functions/function#Parameter_list) of only one parameter, which is of type `T`, `T&`, `const T&`, `volatile T&` or `const volatile T&` and does not have a default argument
+  </Parameter>
+  <Parameter name="function-body">
+    the [function body](/docs/cpp/language/classes/initializer_list) of the copy assignment operator
+  </Parameter>
+  <Parameter name="return-type">
+    any type, but `T&` is favored in order to allow chaining asssignments
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-as-operator:0004 */}
+1. Declaration of a copy assignment operator inside of class definition.
+
+{/* source:cpp-language-as-operator:0005 */}
+2. Definition of a copy assignment operator inside of class definition.
+
+{/* source:cpp-language-as-operator:0006 */}
+   - 3) The copy assignment operator is explicitly-defaulted.
+
+{/* source:cpp-language-as-operator:0007 */}
+   - 4) The copy assignment operator is deleted.
+
+{/* source:cpp-language-as-operator:0008 */}
+3. Definition of a copy assignment operator outside of class definition (the class must contain a declaration (1)).
+
+{/* source:cpp-language-as-operator:0009 */}
+   - 6) The copy assignment operator is explicitly-defaulted.
+
+{/* source:cpp-language-as-operator:0010 */}
+```cpp
+struct X
+{
+    X& operator=(X& other);     // copy assignment operator
+    X operator=(X other);       // pass-by-value is allowed
+//  X operator=(const X other); // Error: incorrect parameter type
+};
+
+union Y
+{
+    // copy assignment operators can have syntaxes not listed above,
+    // as long as they follow the general function declaration syntax
+    // and do not viloate the restrictions listed above
+    auto operator=(Y& other) -> Y&;       // OK: trailing return type
+    Y& operator=(this Y& self, Y& other); // OK: explicit object parameter
+//  Y& operator=(Y&, int num = 1);        // Error: has other non-object parameters
+};
+```
+
+{/* source:cpp-language-as-operator:0011 */}
+The copy assignment operator is called whenever selected by [overload resolution](/docs/cpp/language/functions/overload_resolution), e.g. when an object appears on the left side of an assignment expression.
+
+## Implicitly-declared copy assignment operator
+
+{/* source:cpp-language-as-operator:0012 */}
+If no user-defined copy assignment operators are provided for a class type, the compiler will always declare one as an `inline public` member of the class. This implicitly-declared copy assignment operator has the form `T& T::operator=(const T&)` if all of the following is true:
+
+{/* source:cpp-language-as-operator:0013 */}
+- each direct base `B` of `T` has a copy assignment operator whose parameters are `B` or `const B&` or `const volatile B&`;
+- each non-static data member `M` of `T` of class type or array of class type has a copy assignment operator whose parameters are `M` or `const M&` or `const volatile M&`.
+
+{/* source:cpp-language-as-operator:0014 */}
+Otherwise the implicitly-declared copy assignment operator is declared as `T& T::operator=(T&)`.
+
+{/* source:cpp-language-as-operator:0015 */}
+Due to these rules, the implicitly-declared copy assignment operator cannot bind to a `volatile` lvalue argument.
+
+{/* source:cpp-language-as-operator:0016 */}
+A class can have multiple copy assignment operators, e.g. both `T& T::operator=(T&)` and `T& T::operator=(T)`. <InlineRevision since="C++11">If some user-defined copy assignment operators are present, the user may still force the generation of the implicitly declared copy assignment operator with the keyword `default`.</InlineRevision>
+
+{/* source:cpp-language-as-operator:0017 */}
+The implicitly-declared (or defaulted on its first declaration) copy assignment operator has an exception specification as described in <InlineRevision until="C++17">[dynamic exception specification](/docs/cpp/language/exceptions/except_spec)</InlineRevision> <InlineRevision since="C++17">[noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)</InlineRevision>
+
+{/* source:cpp-language-as-operator:0018 */}
+Because the copy assignment operator is always declared for any class, the base class assignment operator is always hidden. If a [using-declaration](/docs/cpp/language/classes/using_declaration#In_class_definition) is used to bring in the assignment operator from the base class, and its argument type could be the same as the argument type of the implicit assignment operator of the derived class, the using-declaration is also hidden by the implicit declaration.
+
+## Implicitly-defined copy assignment operator
+
+{/* source:cpp-language-as-operator:0019 */}
+If the implicitly-declared copy assignment operator is neither deleted nor trivial, it is defined (that is, a function body is generated and compiled) by the compiler if [odr-used](/docs/cpp/language/basic_concepts/definition#ODR-use) <InlineRevision since="C++14">or [needed for constant evaluation](/docs/cpp/language/expressions/constant_expression#Functions_and_variables_needed_for_constant_evaluation)</InlineRevision>. For union types, the implicitly-defined copy assignment copies the object representation (as by [`std::memmove`](/docs/cpp/library/text/byte/memmove)). For non-union class types, the operator performs member-wise copy assignment of the object's direct bases and non-static data members, in their initialization order, using built-in assignment for the scalars, memberwise copy-assignment for arrays, and copy assignment operator for class types (called non-virtually).
+
+{/* source:cpp-language-as-operator:0020 */}
+<Revision since="C++14" until="C++23">
+The implicitly-defined copy assignment operator for a class `T` is [`constexpr`](/docs/cpp/language/declarations/constexpr) if `T` is a [literal type](/docs/cpp/library/named_req/LiteralType), and the assignment operator selected to copy each direct base class subobject is a constexpr function, and for each non-static data member of `T` that is of class type (or array thereof), the assignment operator selected to copy that member is a constexpr function.
+</Revision>
+
+<Revision since="C++23">
+The implicitly-defined copy assignment operator for a class `T` is [`constexpr`](/docs/cpp/language/declarations/constexpr).
+</Revision>
+
+{/* source:cpp-language-as-operator:0021 */}
+<Revision since="C++11">
+The generation of the implicitly-defined copy assignment operator is deprecated if `T` has a user-declared destructor or user-declared copy constructor.
+</Revision>
+
+## Deleted copy assignment operator
+
+{/* source:cpp-language-as-operator:0022 */}
+An implicitly-declared <InlineRevision since="C++11">or explicitly-defaulted</InlineRevision> copy assignment operator for class `T` is <InlineRevision until="C++11">undefined</InlineRevision> <InlineRevision since="C++11">defined as deleted</InlineRevision> if any of the following conditions is satisfied:
+
+{/* source:cpp-language-as-operator:0023 */}
+- `T` has a non-static data member of a const-qualified non-class type (or possibly multi-dimensional array thereof).
+- `T` has a non-static data member of a reference type.
+- `T` has a [potentially constructed subobject](/docs/cpp/language/basic_concepts/objects#Potentially_constructed_subobject) of class type `M` (or possibly multi-dimensional array thereof) such that the overload resolution as applied to find `M`'s copy assignment operator
+
+{/* source:cpp-language-as-operator:0024 */}
+   - does not result in a usable candidate, or
+   - in the case of the subobject being a [variant member](/docs/cpp/language/classes/union#Union-like_classes), selects a non-trivial function.
+
+{/* source:cpp-language-as-operator:0025 */}
+<Revision since="C++11">
+The implicitly-declared copy assignment operator for class `T` is defined as deleted if `T` declares a [move constructor](/docs/cpp/language/classes/move_constructor) or [move assignment operator](/docs/cpp/language/classes/move_operator).
+</Revision>
+
+## Trivial copy assignment operator
+
+{/* source:cpp-language-as-operator:0026 */}
+The copy assignment operator for class `T` is trivial if all of the following is true:
+
+{/* source:cpp-language-as-operator:0027 */}
+- it is not user-provided (meaning, it is implicitly-defined or defaulted);
+- `T` has no virtual member functions;
+- `T` has no virtual base classes;
+- the copy assignment operator selected for every direct base of `T` is trivial;
+- the copy assignment operator selected for every non-static class type (or array of class type) member of `T` is trivial.
+
+{/* source:cpp-language-as-operator:0028 */}
+A trivial copy assignment operator makes a copy of the object representation as if by [`std::memmove`](/docs/cpp/library/text/byte/memmove). All data types compatible with the C language (POD types) are trivially copy-assignable.
+
+## Eligible copy assignment operator
+
+{/* source:cpp-language-as-operator:0029 */}
+<Revision until="C++11">
+A copy assignment operator is eligible if it is either user-declared or both implicitly-declared and definable.
+</Revision>
+
+<Revision since="C++11" until="C++20">
+A copy assignment operator is eligible if it is not deleted.
+</Revision>
+
+<Revision since="C++20">
+A copy assignment operator is eligible if all following conditions are satisfied:
+
+- It is not deleted.
+- Its [associated constraints](/docs/cpp/language/templates/constraints) (if any) are satisfied.
+- No copy assignment operator whose associated constraints are satisfied is [more constrained](/docs/cpp/language/templates/constraints#Partial_ordering_of_constraints).
+</Revision>
+
+{/* source:cpp-language-as-operator:0030 */}
+Triviality of eligible copy assignment operators determines whether the class is a [trivially copyable type](/docs/cpp/library/named_req/TriviallyCopyable).
+
+## Notes
+
+{/* source:cpp-language-as-operator:0031 */}
+If both copy and move assignment operators are provided, overload resolution selects the move assignment if the argument is an [rvalue](/docs/cpp/language/expressions/value_category) (either a [prvalue](/docs/cpp/language/expressions/value_category) such as a nameless temporary or an [xvalue](/docs/cpp/language/expressions/value_category) such as the result of [`std::move`](/docs/cpp/library/utility/move)), and selects the copy assignment if the argument is an [lvalue](/docs/cpp/language/expressions/value_category) (named object or a function/operator returning lvalue reference). If only the copy assignment is provided, all argument categories select it (as long as it takes its argument by value or as a const reference, since rvalues can bind to const references), which makes copy assignment the fallback for move assignment, when move is unavailable.
+
+{/* source:cpp-language-as-operator:0032 */}
+It is unspecified whether virtual base class subobjects that are accessible through more than one path in the inheritance lattice, are assigned more than once by the implicitly-defined copy assignment operator (same applies to [move assignment](/docs/cpp/language/classes/move_operator)).
+
+{/* source:cpp-language-as-operator:0033 */}
+See [assignment operator overloading](/docs/cpp/language/expressions/operators#Assignment_operator) for additional detail on the expected behavior of a user-defined copy-assignment operator.
+
+## Example
+
+{/* source:cpp-language-as-operator:0034 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
+
+struct A
+{
+    int n;
+    std::string s1;
+
+    A() = default;
+    A(A const&) = default;
+
+    // user-defined copy assignment (copy-and-swap idiom)
+    A& operator=(A other)
+    {
+        std::cout << "copy assignment of A\n";
+        std::swap(n, other.n);
+        std::swap(s1, other.s1);
+        return *this;
+    }
+};
+
+struct B : A
+{
+    std::string s2;
+    // implicitly-defined copy assignment
+};
+
+struct C
+{
+    std::unique_ptr<int[]> data;
+    std::size_t size;
+
+    // user-defined copy assignment (non copy-and-swap idiom)
+    // note: copy-and-swap would always reallocate resources
+    C& operator=(const C& other)
+    {
+        if (this != &other) // not a self-assignment
+        {
+            if (size != other.size) // resource cannot be reused
+            {
+                data.reset(new int[other.size]);
+                size = other.size;
+            }
+            std::copy(&other.data[0], &other.data[0] + size, &data[0]);
+        }
+        return *this;
+    }
+};
+
+int main()
+{
+    A a1, a2;
+    std::cout << "a1 = a2 calls ";
+    a1 = a2; // user-defined copy assignment
+
+    B b1, b2;
+    b2.s1 = "foo";
+    b2.s2 = "bar";
+    std::cout << "b1 = b2 calls ";
+    b1 = b2; // implicitly-defined copy assignment
+
+    std::cout << "b1.s1 = " << b1.s1 << "; b1.s2 = " << b1.s2 << '\n';
+}
+```
+
+Output:
+
+```text
+a1 = a2 calls copy assignment of A
+b1 = b2 calls copy assignment of A
+b1.s1 = foo; b1.s2 = bar
+```
+
+## Defect reports
+
+{/* source:cpp-language-as-operator:0035 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-as-operator:0036 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1353} standard="C++98"><PublishedBehavior>the conditions where implicitly-declared copy assignment operators are undefined did not consider multi-dimensional array types</PublishedBehavior><CorrectedBehavior>consider these types</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2094} standard="C++11"><PublishedBehavior>a volatile subobject made defaulted copy assignment operators non-trivial ([CWG issue 496](https://cplusplus.github.io/CWG/issues/496.html))</PublishedBehavior><CorrectedBehavior>triviality not affected</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2171} standard="C++11"><PublishedBehavior>`operator=(X&) = default` was non-trivial</PublishedBehavior><CorrectedBehavior>made trivial</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2180} standard="C++11"><PublishedBehavior>a defaulted copy assignment operator for class `T` was not defined as deleted if `T` is abstract and has non-copy-assignable direct virtual base classes</PublishedBehavior><CorrectedBehavior>the operator is defined as deleted in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2595} standard="C++20"><PublishedBehavior>a copy assignment operator was not eligible if there is another copy assignment operator which is more constrained but does not satisfy its associated constraints</PublishedBehavior><CorrectedBehavior>it can be eligible in this case</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-as-operator:0037 */}
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [explicit](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+- [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+- [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+- [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+- [default initialization](/docs/cpp/language/initialization/default_initialization)
+- [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+- [initializer list](/docs/cpp/language/classes/initializer_list)
+- [list initialization](/docs/cpp/language/initialization/list_initialization)
+- [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+- [value initialization](/docs/cpp/language/initialization/value_initialization)
+- [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

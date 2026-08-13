@@ -1,0 +1,224 @@
+---
+title: "Member templates"
+description: "Template declarations (class, function, and variables) can appear inside a member specification of any class, struct, or union that are not local classes."
+source_url: "https://en.cppreference.com/w/cpp/language/member_template"
+language: "C++"
+---
+
+{/* source:cpp-language-member-template:0000 */}
+Template declarations ([class](/docs/cpp/language/templates/class_template), [function](/docs/cpp/language/templates/function_template)<InlineRevision since="C++14">, and [variables](/docs/cpp/language/templates/variable_template)</InlineRevision>) can appear inside a [member specification](/docs/cpp/language/classes/class) of any class, struct, or union that are not [local classes](/docs/cpp/language/classes/class#Local_classes).
+
+{/* source:cpp-language-member-template:0001 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+struct Printer
+{
+    // generic functor
+    std::ostream& os;
+    Printer(std::ostream& os) : os(os) {}
+    template<typename T>
+    void operator()(const T& obj) { os << obj << ' '; } // member template
+};
+
+int main()
+{
+    std::vector<int> v{1,2,3};
+    std::for_each(v.begin(), v.end(), Printer(std::cout));
+    std::string s{"abc"};
+    std::ranges::for_each(s, Printer(std::cout));
+}
+```
+
+Output:
+
+```text
+1 2 3 a b c
+```
+
+{/* source:cpp-language-member-template:0002 */}
+Partial specializations of member template may appear both at class scope and at enclosing namespace scope. Explicit specializations may appear in any scope in which the primary template may appear.
+
+{/* source:cpp-language-member-template:0003 */}
+```cpp
+struct A
+{
+    template<class T> struct B;        // primary member template
+    template<class T> struct B<T*> {}; // OK: partial specialization
+//  template<> struct B<int*> {};      // OK via CWG 727: full specialization
+};
+template<> struct A::B<int*> {};       // OK
+template<class T> struct A::B<T&> {};  // OK
+```
+
+{/* source:cpp-language-member-template:0004 */}
+If the enclosing class declaration is, in turn, a class template, when a member template is defined outside of the class body, it takes two sets of template parameters: one for the enclosing class, and another one for itself:
+
+{/* source:cpp-language-member-template:0005 */}
+```cpp
+template<typename T1>
+struct string
+{
+    // member template function
+    template<typename T2>
+    int compare(const T2&);
+    // constructors can be templates too
+    template<typename T2>
+    string(const std::basic_string<T2>& s) { /*...*/ }
+};
+// out of class definition of string<T1>::compare<T2> 
+template<typename T1> // for the enclosing class template
+template<typename T2> // for the member template
+int string<T1>::compare(const T2& s) { /* ... */ }
+```
+
+## Member function templates
+
+{/* source:cpp-language-member-template:0006 */}
+[Destructors](/docs/cpp/language/classes/destructor) and [copy constructors](/docs/cpp/language/classes/copy_constructor) cannot be templates. If a template constructor is declared which could be instantiated with the type signature of a copy constructor, the [implicitly-declared copy constructor](/docs/cpp/language/classes/copy_constructor#Implicitly-declared_copy_constructor) is used instead.
+
+{/* source:cpp-language-member-template:0007 */}
+A member function template cannot be virtual, and a member function template in a derived class cannot override a virtual member function from the base class.
+
+{/* source:cpp-language-member-template:0008 */}
+```cpp
+class Base
+{
+    virtual void f(int);
+};
+
+struct Derived : Base
+{
+    // this member template does not override Base::f
+    template<class T> void f(T);
+
+    // non-template member override can call the template:
+    void f(int i) override
+    {
+         f<>(i);
+    }
+};
+```
+
+{/* source:cpp-language-member-template:0009 */}
+A non-template member function and a template member function with the same name may be declared. In case of conflict (when some template specialization matches the non-template function signature exactly), the use of that name and type refers to the non-template member unless an explicit template argument list is supplied.
+
+{/* source:cpp-language-member-template:0010 */}
+```cpp
+template<typename T>
+struct A
+{
+    void f(int); // non-template member
+
+    template<typename T2>
+    void f(T2); // member template
+};
+
+// template member definition
+template<typename T>
+template<typename T2>
+void A<T>::f(T2)
+{
+    // some code
+}
+
+int main()
+{
+    A<char> ac;
+    ac.f('c'); // calls template function A<char>::f<char>(char)
+    ac.f(1);   // calls non-template function A<char>::f(int)
+    ac.f<>(1); // calls template function A<char>::f<int>(int)
+}
+```
+
+{/* source:cpp-language-member-template:0011 */}
+An out-of-class definition of a member function template must be equivalent to the declaration inside the class (see [function template overloading](/docs/cpp/language/templates/function_template#Function_template_overloading) for the definition of equivalency), otherwise it is considered to be an overload.
+
+{/* source:cpp-language-member-template:0012 */}
+```cpp
+struct X
+{
+    template<class T> T good(T n);
+    template<class T> T bad(T n);
+};
+
+template<class T> struct identity { using type = T; };
+
+// OK: equivalent declaration
+template<class V>
+V X::good(V n) { return n; }
+
+// Error: not equivalent to any of the declarations inside X
+template<class T>
+T X::bad(typename identity<T>::type n) { return n; }
+```
+
+## Conversion function templates
+
+{/* source:cpp-language-member-template:0013 */}
+A user-defined [conversion function](/docs/cpp/language/expressions/cast_operator) can be a template.
+
+{/* source:cpp-language-member-template:0014 */}
+```cpp
+struct A
+{
+    template<typename T>
+    operator T*(); // conversion to pointer to any type
+};
+
+// out-of-class definition
+template<typename T>
+A::operator T*() { return nullptr; }
+
+// explicit specialization for char*
+template<>
+A::operator char*() { return nullptr; }
+
+// explicit instantiation
+template A::operator void*();
+
+int main()
+{
+    A a;
+    int* ip = a.operator int*(); // explicit call to A::operator int*()
+}
+```
+
+{/* source:cpp-language-member-template:0015 */}
+During [overload resolution](/docs/cpp/language/functions/overload_resolution), specializations of conversion function templates are not found by [name lookup](/docs/cpp/language/basic_concepts/lookup). Instead, all visible conversion function templates are considered, and every specialization produced by [template argument deduction](/docs/cpp/language/templates/template_argument_deduction) (which has special rules for conversion function templates) is used as if found by name lookup.
+
+{/* source:cpp-language-member-template:0016 */}
+Using-declarations in derived classes cannot refer to specializations of template conversion functions from base classes.
+
+{/* source:cpp-language-member-template:0017 */}
+<Revision since="C++14">
+A user-defined conversion function template cannot have a deduced return type:
+
+```cpp
+struct S
+{
+    operator auto() const { return 10; } // OK
+    template<class T> operator auto() const { return 42; } // error
+};
+```
+</Revision>
+
+{/* source:cpp-language-member-template:0018 */}
+<Revision since="C++14">
+### Member variable templates
+
+A variable template declaration may appear at class scope, in which case it declares a static data member template. See [variable templates](/docs/cpp/language/templates/variable_template) for details.
+</Revision>
+
+## Defect reports
+
+{/* source:cpp-language-member-template:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-member-template:0020 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1878} standard="C++14"><PublishedBehavior>`operator auto` was technically allowed</PublishedBehavior><CorrectedBehavior>`operator auto` forbidden</CorrectedBehavior></DefectReport>
+</DefectReportList>

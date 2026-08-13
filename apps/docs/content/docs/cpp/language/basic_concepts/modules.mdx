@@ -1,0 +1,509 @@
+---
+title: "Modules (since C++20)"
+description: "Most C++ projects use multiple translation units, and so they need to share declarations and definitions across those units."
+source_url: "https://en.cppreference.com/w/cpp/language/modules"
+language: "C++"
+---
+
+{/* source:cpp-language-modules:0000 */}
+Most C++ projects use multiple translation units, and so they need to share [declarations](/docs/cpp/language/declarations) and [definitions](/docs/cpp/language/basic_concepts/definition) across those units. The usage of [headers](/docs/cpp/library/standard_library#Headers) is prominent for this purpose, an example being the [standard library](/docs/cpp/library/standard_library) whose declarations can be provided by [including the corresponding header](/docs/cpp/library/standard_library#Including_headers).
+
+{/* source:cpp-language-modules:0001 */}
+Modules are a language feature to share declarations and definitions across translation units. They are an alternative to some use cases of headers.
+
+{/* source:cpp-language-modules:0002 */}
+Modules are orthogonal to [namespaces](/docs/cpp/language/declarations/namespace).
+
+{/* source:cpp-language-modules:0003 */}
+```cpp
+// helloworld.cpp
+export module helloworld; // module declaration
+ 
+import <iostream>;        // import declaration
+ 
+export void hello()       // export declaration
+{
+    std::cout << "Hello world!\n";
+}
+```
+
+{/* source:cpp-language-modules:0004 */}
+```cpp
+// main.cpp
+import helloworld; // import declaration
+ 
+int main()
+{
+    hello();
+}
+```
+
+## Syntax
+
+{/* source:cpp-language-modules:0005 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="export (optional) module module-name module-partition (optional) attr (optional) ;" />
+  <Declaration id="2" language="cpp" grammar code="export declaration" />
+  <Declaration id="3" language="cpp" grammar code="export { declaration-seq (optional) }" />
+  <Declaration id="4" language="cpp" grammar code="export (optional) import module-name attr (optional) ;" />
+  <Declaration id="5" language="cpp" grammar code="export (optional) import module-partition attr (optional) ;" />
+  <Declaration id="6" language="cpp" grammar code="export (optional) import header-name attr (optional) ;" />
+  <Declaration id="7" language="cpp" grammar code="module;" />
+  <Declaration id="8" language="cpp" grammar code="module : private;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0006 */}
+1) Module declaration. Declares that the current translation unit is a *module unit*.
+
+{/* source:cpp-language-modules:0007 */}
+2,3) Export declaration. Export all namespace-scope declarations in *declaration* or *declaration-seq*.
+
+{/* source:cpp-language-modules:0008 */}
+4,5,6) Import declaration. Import a module unit/module partition/header unit.
+
+{/* source:cpp-language-modules:0009 */}
+7) Starts a [global module fragment](/docs/cpp/language/basic_concepts/modules#Global_module_fragment).
+
+{/* source:cpp-language-modules:0010 */}
+8) Starts a [private module fragment](/docs/cpp/language/basic_concepts/modules#Private_module_fragment).
+
+## Module declarations
+
+{/* source:cpp-language-modules:0011 */}
+A translation unit may have a module declaration, in which case it is considered a *module unit*. The *module declaration*, if provided, must be the first declaration of the translation unit (excepted the *global module fragment*, which is covered later on). Each module unit is associated to a *module name* (and optionally a partition), provided in the module declaration.
+
+{/* source:cpp-language-modules:0012 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="export (optional) module module-name module-partition (optional) attr (optional) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0013 */}
+The module name consists of one or more identifiers separated by dots (for example: `mymodule`, `mymodule.mysubmodule`, `mymodule2`...). Dots have no intrinsic meaning, however they are used informally to represent hierarchy.
+
+{/* source:cpp-language-modules:0014 */}
+If any identifier in the module name or module partition is defined as an [object-like macro](/docs/cpp/language/preprocessor/replace), the program is ill-formed.
+
+{/* source:cpp-language-modules:0015 */}
+A *named module* is the collection of module units with the same module name.
+
+{/* source:cpp-language-modules:0016 */}
+Module units whose declaration has the keyword `export` are termed *module interface units*; all other module units are termed *module implementation units*.
+
+{/* source:cpp-language-modules:0017 */}
+For every named module, there must be exactly one module interface unit that specifies no module partition; this module unit is termed the *primary module interface unit*. Its exported content will be available when importing the corresponding named module.
+
+{/* source:cpp-language-modules:0018 */}
+```cpp
+// (each line represents a separate translation unit)
+ 
+export module A;   // declares the primary module interface unit for named module 'A'
+module A;          // declares a module implementation unit for named module 'A'
+module A;          // declares another module implementation unit for named module 'A'
+export module A.B; // declares the primary module interface unit for named module 'A.B'
+module A.B;        // declares a module implementation unit for named module 'A.B'
+```
+
+## Exporting declarations and definitions
+
+{/* source:cpp-language-modules:0019 */}
+Module interface units can export declarations (including definitions), which can be imported by other translation units. To export a declaration, either prefix it with the `export` keyword, or else place it inside an `export` block.
+
+{/* source:cpp-language-modules:0020 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="export declaration" />
+  <Declaration id="2" language="cpp" grammar code="export { declaration-seq (optional) }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0021 */}
+```cpp
+export module A; // declares the primary module interface unit for named module 'A'
+ 
+// hello() will be visible by translations units importing 'A'
+export char const* hello() { return "hello"; } 
+ 
+// world() will NOT be visible.
+char const* world() { return "world"; }
+ 
+// Both one() and zero() will be visible.
+export
+{
+    int one()  { return 1; }
+    int zero() { return 0; }
+}
+ 
+// Exporting namespaces also works: hi::english() and hi::french() will be visible.
+export namespace hi
+{
+    char const* english() { return "Hi!"; }
+    char const* french()  { return "Salut!"; }
+}
+```
+
+## Importing modules and header units
+
+{/* source:cpp-language-modules:0022 */}
+Modules are imported via an *import declaration*:
+
+{/* source:cpp-language-modules:0023 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="export (optional) import module-name attr (optional) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0024 */}
+All declarations and definitions exported in the module interface units of the given named module will be available in the translation unit using the import declaration.
+
+{/* source:cpp-language-modules:0025 */}
+Import declarations can be exported in a module interface unit. That is, if module `B` export-imports `A`, then importing `B` will also make visible all exports from `A`.
+
+{/* source:cpp-language-modules:0026 */}
+In module units, all import declarations (including export-imports) must be grouped after the module declaration and before all other declarations.
+
+{/* source:cpp-language-modules:0027 */}
+```cpp
+/////// A.cpp (primary module interface unit of 'A')
+export module A;
+ 
+export char const* hello() { return "hello"; }
+ 
+/////// B.cpp (primary module interface unit of 'B')
+export module B;
+ 
+export import A;
+ 
+export char const* world() { return "world"; }
+ 
+/////// main.cpp (not a module unit)
+#include <iostream>
+import B;
+ 
+int main()
+{
+    std::cout << hello() << ' ' << world() << '\n';
+}
+```
+
+{/* source:cpp-language-modules:0028 */}
+[`#include`](/docs/cpp/language/preprocessor/include) should not be used in a module unit (outside the *global module fragment*), because all included declarations and definitions would be considered part of the module. Instead, headers can also be imported as *header units* with an *import declaration*:
+
+{/* source:cpp-language-modules:0029 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="export (optional) import header-name attr (optional) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0030 */}
+A header unit is a separate translation unit synthesized from a header. Importing a header unit will make accessible all its definitions and declarations. Preprocessor macros are also accessible (because import declarations are recognized by the preprocessor).
+
+{/* source:cpp-language-modules:0031 */}
+However, contrary to `#include`, preprocessing macros already defined at the point of the import declaration will not affect the processing of the header. This may be inconvenient in some cases (some headers use preprocessing macros as a form of configuration), in which case the usage of *global module fragment* is needed.
+
+{/* source:cpp-language-modules:0032 */}
+```cpp
+/////// A.cpp (primary module interface unit of 'A')
+export module A;
+ 
+import <iostream>;
+export import <string_view>;
+ 
+export void print(std::string_view message)
+{
+    std::cout << message << std::endl;
+}
+ 
+/////// main.cpp (not a module unit)
+import A;
+ 
+int main()
+{
+    std::string_view message = "Hello, world!";
+    print(message);
+}
+```
+
+## Global module fragment
+
+{/* source:cpp-language-modules:0033 */}
+Module units can be prefixed by a *global module fragment*, which can be used to include headers when importing the headers is not possible (notably when the header uses preprocessing macros as configuration).
+
+{/* source:cpp-language-modules:0034 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="module;" />
+  <Declaration id="2" language="cpp" grammar code="preprocessing-directives (optional)" />
+  <Declaration id="3" language="cpp" grammar code="module-declaration" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0035 */}
+If a module-unit has a global module fragment, then its first declaration must be `module;`. Then, only [preprocessing directives](/docs/cpp/language/preprocessor#Directives) can appear in the global module fragment. Then, a standard module declaration marks the end of the global module fragment and the start of the module content.
+
+{/* source:cpp-language-modules:0036 */}
+```cpp
+/////// A.cpp (primary module interface unit of 'A')
+module;
+ 
+// Defining _POSIX_C_SOURCE adds functions to standard headers,
+// according to the POSIX standard.
+#define _POSIX_C_SOURCE 200809L
+#include <stdlib.h>
+ 
+export module A;
+ 
+import <ctime>;
+ 
+// Only for demonstration (bad source of randomness).
+// Use C++ <random> instead.
+export double weak_random()
+{
+    std::timespec ts;
+    std::timespec_get(&ts, TIME_UTC); // from <ctime>
+ 
+    // Provided in <stdlib.h> according to the POSIX standard.
+    srand48(ts.tv_nsec);
+ 
+    // drand48() returns a random number between 0 and 1.
+    return drand48();
+}
+ 
+/////// main.cpp (not a module unit)
+import <iostream>;
+import A;
+ 
+int main()
+{
+    std::cout << "Random value between 0 and 1: " << weak_random() << '\n';
+}
+```
+
+## Private module fragment
+
+{/* source:cpp-language-modules:0037 */}
+Primary module interface unit can be suffixed by a *private module fragment*, which allows a module to be represented as a single translation unit without making all of the contents of the module reachable to importers.
+
+{/* source:cpp-language-modules:0038 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="module : private;" />
+  <Declaration id="2" language="cpp" grammar code="declaration-seq (optional)" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0039 */}
+*Private module fragment* ends the portion of the module interface unit that can affect the behavior of other translation units. If a module unit contains a *private module fragment*, it will be the only module unit of its module.
+
+{/* source:cpp-language-modules:0040 */}
+```cpp
+export module foo;
+ 
+export int f();
+ 
+module : private; // ends the portion of the module interface unit that
+                  // can affect the behavior of other translation units
+                  // starts a private module fragment
+ 
+int f()           // definition not reachable from importers of foo
+{
+    return 42;
+}
+```
+
+## Module partitions
+
+{/* source:cpp-language-modules:0041 */}
+A module can have *module partition units*. They are module units whose module declarations include a module partition, which starts with a colon `:` and is placed after the module name.
+
+{/* source:cpp-language-modules:0042 */}
+```cpp
+export module A:B; // Declares a module interface unit for module 'A', partition ':B'.
+```
+
+{/* source:cpp-language-modules:0043 */}
+A module partition represents exactly one module unit (two module units cannot designate the same module partition). They are visible only from inside the named module (translation units outside the named module cannot import a module partition directly).
+
+{/* source:cpp-language-modules:0044 */}
+A module partition can be imported by module units of the same named module.
+
+{/* source:cpp-language-modules:0045 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="export (optional) import module-partition attr (optional) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0046 */}
+```cpp
+/////// A-B.cpp   
+export module A:B;
+...
+ 
+/////// A-C.cpp
+module A:C;
+...
+ 
+/////// A.cpp
+export module A;
+ 
+import :C;
+export import :B;
+ 
+...
+```
+
+{/* source:cpp-language-modules:0047 */}
+All definitions and declarations in a module partition are visible by the importing module unit, whether exported or not.
+
+{/* source:cpp-language-modules:0048 */}
+Module partitions can be module interface units (when their module declarations have `export`). They must be export-imported by the primary module interface unit, and their exported statements will be visible when the module is imported.
+
+{/* source:cpp-language-modules:0049 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="export (optional) import module-partition attr (optional) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-modules:0050 */}
+```cpp
+///////  A.cpp   
+export module A;     // primary module interface unit
+ 
+export import :B;    // Hello() is visible when importing 'A'.
+import :C;           // WorldImpl() is now visible only for 'A.cpp'.
+// export import :C; // ERROR: Cannot export a module implementation unit.
+ 
+// World() is visible by any translation unit importing 'A'.
+export char const* World()
+{
+    return WorldImpl();
+}
+```
+
+{/* source:cpp-language-modules:0051 */}
+```cpp
+/////// A-B.cpp 
+export module A:B; // partition module interface unit
+ 
+// Hello() is visible by any translation unit importing 'A'.
+export char const* Hello() { return "Hello"; }
+```
+
+{/* source:cpp-language-modules:0052 */}
+```cpp
+/////// A-C.cpp 
+module A:C; // partition module implementation unit
+ 
+// WorldImpl() is visible by any module unit of 'A' importing ':C'.
+char const* WorldImpl() { return "World"; }
+```
+
+{/* source:cpp-language-modules:0053 */}
+```cpp
+/////// main.cpp 
+import A;
+import <iostream>;
+ 
+int main()
+{
+    std::cout << Hello() << ' ' << World() << '\n';
+    // WorldImpl(); // ERROR: WorldImpl() is not visible.
+}
+```
+
+## Module ownership
+
+{/* source:cpp-language-modules:0054 */}
+In general, if a declaration appears after the module declaration in a module unit, it is *attached to* that module.
+
+{/* source:cpp-language-modules:0055 */}
+If a declaration of an entity is attached to a named module, that entity can only be defined in that module. All declarations of such an entity must be attached to the same module.
+
+{/* source:cpp-language-modules:0056 */}
+If a declaration is attached to a named module, and it is not exported, the declared name has [module linkage](/docs/cpp/language/declarations/storage_duration#Module_linkage).
+
+{/* source:cpp-language-modules:0057 */}
+```cpp
+export module lib_A;
+ 
+int f() { return 0; } // f has module linkage
+export int x = f();   // x equals 0
+```
+
+{/* source:cpp-language-modules:0058 */}
+```cpp
+export module lib_B;
+ 
+int f() { return 1; } // OK, f in lib_A and f in lib_B refer to different entities
+export int y = f(); // y equals 1
+```
+
+{/* source:cpp-language-modules:0059 */}
+If [two declarations of an entity](/docs/cpp/language/declarations/conflicting_declarations#Multiple_declarations_of_the_same_entity) are attached to different modules, the program is ill-formed; no diagnostic is required if neither is reachable from the other.
+
+{/* source:cpp-language-modules:0060 */}
+```cpp
+/////// decls.h
+int f(); // #1, attached to the global module
+int g(); // #2, attached to the global module
+```
+
+{/* source:cpp-language-modules:0061 */}
+```cpp
+/////// Module interface of M
+module;
+#include "decls.h"
+export module M;
+export using ::f; // OK, does not declare an entity, exports #1
+int g();          // Error: matches #2, but attached to M
+export int h();   // #3
+export int k();   // #4
+```
+
+{/* source:cpp-language-modules:0062 */}
+```cpp
+/////// Other translation unit
+import M;
+static int h();   // Error: matches #3
+int k();          // Error: matches #4
+```
+
+{/* source:cpp-language-modules:0063 */}
+The following declarations are not attached to any named module (and thus the declared entity can be defined outside the module):
+
+{/* source:cpp-language-modules:0064 */}
+- [namespace](/docs/cpp/language/declarations/namespace) definitions with external linkage;
+- declarations within a [language linkage](/docs/cpp/language/declarations/language_linkage) specification.
+
+{/* source:cpp-language-modules:0065 */}
+```cpp
+export module lib_A;
+ 
+namespace ns // ns is not attached to lib_A.
+{
+    export extern "C++" int f(); // f is not attached to lib_A.
+           extern "C++" int g(); // g is not attached to lib_A.
+    export              int h(); // h is attached to lib_A.
+}
+// ns::h must be defined in lib_A, but ns::f and ns::g can be defined elsewhere (e.g.
+// in a traditional source file).
+```
+
+## Notes
+
+{/* source:cpp-language-modules:0066 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_modules`](/docs/cpp/library/feature_test#cpp_modules) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_modules_201907L) | (C++20) | Modules — core language support |
+| [`__cpp_lib_modules`](/docs/cpp/library/feature_test#cpp_lib_modules) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_modules_202207L) | (C++23) | [Standard library modules](/docs/cpp/library/standard_library#Importing_modules) `std` and `std.compat` |
+
+## Keywords
+
+{/* source:cpp-language-modules:0067 */}
+[`private`](/docs/cpp/language/keywords/private), [`module`](/docs/cpp/language/keywords/module), [`import`](/docs/cpp/language/keywords/import), [`export`](/docs/cpp/language/keywords/export)
+
+## Defect reports
+
+{/* source:cpp-language-modules:0068 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-modules:0069 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2732} standard="C++20">
+    <PublishedBehavior>it was unclear whether importable headers can react to preprocessor state from the point of import</PublishedBehavior>
+    <CorrectedBehavior>no reaction</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P3034R1" standard="C++20">
+    <PublishedBehavior>module names and module partitions could contain identifiers defined as object-like macros</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

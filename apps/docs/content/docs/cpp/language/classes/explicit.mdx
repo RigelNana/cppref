@@ -1,0 +1,111 @@
+---
+title: "explicit specifier"
+description: "Specifies that a constructor or conversion function or deduction guide is explicit, that is, it cannot be used for implicit conversions and copy-initialization."
+source_url: "https://en.cppreference.com/w/cpp/language/explicit"
+language: "C++"
+---
+
+## Syntax
+
+{/* source:cpp-language-explicit:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="explicit" />
+  <Declaration id="2" language="cpp" grammar since="C++20" code="explicit ( expression )" />
+</DeclarationDoc>
+
+{/* source:cpp-language-explicit:0001 */}
+<ParameterList>
+  <Parameter name="expression">[contextually converted constant expression of type `bool`](/docs/cpp/language/expressions/constant_expression#Converted_constant_expression)</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-explicit:0002 */}
+1. Specifies that a constructor <InlineRevision since="C++11">or conversion function</InlineRevision> <InlineRevision since="C++17">or [deduction guide](/docs/cpp/language/templates/ctad)</InlineRevision> is explicit, that is, it cannot be used for [implicit conversions](/docs/cpp/language/expressions/implicit_cast) and [copy-initialization](/docs/cpp/language/initialization/copy_initialization).
+
+{/* source:cpp-language-explicit:0003 */}
+<Revision since="C++20">
+2. The `explicit` specifier may be used with a constant expression. The function is explicit if and only if that constant expression evaluates to `true`.
+</Revision>
+
+{/* source:cpp-language-explicit:0004 */}
+The explicit specifier may only appear within the *decl-specifier-seq* of the declaration of a constructor <InlineRevision since="C++11">or conversion function</InlineRevision> within its class definition.
+
+## Notes
+
+{/* source:cpp-language-explicit:0005 */}
+A constructor <InlineRevision until="C++11">with a single non-default parameter</InlineRevision> that is declared without the function specifier `explicit` is called a [converting constructor](/docs/cpp/language/classes/converting_constructor).
+
+{/* source:cpp-language-explicit:0006 */}
+Both constructors (other than [copy](/docs/cpp/language/classes/copy_constructor)/[move](/docs/cpp/language/classes/move_constructor)) and user-defined conversion functions may be function templates; the meaning of `explicit` does not change.
+
+{/* source:cpp-language-explicit:0007 */}
+<Revision since="C++20">
+A `(` token that follows `explicit` is always parsed as part of the explicit specifier:
+
+```cpp
+struct S
+{
+    explicit (S)(const S&);    // error in C++20, OK in C++17
+    explicit (operator int)(); // error in C++20, OK in C++17
+};
+```
+</Revision>
+
+{/* source:cpp-language-explicit:0008 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_conditional_explicit`](/docs/cpp/library/feature_test#cpp_conditional_explicit) | [`201806L`](/docs/cpp/library/compiler_support/20#cpp_conditional_explicit_201806L) | (C++20) | conditional `explicit` |
+
+## Keywords
+
+{/* source:cpp-language-explicit:0009 */}
+[`explicit`](/docs/cpp/language/keywords/explicit)
+
+## Example
+
+{/* source:cpp-language-explicit:0010 */}
+```cpp
+struct A
+{
+    A(int) {}      // converting constructor
+    A(int, int) {} // converting constructor (C++11)
+    operator bool() const { return true; }
+};
+
+struct B
+{
+    explicit B(int) {}
+    explicit B(int, int) {}
+    explicit operator bool() const { return true; }
+};
+
+int main()
+{
+    A a1 = 1;      // OK: copy-initialization selects A::A(int)
+    A a2(2);       // OK: direct-initialization selects A::A(int)
+    A a3 {4, 5};   // OK: direct-list-initialization selects A::A(int, int)
+    A a4 = {4, 5}; // OK: copy-list-initialization selects A::A(int, int)
+    A a5 = (A)1;   // OK: explicit cast performs static_cast
+    if (a1) { }    // OK: A::operator bool()
+    bool na1 = a1; // OK: copy-initialization selects A::operator bool()
+    bool na2 = static_cast<bool>(a1); // OK: static_cast performs direct-initialization
+
+//  B b1 = 1;      // error: copy-initialization does not consider B::B(int)
+    B b2(2);       // OK: direct-initialization selects B::B(int)
+    B b3 {4, 5};   // OK: direct-list-initialization selects B::B(int, int)
+//  B b4 = {4, 5}; // error: copy-list-initialization does not consider B::B(int, int)
+    B b5 = (B)1;   // OK: explicit cast performs static_cast
+    if (b2) { }    // OK: B::operator bool()
+//  bool nb1 = b2; // error: copy-initialization does not consider B::operator bool()
+    bool nb2 = static_cast<bool>(b2); // OK: static_cast performs direct-initialization
+
+    [](...){}(a4, a5, na1, na2, b5, nb2); // suppresses “unused variable” warnings
+}
+```
+
+## See also
+
+{/* source:cpp-language-explicit:0011 */}
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [initialization](/docs/cpp/language/initialization)
+- [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+- [direct initialization](/docs/cpp/language/initialization/direct_initialization)

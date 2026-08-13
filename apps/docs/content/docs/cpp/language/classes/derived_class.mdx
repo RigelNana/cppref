@@ -1,0 +1,318 @@
+---
+title: "Derived classes"
+description: "Any class type (whether declared with class-key class or struct) may be declared as derived from one or more base classes which, in turn, may be derived from their own base classes, forming an inheritance hierarchy."
+source_url: "https://en.cppreference.com/w/cpp/language/derived_class"
+language: "C++"
+---
+
+{{/* source:cpp-language-derived-class:0000 */}}
+Any class type (whether declared with class-key `class` or `struct`) may be declared as derived from one or more base classes which, in turn, may be derived from their own base classes, forming an inheritance hierarchy.
+
+## Syntax
+
+{{/* source:cpp-language-derived-class:0001 */}}
+The list of base classes is provided in the *base-clause* of the [class declaration syntax](/docs/cpp/language/classes/class). The *base-clause* consists of the character `:` followed by a comma-separated list of one or more *base-specifiers*.
+
+{{/* source:cpp-language-derived-class:0002 */}}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) class-or-computed" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) virtual class-or-computed" />
+  <Declaration id="3" language="cpp" grammar code="attr (optional) access-specifier class-or-computed" />
+  <Declaration id="4" language="cpp" grammar code="attr (optional) virtual access-specifier class-or-computed" />
+  <Declaration id="5" language="cpp" grammar code="attr (optional) access-specifier virtual class-or-computed" />
+</DeclarationDoc>
+
+{{/* source:cpp-language-derived-class:0003 */}}
+1. Specifies a non-virtual inheritance with default member accessibility.
+
+{{/* source:cpp-language-derived-class:0004 */}}
+2. Specifies a virtual inheritance with default member accessibility.
+
+{{/* source:cpp-language-derived-class:0005 */}}
+3. Specifies a non-virtual inheritance with given member accessibility.
+
+{{/* source:cpp-language-derived-class:0006 */}}
+4. Specifies a virtual inheritance with given member accessibility.
+
+{{/* source:cpp-language-derived-class:0007 */}}
+5. Same as 4), virtual and access-specifier can appear in any order.
+
+{{/* source:cpp-language-derived-class:0008 */}}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> sequence of any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="access-specifier">
+    one of `private`, `public`, or `protected`
+  </Parameter>
+  <Parameter name="class-or-computed">
+    one of
+    - `nested-name-specifier` (optional) `type-name`
+    - `nested-name-specifier` `template` `simple-template-id`
+
+    <Revision since="C++11">
+    - [`decltype-specifier`](/docs/cpp/language/declarations/decltype)
+    </Revision>
+
+    <Revision since="C++26">
+    - [`pack-index-specifier`](/docs/cpp/language/templates/pack_indexing#Pack_indexing_specifier)
+    </Revision>
+  </Parameter>
+</ParameterList>
+
+{{/* source:cpp-language-derived-class:0009 */}}
+An [elaborated type specifier](/docs/cpp/language/declarations/elaborated_type_specifier) cannot directly appear as *class-or-computed* due to syntax limitations.
+
+{{/* source:cpp-language-derived-class:0010 */}}
+<Revision since="C++11">
+*base-specifiers* in a *base-clause* may be [pack expansions](/docs/cpp/language/templates/parameter_pack).
+
+A class or struct declared [`final`](/docs/cpp/language/classes/final) cannot be denoted by *class-or-computed*.
+</Revision>
+
+{{/* source:cpp-language-derived-class:0011 */}}
+If *access-specifier* is omitted, it defaults to `public` for derived classes declared with *class-key* `struct` and to `private` for derived classes declared with *class-key* `class`.
+
+{{/* source:cpp-language-derived-class:0012 */}}
+```cpp
+struct Base
+{
+    int a, b, c;
+};
+
+// every object of type Derived includes Base as a subobject
+struct Derived : Base
+{
+    int b;
+};
+
+// every object of type Derived2 includes Derived and Base as subobjects
+struct Derived2 : Derived
+{
+    int c;
+};
+```
+
+{{/* source:cpp-language-derived-class:0013 */}}
+Classes denoted by *class-or-computed*'s listed in the base-clause are direct base classes. Their bases are indirect base classes. The same class cannot be specified as a direct base class more than once, but the same class can be both direct and indirect base class.
+
+{{/* source:cpp-language-derived-class:0014 */}}
+Each direct and indirect base class is present, as base class subobject, within the object representation of the derived class at an ABI-dependent offset. Empty base classes usually do not increase the size of the derived object due to [empty base optimization](/docs/cpp/language/classes/ebo). The constructors of base class subobjects are called by the constructor of the derived class: arguments may be provided to those constructors in the [member initializer list](/docs/cpp/language/classes/initializer_list).
+
+## Virtual base classes
+
+{{/* source:cpp-language-derived-class:0015 */}}
+For each distinct base class that is specified `virtual`, the most derived object contains only one base class subobject of that type, even if the class appears many times in the inheritance hierarchy (as long as it is inherited virtual every time).
+
+{{/* source:cpp-language-derived-class:0016 */}}
+```cpp
+struct B { int n; };
+class X : public virtual B {};
+class Y : virtual public B {};
+class Z : public B {};
+
+// every object of type AA has one X, one Y, one Z, and two B's:
+// one that is the base of Z and one that is shared by X and Y
+struct AA : X, Y, Z
+{
+    AA()
+    {
+        X::n = 1; // modifies the virtual B subobject's member
+        Y::n = 2; // modifies the same virtual B subobject's member
+        Z::n = 3; // modifies the non-virtual B subobject's member
+
+        std::cout << X::n << Y::n << Z::n << '\n'; // prints 223
+    }
+};
+```
+
+{{/* source:cpp-language-derived-class:0017 */}}
+An example of an inheritance hierarchy with virtual base classes is the iostreams hierarchy of the standard library: [`std::istream`](/docs/cpp/library/io/basic_istream) and [`std::ostream`](/docs/cpp/library/io/basic_ostream) are derived from [`std::ios`](/docs/cpp/library/io/basic_ios) using virtual inheritance. [`std::iostream`](/docs/cpp/library/io/basic_iostream) is derived from both [`std::istream`](/docs/cpp/library/io/basic_istream) and [`std::ostream`](/docs/cpp/library/io/basic_ostream), so every instance of `std::iostream` contains a [`std::ostream`](/docs/cpp/library/io/basic_ostream) subobject, a [`std::istream`](/docs/cpp/library/io/basic_istream) subobject, and just one [`std::ios`](/docs/cpp/library/io/basic_ios) subobject (and, consequently, one [`std::ios_base`](/docs/cpp/library/io/ios_base)).
+
+{{/* source:cpp-language-derived-class:0018 */}}
+All virtual base subobjects are initialized before any non-virtual base subobject, so only the most derived class calls the constructors of the virtual bases in its [member initializer list](/docs/cpp/language/classes/initializer_list):
+
+{{/* source:cpp-language-derived-class:0019 */}}
+```cpp
+struct B
+{
+    int n;
+
+    B(int x) : n(x) {}
+};
+
+struct X : virtual B { X() : B(1) {} };
+struct Y : virtual B { Y() : B(2) {} };
+struct AA : X, Y     { AA() : B(3), X(), Y() {} };
+
+// the default constructor of AA calls the default constructors of X and Y
+// but those constructors do not call the constructor of B because B is a virtual base
+AA a; // a.n == 3
+
+// the default constructor of X calls the constructor of B
+X x;  // x.n == 1
+```
+
+{{/* source:cpp-language-derived-class:0020 */}}
+There are [special rules](/docs/cpp/language/basic_concepts/unqualified_lookup#Member_function_definition) for unqualified name lookup for class members when virtual inheritance is involved (sometimes referred to as the rules of dominance).
+
+## Public inheritance
+
+{{/* source:cpp-language-derived-class:0021 */}}
+When a class uses [member access specifier](/docs/cpp/language/classes/access) to derive from a base, all public members of the base class are accessible as public members of the derived class and all protected members of the base class are accessible as protected members of the derived class (private members of the base are never accessible unless friended).
+
+{{/* source:cpp-language-derived-class:0022 */}}
+Public inheritance models the subtyping relationship of object-oriented programming: the derived class object IS-A base class object. References and pointers to a derived object are expected to be usable by any code that expects references or pointers to any of its public bases (see [LSP](https://en.wikipedia.org/wiki/Liskov_substitution_principle)) or, in [DbC](https://en.wikipedia.org/wiki/Design_by_contract) terms, a derived class should maintain class invariants of its public bases, should not strengthen any precondition or weaken any postcondition of a member function it [overrides](/docs/cpp/language/classes/virtual).
+
+{{/* source:cpp-language-derived-class:0023 */}}
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+
+struct MenuOption { std::string title; };
+
+// Menu is a vector of MenuOption: options can be inserted, removed, reordered...
+// and has a title.
+class Menu : public std::vector<MenuOption>
+{
+public:
+    std::string title;
+
+    void print() const
+    {
+        std::cout << title << ":\n";
+        for (std::size_t i = 0, s = size(); i < s; ++i)
+            std::cout << "  " << (i + 1) << ". " << at(i).title << '\n';
+    }
+};
+// Note: Menu::title is not problematic because its role is independent of the base class.
+
+enum class Color { WHITE, RED, BLUE, GREEN };
+
+void apply_terminal_color(Color) { /* OS-specific */ }
+
+// THIS IS BAD!
+// ColorMenu is a Menu where every option has a custom color.
+class ColorMenu : public Menu
+{
+public:
+    std::vector<Color> colors;
+
+    void print() const
+    {
+        std::cout << title << ":\n";
+
+        for (std::size_t i = 0, s = size(); i < s; ++i)
+        {
+            std::cout << "  " << (i + 1) << ". ";
+            apply_terminal_color(colors[i]);
+            std::cout << at(i).title << '\n';
+            apply_terminal_color(Color::WHITE);
+        }
+    }
+};
+// ColorMenu needs the following invariants that cannot be satisfied
+// by publicly inheriting from Menu, for example:
+// - ColorMenu::colors and Menu must have the same number of elements
+// - To make sense, calling erase() should remove also elements from colors,
+//   in order to let options keep their colors
+// Basically every non-const call to a std::vector method will break the invariant
+// of the ColorMenu and will need fixing from the user by correctly managing colors.
+
+int main()
+{
+    ColorMenu color_menu;
+
+    // The big problem of this class is that we must keep ColorMenu::Color
+    // in sync with Menu.
+    color_menu.push_back(MenuOption{"Some choice"});
+
+    // color_menu.print(); // ERROR! colors[i] in print() is out of range
+
+    color_menu.colors.push_back(Color::RED);
+
+    color_menu.print(); // OK: colors and Menu has the same number of elements
+}
+```
+
+## Protected inheritance
+
+{{/* source:cpp-language-derived-class:0024 */}}
+When a class uses [member access specifier](/docs/cpp/language/classes/access) to derive from a base, all public and protected members of the base class are accessible as protected members of the derived class (private members of the base are never accessible unless friended).
+
+{{/* source:cpp-language-derived-class:0025 */}}
+Protected inheritance may be used for "controlled polymorphism": within the members of Derived, as well as within the members of all further-derived classes, the derived class IS-A base: references and pointers to Derived may be used where references and pointers to Base are expected.
+
+## Private inheritance
+
+{{/* source:cpp-language-derived-class:0026 */}}
+When a class uses [member access specifier](/docs/cpp/language/classes/access) to derive from a base, all public and protected members of the base class are accessible as private members of the derived class (private members of the base are never accessible unless friended).
+
+{{/* source:cpp-language-derived-class:0027 */}}
+Private inheritance is commonly used in policy-based design, since policies are usually empty classes, and using them as bases both enables static polymorphism and leverages [empty-base optimization](/docs/cpp/language/classes/ebo).
+
+{{/* source:cpp-language-derived-class:0028 */}}
+Private inheritance can also be used to implement the composition relationship (the base class subobject is an implementation detail of the derived class object). Using a member offers better encapsulation and is generally preferred unless the derived class requires access to protected members (including constructors) of the base, needs to override a virtual member of the base, needs the base to be constructed before and destructed after some other base subobject, needs to share a virtual base or needs to control the construction of a virtual base. Use of members to implement composition is also not applicable in the case of multiple inheritance from a [parameter pack](/docs/cpp/language/templates/parameter_pack) or when the identities of the base classes are determined at compile time through template metaprogramming.
+
+{{/* source:cpp-language-derived-class:0029 */}}
+Similar to protected inheritance, private inheritance may also be used for controlled polymorphism: within the members of the derived (but not within further-derived classes), derived IS-A base.
+
+{{/* source:cpp-language-derived-class:0030 */}}
+```cpp
+template<typename Transport>
+class service : private Transport // private inheritance from the Transport policy
+{
+public:
+    void transmit()
+    {
+        this->send(...); // send using whatever transport was supplied
+    }
+};
+
+// TCP transport policy
+class tcp
+{
+public:
+    void send(...);
+};
+
+// UDP transport policy
+class udp
+{
+public:
+    void send(...);
+};
+
+service<tcp> service(host, port); 
+service.transmit(...); // send over TCP
+```
+
+## Member name lookup
+
+{{/* source:cpp-language-derived-class:0031 */}}
+Unqualified and qualified name lookup rules for class members are detailed in [name lookup](/docs/cpp/language/basic_concepts/lookup).
+
+## Keywords
+
+{{/* source:cpp-language-derived-class:0032 */}}
+[`virtual`](/docs/cpp/language/keywords/virtual)
+
+## Defect reports
+
+{{/* source:cpp-language-derived-class:0033 */}}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{{/* source:cpp-language-derived-class:0034 */}}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1710} standard="C++98">
+    <PublishedBehavior>the syntax of *class-or-decltype* made it impossible to derive from a dependent class where the `template` disambiguator is required</PublishedBehavior>
+    <CorrectedBehavior>allowed `template`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{{/* source:cpp-language-derived-class:0035 */}}
+- [virtual functions](/docs/cpp/language/classes/virtual)
+- [abstract classes](/docs/cpp/language/classes/abstract_class)

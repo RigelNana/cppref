@@ -1,0 +1,181 @@
+---
+title: "inline specifier"
+description: "The inline specifier, when used in a function's decl-specifier-seq, declares the function to be an inline function."
+source_url: "https://en.cppreference.com/w/cpp/language/inline"
+language: "C++"
+---
+
+{/* source:cpp-language-inline:0000 */}
+The `inline` specifier, when used in a function's [decl-specifier-seq](/docs/cpp/language/declarations#Specifiers), declares the function to be an *inline function*.
+
+{/* source:cpp-language-inline:0001 */}
+A function defined entirely inside a [class/struct/union definition](/docs/cpp/language/classes), whether it's a member function or a non-member `friend` function, is implicitly an inline function<InlineRevision since="C++20"> unless it is attached to a [named module](/docs/cpp/language/basic_concepts/modules#Module_declarations)</InlineRevision>.
+
+{/* source:cpp-language-inline:0002 */}
+<Revision since="C++11">
+A function declared `constexpr`<InlineRevision since="C++20"> or `consteval`</InlineRevision> on its first declaration is implicitly an inline function.
+
+A deleted function is implicitly an inline function: its (deleted) definition can appear in more than one translation unit.
+</Revision>
+
+<Revision since="C++17">
+The `inline` specifier, when used in a decl-specifier-seq of a variable with static storage duration (static class member or namespace-scope variable), declares the variable to be an inline variable. A static data member declared `constexpr` on its first declaration is implicitly an inline variable.
+</Revision>
+
+## Explanation
+
+{/* source:cpp-language-inline:0003 */}
+An inline function<InlineRevision since="C++17"> or inline variable</InlineRevision> has the following properties:
+
+{/* source:cpp-language-inline:0004 */}
+- The definition of an inline function<InlineRevision since="C++17"> or variable</InlineRevision> must be reachable in the translation unit where it is accessed (not necessarily before the point of access).
+- An inline function<InlineRevision since="C++17"> or variable</InlineRevision> with [external linkage](/docs/cpp/language/declarations/storage_duration#external_linkage) (e.g. not declared `static`) has the following additional properties:
+
+{/* source:cpp-language-inline:0005 */}
+- There may be [more than one definition](/docs/cpp/language/basic_concepts/definition#One_Definition_Rule) of an inline function<InlineRevision since="C++17"> or variable</InlineRevision> in the program as long as each definition appears in a different translation unit and (for non-static inline functions<InlineRevision since="C++17"> and variables</InlineRevision>) all definitions are identical. For example, an inline function<InlineRevision since="C++17"> or an inline variable</InlineRevision> may be defined in a header file that is included in multiple source files. It must be declared `inline` in every translation unit. It has the same address in every translation unit.
+
+{/* source:cpp-language-inline:0006 */}
+In an inline function,
+
+{/* source:cpp-language-inline:0007 */}
+- Function-local static objects in all function definitions are shared across all translation units (they all refer to the same object defined in one translation unit).
+- Types defined in all function definitions are also the same in all translation units.
+
+{/* source:cpp-language-inline:0008 */}
+<Revision since="C++17">
+Inline const variables at namespace scope have [external linkage](/docs/cpp/language/declarations/storage_duration#external_linkage) by default (unlike the non-inline non-volatile const-qualified variables).
+</Revision>
+
+{/* source:cpp-language-inline:0009 */}
+The original intent of the `inline` keyword was to serve as an indicator to the optimizer that [inline substitution of a function](https://en.wikipedia.org/wiki/inline_expansion) is preferred over function call, that is, instead of executing the function call CPU instruction to transfer control to the function body, a copy of the function body is executed without generating the call. This avoids overhead created by the function call (passing the arguments and retrieving the result) but it may result in a larger executable as the code for the function has to be repeated multiple times.
+
+{/* source:cpp-language-inline:0010 */}
+Since inline substitution is unobservable in the standard semantics, compilers are free to use inline substitution for any function that's not marked `inline`, and are free to generate function calls to any function marked `inline`. Those optimization choices do not change the rules regarding multiple definitions and shared statics listed above.
+
+{/* source:cpp-language-inline:0011 */}
+<Revision since="C++17">
+Because the meaning of the keyword `inline` for functions came to mean "multiple definitions are permitted" rather than "inlining is preferred" since C++98, that meaning was extended to variables.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-inline:0012 */}
+If an inline function<InlineRevision since="C++17"> or variable</InlineRevision> with external linkage is defined differently in different translation units, the program is ill-formed, no diagnostic required.
+
+{/* source:cpp-language-inline:0013 */}
+The `inline` specifier cannot be used with a function<InlineRevision since="C++17"> or variable</InlineRevision> declaration at block scope (inside another function).
+
+{/* source:cpp-language-inline:0014 */}
+The `inline` specifier cannot re-declare a function<InlineRevision since="C++17"> or variable</InlineRevision> that was already defined in the translation unit as non-inline.
+
+{/* source:cpp-language-inline:0015 */}
+The implicitly-generated member functions and any member function declared as defaulted on its first declaration are inline just like any other function defined inside a class definition.
+
+{/* source:cpp-language-inline:0016 */}
+If an inline function is declared in different translation units, the accumulated sets of [default arguments](/docs/cpp/language/functions/default_arguments) must be the same at the end of each translation unit.
+
+{/* source:cpp-language-inline:0017 */}
+In C, inline functions do not have to be declared `inline` in every translation unit (at most one may be non-`inline` or `extern inline`), the function definitions do not have to be identical (but the behavior of the program is unspecified if it depends on which one is called), and the function-local statics are distinct between different definitions of the same function.
+
+{/* source:cpp-language-inline:0018 */}
+<Revision since="C++17">
+See [static data members](/docs/cpp/language/classes/static) for additional rules about inline static members.
+
+Inline variables eliminate the main obstacle to packaging C++ code as header-only libraries.
+</Revision>
+
+{/* source:cpp-language-inline:0019 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_inline_variables`](/docs/cpp/library/feature_test#cpp_inline_variables) | [`201606L`](/docs/cpp/library/compiler_support/17#cpp_inline_variables_201606L) | (C++17) | Inline variables |
+
+## Keywords
+
+{/* source:cpp-language-inline:0020 */}
+[`inline`](/docs/cpp/language/keywords/inline)
+
+## Example
+
+{/* source:cpp-language-inline:0021 */}
+Header "example.h":
+
+{/* source:cpp-language-inline:0022 */}
+```cpp
+#ifndef EXAMPLE_H
+#define EXAMPLE_H
+
+#include <atomic>
+
+// function included in multiple source files must be inline
+inline int sum(int a, int b)
+{
+    return a + b;
+}
+
+// variable with external linkage included in multiple source files must be inline
+inline std::atomic<int> counter(0);
+
+#endif
+```
+
+{/* source:cpp-language-inline:0023 */}
+Source file #1:
+
+{/* source:cpp-language-inline:0024 */}
+```cpp
+#include "example.h"
+
+int a()
+{
+    ++counter;
+    return sum(1, 2);
+}
+```
+
+{/* source:cpp-language-inline:0025 */}
+Source file #2:
+
+{/* source:cpp-language-inline:0026 */}
+```cpp
+#include "example.h"
+
+int b()
+{
+    ++counter;
+    return sum(3, 4);
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-inline:0027 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-inline:0028 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={281} standard="C++98">
+    <PublishedBehavior>a friend function declaration could use the inline specifier even if the friended function is not an inline function</PublishedBehavior>
+    <CorrectedBehavior>prohibit such uses</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={317} standard="C++98">
+    <PublishedBehavior>a function could be declared inline even if it has a non-inline definition in the same translation unit before the declaration</PublishedBehavior>
+    <CorrectedBehavior>the program is ill-formed in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={765} standard="C++98">
+    <PublishedBehavior>a type defined in an inline function might be different in different translation units</PublishedBehavior>
+    <CorrectedBehavior>such types are the same in all translation units</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1823} standard="C++98">
+    <PublishedBehavior>string literals in all definitions of an inline function were shared across all translation units</PublishedBehavior>
+    <CorrectedBehavior>the requirement is removed due to consistency and implementations</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2531} standard="C++17">
+    <PublishedBehavior>a static data member could be implicitly inline even if it was not declared constexpr on its first declaration</PublishedBehavior>
+    <CorrectedBehavior>it is not implicitly inline in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-inline:0029 */}
+[C documentation](/docs/c/language/functions/inline) for `inline`

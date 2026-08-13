@@ -1,0 +1,363 @@
+---
+title: "String literal"
+description: "A string literal is a literal that represents a sequence of characters, with an optional encoding prefix."
+source_url: "https://en.cppreference.com/w/cpp/language/string_literal"
+language: "C++"
+---
+
+## Syntax
+
+{/* source:cpp-language-string-literal:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`" s-char-seq (optional) "`} />
+  <Declaration id="2" language="cpp" grammar since="C++11" code={`R" d-char-seq (optional) ( r-char-seq (optional) ) d-char-seq (optional) "`} />
+  <Declaration id="3" language="cpp" grammar code={`L" s-char-seq (optional) "`} />
+  <Declaration id="4" language="cpp" grammar since="C++11" code={`LR" d-char-seq (optional) ( r-char-seq (optional) ) d-char-seq (optional) "`} />
+  <Declaration id="5" language="cpp" grammar since="C++11" code={`u8" s-char-seq (optional) "`} />
+  <Declaration id="6" language="cpp" grammar since="C++11" code={`u8R" d-char-seq (optional) ( r-char-seq (optional) ) d-char-seq (optional) "`} />
+  <Declaration id="7" language="cpp" grammar since="C++11" code={`u" s-char-seq (optional) "`} />
+  <Declaration id="8" language="cpp" grammar since="C++11" code={`uR" d-char-seq (optional) ( r-char-seq (optional) ) d-char-seq (optional) "`} />
+  <Declaration id="9" language="cpp" grammar since="C++11" code={`U" s-char-seq (optional) "`} />
+  <Declaration id="10" language="cpp" grammar since="C++11" code={`UR" d-char-seq (optional) ( r-char-seq (optional) ) d-char-seq (optional) "`} />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-string-literal:0001 */}
+<ParameterList>
+  <Parameter name="s-char-seq">A sequence of one or more *s-char*s</Parameter>
+  <Parameter name="s-char">
+One of
+  - a *basic-s-char*
+  - an escape sequence, as defined in [escape sequences](/docs/cpp/language/expressions/escape)
+  - a universal character name, as defined in [escape sequences](/docs/cpp/language/expressions/escape)
+</Parameter>
+  <Parameter name="basic-s-char">A character from the [translation character set](/docs/cpp/language/basic_concepts/charset#Translation_character_set), except the double-quote `"`, backslash `\`, or new-line character</Parameter>
+  <Parameter name="d-char-seq">A sequence of one or more *d-char*s, at most 16 characters long</Parameter>
+  <Parameter name="d-char">A character from the [basic character set](/docs/cpp/language/basic_concepts/charset#Basic_character_set), except parentheses, backslash and [spaces](/docs/cpp/library/text/byte/isspace)</Parameter>
+  <Parameter name="r-char-seq">A sequence of one or more *r-char*s, except that it must not contain the closing sequence `)`*d-char-seq*`"`</Parameter>
+  <Parameter name="r-char">A character from the [translation character set](/docs/cpp/language/basic_concepts/charset#Translation_character_set)</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-string-literal:0002 */}
+<table>
+<thead><tr><th>Syntax</th><th>Kind</th><th>Type</th><th>Encoding</th></tr></thead>
+<tbody>
+<tr><td>(1,2)</td><td>ordinary string literal</td><td>`const char[N]`</td><td>[ordinary literal encoding](/docs/cpp/language/basic_concepts/charset#Code_unit_and_literal_encoding)</td></tr>
+<tr><td>(3,4)</td><td>wide string literal</td><td>`const wchar_t[N]`</td><td>[wide literal encoding](/docs/cpp/language/basic_concepts/charset#Code_unit_and_literal_encoding)</td></tr>
+<tr><td>(5,6)</td><td>UTF-8 string literal</td><td><Revision until="C++20">`const char[N]`</Revision><Revision since="C++20">`const char8_t[N]`</Revision></td><td>UTF-8</td></tr>
+<tr><td>(7,8)</td><td>UTF-16 string literal</td><td>`const char16_t[N]`</td><td>UTF-16</td></tr>
+<tr><td>(9,10)</td><td>UTF-32 string literal</td><td>`const char32_t[N]`</td><td>UTF-32</td></tr>
+</tbody>
+</table>
+
+{/* source:cpp-language-string-literal:0003 */}
+In the types listed in the table above, `N` is the number of encoded code units, which is determined [below](/docs/cpp/language/expressions/string_literal#Initialization).
+
+{/* source:cpp-language-string-literal:0004 */}
+Ordinary<InlineRevision since="C++11"> and UTF-8</InlineRevision> string literals are collectively referred to as narrow string literals.
+
+{/* source:cpp-language-string-literal:0005 */}
+Evaluating a string literal results in a string literal object with static [storage duration](/docs/cpp/language/declarations/storage_duration). Whether all string literals are stored in [nonoverlapping objects](/docs/cpp/language/basic_concepts/objects#Subobjects) and whether successive evaluations of a string literal yield the same or a different object is unspecified.
+
+{/* source:cpp-language-string-literal:0006 */}
+The effect of attempting to modify a string literal object is undefined.
+
+{/* source:cpp-language-string-literal:0007 */}
+```cpp
+bool b = "bar" == 3 + "foobar"; // can be true or false, unspecified
+
+const char* pc = "Hello";
+char* p = const_cast<char*>(pc);
+p[0] = 'M'; // undefined behavior
+```
+
+{/* source:cpp-language-string-literal:0008 */}
+<Revision since="C++11">
+## Raw string literals
+
+Raw string literals are string literals with a prefix containing `R` (syntaxes (2,4,6,8,10)). They do not escape any character, which means anything between the delimiters *d-char-seq*`(` and `)`*d-char-seq* becomes part of the string. The terminating *d-char-seq* is the same sequence of characters as the initial *d-char-seq*.
+
+```cpp
+// OK: contains one backslash,
+// equivalent to "\\"
+R"(\)";
+
+// OK: contains four \n pairs,
+// equivalent to "\\n\\n\\n\\n"
+R"(\n\n\n\n)";
+
+// OK: contains one close-parenthesis, two double-quotes and one open-parenthesis,
+// equivalent to ")\"\"("
+R"-()""()-";
+
+// OK: equivalent to "\n)\\\na\"\"\n"
+R"a(
+)\
+a""
+)a";
+
+// OK: equivalent to "x = \"\"\\y\"\""
+R"(x = ""\y"")";
+
+// R"<<(-_-)>>"; // Error: begin and end delimiters do not match
+// R"-()-"-()-"; // Error: )-" appears in the middle and terminates the literal
+```
+</Revision>
+
+## Initialization
+
+{/* source:cpp-language-string-literal:0009 */}
+String literal objects are initialized with the sequence of code unit values corresponding to the string literal's sequence of *s-char*s<InlineRevision since="C++11"> and *r-char*s</InlineRevision>, plus a terminating null character (U+0000), in order as follows:
+
+{/* source:cpp-language-string-literal:0010 */}
+1. For each contiguous sequence of *basic-s-char*s,<InlineRevision since="C++11"> *r-char*s,</InlineRevision> [simple escape sequences](/docs/cpp/language/expressions/escape) and [universal character names](/docs/cpp/language/expressions/escape), the sequence of character it denotes is encoded to a code unit sequence using the string literal's associated character encoding. If a character lacks representation in the associated character encoding, then the program is ill-formed.
+
+{/* source:cpp-language-string-literal:0011 */}
+   If the associated character encoding is stateful, the first such sequence is encoded beginning with the initial encoding state and each subsequent sequence is encoded beginning with the final encoding state of the prior sequence.
+
+{/* source:cpp-language-string-literal:0012 */}
+2. For each [numeric escape sequence](/docs/cpp/language/expressions/escape), given `v` as the integer value represented by the octal or hexadecimal number comprising the sequence of digits in the escape sequence, and `T` as the string literal's array element type (see the table [above](/docs/cpp/language/expressions/string_literal#Info_table)):
+
+   - If `v` does not exceed the range of representable values of `T`, then the escape sequence contributes a single code unit with value `v`.
+   - Otherwise, if<InlineRevision since="C++11"> the string literal is of syntax (1) or (3), and</InlineRevision> `v` does not exceed the range of representable values of the corresponding unsigned type for the underlying type of `T`, then the escape sequence contributes a single code unit with a unique value of type `T`, that is congruent to v mod 2S, where `S` is the width of `T`.
+   - Otherwise, the program is ill-formed.
+
+{/* source:cpp-language-string-literal:0013 */}
+   If the associated character encoding is stateful, all such sequences have no effect on encoding state.
+
+{/* source:cpp-language-string-literal:0014 */}
+3. Each [conditional escape sequence](/docs/cpp/language/expressions/escape) contributes an implementation-defined code unit sequence.
+
+{/* source:cpp-language-string-literal:0015 */}
+   If the associated character encoding is stateful, it is implementation-defined what effect these sequences have on encoding state.
+
+## Concatenation
+
+{/* source:cpp-language-string-literal:0016 */}
+Adjacent string literals are concatenated at [translation phase 6](/docs/cpp/language/basic_concepts/translation_phases#Phase_6) (after preprocessing):
+
+{/* source:cpp-language-string-literal:0017 */}
+- If the two string literals are of the same [kind](/docs/cpp/language/expressions/string_literal#Explanation), the concatenated string literal is also of that kind.
+
+{/* source:cpp-language-string-literal:0018 */}
+<Revision until="C++11">
+- If an ordinary string literal is adjacent to a wide string literal, the behavior is undefined.
+</Revision>
+
+<Revision since="C++11">
+- If an ordinary string literal is adjacent to a non-ordinary string literal, the concatenated string literal is of the kind of the latter.
+- If a UTF-8 string literal is adjacent to a wide string literal, the program is ill-formed.
+
+<Revision until="C++23">
+- Any other combination is conditionally supported with implementation-defined semantics.[^1]
+</Revision>
+
+<Revision since="C++23">
+- Any other combination is ill-formed.
+</Revision>
+</Revision>
+
+{/* source:cpp-language-string-literal:0019 */}
+```cpp
+"Hello, " " world!" // at phase 6, the 2 string literals form "Hello, world!"
+
+L"Δx = %" PRId16    // at phase 4, PRId16 expands to "d"
+                    // at phase 6, L"Δx = %" and "d" form L"Δx = %d"
+```
+
+{/* source:cpp-language-string-literal:0020 */}
+[^1]: No known implementation supports such concatenation.
+
+## Unevaluated strings
+
+{/* source:cpp-language-string-literal:0021 */}
+The following contexts expect a string literal, but do not evaluate it:
+
+{/* source:cpp-language-string-literal:0022 */}
+- [language linkage](/docs/cpp/language/declarations/language_linkage) specification
+
+{/* source:cpp-language-string-literal:0023 */}
+<Revision since="C++11">
+- [`static_assert`](/docs/cpp/language/declarations/static_assert)
+- [literal operator](/docs/cpp/language/expressions/user_literal#Literal_operators) name
+</Revision>
+
+<Revision since="C++14">
+- [`[[deprecated]]`](/docs/cpp/language/declarations/attributes/deprecated)
+</Revision>
+
+<Revision since="C++20">
+- [`[[nodiscard]]`](/docs/cpp/language/declarations/attributes/nodiscard)
+</Revision>
+
+<Revision since="C++26">
+- [deleted function body](/docs/cpp/language/functions/function#Deleted_functions)
+</Revision>
+
+{/* source:cpp-language-string-literal:0024 */}
+<Revision until="C++26">
+It is unspecified whether non-ordinary string literals are allowed in these contexts<InlineRevision since="C++11">, except that a literal operator name must use an ordinary string literal</InlineRevision>.
+</Revision>
+
+<Revision since="C++26">
+Only ordinary string literals are allowed in these contexts.
+
+Each [universal character name](/docs/cpp/language/expressions/escape) and each [simple escape sequence](/docs/cpp/language/expressions/escape) in an unevaluated string is replaced by the member of the [translation character set](/docs/cpp/language/basic_concepts/charset) it denotes. An unevaluated string that contains a numeric escape sequence or a conditional escape sequence is ill-formed.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-string-literal:0025 */}
+String literals can be used to [initialize character arrays](/docs/cpp/language/initialization/aggregate_initialization). If an array is initialized like `char str[] = "foo";`, `str` will contain a copy of the string `"foo"`.
+
+{/* source:cpp-language-string-literal:0026 */}
+<Revision until="C++11">
+String literals are convertible and assignable to non-const `char*` or `wchar_t*` in order to be compatible with C, where string literals are of types `char[N]` and `wchar_t[N]`. Such implicit conversion is deprecated.
+</Revision>
+
+<Revision since="C++11">
+String literals are not convertible or assignable to non-const `CharT*`. An explicit cast (e.g. [`const_cast`](/docs/cpp/language/expressions/const_cast)) must be used if such conversion is wanted.
+</Revision>
+
+{/* source:cpp-language-string-literal:0027 */}
+A string literal is not necessarily a null-terminated character sequence: if a string literal has embedded null characters, it represents an array which contains more than one string.
+
+{/* source:cpp-language-string-literal:0028 */}
+```cpp
+const char* p = "abc\0def"; // std::strlen(p) == 3, but the array has size 8
+```
+
+{/* source:cpp-language-string-literal:0029 */}
+If a valid hexadecimal digit follows a hexadecimal escape sequence in a string literal, it would fail to compile as an invalid escape sequence. String concatenation can be used as a workaround:
+
+{/* source:cpp-language-string-literal:0030 */}
+```cpp
+//const char* p = "\xfff"; // error: hexadecimal escape sequence out of range
+const char* p = "\xff""f"; // OK: the literal is const char[3] holding {'\xff','f','\0'}
+```
+
+{/* source:cpp-language-string-literal:0031 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_char8_t`](/docs/cpp/library/feature_test#cpp_char8_t) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_char8_t_202207L) | (C++23) (DR20) | `char8_t` compatibility and portability fix (allow [initialization of (`unsigned`) `char` arrays](/docs/cpp/language/initialization/aggregate_initialization#Character_arrays) from UTF-8 string literals) |
+| [`__cpp_raw_strings`](/docs/cpp/library/feature_test#cpp_raw_strings) | [`200710L`](/docs/cpp/library/compiler_support/11#cpp_raw_strings_200710L) | (C++11) | Raw string literals |
+| [`__cpp_unicode_literals`](/docs/cpp/library/feature_test#cpp_unicode_literals) | [`200710L`](/docs/cpp/library/compiler_support/11#cpp_unicode_literals_200710L) | (C++11) | Unicode string literals |
+
+## Example
+
+{/* source:cpp-language-string-literal:0032 */}
+```cpp
+#include <iostream>
+
+// array1 and array2 contains the same values:
+char array1[] = "Foo" "bar";
+char array2[] = {'F', 'o', 'o', 'b', 'a', 'r', '\0'};
+
+const char* s1 = R"foo(
+Hello
+  World
+)foo";
+// same as
+const char* s2 = "\nHello\n  World\n";
+// same as
+const char* s3 = "\n"
+                 "Hello\n"
+                 "  World\n";
+
+const wchar_t* s4 = L"ABC" L"DEF"; // OK, same as
+const wchar_t* s5 = L"ABCDEF";
+const char32_t* s6 = U"GHI" "JKL"; // OK, same as
+const char32_t* s7 = U"GHIJKL";
+const char16_t* s9 = "MN" u"OP" "QR"; // OK, same as
+const char16_t* sA = u"MNOPQR";
+
+// const auto* sB = u"Mixed" U"Types";
+        // before C++23 may or may not be supported by
+        // the implementation; ill-formed since C++23
+
+const wchar_t* sC = LR"--(STUV)--"; // OK, raw string literal
+
+int main()
+{
+    std::cout << array1 << ' ' << array2 << '\n'
+              << s1 << s2 << s3 << std::endl;
+    std::wcout << s4 << ' ' << s5 << ' ' << sC
+               << std::endl;
+}
+```
+
+Output:
+
+```text
+Foobar Foobar
+
+Hello
+  World
+
+Hello
+  World
+
+Hello
+  World
+
+ABCDEF ABCDEF STUV
+```
+
+## Defect reports
+
+{/* source:cpp-language-string-literal:0033 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-string-literal:0034 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={411} standard="C++98"><PublishedBehavior>escape sequences in string literals were not allowed to map to multiple code units</PublishedBehavior><CorrectedBehavior>allowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1656} standard="C++98"><PublishedBehavior>the characters denoted by numeric escape sequences in string literals were unclear</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1759} standard="C++11"><PublishedBehavior>a UTF-8 string literal might have code units that are not representable in `char`</PublishedBehavior><CorrectedBehavior>`char` can represent all UTF-8 code units</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1823} standard="C++98"><PublishedBehavior>whether string literals are distinct was implementation-defined</PublishedBehavior><CorrectedBehavior>distinctness is unspecified, and same string literal can yield different object</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2333} standard="C++11"><PublishedBehavior>it was unclear whether numeric escape sequences were allowed in UTF-8/16/32 string literals</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2870} standard="C++11"><PublishedBehavior>the concatenation result of two ordinary string literals was unclear</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P1854R4" standard="C++98"><PublishedBehavior>ordinary and wide string literals with non-encodable characters were conditionally-supported</PublishedBehavior><CorrectedBehavior>programs with such literals are ill-formed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P2029R4" standard="C++98"><PublishedBehavior>1. it was unclear whether string literals could contain non-encodable characters; 2. it was unclear whether string literals could contain numeric escape sequences such that the code units they represent are not representable in the literals' array element type</PublishedBehavior><CorrectedBehavior>1. made conditionally-supported for ordinary and wide string literals[^2]; 2. ill-formed if the code units are neither representable in the unsigned integer type corresponding to the underlying type</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-language-string-literal:0035 */}
+[^2]: P1854R4 was accepted as a DR later, overriding this resolution.
+
+## References
+
+{/* source:cpp-language-string-literal:0036 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 5.13.5 String literals [lex.string]
+
+{/* source:cpp-language-string-literal:0037 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 5.13.5 String literals [lex.string]
+
+{/* source:cpp-language-string-literal:0038 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 5.13.5 String literals [lex.string]
+
+{/* source:cpp-language-string-literal:0039 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 2.14.5 String literals [lex.string]
+
+{/* source:cpp-language-string-literal:0040 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 2.14.5 String literals [lex.string]
+
+{/* source:cpp-language-string-literal:0041 */}
+- C++03 standard (ISO/IEC 14882:2003):
+  - 2.13.4 String literals [lex.string]
+
+{/* source:cpp-language-string-literal:0042 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 2.13.4 String literals [lex.string]
+
+## See also
+
+{/* source:cpp-language-string-literal:0043 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[user-defined literals](/docs/cpp/language/expressions/user_literal) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>literals with user-defined suffix</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[C documentation](/docs/c/language/expressions/string_literal)</DescriptionTerm><DescriptionBody>for String literals</DescriptionBody></DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,499 @@
+---
+title: "User-defined literals (since C++11)"
+description: "Allows integer, floating-point, character, and string literals to produce objects of user-defined type by defining a user-defined suffix."
+source_url: "https://en.cppreference.com/w/cpp/language/user_literal"
+language: "C++"
+---
+
+{/* source:cpp-language-user-literal:0000 */}
+Allows integer, floating-point, character, and string literals to produce objects of user-defined type by defining a user-defined suffix.
+
+## Syntax
+
+{/* source:cpp-language-user-literal:0001 */}
+A user-defined literal is an expression of any of the following forms
+
+{/* source:cpp-language-user-literal:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="decimal-literal ud-suffix" />
+  <Declaration id="2" language="cpp" grammar code="octal-literal ud-suffix" />
+  <Declaration id="3" language="cpp" grammar code="hex-literal ud-suffix" />
+  <Declaration id="4" language="cpp" grammar code="binary-literal ud-suffix" />
+  <Declaration id="5" language="cpp" grammar code="fractional-constant exponent-part (optional) ud-suffix" />
+  <Declaration id="6" language="cpp" grammar code="digit-sequence exponent-part ud-suffix" />
+  <Declaration id="7" language="cpp" grammar code="character-literal ud-suffix" />
+  <Declaration id="8" language="cpp" grammar code="string-literal ud-suffix" />
+</DeclarationDoc>
+
+{/* source:cpp-language-user-literal:0003 */}
+1-4) user-defined integer literals, such as `12_km`
+
+{/* source:cpp-language-user-literal:0004 */}
+5-6) user-defined floating-point literals, such as `0.5_Pa`
+
+{/* source:cpp-language-user-literal:0005 */}
+7) user-defined character literal, such as `'c'_X`
+
+{/* source:cpp-language-user-literal:0006 */}
+8) user-defined string literal, such as `"abd"_L` or `u"xyz"_M`
+
+{/* source:cpp-language-user-literal:0007 */}
+<ParameterList>
+  <Parameter name="decimal-literal">
+    same as in [integer literal](/docs/cpp/language/expressions/integer_literal), a non-zero decimal digit followed by zero or more decimal digits
+  </Parameter>
+  <Parameter name="octal-literal">
+    same as in [integer literal](/docs/cpp/language/expressions/integer_literal), a zero followed by zero or more octal digits
+  </Parameter>
+  <Parameter name="hex-literal">
+    same as in [integer literal](/docs/cpp/language/expressions/integer_literal), `0x` or `0X` followed by one or more hexadecimal digits
+  </Parameter>
+  <Parameter name="binary-literal">
+    same as in [integer literal](/docs/cpp/language/expressions/integer_literal), `0b` or `0B` followed by one or more binary digits
+  </Parameter>
+  <Parameter name="digit-sequence">
+    same as in [floating literal](/docs/cpp/language/expressions/floating_literal), a sequence of decimal digits
+  </Parameter>
+  <Parameter name="fractional-constant">
+    same as in [floating literal](/docs/cpp/language/expressions/floating_literal), either a *digit-sequence* followed by a dot (`123.`) or an optional *digit-sequence* followed by a dot and another *digit-sequence* (`1.0` or `.12`)
+  </Parameter>
+  <Parameter name="exponent-part">
+    same as in [floating literal](/docs/cpp/language/expressions/floating_literal), the letter `e` or the letter `E` followed by optional sign, followed by *digit-sequence*
+  </Parameter>
+  <Parameter name="character-literal">
+    same as in [character literal](/docs/cpp/language/expressions/character_literal)
+  </Parameter>
+  <Parameter name="string-literal">
+    same as in [string literal](/docs/cpp/language/expressions/string_literal), including raw string literals
+  </Parameter>
+  <Parameter name="ud-suffix">
+    an identifier, introduced by a *literal operator* or a *literal operator template* declaration (see [below](/docs/cpp/language/expressions/user_literal#Literal_operators))
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-user-literal:0008 */}
+<Revision since="C++14">
+In the [integer](/docs/cpp/language/expressions/integer_literal#Single_quote) and [floating-point](/docs/cpp/language/expressions/floating_literal#Single_quote) digit sequences, optional separators `'` are allowed between any two digits.
+</Revision>
+
+{/* source:cpp-language-user-literal:0009 */}
+If a token matches a user-defined literal syntax and a regular literal syntax, it is assumed to be a regular literal (that is, it's impossible to overload `LL` in `123LL`).
+
+{/* source:cpp-language-user-literal:0010 */}
+When the compiler encounters a user-defined literal with *ud-suffix* `X`, it performs [unqualified name lookup](/docs/cpp/language/basic_concepts/lookup#Unqualified_name_lookup), looking for a function with the name `operator""X`. If the lookup does not find a declaration, the program is ill-formed. Otherwise,
+
+{/* source:cpp-language-user-literal:0011 */}
+1. For user-defined integer literals,
+
+{/* source:cpp-language-user-literal:0012 */}
+a) if the overload set includes a literal operator with the parameter type `unsigned long long`, the user-defined literal expression is treated as a function call `operator ""X(`*n*`ULL)`, where *n* is the literal without *ud-suffix*;
+
+{/* source:cpp-language-user-literal:0013 */}
+b) otherwise, the overload set must include either, but not both, a raw literal operator or a numeric literal operator template. If the overload set includes a raw literal operator, the user-defined literal expression is treated as a function call `operator""X("`*n*`")`;
+
+{/* source:cpp-language-user-literal:0014 */}
+c) otherwise, if the overload set includes a numeric literal operator template, the user-defined literal expression is treated as a function call `operator""X<'c1', 'c2', 'c3'..., 'ck'>()`, where *c1*..*ck* are the individual characters of *n* and all of them are from the [basic character set](/docs/cpp/language/basic_concepts/charset#Basic_character_set).
+
+{/* source:cpp-language-user-literal:0015 */}
+2. For user-defined floating-point literals,
+
+{/* source:cpp-language-user-literal:0016 */}
+a) If the overload set includes a literal operator with the parameter type `long double`, the user-defined literal expression is treated as a function call `operator ""X(`*f*`L)`, where *f* is the literal without *ud-suffix*;
+
+{/* source:cpp-language-user-literal:0017 */}
+b) otherwise, the overload set must include either, but not both, a raw literal operator or a numeric literal operator template. If the overload set includes a raw literal operator, the user-defined literal expression is treated as a function call `operator ""X("`*f*`")`;
+
+{/* source:cpp-language-user-literal:0018 */}
+c) otherwise, if the overload set includes a numeric literal operator template, the user-defined literal expression is treated as a function call `operator""X<'c1', 'c2', 'c3'..., 'ck'>()`, where *c1*..*ck* are the individual characters of *f* and all of them are from the [basic character set](/docs/cpp/language/basic_concepts/charset#Basic_character_set).
+
+{/* source:cpp-language-user-literal:0019 */}
+3. For user-defined string literals, let `str` be the literal without *ud-suffix*:
+
+{/* source:cpp-language-user-literal:0020 */}
+<Revision since="C++20">
+a) If the overload set includes a string literal operator template with a non-type template parameter for which `str` is a well-formed template argument, then the user-defined literal expression is treated as a function call `operator ""X<str>()`;
+</Revision>
+
+{/* source:cpp-language-user-literal:0021 */}
+b) otherwise, the user-defined literal expression is treated as a function call `operator ""X (str, len)`, where `len` is the length of the string literal, excluding the terminating null character.
+
+{/* source:cpp-language-user-literal:0022 */}
+4. For user-defined character literals, the user-defined literal expression is treated as a function call `operator ""X(ch)`, where `ch` is the literal without *ud-suffix*.
+
+{/* source:cpp-language-user-literal:0023 */}
+```cpp
+long double operator ""_w(long double);
+std::string operator ""_w(const char16_t*, size_t);
+unsigned    operator ""_w(const char*);
+
+int main()
+{
+    1.2_w;    // calls operator ""_w(1.2L)
+    u"one"_w; // calls operator ""_w(u"one", 3)
+    12_w;     // calls operator ""_w("12")
+    "two"_w;  // error: no applicable literal operator
+}
+```
+
+{/* source:cpp-language-user-literal:0024 */}
+When string literal concatenation takes place in [translation phase 6](/docs/cpp/language/basic_concepts/translation_phases#Phase_6), user-defined string literals are concatenated as well, and their *ud-suffix*es are ignored for the purpose of concatenation, except that only one suffix may appear on all concatenated literals:
+
+{/* source:cpp-language-user-literal:0025 */}
+```cpp
+int main()
+{
+    L"A" "B" "C"_x;  // OK: same as L"ABC"_x
+    "P"_x "Q" "R"_y; // error: two different ud-suffixes (_x and _y)
+}
+```
+
+## Literal operators
+
+{/* source:cpp-language-user-literal:0026 */}
+The function called by a user-defined literal is known as *literal operator* (or, if it's a template, *literal operator template*). It is declared just like any other [function](/docs/cpp/language/functions/function) or [function template](/docs/cpp/language/templates/function_template) at namespace scope (it may also be a friend function, an explicit instantiation or specialization of a function template, or introduced by a using-declaration), except for the following restrictions:
+
+{/* source:cpp-language-user-literal:0027 */}
+The name of this function can have one of the two forms:
+
+{/* source:cpp-language-user-literal:0028 */}
+| Syntax | # | Std |
+| --- | --- | --- |
+| `operator "" identifier` | (1) | (deprecated) |
+| `operator user-defined-string-literal` | (2) | |
+
+{/* source:cpp-language-user-literal:0029 */}
+<ParameterList>
+  <Parameter name="identifier">
+    the [identifier](/docs/cpp/language/basic_concepts/name) to use as the *ud-suffix* for the user-defined literals that will call this function
+  </Parameter>
+  <Parameter name="user-defined-string-literal">
+    the character sequence `""` followed, without a space, by the character sequence that becomes the *ud-suffix*
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-user-literal:0030 */}
+1. Declares a literal operator.
+
+{/* source:cpp-language-user-literal:0031 */}
+2. Declares a literal operator. This syntax makes it possible to use language keywords and [reserved identifiers](/docs/cpp/language/keywords) as *ud-suffix*es, for example, `operator ""if` from the header [`<complex>`](/docs/cpp/library/headers/complex).
+
+{/* source:cpp-language-user-literal:0032 */}
+*ud-suffix* must begin with the underscore `_`: the suffixes that do not begin with the underscore are reserved for the literal operators provided by the standard library. It cannot contain double underscores `__` as well: such suffixes are also reserved.
+
+{/* source:cpp-language-user-literal:0033 */}
+If the literal operator is a template, it must have an empty parameter list and can have only one template parameter, which must be a non-type template parameter pack with element type `char` (in which case it is known as a *numeric literal operator template*):
+
+{/* source:cpp-language-user-literal:0034 */}
+```cpp
+template<char...>
+double operator ""_x();
+```
+
+{/* source:cpp-language-user-literal:0035 */}
+<Revision since="C++20">
+or a non-type template parameter of class type (in which case it is known as a *string literal operator template*):
+
+```cpp
+struct A { constexpr A(const char*); };
+
+template<A a>
+A operator ""_a();
+```
+</Revision>
+
+{/* source:cpp-language-user-literal:0036 */}
+Only the following parameter lists are allowed on literal operators:
+
+{/* source:cpp-language-user-literal:0037 */}
+| Parameter list | # | Std |
+| --- | --- | --- |
+| `( const char* )` | (1) | |
+| `( unsigned long long int )` | (2) | |
+| `( long double )` | (3) | |
+| `( char )` | (4) | |
+| `( wchar_t )` | (5) | |
+| `( char8_t )` | (6) | (C++20) |
+| `( char16_t )` | (7) | |
+| `( char32_t )` | (8) | |
+| `( const char*, [`std::size_t`](/docs/cpp/library/utility/types/size_t) )` | (9) | |
+| `( const wchar_t*, [`std::size_t`](/docs/cpp/library/utility/types/size_t) )` | (10) | |
+| `( const char8_t*, [`std::size_t`](/docs/cpp/library/utility/types/size_t) )` | (11) | (C++20) |
+| `( const char16_t*, [`std::size_t`](/docs/cpp/library/utility/types/size_t) )` | (12) | |
+| `( const char32_t*, [`std::size_t`](/docs/cpp/library/utility/types/size_t) )` | (13) | |
+
+{/* source:cpp-language-user-literal:0038 */}
+1. Literal operators with this parameter list are the *raw literal operators*, used as fallbacks for integer and floating-point user-defined literals (see above)
+
+{/* source:cpp-language-user-literal:0039 */}
+2. Literal operators with these parameter lists are the first-choice literal operator for user-defined integer literals
+
+{/* source:cpp-language-user-literal:0040 */}
+3. Literal operators with these parameter lists are the first-choice literal operator for user-defined floating-point literals
+
+{/* source:cpp-language-user-literal:0041 */}
+4-8) Literal operators with these parameter lists are called by user-defined character literals
+
+{/* source:cpp-language-user-literal:0042 */}
+9-13) Literal operators with these parameter lists are called by user-defined string literals
+
+{/* source:cpp-language-user-literal:0043 */}
+[Default arguments](/docs/cpp/language/functions/default_arguments) are not allowed.
+
+{/* source:cpp-language-user-literal:0044 */}
+C [language linkage](/docs/cpp/language/declarations/language_linkage) is not allowed.
+
+{/* source:cpp-language-user-literal:0045 */}
+Other than the restrictions above, literal operators and literal operator templates are normal functions (and function templates), they can be declared inline or constexpr, they may have internal or external linkage, they can be called explicitly, their addresses can be taken, etc.
+
+{/* source:cpp-language-user-literal:0046 */}
+```cpp
+#include <string>
+
+void        operator ""_km(long double); // OK, will be called for 1.0_km
+void        operator "" _km(long double); // same as above, deprecated
+std::string operator ""_i18n(const char*, std::size_t); // OK
+
+template<char...>
+double operator ""_pi(); // OK
+float  operator ""_e(const char*); // OK
+
+// error: suffix must begin with underscore
+float operator ""Z(const char*);
+
+// error: all names that begin with underscore followed by uppercase
+// letter are reserved (NOTE: a space between "" and _).
+double operator"" _Z(long double);
+
+// OK. NOTE: no space between "" and _.
+double operator""_Z(long double);
+
+// OK: literal operators can be overloaded
+double operator ""_Z(const char* args);
+
+int main() {}
+```
+
+## Notes
+
+{/* source:cpp-language-user-literal:0047 */}
+Since the introduction of user-defined literals, the code that uses [format macro constants for fixed-width integer types](/docs/c/library/types/integer) with no space after the preceding string literal became invalid: `std::printf("%"PRId64"\n",INT64_MIN);` has to be replaced by `std::printf("%" PRId64"\n",INT64_MIN);`.
+
+{/* source:cpp-language-user-literal:0048 */}
+Due to [maximal munch](/docs/cpp/language/basic_concepts/translation_phases#maximal_munch), user-defined integer and floating point literals ending in <InlineRevision since="C++17">`p`, `P`,</InlineRevision> `e` and `E`, when followed by the operators `+` or `-`, must be separated from the operator with whitespace or parentheses in the source:
+
+{/* source:cpp-language-user-literal:0049 */}
+```cpp
+long double operator""_E(long double);
+long double operator""_a(long double);
+int operator""_p(unsigned long long);
+
+auto x = 1.0_E+2.0;   // error
+auto y = 1.0_a+2.0;   // OK
+auto z = 1.0_E +2.0;  // OK
+auto q = (1.0_E)+2.0; // OK
+auto w = 1_p+2;       // error
+auto u = 1_p +2;      // OK
+```
+
+{/* source:cpp-language-user-literal:0050 */}
+Same applies to dot operator following an integer or floating-point user-defined literal:
+
+{/* source:cpp-language-user-literal:0051 */}
+```cpp
+#include <chrono>
+
+using namespace std::literals;
+
+auto a = 4s.count();   // Error
+auto b = 4s .count();  // OK
+auto c = (4s).count(); // OK
+```
+
+{/* source:cpp-language-user-literal:0052 */}
+Otherwise, a single invalid preprocessing number token (e.g., `1.0_E+2.0` or `4s.count`) is formed, which causes compilation to fail.
+
+{/* source:cpp-language-user-literal:0053 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_user_defined_literals`](/docs/cpp/library/feature_test#cpp_user_defined_literals) | [`200809L`](/docs/cpp/library/compiler_support/11#cpp_user_defined_literals_200809L) | (C++11) | User-defined literals |
+
+## Keywords
+
+{/* source:cpp-language-user-literal:0054 */}
+[`operator`](/docs/cpp/language/keywords/operator)
+
+## Examples
+
+{/* source:cpp-language-user-literal:0055 */}
+```cpp
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
+#include <numbers>
+#include <string>
+
+// used as conversion from degrees (input param) to radians (returned output)
+constexpr long double operator""_deg_to_rad(long double deg)
+{
+    long double radians = deg * std::numbers::pi_v<long double> / 180;
+    return radians;
+}
+
+// used with custom type
+struct mytype
+{
+    unsigned long long m;
+};
+
+constexpr mytype operator""_mytype(unsigned long long n)
+{
+    return mytype{n};
+}
+
+// used for side-effects
+void operator""_print(const char* str)
+{
+    std::cout << str << '\n';
+}
+
+#if __cpp_nontype_template_args < 201911
+
+std::string operator""_x2 (const char* str, std::size_t)
+{
+    return std::string{str} + str;
+}
+
+#else // C++20 string literal operator template
+
+template<std::size_t N>
+struct DoubleString
+{
+    char p[N + N - 1]{};
+
+    constexpr DoubleString(char const(&pp)[N])
+    {
+        std::ranges::copy(pp, p);
+        std::ranges::copy(pp, p + N - 1);
+    }
+};
+
+template<DoubleString A>
+constexpr auto operator""_x2()
+{
+    return A.p;
+}
+
+#endif // C++20
+
+int main()
+{
+    double x_rad = 90.0_deg_to_rad;
+    std::cout << std::fixed << x_rad << '\n';
+
+    mytype y = 123_mytype;
+    std::cout << y.m << '\n';
+
+    0x123ABC_print;
+    std::cout << "abc"_x2 << '\n';
+}
+```
+
+Output:
+
+```text
+1.570796
+123
+0x123ABC
+abcabc
+```
+
+## Standard library
+
+{/* source:cpp-language-user-literal:0056 */}
+The following literal operators are defined in the standard library:
+
+{/* source:cpp-language-user-literal:0057 */}
+Defined in inline namespace `std::literals::complex_literals`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""if` `operator""i` `operator""il`](/docs/cpp/library/numeric/complex/operator_q__q_i) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::complex`](/docs/cpp/library/numeric/complex) literal representing purely imaginary number (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Defined in inline namespace `std::literals::chrono_literals`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""h`](/docs/cpp/library/chrono/duration/operator_q__q_h) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) literal representing hours (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""min`](/docs/cpp/library/chrono/duration/operator_q__q_min) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) literal representing minutes (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""s`](/docs/cpp/library/chrono/duration/operator_q__q_s) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) literal representing seconds (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""ms`](/docs/cpp/library/chrono/duration/operator_q__q_ms) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) literal representing milliseconds (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""us`](/docs/cpp/library/chrono/duration/operator_q__q_us) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) literal representing microseconds (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""ns`](/docs/cpp/library/chrono/duration/operator_q__q_ns) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>a [`std::chrono::duration`](/docs/cpp/library/chrono/duration) literal representing nanoseconds (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""y`](/docs/cpp/library/chrono/year/operator_q__q_y) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a `std::chrono::year` literal representing a particular year (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""d`](/docs/cpp/library/chrono/day/operator_q__q_d) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a `std::chrono::day` literal representing a day of a month (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Defined in inline namespace `std::literals::string_literals`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""s`](/docs/cpp/library/string/basic_string/operator_q__q_s) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>converts a character array literal to `basic_string` (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Defined in inline namespace `std::literals::string_view_literals`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator""sv`](/docs/cpp/library/string/basic_string_view/operator_q__q_sv) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a string view of a character array literal (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Defect reports
+
+{/* source:cpp-language-user-literal:0058 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-user-literal:0059 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1473} standard="C++11">
+    <PublishedBehavior>whitespace between `""` and *ud-suffix* was required in the declaration of literal operators</PublishedBehavior>
+    <CorrectedBehavior>made optional</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1479} standard="C++11">
+    <PublishedBehavior>literal operators could have default arguments</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2521} standard="C++11">
+    <PublishedBehavior>`operator"" _Bq` was ill-formed (no diagnostic required) because it uses the reserved identifier `_Bq`</PublishedBehavior>
+    <CorrectedBehavior>deprecated the literal operator syntax with whitespace between `""` and *ud-suffix*</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

@@ -1,0 +1,473 @@
+---
+title: "Object"
+description: "C++ programs create, destroy, refer to, access, and manipulate objects."
+source_url: "https://en.cppreference.com/w/cpp/language/object"
+language: "C++"
+---
+
+{/* source:cpp-language-object:0000 */}
+C++ programs create, destroy, refer to, access, and manipulate *objects*.
+
+{/* source:cpp-language-object:0001 */}
+An object, in C++, has
+
+{/* source:cpp-language-object:0002 */}
+- size (can be determined with [`sizeof`](/docs/cpp/language/expressions/sizeof));
+- alignment requirement (can be determined with [`alignof`](/docs/cpp/language/expressions/alignof));
+- [storage duration](/docs/cpp/language/declarations/storage_duration) (automatic, static, dynamic, thread-local);
+- [lifetime](/docs/cpp/language/basic_concepts/lifetime) (bounded by storage duration or temporary);
+- [type](/docs/cpp/language/basic_concepts/type-id);
+- value (which may be indeterminate, e.g. for [default-initialized](/docs/cpp/language/initialization/default_initialization) non-class types);
+- optionally, a [name](/docs/cpp/language/basic_concepts/name).
+
+{/* source:cpp-language-object:0003 */}
+The following entities are not objects: value, reference, function, enumerator, type, non-static class member, template, class or function template specialization, namespace, parameter pack, and `this`.
+
+{/* source:cpp-language-object:0004 */}
+A *variable* is an object or a reference that is not a non-static data member, that is introduced by a [declaration](/docs/cpp/language/declarations).
+
+## Object creation
+
+{/* source:cpp-language-object:0005 */}
+Objects can be explicitly created by [definitions](/docs/cpp/language/basic_concepts/definition), [`new` expressions](/docs/cpp/language/expressions/new), [`throw` expressions](/docs/cpp/language/exceptions/throw), changing the active member of a [union](/docs/cpp/language/classes/union) and evaluating expressions that require [temporary objects](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime). The created object is uniquely defined in explicit object creation.
+
+{/* source:cpp-language-object:0006 */}
+Objects of [implicit-lifetime types](/docs/cpp/language/basic_concepts/type-id#Implicit-lifetime_type) can also be implicitly created by
+
+{/* source:cpp-language-object:0007 */}
+- except during constant evaluation, operations that begin lifetime of an array of type `unsigned char`<InlineRevision since="C++17"> or [`std::byte`](/docs/cpp/library/utility/types/byte)</InlineRevision>, in which case such objects are created in the array,
+- call to following allocating functions, in which case such objects are created in the allocated storage:
+
+{/* source:cpp-language-object:0008 */}
+- [`operator new`](/docs/cpp/library/memory/new/operator_new) (except during constant evaluation)
+- [`operator new[]`](/docs/cpp/library/memory/new/operator_new) (except during constant evaluation)
+- [`std::malloc`](/docs/cpp/library/memory/c/malloc)
+- [`std::calloc`](/docs/cpp/library/memory/c/calloc)
+- [`std::realloc`](/docs/cpp/library/memory/c/realloc)
+
+{/* source:cpp-language-object:0009 */}
+<Revision since="C++17">
+- [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)
+</Revision>
+
+{/* source:cpp-language-object:0010 */}
+- call to following [object representation](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation) copying functions, in which case such objects are created in the destination region of storage or the result:
+
+{/* source:cpp-language-object:0011 */}
+- [`std::memcpy`](/docs/cpp/library/text/byte/memcpy)
+- [`std::memmove`](/docs/cpp/library/text/byte/memmove)
+
+{/* source:cpp-language-object:0012 */}
+<Revision since="C++20">
+- [`std::bit_cast`](/docs/cpp/library/utility/bit/bit_cast)
+</Revision>
+
+{/* source:cpp-language-object:0013 */}
+<Revision since="C++23">
+- call to following specific functions, in which case such objects are created in the specified region of storage:
+  - `std::start_lifetime_as`
+  - `std::start_lifetime_as_array`
+</Revision>
+
+{/* source:cpp-language-object:0014 */}
+Zero or more objects may be created in the same region of storage, as long as doing so would give the program defined behavior. If such creation is impossible, e.g. due to conflicting operations, the behavior of the program is undefined. If multiple such sets of implicitly created objects would give the program defined behavior, it is unspecified which such set of objects is created. In other words, implicitly created objects are not required to be uniquely defined.
+
+{/* source:cpp-language-object:0015 */}
+After implicitly creating objects within a specified region of storage, some operations produce a pointer to a *suitable created object*. The suitable created object has the same address as the region of storage. Likewise, the behavior is undefined if only if no such pointer value can give the program defined behavior, and it is unspecified which pointer value is produced if there are multiple values giving the program defined behavior.
+
+{/* source:cpp-language-object:0016 */}
+```cpp
+#include <cstdlib>
+
+struct X { int a, b; };
+
+X* MakeX()
+{
+    // One of possible defined behaviors:
+    // the call to std::malloc implicitly creates an object of type X
+    // and its subobjects a and b, and returns a pointer to that X object
+    X* p = static_cast<X*>(std::malloc(sizeof(X)));
+    p->a = 1;
+    p->b = 2;
+    return p;
+}
+```
+
+{/* source:cpp-language-object:0017 */}
+Call to [`std::allocator::allocate`](/docs/cpp/library/memory/allocator/allocate) or implicitly defined copy/move special member functions of [union](/docs/cpp/language/classes/union) types can also create objects.
+
+## Object representation and value representation
+
+{/* source:cpp-language-object:0018 */}
+Some types and objects have *object representations* and *value representations*, they are defined in the table below:
+
+{/* source:cpp-language-object:0019 */}
+| Entity | Object representation | Value representation |
+| --- | --- | --- |
+| a complete object type `T` | the sequence of `N` `unsigned char` objects taken up by a non-[bit-field](/docs/cpp/language/classes/bit_field) complete object of type `T`, where `N` is `sizeof(T)` | the set of bits in the object representation of `T` that participate in representing a value of type `T` |
+| a non-bit-field complete object `obj` of type `T` | the bytes of `obj` corresponding to the object representation of `T` | the bits of `obj` corresponding to the value representation of `T` |
+| a bit-field object `bf` | the sequence of `N` bits taken up by `bf`, where `N` is the width of the bit-field | the set of bits in the object representation of `bf` that participate in representing the value of `bf` |
+
+{/* source:cpp-language-object:0020 */}
+Bits in the object representation of a type or object that are not part of the value representation are *padding bits*.
+
+{/* source:cpp-language-object:0021 */}
+For [TriviallyCopyable](/docs/cpp/library/named_req/TriviallyCopyable) types, value representation is a part of the object representation, which means that copying the bytes occupied by the object in the storage is sufficient to produce another object with the same value (except if the object is a potentially-overlapping subobject, or the value is a *trap representation* of its type and loading it into the CPU raises a hardware exception, such as SNaN ("signalling not-a-number") floating-point values or NaT ("not-a-thing") integers).
+
+{/* source:cpp-language-object:0022 */}
+Although most implementations do not allow trap representations, padding bits, or multiple representations for integer types, there are exceptions; for example a value of an integer type on Itanium [may be a trap representation](https://web.archive.org/web/20170830125905/https://blogs.msdn.microsoft.com/oldnewthing/20040119-00/?p=41003).
+
+{/* source:cpp-language-object:0023 */}
+The reverse is not necessarily true: two objects of a [TriviallyCopyable](/docs/cpp/library/named_req/TriviallyCopyable) type with different object representations may represent the same value. For example, multiple floating-point bit patterns represent the same special value [NaN](/docs/cpp/library/numeric/math/NAN). More commonly, padding bits may be introduced to satisfy [alignment requirements](/docs/cpp/language/basic_concepts/objects#Alignment), [bit-field](/docs/cpp/language/classes/bit_field) sizes, etc.
+
+{/* source:cpp-language-object:0024 */}
+```cpp
+#include <cassert>
+
+struct S
+{
+    char c;  // 1 byte value
+             // 3 bytes of padding bits (assuming alignof(float) == 4)
+    float f; // 4 bytes value (assuming sizeof(float) == 4)
+
+    bool operator==(const S& arg) const // value-based equality
+    {
+        return c == arg.c && f == arg.f;
+    }
+};
+
+void f()
+{
+    assert(sizeof(S) == 8);
+    S s1 = {'a', 3.14};
+    S s2 = s1;
+    reinterpret_cast<unsigned char*>(&s1)[2] = 'b'; // modify some padding bits
+    assert(s1 == s2); // value did not change
+}
+```
+
+{/* source:cpp-language-object:0025 */}
+For the objects of type `char`, `signed char`, and `unsigned char` (unless they are oversize [bit-fields](/docs/cpp/language/classes/bit_field)), every bit of the object representation is required to participate in the value representation and each possible bit pattern represents a distinct value (no padding bits, trap bits, or multiple representations allowed).
+
+## Subobjects
+
+{/* source:cpp-language-object:0026 */}
+An object can have *subobjects*. These include
+
+{/* source:cpp-language-object:0027 */}
+- member objects
+- base class subobjects
+- array elements
+
+{/* source:cpp-language-object:0028 */}
+An object that is not a subobject of another object is called *complete object*.
+
+{/* source:cpp-language-object:0029 */}
+Complete objects, member objects, and array elements are also known as *most derived objects*, to distinguish them from base class subobjects.
+
+{/* source:cpp-language-object:0030 */}
+For a class,
+
+{/* source:cpp-language-object:0031 */}
+- its non-static [data members](/docs/cpp/language/classes/data_members),
+- its non-virtual direct [base classes](/docs/cpp/language/classes/derived_class), and,
+- if the class is not [abstract](/docs/cpp/language/classes/abstract_class), its [virtual base classes](/docs/cpp/language/classes/derived_class#Virtual_base_classes)
+
+{/* source:cpp-language-object:0032 */}
+are called its *potentially constructed subobjects*.
+
+## Size
+
+{/* source:cpp-language-object:0033 */}
+A subobject is a *potentially overlapping subobject* if it is a base class subobject<InlineRevision since="C++20"> or a non-static data member declared with the [`[[no_unique_address]]`](/docs/cpp/language/declarations/attributes/no_unique_address) attribute</InlineRevision>.
+
+{/* source:cpp-language-object:0034 */}
+An object `obj` can only possibly have zero size if all following conditions are satisfied:
+
+{/* source:cpp-language-object:0035 */}
+- `obj` is a potentially-overlapping subobject.
+- `obj` is of a class type without virtual member functions and virtual base classes.
+- `obj` does not have any subobject of nonzero size or unnamed [bit-fields](/docs/cpp/language/classes/bit_field) of nonzero length.
+
+{/* source:cpp-language-object:0036 */}
+For an object `obj` satisfying all the conditions above:
+
+{/* source:cpp-language-object:0037 */}
+- If `obj` is a base class subobject of a<InlineRevision since="C++11"> [standard-layout](/docs/cpp/language/classes/data_members#Standard-layout)</InlineRevision> class type with no non-static data members, it has zero size.
+- Otherwise, it is implementation-defined under which circumstances where `obj` has zero size.
+
+{/* source:cpp-language-object:0038 */}
+See [empty base optimization](/docs/cpp/language/classes/ebo) for more details.
+
+{/* source:cpp-language-object:0039 */}
+Any non-bit-field object with nonzero size must occupy one or more bytes of storage, including every byte that is occupied (in full or in part) by any of its subobjects. The storage occupied must be contiguous if the object is of trivially copyable<InlineRevision since="C++11"> or standard-layout</InlineRevision> type.
+
+## Address
+
+{/* source:cpp-language-object:0040 */}
+Unless an object is a bit-field or a subobject of zero size, the *address* of that object is the address of the first [byte](/docs/cpp/language/basic_concepts/memory_model#Byte) it occupies.
+
+{/* source:cpp-language-object:0041 */}
+An object can contain other objects, in which case the contained objects are *nested within* the former object. An object `a` is nested within another object `b` if any of the following conditions is satisfied:
+
+{/* source:cpp-language-object:0042 */}
+- `a` is a subobject of `b`.
+- `b` [provides storage](/docs/cpp/language/basic_concepts/lifetime#Providing_storage) for `a`.
+- There exists an object `c` where `a` is nested within `c`, and `c` is nested within `b`.
+
+{/* source:cpp-language-object:0043 */}
+An object is a *potentially non-unique object* if it is one of the following objects:
+
+{/* source:cpp-language-object:0044 */}
+- A [string literal](/docs/cpp/language/expressions/string_literal) object.
+
+{/* source:cpp-language-object:0045 */}
+<Revision since="C++11">
+- The [backing array](/docs/cpp/language/initialization/list_initialization#List-initializing_std::initializer_list) of an initializer list.
+</Revision>
+
+{/* source:cpp-language-object:0046 */}
+- A subobject of a potentially non-unique object.
+
+{/* source:cpp-language-object:0047 */}
+For any two non-bit-field objects with overlapping [lifetimes](/docs/cpp/language/basic_concepts/lifetime):
+
+{/* source:cpp-language-object:0048 */}
+- If any of the following conditions is satisfied, they may have the same address:
+
+{/* source:cpp-language-object:0049 */}
+- One of them is nested within the other.
+- Any of them is a subobject of zero size, and their types are not [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types).
+- They are both potentially non-unique objects.
+
+{/* source:cpp-language-object:0050 */}
+- Otherwise, they always have distinct addresses and occupy disjoint bytes of storage.
+
+{/* source:cpp-language-object:0051 */}
+```cpp
+// character literals are always unique
+static const char test1 = 'x';
+static const char test2 = 'x';
+const bool b = &test1 != &test2;      // always true
+
+// the character 'x' accessed from “r”, “s” and “il”
+// may have the same address (i.e., these objects may share storage)
+static const char (&r) [] = "x";
+static const char *s = "x";
+static std::initializer_list<char> il = {'x'};
+const bool b2 = r != il.begin();      // unspecified result
+const bool b3 = r != s;               // unspecified result
+const bool b4 = il.begin() != &test1; // always true
+const bool b5 = r != &test1;          // always true
+```
+
+## Polymorphic objects
+
+{/* source:cpp-language-object:0052 */}
+Objects of a class type that declares or inherits at least one virtual function are polymorphic objects. Within each polymorphic object, the implementation stores additional information (in every existing implementation, it is one pointer unless optimized out), which is used by [virtual function](/docs/cpp/language/classes/virtual) calls and by the RTTI features ([`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) and [`typeid`](/docs/cpp/language/expressions/typeid)) to determine, at run time, the type with which the object was created, regardless of the expression it is used in.
+
+{/* source:cpp-language-object:0053 */}
+For non-polymorphic objects, the interpretation of the value is determined from the expression in which the object is used, and is decided at compile time.
+
+{/* source:cpp-language-object:0054 */}
+```cpp
+#include <iostream>
+#include <typeinfo>
+
+struct Base1
+{
+    // polymorphic type: declares a virtual member
+    virtual ~Base1() {}
+};
+
+struct Derived1 : Base1
+{
+     // polymorphic type: inherits a virtual member
+};
+
+struct Base2
+{
+     // non-polymorphic type
+};
+
+struct Derived2 : Base2
+{
+     // non-polymorphic type
+};
+
+int main()
+{
+    Derived1 obj1; // object1 created with type Derived1
+    Derived2 obj2; // object2 created with type Derived2
+
+    Base1& b1 = obj1; // b1 refers to the object obj1
+    Base2& b2 = obj2; // b2 refers to the object obj2
+
+    std::cout << "Expression type of b1: " << typeid(decltype(b1)).name() << '\n'
+              << "Expression type of b2: " << typeid(decltype(b2)).name() << '\n'
+              << "Object type of b1: " << typeid(b1).name() << '\n'
+              << "Object type of b2: " << typeid(b2).name() << '\n'
+              << "Size of b1: " << sizeof b1 << '\n'
+              << "Size of b2: " << sizeof b2 << '\n';
+}
+```
+
+Possible output:
+
+```text
+Expression type of b1: Base1
+Expression type of b2: Base2
+Object type of b1: Derived1
+Object type of b2: Base2
+Size of b1: 8
+Size of b2: 1
+```
+
+## Strict aliasing
+
+{/* source:cpp-language-object:0055 */}
+Accessing an object using an expression of a type other than the type with which it was created is undefined behavior in many cases, see [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast#Type_aliasing) for the list of exceptions and examples.
+
+## Alignment
+
+{/* source:cpp-language-object:0056 */}
+Every [object type](/docs/cpp/language/basic_concepts/type-id) has the property called *alignment requirement*, which is a nonnegative integer value (of type [`std::size_t`](/docs/cpp/library/utility/types/size_t), and always a power of two) representing the number of bytes between successive addresses at which objects of this type can be allocated.
+
+{/* source:cpp-language-object:0057 */}
+<Revision since="C++11">
+The alignment requirement of a type can be queried with [`alignof`](/docs/cpp/language/expressions/alignof) or [`std::alignment_of`](/docs/cpp/library/meta/alignment_of). The pointer alignment function [`std::align`](/docs/cpp/library/memory/align) can be used to obtain a suitably-aligned pointer within some buffer, and [`std::aligned_storage`](/docs/cpp/library/meta/aligned_storage) can be used to obtain suitably-aligned storage.
+</Revision>
+
+{/* source:cpp-language-object:0058 */}
+Each object type imposes its alignment requirement on every object of that type<InlineRevision since="C++11">; stricter alignment (with larger alignment requirement) can be requested using [`alignas`](/docs/cpp/language/declarations/alignas)</InlineRevision>. Attempting to create an object in storage that does not meet the alignment requirements of the object's type is undefined behavior.
+
+{/* source:cpp-language-object:0059 */}
+In order to satisfy alignment requirements of all non-static members of a [class](/docs/cpp/language/classes/class), [padding bits](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation) may be inserted after some of its members.
+
+{/* source:cpp-language-object:0060 */}
+```cpp
+#include <iostream>
+
+// objects of type S can be allocated at any address
+// because both S.a and S.b can be allocated at any address
+struct S
+{
+    char a; // size: 1, alignment: 1
+    char b; // size: 1, alignment: 1
+}; // size: 2, alignment: 1
+
+// objects of type X must be allocated at 4-byte boundaries
+// because X.n must be allocated at 4-byte boundaries
+// because int's alignment requirement is (usually) 4
+struct X
+{
+    int n;  // size: 4, alignment: 4
+    char c; // size: 1, alignment: 1
+    // three bytes of padding bits
+}; // size: 8, alignment: 4
+
+int main()
+{
+    std::cout << "alignof(S) = " << alignof(S) << '\n'
+              << "sizeof(S)  = " << sizeof(S) << '\n'
+              << "alignof(X) = " << alignof(X) << '\n'
+              << "sizeof(X)  = " << sizeof(X) << '\n';
+}
+```
+
+Possible output:
+
+```text
+alignof(S) = 1
+sizeof(S)  = 2
+alignof(X) = 4
+sizeof(X)  = 8
+```
+
+{/* source:cpp-language-object:0061 */}
+The weakest alignment (the smallest alignment requirement) is the alignment of `char`, `signed char`, and `unsigned char`, which equals `1`; the largest *fundamental alignment* of any type is implementation-defined<InlineRevision since="C++11"> and equal to the alignment of [`std::max_align_t`](/docs/cpp/library/utility/types/max_align_t)</InlineRevision>.
+
+{/* source:cpp-language-object:0062 */}
+Fundamental alignments are supported for objects of all kinds of storage durations.
+
+{/* source:cpp-language-object:0063 */}
+<Revision since="C++11">
+If a type's alignment is made stricter (larger) than [`std::max_align_t`](/docs/cpp/library/utility/types/max_align_t) using [`alignas`](/docs/cpp/language/declarations/alignas), it is known as a type with *extended alignment* requirement. A type whose alignment is extended or a class type whose non-static data member has extended alignment is an *over-aligned type*.
+
+[Allocator](/docs/cpp/library/named_req/Allocator) types are required to handle over-aligned types correctly.
+</Revision>
+
+{/* source:cpp-language-object:0064 */}
+<Revision since="C++11" until="C++20">
+It is implementation-defined if <InlineRevision until="C++17">[`new` expressions](/docs/cpp/language/expressions/new) and</InlineRevision> [`std::get_temporary_buffer`](/docs/cpp/library/memory/get_temporary_buffer) support over-aligned types.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-object:0065 */}
+Objects in C++ have different meaning from objects in [object-oriented programming (OOP)](https://en.wikipedia.org/wiki/Object-oriented_programming):
+
+{/* source:cpp-language-object:0066 */}
+| Objects in C++ | Objects in OOP |
+| --- | --- |
+| can have any object type (see [`std::is_object`](/docs/cpp/library/meta/is_object)) | must have a class type |
+| no concept of “instance” | have the concept of “instance” (and there are mechanisms like `instanceof` to detect “instance-of” relationship) |
+| no concept of “interface” | have the concept of “interface” (and there are mechanisms like `instanceof` to detect whether an interface is implemented) |
+| polymorphism needs to be explicitly enabled via virtual members | polymorphism is always enabled |
+
+{/* source:cpp-language-object:0067 */}
+In the defect report [P0593R6](https://wg21.link/P0593R6), implicit object creation was considered happening when creating a byte array or invocating an [allocation function](/docs/cpp/library/memory/new/operator_new) (which is possibly user-defined and [`constexpr`](/docs/cpp/language/declarations/constexpr)) during constant evaluation. However, such allowance caused indeterminism in constant evaluation which was undesired and uninplementable in some aspects. As a result, [P2747R2](https://wg21.link/P2747R2) disallowed such implicit object creation in constant evaluation. We intentedly treat such change as a defect report although the whole paper is not.
+
+## Defect reports
+
+{/* source:cpp-language-object:0068 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-object:0069 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={633} standard="C++98">
+    <PublishedBehavior>variables could only be objects</PublishedBehavior>
+    <CorrectedBehavior>they can also be references</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={734} standard="C++98">
+    <PublishedBehavior>it was unspecified whether variables defined in the same scope that are guaranteed to have the same value can have the same address</PublishedBehavior>
+    <CorrectedBehavior>address is guaranteed to be different if their lifetimes overlap, regardless of their values</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1189} standard="C++98">
+    <PublishedBehavior>two base class subobjects of the same type could have the same address</PublishedBehavior>
+    <CorrectedBehavior>they always have distinct addresses</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1861} standard="C++98">
+    <PublishedBehavior>for oversize bit-fields of narrow character types, all bits of the object representation still participated in the value representation</PublishedBehavior>
+    <CorrectedBehavior>allows padding bits</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2489} standard="C++98">
+    <PublishedBehavior>`char[]` cannot provide storage, but objects could be implicitly created within its storage</PublishedBehavior>
+    <CorrectedBehavior>objects cannot be implicitly created within the storage of `char[]`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2519} standard="C++98">
+    <PublishedBehavior>the definition of object representation did not address bit-fields</PublishedBehavior>
+    <CorrectedBehavior>addresses bit-fields</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2719} standard="C++98">
+    <PublishedBehavior>the behavior of creating an object in misaligned storage was unclear</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2753} standard="C++11">
+    <PublishedBehavior>it was unclear whether a backing array of an initializer list can share storage with a string literal</PublishedBehavior>
+    <CorrectedBehavior>they can share storage</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2795} standard="C++98">
+    <PublishedBehavior>when determining whether two objects with overlapping lifetimes can have the same address, if any of them is a subobject of zero size, they could have similar distinct types</PublishedBehavior>
+    <CorrectedBehavior>only allows non-similar types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P0593R6" standard="C++98">
+    <PublishedBehavior>previous object model did not support many useful idioms required by the standard library and was not compatible with effective types in C</PublishedBehavior>
+    <CorrectedBehavior>implicit object creation added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-object:0070 */}
+[C documentation](/docs/c/language/basic_concepts/object) for Object

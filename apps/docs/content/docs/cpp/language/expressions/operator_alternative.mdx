@@ -1,0 +1,157 @@
+---
+title: "Alternative operator representations"
+description: "C++ defines alternative spellings for several operators and other tokens that use non-ISO646 characters."
+source_url: "https://en.cppreference.com/w/cpp/language/operator_alternative"
+language: "C++"
+---
+
+{/* source:cpp-language-operator-alternative:0000 */}
+C++ (and C) source code may be written in any non-ASCII 7-bit character set that includes the [ISO 646:1983](https://en.wikipedia.org/wiki/ISO_646) invariant character set. However, several C++ operators and punctuators require characters that are outside of the ISO 646 codeset: `{, }, [, ], #, \, ^, |, ~`. To be able to use character encodings where some or all of these symbols do not exist (such as the German [DIN 66003](https://en.wikipedia.org/wiki/DIN_66003)), C++ defines the following alternatives composed of ISO 646 compatible characters.
+
+## Alternative tokens
+
+{/* source:cpp-language-operator-alternative:0001 */}
+There are alternative spellings for several operators and other tokens that use non-ISO646 characters. In all respects of the language, each alternative token behaves exactly the same as its primary token, except for its spelling (the [stringification operator](/docs/cpp/language/preprocessor/replace) can make the spelling visible). The two-letter alternative tokens are sometimes called "digraphs". Despite being four-letters long, `%:%:` is also considered a digraph.
+
+{/* source:cpp-language-operator-alternative:0002 */}
+| Primary | Alternative |
+| --- | --- |
+| `&&` | [`and`](/docs/cpp/language/keywords/and) |
+| `&=` | [`and_eq`](/docs/cpp/language/keywords/and_eq) |
+| `&` | [`bitand`](/docs/cpp/language/keywords/bitand) |
+| `\|` | [`bitor`](/docs/cpp/language/keywords/bitor) |
+| `~` | [`compl`](/docs/cpp/language/keywords/compl) |
+| `!` | [`not`](/docs/cpp/language/keywords/not) |
+| `!=` | [`not_eq`](/docs/cpp/language/keywords/not_eq) |
+| `\|\|` | [`or`](/docs/cpp/language/keywords/or) |
+| `\|=` | [`or_eq`](/docs/cpp/language/keywords/or_eq) |
+| `^` | [`xor`](/docs/cpp/language/keywords/xor) |
+| `^=` | [`xor_eq`](/docs/cpp/language/keywords/xor_eq) |
+| `{` | `<%` |
+| `}` | `%>` |
+| `[` | `<:` |
+| `]` | `:>` |
+| `#` | `%:` |
+| `##` | `%:%:` |
+
+## Trigraphs (removed in C++17)
+
+{/* source:cpp-language-operator-alternative:0003 */}
+The following three-character groups (trigraphs) are [parsed before comments and string literals are recognized](/docs/cpp/language/basic_concepts/translation_phases), and each appearance of a trigraph is replaced by the corresponding primary character:
+
+{/* source:cpp-language-operator-alternative:0004 */}
+| Primary | Trigraph |
+| --- | --- |
+| `{` | `??<` |
+| \} | `??>` |
+| `[` | `??(` |
+| `]` | `??)` |
+| `#` | `??=` |
+| `\` | `??/` |
+| `^` | `??'` |
+| `\|` | `??!` |
+| `~` | `??-` |
+
+{/* source:cpp-language-operator-alternative:0005 */}
+Because trigraphs are processed early, a comment such as `// Will the next line be executed?????/` will effectively comment out the following line, and the string literal such as `"Enter date ??/??/??"` is parsed as `"Enter date \\??"`.
+
+## Notes
+
+{/* source:cpp-language-operator-alternative:0006 */}
+The characters `&` and `!` are invariant under ISO-646, but alternatives are provided for the tokens that use these characters anyway to accommodate even more restrictive historical charsets.
+
+{/* source:cpp-language-operator-alternative:0007 */}
+There is no alternative spelling (such as `eq`) for the equality operator `==` because the character `=` was present in all supported charsets.
+
+## Compatibility with C
+
+{/* source:cpp-language-operator-alternative:0008 */}
+The same words are defined in the C programming language in the include file [`<iso646.h>`](/docs/c/language/operator_alternative) as macros. Because in C++ these are built into the language, the C++ version of [`<iso646.h>`](/docs/cpp/library/headers/ciso646), as well as [`<ciso646>`](/docs/cpp/library/headers/ciso646), does not define anything. The non-word digraphs (e.g `<%`), however, are part of the core language and can be used without including any header (otherwise, they would be unusable on any charset that lacks `#`).
+
+## Keywords
+
+{/* source:cpp-language-operator-alternative:0009 */}
+[`and`](/docs/cpp/language/keywords/and),
+[`and_eq`](/docs/cpp/language/keywords/and_eq),
+[`bitand`](/docs/cpp/language/keywords/bitand),
+[`bitor`](/docs/cpp/language/keywords/bitor),
+[`compl`](/docs/cpp/language/keywords/compl),
+[`not`](/docs/cpp/language/keywords/not),
+[`not_eq`](/docs/cpp/language/keywords/not_eq),
+[`or`](/docs/cpp/language/keywords/or),
+[`or_eq`](/docs/cpp/language/keywords/or_eq),
+[`xor`](/docs/cpp/language/keywords/xor),
+[`xor_eq`](/docs/cpp/language/keywords/xor_eq)
+
+## Example
+
+{/* source:cpp-language-operator-alternative:0010 */}
+The following example demonstrates the use of several alternative tokens.
+```cpp
+%:include <iostream>
+ 
+struct X
+<%
+    compl X() <%%> // destructor
+    X() <%%>
+    X(const X bitand) = delete; // copy constructor
+    // X(X and) = delete; // move constructor
+ 
+    bool operator not_eq(const X bitand other)
+    <%
+       return this not_eq bitand other;
+    %>
+%>;
+ 
+int main(int argc, char* argv<::>) 
+<%
+    // lambda with reference-capture:
+    auto greet = <:bitand:>(const char* name)
+    <%
+        std::cout << "Hello " << name
+                  << " from " << argv<:0:> << '\n';
+    %>;
+ 
+    if (argc > 1 and argv<:1:> not_eq nullptr)
+        greet(argv<:1:>);
+    else
+        greet("Anon");
+%>
+```
+Possible output:
+```text
+Hello Anon from ./a.out
+```
+
+## References
+
+{/* source:cpp-language-operator-alternative:0011 */}
+C++23 standard (ISO/IEC 14882:2024): 5.5 Alternative tokens [lex.digraph]
+
+{/* source:cpp-language-operator-alternative:0012 */}
+C++20 standard (ISO/IEC 14882:2020): 5.5 Alternative tokens [lex.digraph]
+
+{/* source:cpp-language-operator-alternative:0013 */}
+C++17 standard (ISO/IEC 14882:2017): 5.5 Alternative tokens [lex.digraph]
+
+{/* source:cpp-language-operator-alternative:0014 */}
+C++14 standard (ISO/IEC 14882:2014): 2.4 Trigraph sequences [lex.trigraph] 2.6 Alternative tokens [lex.digraph]
+
+{/* source:cpp-language-operator-alternative:0015 */}
+C++11 standard (ISO/IEC 14882:2011): 2.4 Trigraph sequences [lex.trigraph] 2.6 Alternative tokens [lex.digraph]
+
+{/* source:cpp-language-operator-alternative:0016 */}
+C++03 standard (ISO/IEC 14882:2003): 2.3 Trigraph sequences [lex.trigraph] 2.5 Alternative tokens [lex.digraph]
+
+{/* source:cpp-language-operator-alternative:0017 */}
+C++98 standard (ISO/IEC 14882:1998): 2.3 Trigraph sequences [lex.trigraph] 2.5 Alternative tokens [lex.digraph]
+
+## See also
+
+{/* source:cpp-language-operator-alternative:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/operator_alternative)</DescriptionTerm>
+    <DescriptionBody>for Alternative operators and tokens</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

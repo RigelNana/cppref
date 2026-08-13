@@ -1,0 +1,186 @@
+---
+title: "final specifier (since C++11)"
+description: "Specifies that a virtual function cannot be overridden in a derived class, or that a class cannot be derived from."
+source_url: "https://en.cppreference.com/w/cpp/language/final"
+language: "C++"
+---
+
+{/* source:cpp-language-final:0000 */}
+Specifies that a [virtual function](/docs/cpp/language/classes/virtual) cannot be overridden in a derived class, or that a class cannot be [derived from](/docs/cpp/language/classes/derived_class).
+
+## Syntax
+
+{/* source:cpp-language-final:0001 */}
+When applied to a member function, the identifier `final` appears immediately after the [declarator](/docs/cpp/language/functions/function) in the syntax of a member function declaration or a member function definition inside a class definition.
+
+{/* source:cpp-language-final:0002 */}
+When applied to a class (including struct and union), the identifier final appears at the beginning of the class definition, immediately after the name of the class, and cannot appear in a class declaration.
+
+{/* source:cpp-language-final:0003 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="declarator virt-specifier-seq (optional) pure-specifier (optional)" />
+  <Declaration id="2" language="cpp" grammar code="declarator virt-specifier-seq (optional) function-body" />
+  <Declaration id="3" language="cpp" grammar code="class-key attr (optional) class-head-name class-virt-specifier (optional) base-clause (optional)" />
+</DeclarationDoc>
+
+{/* source:cpp-language-final:0004 */}
+1. In a member function declaration, `final` may appear in *virt-specifier-seq* immediately after the declarator, and before the [*pure-specifier*](/docs/cpp/language/classes/abstract_class), if used.
+
+{/* source:cpp-language-final:0005 */}
+2. In a member function definition inside a class definition, `final` may appear in *virt-specifier-seq* immediately after the declarator and just before *function-body*.
+
+{/* source:cpp-language-final:0006 */}
+3. In a class definition, `final` may appear as *class-virt-specifier* immediately after the name of the class, just before the colon that begins the *base-clause*, if used.
+
+{/* source:cpp-language-final:0007 */}
+In the cases (1,2), *virt-specifier-seq*, if used, is either [`override`](/docs/cpp/language/classes/override) or `final`, or `final override` or `override final`. In the case (3), the only allowed value of *class-virt-specifier*, if used, is `final`.
+
+## Explanation
+
+{/* source:cpp-language-final:0008 */}
+When used in a virtual function declaration or definition, `final` specifier ensures that the function is virtual and specifies that it may not be overridden by derived classes. The program is ill-formed (a compile-time error is generated) otherwise.
+
+{/* source:cpp-language-final:0009 */}
+When used in a class definition, `final` specifies that this class may not appear in the *base-specifier-list* of another class definition (in other words, cannot be derived from). The program is ill-formed otherwise (a compile-time error is generated). `final` can also be used with a [union](/docs/cpp/language/classes/union) definition, in which case it has no effect <InlineRevision since="C++14">(other than on the outcome of [`std::is_final`](/docs/cpp/library/meta/is_final))</InlineRevision>, since unions cannot be derived from.
+
+{/* source:cpp-language-final:0010 */}
+`final` is an identifier with a special meaning when used in a member function declaration or class head. In other contexts, it is not reserved and may be used to name objects and functions.
+
+## Note
+
+{/* source:cpp-language-final:0011 */}
+In a sequence of the following tokens:
+
+{/* source:cpp-language-final:0012 */}
+- one of `class`, `struct` and `union`
+- a possibly qualified [identifier](/docs/cpp/language/basic_concepts/name)
+- `final`
+- one of `:` and `{`
+
+{/* source:cpp-language-final:0013 */}
+the third token `final` in the sequence is always considered as a specifier instead of an identifier.
+
+{/* source:cpp-language-final:0014 */}
+```cpp
+struct A;
+struct A final {}; // OK, definition of struct A,
+                   // not value-initialization of variable final
+
+struct X
+{
+    struct C { constexpr operator int() { return 5; } };
+    struct B final : C{}; // OK, definition of nested class B,
+                          // not declaration of a bit-field member final
+};
+
+// Abnormal final usage.
+
+struct final final // OK, definition of a struct named `final` from which
+{                  // you cannot inherit
+};
+
+// struct final final {}; // Error: redefinition of `struct final`, NOT a
+                          // definition of a variable `final` using an elaborated
+                          // type specifier `struct final` followed by an
+                          // aggregate initialization
+
+// struct override : final {}; // Error: cannot derive from final base type;
+                               // `override` in given context is a normal name
+void foo()
+{
+    [[maybe_unused]]
+    final final; // OK, declaration of a variable named `final` of type
+                 // `struct final`
+}
+
+struct final final; // OK, declaration of a variable named `final` of type
+                    // `struct final` using an elaborated type specifier
+int main()
+{
+}
+```
+
+## Keywords
+
+{/* source:cpp-language-final:0015 */}
+[`final`](/docs/cpp/language/keywords/final)
+
+## Example
+
+{/* source:cpp-language-final:0016 */}
+```cpp
+struct Base
+{
+    virtual void foo();
+};
+
+struct A : Base
+{
+    void foo() final; // Base::foo is overridden and A::foo is the final override
+    void bar() final; // Error: bar cannot be final as it is non-virtual
+};
+
+struct B final : A // struct B is final
+{
+    void foo() override; // Error: foo cannot be overridden as it is final in A
+};
+
+struct C : B {}; // Error: B is final
+```
+
+Possible output:
+
+```text
+main.cpp:9:10: error: 'void A::bar()' marked 'final', but is not virtual
+    9 |     void bar() final; // Error: bar cannot be final as it is non-virtual
+      |          ^~~
+main.cpp:14:10: error: virtual function 'virtual void B::foo()' overriding final function
+   14 |     void foo() override; // Error: foo cannot be overridden as it is final in A
+      |          ^~~
+main.cpp:8:10: note: overridden function is 'virtual void A::foo()'
+    8 |     void foo() final; // Base::foo is overridden and A::foo is the final override
+      |          ^~~
+main.cpp:17:8: error: cannot derive from 'final' base 'B' in derived type 'C'
+   17 | struct C : B // Error: B is final
+      |
+```
+
+## References
+
+{/* source:cpp-language-final:0017 */}
+C++23 standard (ISO/IEC 14882:2024): 11 Classes [class] 11.7.3 Virtual functions [class.virtual]
+
+{/* source:cpp-language-final:0018 */}
+C++20 standard (ISO/IEC 14882:2020): 11 Classes [class] 11.7.2 Virtual functions [class.virtual]
+
+{/* source:cpp-language-final:0019 */}
+C++17 standard (ISO/IEC 14882:2017): 12 Classes [class] 13.3 Virtual functions [class.virtual]
+
+{/* source:cpp-language-final:0020 */}
+C++14 standard (ISO/IEC 14882:2014): 9 Classes [class] 10.3 Virtual functions [class.virtual]
+
+{/* source:cpp-language-final:0021 */}
+C++11 standard (ISO/IEC 14882:2011): 9 Classes [class] 10.3 Virtual functions [class.virtual]
+
+## Defect reports
+
+{/* source:cpp-language-final:0022 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-final:0023 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1318} standard="C++11">
+    <PublishedBehavior>a class definition which has `final` after the class name and an empty member specification list might make `final` an identifier</PublishedBehavior>
+    <CorrectedBehavior>`final` is always a specifier in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-final:0024 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`override` specifier](/docs/cpp/language/classes/override) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>explicitly declares that a method overrides another method</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

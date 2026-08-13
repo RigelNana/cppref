@@ -1,0 +1,105 @@
+---
+title: "override specifier (since C++11)"
+description: "Specifies that a virtual function overrides another virtual function."
+source_url: "https://en.cppreference.com/w/cpp/language/override"
+language: "C++"
+---
+
+{/* source:cpp-language-override:0000 */}
+Specifies that a [virtual function](/docs/cpp/language/classes/virtual) overrides another virtual function.
+
+## Syntax
+
+{/* source:cpp-language-override:0001 */}
+The identifier `override`, if used, appears immediately after the [declarator](/docs/cpp/language/functions/function) in the syntax of a member function declaration or a member function definition inside a class definition.
+
+{/* source:cpp-language-override:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="declarator virt-specifier-seq (optional) pure-specifier (optional)" />
+  <Declaration id="2" language="cpp" grammar code="declarator virt-specifier-seq (optional) function-body" />
+</DeclarationDoc>
+
+{/* source:cpp-language-override:0003 */}
+1. In a member function declaration, `override` may appear in virt-specifier-seq immediately after the declarator, and before the [pure-specifier](/docs/cpp/language/classes/abstract_class), if used.
+
+{/* source:cpp-language-override:0004 */}
+2. In a member function definition inside a class definition, `override` may appear in virt-specifier-seq immediately after the declarator and just before function-body.
+
+{/* source:cpp-language-override:0005 */}
+In both cases, virt-specifier-seq, if used, is either `override` or [`final`](/docs/cpp/language/classes/final), or `final override` or `override final`.
+
+## Explanation
+
+{/* source:cpp-language-override:0006 */}
+In a member function declaration or definition, `override` specifier ensures that the function is virtual and is overriding a virtual function from a base class. The program is ill-formed (a compile-time error is generated) if this is not true.
+
+{/* source:cpp-language-override:0007 */}
+`override` is an *identifier with a special meaning* when used after member function declarators; it is not a reserved [keyword](/docs/cpp/language/keywords) otherwise.
+
+## Keywords
+
+{/* source:cpp-language-override:0008 */}
+[`override`](/docs/cpp/language/keywords/override)
+
+## Example
+
+{/* source:cpp-language-override:0009 */}
+```cpp
+#include <iostream>
+
+struct A
+{
+    virtual void foo();
+    void bar();
+    virtual ~A();
+};
+
+// member functions definitions of struct A:
+void A::foo() { std::cout << "A::foo();\n"; }
+A::~A() { std::cout << "A::~A();\n"; }
+
+struct B : A
+{
+//  void foo() const override; // Error: B::foo does not override A::foo
+                               // (signature mismatch)
+    void foo() override; // OK: B::foo overrides A::foo
+//  void bar() override; // Error: A::bar is not virtual
+    ~B() override; // OK: `override` can also be applied to virtual
+                   // special member functions, e.g. destructors
+    void override(); // OK, member function name, not a reserved keyword
+};
+
+// member functions definitions of struct B:
+void B::foo() { std::cout << "B::foo();\n"; }
+B::~B() { std::cout << "B::~B();\n"; }
+void B::override() { std::cout << "B::override();\n"; }
+
+int main()
+{
+    B b;
+    b.foo();
+    b.override(); // OK, invokes the member function `override()`
+    int override{42}; // OK, defines an integer variable
+    std::cout << "override: " << override << '\n';
+}
+```
+
+Output:
+
+```text
+B::foo();
+B::override();
+override: 42
+B::~B();
+A::~A();
+```
+
+## See also
+
+{/* source:cpp-language-override:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`final` specifier](/docs/cpp/language/classes/final) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>declares that a method cannot be overridden</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

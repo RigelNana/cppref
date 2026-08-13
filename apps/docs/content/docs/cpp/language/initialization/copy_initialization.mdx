@@ -1,0 +1,175 @@
+---
+title: "Copy-initialization"
+description: "Initializes an object from another object."
+source_url: "https://en.cppreference.com/w/cpp/language/copy_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-copy-initialization:0000 */}
+Initializes an object from another object.
+
+## Syntax
+
+{/* source:cpp-language-copy-initialization:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="T object = other ;" />
+  <Declaration id="2" language="cpp" grammar until="C++11" code="T object = { other };" />
+  <Declaration id="3" language="cpp" grammar code="f ( other )" />
+  <Declaration id="4" language="cpp" grammar code="return other ;" />
+  <Declaration id="5" language="cpp" grammar code="throw object ; catch ( T object )" />
+  <Declaration id="6" language="cpp" grammar code="T array [ N ] = { other-sequence };" />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-copy-initialization:0002 */}
+Copy-initialization is performed in the following situations:
+
+{/* source:cpp-language-copy-initialization:0003 */}
+1. When a named variable (automatic, static, or thread-local) of a non-reference type `T` is declared with the initializer consisting of an equals sign followed by an expression.
+
+{/* source:cpp-language-copy-initialization:0004 */}
+2. <InlineRevision until="C++11" /> When a named variable of a scalar type `T` is declared with the initializer consisting of an equals sign followed by a brace-enclosed expression (Note: as of C++11, this is classified as [list initialization](/docs/cpp/language/initialization/list_initialization), and narrowing conversion is not allowed).
+
+{/* source:cpp-language-copy-initialization:0005 */}
+3. When [passing an argument](/docs/cpp/language/expressions/operator_other#Built-in_function_call_operator) to a function by value.
+
+{/* source:cpp-language-copy-initialization:0006 */}
+4. When [returning](/docs/cpp/language/statements/return) from a function that returns by value.
+
+{/* source:cpp-language-copy-initialization:0007 */}
+5. When [throwing](/docs/cpp/language/exceptions/throw) or [catching](/docs/cpp/language/exceptions/catch) an exception by value.
+
+{/* source:cpp-language-copy-initialization:0008 */}
+6. As part of [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization), to initialize each element for which an initializer is provided.
+
+{/* source:cpp-language-copy-initialization:0009 */}
+The effects of copy-initialization are:
+
+{/* source:cpp-language-copy-initialization:0010 */}
+<Revision since="C++17">
+- First, if `T` is a class type and the initializer is a [prvalue](/docs/cpp/language/expressions/value_category) expression whose cv-unqualified type is the same class as `T`, the initializer expression itself, rather than a temporary materialized from it, is used to initialize the destination object: see [copy elision](/docs/cpp/language/initialization/copy_elision).
+</Revision>
+
+{/* source:cpp-language-copy-initialization:0011 */}
+- Otherwise, if `T` is a class type and the cv-unqualified version of the type of *other* is `T` or a class derived from `T`, the [non-explicit constructors](/docs/cpp/language/classes/converting_constructor) of `T` are examined and the best match is selected by overload resolution. That constructor is then called to initialize the object.
+
+{/* source:cpp-language-copy-initialization:0012 */}
+- Otherwise, if `T` is a class type, and the cv-unqualified version of the type of *other* is not `T` or derived from `T`, or if `T` is non-class type, but the type of *other* is a class type, [user-defined conversion sequences](/docs/cpp/language/expressions/implicit_cast) that can convert from the type of *other* to `T` (or to a type derived from `T` if `T` is a class type and a conversion function is available) are examined and the best one is selected through overload resolution. The result of the conversion, which is a <InlineRevision until="C++11">rvalue temporary</InlineRevision> <InlineRevision since="C++11" until="C++17">prvalue temporary</InlineRevision> <InlineRevision since="C++17">prvalue expression</InlineRevision> of the cv-unqualified version of `T` if a [converting constructor](/docs/cpp/language/classes/converting_constructor) was used, is then used to [direct-initialize](/docs/cpp/language/initialization/direct_initialization) the object. <InlineRevision until="C++17">The last step is usually [optimized out](/docs/cpp/language/initialization/copy_elision) and the result of the conversion is constructed directly in the memory allocated for the target object, but the appropriate constructor (move or copy) is required to be accessible even though it's not used.</InlineRevision>
+
+{/* source:cpp-language-copy-initialization:0013 */}
+- Otherwise (if neither `T` nor the type of *other* are class types), [standard conversions](/docs/cpp/language/expressions/implicit_cast) are used, if necessary, to convert the value of *other* to the cv-unqualified version of `T`.
+
+## Notes
+
+{/* source:cpp-language-copy-initialization:0014 */}
+Copy-initialization is less permissive than direct-initialization: [explicit constructors](/docs/cpp/language/classes/explicit) are not [converting constructors](/docs/cpp/language/classes/converting_constructor) and are not considered for copy-initialization.
+
+{/* source:cpp-language-copy-initialization:0015 */}
+```cpp
+struct Exp { explicit Exp(const char*) {} }; // not convertible from const char*
+Exp e1("abc");  // OK
+Exp e2 = "abc"; // Error, copy-initialization does not consider explicit constructor
+
+struct Imp { Imp(const char*) {} }; // convertible from const char*
+Imp i1("abc");  // OK
+Imp i2 = "abc"; // OK
+```
+
+{/* source:cpp-language-copy-initialization:0016 */}
+In addition, the implicit conversion in copy-initialization must produce `T` directly from the initializer, while, e.g. direct-initialization expects an implicit conversion from the initializer to an argument of `T`'s constructor.
+
+{/* source:cpp-language-copy-initialization:0017 */}
+```cpp
+struct S { S(std::string) {} }; // implicitly convertible from std::string
+S s("abc");   // OK: conversion from const char[4] to std::string
+S s = "abc";  // Error: no conversion from const char[4] to S
+S s = "abc"s; // OK: conversion from std::string to S
+```
+
+{/* source:cpp-language-copy-initialization:0018 */}
+If *other* is an rvalue expression, a [move constructor](/docs/cpp/language/classes/move_constructor) will be selected by overload resolution and called during copy-initialization. This is still considered copy-initialization; there is no special term (e.g., move-initialization) for this case.
+
+{/* source:cpp-language-copy-initialization:0019 */}
+[Implicit conversion](/docs/cpp/language/expressions/implicit_cast) is defined in terms of copy-initialization: if an object of type `T` can be copy-initialized with expression `E`, then `E` is implicitly convertible to `T`.
+
+{/* source:cpp-language-copy-initialization:0020 */}
+The equals sign, `=`, in copy-initialization of a named variable is not related to the assignment operator. Assignment operator overloads have no effect on copy-initialization.
+
+## Example
+
+{/* source:cpp-language-copy-initialization:0021 */}
+```cpp
+#include <memory>
+#include <string>
+#include <utility>
+
+struct A
+{
+    operator int() { return 12;}
+};
+
+struct B
+{
+    B(int) {}
+};
+
+int main()
+{
+    std::string s = "test";        // OK: constructor is non-explicit
+    std::string s2 = std::move(s); // this copy-initialization performs a move
+
+//  std::unique_ptr<int> p = new int(1); // error: constructor is explicit
+    std::unique_ptr<int> p(new int(1));  // OK: direct-initialization
+
+    int n = 3.14;    // floating-integral conversion
+    const int b = n; // const doesn't matter
+    int c = b;       // ...either way
+
+    A a;
+    B b0 = 12;
+//  B b1 = a;       // < error: conversion from 'A' to non-scalar type 'B' requested
+    B b2{a};        // < identical, calling A::operator int(), then B::B(int)
+    B b3 = {a};     // <
+    auto b4 = B{a}; // <
+
+//  b0 = a;         // < error, assignment operator overload needed
+
+    [](...){}(c, b0, b3, b4); // pretend these variables are used
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-copy-initialization:0022 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-copy-initialization:0023 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={5} standard="C++98"><PublishedBehavior>the cv-qualification of the destination type is applied to the temporary initialized by a converting constructor</PublishedBehavior><CorrectedBehavior>the temporary is not cv-qualified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={177} standard="C++98"><PublishedBehavior>the value category of the temporary created during copy-initialization of a class object is unspecified</PublishedBehavior><CorrectedBehavior>specified as rvalue</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-copy-initialization:0024 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [explicit](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+- [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+- [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+- [default initialization](/docs/cpp/language/initialization/default_initialization)
+- [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+- [initializer list](/docs/cpp/language/classes/initializer_list)
+- [list initialization](/docs/cpp/language/initialization/list_initialization)
+- [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+- [value initialization](/docs/cpp/language/initialization/value_initialization)
+- [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

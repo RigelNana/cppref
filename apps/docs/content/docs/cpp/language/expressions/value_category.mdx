@@ -1,0 +1,610 @@
+---
+title: "Value categories"
+description: "Each C++ expression (an operator with its operands, a literal, a variable name, etc.) is characterized by two independent properties: a type and a value category."
+source_url: "https://en.cppreference.com/w/cpp/language/value_category"
+language: "C++"
+---
+
+{/* source:cpp-language-value-category:0000 */}
+Each C++ [expression](/docs/cpp/language/expressions) (an operator with its operands, a literal, a variable name, etc.) is characterized by two independent properties: a [type](/docs/cpp/language/basic_concepts/type-id) and a value category. Each expression has some non-reference type, and each expression belongs to exactly one of the three primary value categories: [prvalue](/docs/cpp/language/expressions/value_category#prvalue), [xvalue](/docs/cpp/language/expressions/value_category#xvalue), and [lvalue](/docs/cpp/language/expressions/value_category#lvalue).
+
+{/* source:cpp-language-value-category:0001 */}
+- a [glvalue](/docs/cpp/language/expressions/value_category#glvalue) (“generalized” lvalue) is an expression whose evaluation determines the identity of an object or function;
+- a [prvalue](/docs/cpp/language/expressions/value_category#prvalue) (“pure” rvalue) is an expression whose evaluation
+
+{/* source:cpp-language-value-category:0002 */}
+- computes the value of an operand of a built-in operator (such prvalue has no result object), or
+- initializes an object (such prvalue is said to have a result object).
+The result object may be a variable, an object created by [new-expression](/docs/cpp/language/expressions/new), a temporary created by [temporary materialization](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization), or a member thereof. Note that non-`void` [discarded](/docs/cpp/language/expressions#Discarded-value_expressions) expressions have a result object (the materialized temporary). Also, every class and array prvalue has a result object except when it is the operand of [`decltype`](/docs/cpp/language/declarations/decltype);
+
+{/* source:cpp-language-value-category:0003 */}
+- an [xvalue](/docs/cpp/language/expressions/value_category#xvalue) (an “eXpiring” value) is a glvalue that denotes an object whose resources can be reused;
+- an [lvalue](/docs/cpp/language/expressions/value_category#lvalue) is a glvalue that is not an xvalue;
+
+{/* source:cpp-language-value-category:0004 */}
+**Extended content**
+So-called, historically, because lvalues could appear on the left-hand side of an assignment expression. In general, it's not always the case:
+```cpp
+void foo();
+
+void baz()
+{
+    int a; // Expression `a` is lvalue
+    a = 4; // OK, could appear on the left-hand side of an assignment expression
+
+    int &b{a}; // Expression `b` is lvalue
+    b = 5; // OK, could appear on the left-hand side of an assignment expression
+
+    const int &c{a}; // Expression `c` is lvalue
+    c = 6;           // ill-formed, assignment of read-only reference
+
+    // Expression `foo` is lvalue
+    // address may be taken by built-in address-of operator
+    void (*p)() = &foo;
+
+    foo = baz; // ill-formed, assignment of function
+}
+```
+
+{/* source:cpp-language-value-category:0005 */}
+- an [rvalue](/docs/cpp/language/expressions/value_category#rvalue) is a prvalue or an xvalue;
+
+{/* source:cpp-language-value-category:0006 */}
+**Extended content**
+So-called, historically, because rvalues could appear on the right-hand side of an assignment expression. In general, it's not always the case:
+```cpp
+#include <iostream>
+ 
+struct S
+{
+    S() : m{42} {}
+    S(int a) : m{a} {}
+    int m;
+};
+ 
+int main()
+{
+    S s;
+ 
+    // Expression `S{}` is prvalue
+    // May appear on the right-hand side of an assignment expression
+    s = S{};
+ 
+    std::cout << s.m << '\n';
+ 
+    // Expression `S{}` is prvalue
+    // Can be used on the left-hand side too
+    std::cout << (S{} = S{7}).m << '\n';
+}
+```
+Output:
+```text
+42
+7
+```
+
+{/* source:cpp-language-value-category:0007 */}
+Note: this taxonomy went through significant changes with past C++ standard revisions, see [History](/docs/cpp/language/expressions/value_category#History) below for details.
+
+{/* source:cpp-language-value-category:0008 */}
+**Extended content**
+Despite their names, these terms classify expressions, not values.
+```cpp
+#include <type_traits>
+#include <utility>
+ 
+template <class T> struct is_prvalue : std::true_type {};
+template <class T> struct is_prvalue<T&> : std::false_type {};
+template <class T> struct is_prvalue<T&&> : std::false_type {};
+ 
+template <class T> struct is_lvalue : std::false_type {};
+template <class T> struct is_lvalue<T&> : std::true_type {};
+template <class T> struct is_lvalue<T&&> : std::false_type {};
+ 
+template <class T> struct is_xvalue : std::false_type {};
+template <class T> struct is_xvalue<T&> : std::false_type {};
+template <class T> struct is_xvalue<T&&> : std::true_type {};
+ 
+int main()
+{
+    int a{42};
+    int& b{a};
+    int&& r{std::move(a)};
+ 
+    // Expression `42` is prvalue
+    static_assert(is_prvalue<decltype((42))>::value);
+ 
+    // Expression `a` is lvalue
+    static_assert(is_lvalue<decltype((a))>::value);
+ 
+    // Expression `b` is lvalue
+    static_assert(is_lvalue<decltype((b))>::value);
+ 
+    // Expression `std::move(a)` is xvalue
+    static_assert(is_xvalue<decltype((std::move(a)))>::value);
+ 
+    // Type of variable `r` is rvalue reference
+    static_assert(std::is_rvalue_reference<decltype(r)>::value);
+ 
+    // Type of variable `b` is lvalue reference
+    static_assert(std::is_lvalue_reference<decltype(b)>::value);
+ 
+    // Expression `r` is lvalue
+    static_assert(is_lvalue<decltype((r))>::value);
+}
+```
+
+## Primary categories
+
+### lvalue
+
+{/* source:cpp-language-value-category:0009 */}
+The following expressions are lvalue expressions:
+
+{/* source:cpp-language-value-category:0010 */}
+- the name of a variable, a function<InlineRevision since="C++20">, a [template parameter object](/docs/cpp/language/templates/template_parameters#Non-type_template_parameter)</InlineRevision>, or a data member, regardless of type, such as `std::cin` or `std::endl`. Even if the variable's type is rvalue reference, the expression consisting of its name is an lvalue expression (but see [Move-eligible expressions](/docs/cpp/language/expressions/value_category#Move-eligible_expressions));
+
+{/* source:cpp-language-value-category:0011 */}
+**Extended content**
+```cpp
+void foo() {}
+
+void baz()
+{
+    // `foo` is lvalue
+    // address may be taken by built-in address-of operator
+    void (*p)() = &foo;
+}
+```
+```cpp
+struct foo {};
+
+template <foo a>
+void baz()
+{
+    const foo* obj = &a;  // `a` is an lvalue, template parameter object
+}
+```
+
+{/* source:cpp-language-value-category:0012 */}
+- a function call or an overloaded operator expression, whose return type is lvalue reference, such as `std::getline(std::cin, str)`, `std::cout << 1`, `str1 = str2`, or `++it`;
+
+{/* source:cpp-language-value-category:0013 */}
+**Extended content**
+```cpp
+int& a_ref()
+{
+    static int a{3};
+    return a;
+}
+
+void foo()
+{
+    a_ref() = 5;  // `a_ref()` is lvalue, function call whose return type is lvalue reference
+}
+```
+
+{/* source:cpp-language-value-category:0014 */}
+- `a = b`, `a += b`, `a %= b`, and all other built-in [assignment and compound assignment](/docs/cpp/language/expressions/operator_assignment) expressions;
+- `++a` and `--a`, the built-in [pre-increment and pre-decrement](/docs/cpp/language/expressions/operator_incdec#Built-in_prefix_operators) expressions;
+- `*p`, the built-in [indirection](/docs/cpp/language/expressions/operator_member_access#Built-in_indirection_operator) expression;
+- `a[n]` and `p[n]`, the built-in [subscript](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) expressions<InlineRevision since="C++11">, where one operand in `a[n]` is an array lvalue</InlineRevision>;
+- `a.m`, the [member of object](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) expression, except where `m` is a member enumerator or a non-static member function, or where `a` is an rvalue and `m` is a non-static data member of object type;
+
+{/* source:cpp-language-value-category:0015 */}
+**Extended content**
+```cpp
+struct foo
+{
+    enum bar
+    {
+        m // member enumerator
+    };
+};
+
+void baz()
+{
+    foo a;
+    a.m = 42; // ill-formed, lvalue required as left operand of assignment
+}
+```
+```cpp
+struct foo
+{
+    void m() {} // non-static member function
+};
+
+void baz()
+{
+    foo a;
+
+    // `a.m` is a prvalue, hence the address cannot be taken by built-in
+    // address-of operator
+    void (foo::*p1)() = &a.m; // ill-formed
+
+    void (foo::*p2)() = &foo::m; // OK: pointer to member function
+}
+```
+```cpp
+struct foo
+{
+    static void m() {} // static member function
+};
+
+void baz()
+{
+    foo a;
+    void (*p1)() = &a.m;     // `a.m` is an lvalue
+    void (*p2)() = &foo::m;  // the same
+}
+```
+
+{/* source:cpp-language-value-category:0016 */}
+- `p->m`, the built-in [member of pointer](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) expression, except where `m` is a member enumerator or a non-static member function;
+- `a.*mp`, the [pointer to member of object](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators) expression, where `a` is an lvalue and `mp` is a pointer to data member;
+- `p->*mp`, the built-in [pointer to member of pointer](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators) expression, where `mp` is a pointer to data member;
+- `a, b`, the built-in [comma](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) expression, where `b` is an lvalue;
+- `a ? b : c`, the [ternary conditional](/docs/cpp/language/expressions/operator_other#Conditional_operator) expression for certain `b` and `c` (e.g., when both are lvalues of the same type, but see [definition](/docs/cpp/language/expressions/operator_other#Conditional_operator) for detail);
+- a [string literal](/docs/cpp/language/expressions/string_literal), such as `"Hello, world!"`;
+- a cast expression to lvalue reference type, such as `static_cast<int&>(x)` or `static_cast<void(&)(int)>(x)`;
+- a non-type [template parameter](/docs/cpp/language/templates/template_parameters) of an lvalue reference type;
+
+{/* source:cpp-language-value-category:0017 */}
+```cpp
+template <int& v>
+void set()
+{
+    v = 5; // template parameter is lvalue
+}
+
+int a{3}; // static variable, fixed address is known at compile-time
+
+void foo()
+{
+    set<a>();
+}
+```
+
+{/* source:cpp-language-value-category:0018 */}
+<Revision since="C++11">
+  - a function call or an overloaded operator expression, whose return type is rvalue reference to function;
+  - a cast expression to rvalue reference to function type, such as `static_cast<void(&&)(int)>(x)`.
+</Revision>
+
+{/* source:cpp-language-value-category:0019 */}
+Properties:
+
+{/* source:cpp-language-value-category:0020 */}
+- Same as [glvalue](/docs/cpp/language/expressions/value_category#glvalue) (below).
+- Address of an lvalue may be taken by built-in address-of operator: `&++i`[^1] and `&std::endl` are valid expressions.
+- A modifiable lvalue may be used as the left-hand operand of the built-in assignment and compound assignment operators.
+- An lvalue may be used to [initialize an lvalue reference](/docs/cpp/language/initialization/reference_initialization); this associates a new name with the object identified by the expression.
+
+### prvalue
+
+{/* source:cpp-language-value-category:0021 */}
+The following expressions are prvalue expressions:
+
+{/* source:cpp-language-value-category:0022 */}
+- a [literal](/docs/cpp/language/expressions#Literals) (except for [string literal](/docs/cpp/language/expressions/string_literal)), such as `42`, `true` or `nullptr`;
+- a function call or an overloaded operator expression, whose return type is non-reference, such as `str.substr(1, 2)`, `str1 + str2`, or `it++`;
+- `a++` and `a--`, the built-in  [post-increment and post-decrement](/docs/cpp/language/expressions/operator_incdec#Built-in_postfix_operators) expressions;
+- `a + b`, `a % b`, `a & b`, `a << b`, and all other built-in [arithmetic](/docs/cpp/language/expressions/operator_arithmetic) expressions;
+- `a && b`, `a || b`, `!a`, the built-in [logical](/docs/cpp/language/expressions/operator_logical) expressions;
+- `a < b`, `a == b`, `a >= b`, and all other built-in [comparison](/docs/cpp/language/expressions/operator_comparison) expressions;
+- `&a`, the built-in [address-of](/docs/cpp/language/expressions/operator_member_access#Built-in_address-of_operator) expression;
+- `a.m`, the [member of object](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) expression, where `m` is a member enumerator or a non-static member function[^2];
+- `p->m`, the built-in [member of pointer](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) expression, where `m` is a member enumerator or a non-static member function[^2];
+- `a.*mp`, the [pointer to member of object](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators) expression, where `mp` is a pointer to member function[^2];
+- `p->*mp`, the built-in [pointer to member of pointer](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators) expression, where `mp` is a pointer to member function[^2];
+- `a, b`, the built-in [comma](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) expression, where `b` is an prvalue;
+- `a ? b : c`, the [ternary conditional](/docs/cpp/language/expressions/operator_other#Conditional_operator) expression for certain `b` and `c` (see [definition](/docs/cpp/language/expressions/operator_other#Conditional_operator) for detail);
+- a cast expression to non-reference type, such as `static_cast<double>(x)`, `std::string{}`, or `(int)42`;
+- the [`this`](/docs/cpp/language/classes/this) pointer;
+- an [enumerator](/docs/cpp/language/declarations/enum);
+- a non-type [template parameter](/docs/cpp/language/templates/template_parameters) of a scalar type;
+
+{/* source:cpp-language-value-category:0023 */}
+```cpp
+template <int v>
+void foo()
+{
+    // not an lvalue, `v` is a template parameter of scalar type int
+    const int* a = &v; // ill-formed
+
+    v = 3; // ill-formed: lvalue required as left operand of assignment
+}
+```
+
+{/* source:cpp-language-value-category:0024 */}
+<Revision since="C++11">
+  - a [lambda expression](/docs/cpp/language/functions/lambda), such as `[](int x){ return x * x; }`;
+</Revision>
+<Revision since="C++20">
+  - a [requires-expression](/docs/cpp/language/templates/constraints), such as `requires (T i) { typename T::type; }`;
+  - a specialization of a [concept](/docs/cpp/language/templates/constraints), such as `std::equality_comparable<int>`.
+</Revision>
+
+{/* source:cpp-language-value-category:0025 */}
+Properties:
+
+{/* source:cpp-language-value-category:0026 */}
+- Same as [rvalue](/docs/cpp/language/expressions/value_category#rvalue) (below).
+- A prvalue cannot be [polymorphic](/docs/cpp/language/basic_concepts/objects#Polymorphic_objects): the [dynamic type](/docs/cpp/language/basic_concepts/type-id#Dynamic_type) of the object it denotes is always the type of the expression.
+- A non-class non-array prvalue cannot be [cv-qualified](/docs/cpp/language/declarations/cv)<InlineRevision since="C++17">, unless it is [materialized](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) in order to be [bound to a reference](/docs/cpp/language/initialization/reference_initialization) to a cv-qualified type</InlineRevision>. (Note: a function call or cast expression may result in a prvalue of non-class cv-qualified type, but the cv-qualifier is generally immediately stripped out.)
+- A prvalue cannot have [incomplete type](/docs/cpp/language/basic_concepts/type-id#Incomplete_type) (except for type `void`, see below, or when used in [`decltype`](/docs/cpp/language/declarations/decltype) specifier).
+- A prvalue cannot have [abstract class type](/docs/cpp/language/classes/abstract_class) or an array thereof.
+
+### xvalue
+
+{/* source:cpp-language-value-category:0027 */}
+The following expressions are xvalue expressions:
+
+{/* source:cpp-language-value-category:0028 */}
+- `a.m`, the [member of object](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) expression, where `a` is an rvalue and `m` is a non-static data member of an object type;
+- `a.*mp`, the [pointer to member of object](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators) expression, where `a` is an rvalue and `mp` is a pointer to data member;
+- `a, b`, the built-in [comma](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) expression, where `b` is an xvalue;
+- `a ? b : c`, the [ternary conditional](/docs/cpp/language/expressions/operator_other#Conditional_operator) expression for certain `b` and `c` (see [definition](/docs/cpp/language/expressions/operator_other#Conditional_operator) for detail);
+
+{/* source:cpp-language-value-category:0029 */}
+<Revision since="C++11">
+  - a function call or an overloaded operator expression, whose return type is rvalue reference to object, such as `std::move(x)`;
+  - `a[n]`, the built-in [subscript](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) expression, where one operand is an array rvalue;
+  - a cast expression to rvalue reference to object type, such as `static_cast<char&&>(x)`;
+</Revision>
+<Revision since="C++17">
+  - any expression that designates a temporary object, after [temporary materialization](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization);
+</Revision>
+<Revision since="C++23">
+  - a [move-eligible expression](/docs/cpp/language/expressions/value_category#Move-eligible_expressions).
+</Revision>
+
+{/* source:cpp-language-value-category:0030 */}
+Properties:
+
+{/* source:cpp-language-value-category:0031 */}
+- Same as rvalue (below).
+- Same as glvalue (below).
+
+{/* source:cpp-language-value-category:0032 */}
+In particular, like all rvalues, xvalues bind to rvalue references, and like all glvalues, xvalues may be [polymorphic](/docs/cpp/language/basic_concepts/objects#Polymorphic_objects), and non-class xvalues may be [cv-qualified](/docs/cpp/language/declarations/cv).
+
+{/* source:cpp-language-value-category:0033 */}
+**Extended content**
+```cpp
+#include <type_traits>
+ 
+template <class T> struct is_prvalue : std::true_type {};
+template <class T> struct is_prvalue<T&> : std::false_type {};
+template <class T> struct is_prvalue<T&&> : std::false_type {};
+ 
+template <class T> struct is_lvalue : std::false_type {};
+template <class T> struct is_lvalue<T&> : std::true_type {};
+template <class T> struct is_lvalue<T&&> : std::false_type {};
+ 
+template <class T> struct is_xvalue : std::false_type {};
+template <class T> struct is_xvalue<T&> : std::false_type {};
+template <class T> struct is_xvalue<T&&> : std::true_type {};
+ 
+// Example from C++23 standard: 7.2.1 Value category [basic.lval]
+struct A
+{
+    int m;
+};
+ 
+A&& operator+(A, A);
+A&& f();
+ 
+int main()
+{
+    A a;
+    A&& ar = static_cast<A&&>(a);
+ 
+    // Function call with return type rvalue reference is xvalue
+    static_assert(is_xvalue<decltype( (f()) )>::value);
+ 
+    // Member of object expression, object is xvalue, `m` is a non-static data member
+    static_assert(is_xvalue<decltype( (f().m) )>::value);
+ 
+    // A cast expression to rvalue reference
+    static_assert(is_xvalue<decltype( (static_cast<A&&>(a)) )>::value);
+ 
+    // Operator expression, whose return type is rvalue reference to object
+    static_assert(is_xvalue<decltype( (a + a) )>::value);
+ 
+    // Expression `ar` is lvalue, `&ar` is valid
+    static_assert(is_lvalue<decltype( (ar) )>::value);
+    [[maybe_unused]] A* ap = &ar;
+}
+```
+
+## Mixed categories
+
+### glvalue
+
+{/* source:cpp-language-value-category:0034 */}
+A glvalue expression is either lvalue or xvalue.
+
+{/* source:cpp-language-value-category:0035 */}
+Properties:
+
+{/* source:cpp-language-value-category:0036 */}
+- A glvalue may be implicitly converted to a prvalue with lvalue-to-rvalue, array-to-pointer, or function-to-pointer [implicit conversion](/docs/cpp/language/expressions/implicit_cast).
+- A glvalue may be [polymorphic](/docs/cpp/language/basic_concepts/objects#Polymorphic_objects): the [dynamic type](/docs/cpp/language/basic_concepts/type-id#Dynamic_type) of the object it identifies is not necessarily the static type of the expression.
+- A glvalue can have [incomplete type](/docs/cpp/language/basic_concepts/type-id#Incomplete_type), where permitted by the expression.
+
+### rvalue
+
+{/* source:cpp-language-value-category:0037 */}
+An rvalue expression is either prvalue or xvalue.
+
+{/* source:cpp-language-value-category:0038 */}
+Properties:
+
+{/* source:cpp-language-value-category:0039 */}
+- Address of an rvalue cannot be taken by built-in address-of operator: `&int()`, `&i++`[^3], `&42`, and `&std::move(x)` are invalid.
+- An rvalue can't be used as the left-hand operand of the built-in assignment or compound assignment operators.
+- An rvalue may be used to [initialize a const lvalue reference](/docs/cpp/language/initialization/reference_initialization), in which case the lifetime of the temporary object identified by the rvalue is [extended](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) until the scope of the reference ends.
+
+{/* source:cpp-language-value-category:0040 */}
+<Revision since="C++11">
+  - An rvalue may be used to [initialize an rvalue reference](/docs/cpp/language/initialization/reference_initialization), in which case the lifetime of the temporary object identified by the rvalue is [extended](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) until the scope of the reference ends.
+  - When used as a function argument and when [two overloads](/docs/cpp/language/functions/overload_resolution) of the function are available, one taking rvalue reference parameter and the other taking lvalue reference to const parameter, an rvalue binds to the rvalue reference overload (thus, if both copy and move constructors are available, an rvalue argument invokes the [move constructor](/docs/cpp/language/classes/move_constructor), and likewise with copy and move assignment operators).
+</Revision>
+
+## Special categories
+
+### Pending member function call
+
+{/* source:cpp-language-value-category:0041 */}
+The expressions `a.mf` and `p->mf`, where `mf` is a [non-static member function](/docs/cpp/language/classes/member_functions), and the expressions `a.*pmf` and `p->*pmf`, where `pmf` is a [pointer to member function](/docs/cpp/language/declarations/pointer#Pointers_to_member_functions), are classified as prvalue expressions, but they cannot be used to initialize references, as function arguments, or for any purpose at all, except as the left-hand argument of the function call operator, e.g. `(p->*pmf)(args)`.
+
+### Void expressions
+
+{/* source:cpp-language-value-category:0042 */}
+Function call expressions returning `void`, cast expressions to `void`, and [throw-expressions](/docs/cpp/language/exceptions/throw) are classified as prvalue expressions, but they cannot be used to initialize references or as function arguments. They can be used in discarded-value contexts (e.g. on a line of its own, as the left-hand operand of the comma operator, etc.) and in the `return` statement in a function returning `void`. In addition, throw-expressions may be used as the second and the third operands of the [conditional operator ?:](/docs/cpp/language/expressions/operator_other).
+
+{/* source:cpp-language-value-category:0043 */}
+<Revision since="C++17">
+Void expressions have no result object.
+</Revision>
+
+### Bit-fields
+
+{/* source:cpp-language-value-category:0044 */}
+An expression that designates a [bit-field](/docs/cpp/language/classes/bit_field) (e.g. `a.m`, where `a` is an lvalue of type `struct A { int m: 3; }`) is a glvalue expression: it may be used as the left-hand operand of the assignment operator, but its address cannot be taken and a non-const lvalue reference cannot be bound to it. A const lvalue reference or rvalue reference can be initialized from a bit-field glvalue, but a temporary copy of the bit-field will be made: it won't bind to the bit-field directly.
+
+{/* source:cpp-language-value-category:0045 */}
+<Revision since="C++11">
+### Move-eligible expressions
+Although an expression consisting of the name of any variable is an lvalue expression, such expression may be move-eligible if it appears as the operand of
+  - a [`return`](/docs/cpp/language/statements/return) statement
+  - a [`co_return`](/docs/cpp/language/functions/coroutines) statement
+  - a [`throw`](/docs/cpp/language/exceptions/throw) expression
+If an expression is move-eligible, it is treated <InlineRevision until="C++23">either as an rvalue or as an lvalue</InlineRevision><InlineRevision since="C++23">as an rvalue</InlineRevision> for the purpose of [overload resolution](/docs/cpp/language/functions/overload_resolution)  (thus it may select the [move constructor](/docs/cpp/language/classes/move_constructor)). See [Automatic move from local variables and parameters](/docs/cpp/language/statements/return#Automatic_move_from_local_variables_and_parameters) for details.
+</Revision>
+
+## History
+
+### CPL
+
+{/* source:cpp-language-value-category:0046 */}
+The programming language [CPL](https://en.wikipedia.org/wiki/CPL_(programming_language)) was first to introduce value categories for expressions: all CPL expressions can be evaluated in "right-hand mode", but only certain kinds of expression are meaningful in "left-hand mode". When evaluated in right-hand mode, an expression is regarded as being a rule for the computation of a value (the right-hand value, or rvalue). When evaluated in left-hand mode an expression effectively gives an address (the left-hand value, or lvalue). "Left" and "Right" here stood for "left of assignment" and "right of assignment".
+
+### C
+
+{/* source:cpp-language-value-category:0047 */}
+The C programming language followed a similar taxonomy, except that the role of assignment was no longer significant: C expressions are categorized between "lvalue expressions" and others (functions and non-object values), where "lvalue" means an expression that identifies an object, a "locator value"[^4].
+
+### C++98
+
+{/* source:cpp-language-value-category:0048 */}
+Pre-2011 C++ followed the C model, but restored the name "rvalue" to non-lvalue expressions, made functions into lvalues, and added the rule that references can bind to lvalues, but only references to const can bind to rvalues. Several non-lvalue C expressions became lvalue expressions in C++.
+
+### C++11
+
+{/* source:cpp-language-value-category:0049 */}
+With the introduction of move semantics in C++11, value categories were redefined to characterize two independent properties of expressions[^5]:
+
+{/* source:cpp-language-value-category:0050 */}
+- has identity: it's possible to determine whether the expression refers to the same entity as another expression, such as by comparing addresses of the objects or the functions they identify (obtained directly or indirectly);
+- can be moved from: [move constructor](/docs/cpp/language/classes/move_constructor), [move assignment operator](/docs/cpp/language/classes/move_operator), or another function overload that implements move semantics can bind to the expression.
+
+{/* source:cpp-language-value-category:0051 */}
+In C++11, expressions that:
+
+{/* source:cpp-language-value-category:0052 */}
+- have identity and cannot be moved from are called lvalue expressions;
+- have identity and can be moved from are called xvalue expressions;
+- do not have identity and can be moved from are called prvalue ("pure rvalue") expressions;
+- do not have identity and cannot be moved from are not used[^6].
+
+{/* source:cpp-language-value-category:0053 */}
+The expressions that have identity are called "glvalue expressions" (glvalue stands for "generalized lvalue"). Both lvalues and xvalues are glvalue expressions.
+
+{/* source:cpp-language-value-category:0054 */}
+The expressions that can be moved from are called "rvalue expressions". Both prvalues and xvalues are rvalue expressions.
+
+### C++17
+
+{/* source:cpp-language-value-category:0055 */}
+In C++17, [copy elision](/docs/cpp/language/initialization/copy_elision) was made mandatory in some situations, and that required separation of prvalue expressions from the temporary objects initialized by them, resulting in the system we have today. Note that, in contrast with the C++11 scheme, prvalues are no longer moved from.
+
+## Footnotes
+
+{/* source:cpp-language-value-category:0056 */}
+[^1]: Assuming `i` has built-in type or the pre-increment operator is [overloaded](/docs/cpp/language/expressions/operators) to return by lvalue reference.
+[^2]: 2.0 2.1 2.2 2.3 Special rvalue category, see [pending member function call](/docs/cpp/language/expressions/value_category#Pending_member_function_call).
+[^3]: Assuming `i` has built-in type or the post-increment operator is not [overloaded](/docs/cpp/language/expressions/operators) to return by lvalue reference.
+[^4]: "A difference of opinion within the C community centered around the meaning of lvalue, one group considering an lvalue to be any kind of object locator, another group holding that an lvalue is meaningful on the left side of an assigning operator. The C89 Committee adopted the definition of lvalue as an object locator." -- ANSI C Rationale, 6.3.2.1/10.
+[^5]: ["New" Value Terminology](https://www.stroustrup.com/terminology.pdf) by Bjarne Stroustrup, 2010.
+[^6]: const prvalues (only allowed for class types) and const xvalues do not bind to `T&&` overloads, but they bind to the `const T&&` overloads, which are also classified as "move constructor" and "move assignment operator" by the standard, satisfying the definition of "can be moved from" for the purpose of this classification. However, such overloads cannot modify their arguments and are not used in practice; in their absence const prvalues and const xvalues bind to `const T&` overloads.
+
+## References
+
+{/* source:cpp-language-value-category:0057 */}
+C++23 standard (ISO/IEC 14882:2024): 7.2.1 Value category [basic.lval]
+
+{/* source:cpp-language-value-category:0058 */}
+C++20 standard (ISO/IEC 14882:2020): 7.2.1 Value category [basic.lval]
+
+{/* source:cpp-language-value-category:0059 */}
+C++17 standard (ISO/IEC 14882:2017): 6.10 Lvalues and rvalues [basic.lval]
+
+{/* source:cpp-language-value-category:0060 */}
+C++14 standard (ISO/IEC 14882:2014): 3.10 Lvalues and rvalues [basic.lval]
+
+{/* source:cpp-language-value-category:0061 */}
+C++11 standard (ISO/IEC 14882:2011): 3.10 Lvalues and rvalues [basic.lval]
+
+{/* source:cpp-language-value-category:0062 */}
+C++98 standard (ISO/IEC 14882:1998): 3.10 Lvalues and rvalues [basic.lval]
+
+## Defect reports
+
+{/* source:cpp-language-value-category:0063 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-value-category:0064 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={616} standard="C++11">
+    <PublishedBehavior>
+    member access and member access through pointer to member of an rvalue resulted in prvalue
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    reclassified as xvalue
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1059} standard="C++11">
+    <PublishedBehavior>
+    array prvalues could not be cv-qualified
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    allowed
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1213} standard="C++11">
+    <PublishedBehavior>
+    subscripting an array rvalue resulted in  lvalue
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    reclassified as xvalue
+    </CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-value-category:0065 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/expressions/value_category)</DescriptionTerm>
+    <DescriptionBody>for value categories</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## External links
+
+{/* source:cpp-language-value-category:0066 */}
+1. [C++ value categories and decltype demystified](https://www.scs.stanford.edu/~dm/blog/decltype.html) — David Mazières, 2021
+2. [Empirically determine value category of expression](https://stackoverflow.com/a/16638081) — StackOverflow

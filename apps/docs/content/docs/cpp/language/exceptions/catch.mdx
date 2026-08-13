@@ -1,0 +1,350 @@
+---
+title: "Handling exceptions"
+description: "An exception can be handled by a handler."
+source_url: "https://en.cppreference.com/w/cpp/language/catch"
+language: "C++"
+---
+
+{/* source:cpp-language-catch:0000 */}
+An [exception](/docs/cpp/language/exceptions) can be handled by a handler.
+
+## Handler
+
+{/* source:cpp-language-catch:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="catch ( attr (optional) type-specifier-seq declarator ) compound-statement" />
+  <Declaration id="2" language="cpp" grammar code="catch ( attr (optional) type-specifier-seq abstract-declarator (optional) ) compound-statement" />
+  <Declaration id="3" language="cpp" grammar code="catch ( ... ) compound-statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-catch:0002 */}
+1. A handler with a named parameter.
+
+{/* source:cpp-language-catch:0003 */}
+2. A handler with an unnamed parameter.
+
+{/* source:cpp-language-catch:0004 */}
+3. A handler matching all kinds of exceptions.
+
+{/* source:cpp-language-catch:0005 */}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes), applies to the parameter
+  </Parameter>
+  <Parameter name="type-specifier-seq">
+    part of a formal parameter declaration, same as in a function [parameter list](/docs/cpp/language/functions/function#Parameter_list)
+  </Parameter>
+  <Parameter name="declarator">
+    part of a parameter declaration, same as in a function [parameter list](/docs/cpp/language/functions/function#Parameter_list)
+  </Parameter>
+  <Parameter name="abstract-declarator">
+    part of an unnamed parameter declaration, same as in function parameter list
+  </Parameter>
+  <Parameter name="compound-statement">
+    a [compound statement](/docs/cpp/language/statements#Compound_statements)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-catch:0006 */}
+The parameter declaration in a handler describes the type(s) of exceptions that can cause that handler to be entered.
+
+{/* source:cpp-language-catch:0007 */}
+If the parameter is declared to have one of the following types, the program is ill-formed:
+
+{/* source:cpp-language-catch:0008 */}
+- an [incomplete type](/docs/cpp/language/basic_concepts/type-id#Incomplete_type)
+- an [abstract class type](/docs/cpp/language/classes/abstract_class)
+
+{/* source:cpp-language-catch:0009 */}
+<Revision since="C++11">
+- an [rvalue reference](/docs/cpp/language/declarations/reference#Rvalue_reference) type
+</Revision>
+
+{/* source:cpp-language-catch:0010 */}
+- a pointer to an incomplete type other than (possibly cv-qualified) `void`
+- an lvalue reference to an incomplete type
+
+{/* source:cpp-language-catch:0011 */}
+If the parameter is declared to have type “array of `T`” or function type `T`, the type is adjusted to “pointer to `T`”.
+
+{/* source:cpp-language-catch:0012 */}
+A handler with parameter type `T` can be abbreviated as “a handler of type `T`”.
+
+## Matching exceptions
+
+{/* source:cpp-language-catch:0013 */}
+Each `try` block associates with a number of handlers, these handlers form a handler sequence. When an exception is thrown from a `try` block, the handlers in the sequence are tried in order of appearance to match the exception.
+
+{/* source:cpp-language-catch:0014 */}
+A handler is a match for an [exception object](/docs/cpp/language/exceptions/throw#Exception_object) of type `E` if any of the following conditions is satisfied:
+
+{/* source:cpp-language-catch:0015 */}
+- The handler is of type “possibly cv-qualified `T`” or “lvalue reference to possibly cv-qualified `T`”, and any of the following conditions is satisfied:
+  {/* source:cpp-language-catch:0016 */}
+  - `E` and `T` are the same type (ignoring the top-level cv-qualifiers).
+  - `T` is an unambiguous public base class of `E`.
+
+{/* source:cpp-language-catch:0017 */}
+- The handler is of type “possibly cv-qualified `T`” or `const T&` where `T` is a pointer or pointer-to-member type, and any of the following conditions is satisfied:
+  {/* source:cpp-language-catch:0018 */}
+  - `E` is a pointer or pointer-to-member type that can be converted to `T` by at least one of the following conversions:
+    - A [standard pointer conversion](/docs/cpp/language/expressions/implicit_cast#Pointer_conversions) not involving conversions to pointers to private or protected or ambiguous classes.
+    {/* source:cpp-language-catch:0019 */}
+    - <Revision since="C++17">A [function pointer conversion](/docs/cpp/language/expressions/implicit_cast#Function_pointer_conversions).</Revision>
+    {/* source:cpp-language-catch:0020 */}
+    - A [qualification conversion](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions).
+    {/* source:cpp-language-catch:0021 */}
+    - <Revision since="C++11">`E` is [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t).</Revision>
+
+{/* source:cpp-language-catch:0022 */}
+The `catch (...)` handler matches exceptions of any type. If present, it can only be the last handler in a handler sequence. This handler may be used to ensure that no uncaught exceptions can possibly escape from a function that offers [nothrow exception guarantee](/docs/cpp/language/exceptions).
+
+{/* source:cpp-language-catch:0023 */}
+```cpp
+try
+{
+    f();
+}
+catch (const std::overflow_error& e)
+{} // this executes if f() throws std::overflow_error (same type rule)
+catch (const std::runtime_error& e)
+{} // this executes if f() throws std::underflow_error (base class rule)
+catch (const std::exception& e)
+{} // this executes if f() throws std::logic_error (base class rule)
+catch (...)
+{} // this executes if f() throws std::string or int or any other unrelated type
+```
+
+{/* source:cpp-language-catch:0024 */}
+If no match is found among the handlers for a `try` block, the search for a matching handler continues in a dynamically surrounding `try` block<InlineRevision since="C++11">of the same thread</InlineRevision>.
+
+{/* source:cpp-language-catch:0025 */}
+If no matching handler is found, [`std::terminate`](/docs/cpp/library/error/terminate) is invoked; whether or not the stack is [unwound](/docs/cpp/language/exceptions/throw#Stack_unwinding) before this invocation of [`std::terminate`](/docs/cpp/library/error/terminate) is implementation-defined.
+
+## Handling exceptions
+
+{/* source:cpp-language-catch:0026 */}
+When an exception is thrown, control is transferred to the nearest handler with a matching type; “nearest” means the handler for which the compound statement or the member initializer list (if present) following the `try` keyword was most recently entered by the thread of control and not yet exited.
+
+### Initializing the handler parameter
+
+{/* source:cpp-language-catch:0027 */}
+The parameter declared in the parameter list (if any), of type “possibly cv-qualified `T`” or “lvalue reference to possibly cv-qualified `T`”, is initialized from the [exception object](/docs/cpp/language/exceptions/throw#Exception_object), of type `E`, as follows:
+
+{/* source:cpp-language-catch:0028 */}
+- If `T` is a base class of `E`, the parameter is [copy-initialized](/docs/cpp/language/initialization/copy_initialization) from an lvalue of type `T` designating the corresponding base class subobject of the exception object.
+- Otherwise, the parameter is copy-initialized from an lvalue of type `E` designating the exception object.
+
+{/* source:cpp-language-catch:0029 */}
+The lifetime of the parameter ends when the handler exits, after the destruction of any objects with automatic [storage duration](/docs/cpp/language/declarations/storage_duration) initialized within the handler.
+
+{/* source:cpp-language-catch:0030 */}
+When the parameter is declared as an object, any changes to that object will not affect the exception object.
+
+{/* source:cpp-language-catch:0031 */}
+When the parameter is declared as a reference to an object, any changes to the referenced object are changes to the exception object and will have effect should that object be rethrown.
+
+### Activating the handler
+
+{/* source:cpp-language-catch:0032 */}
+A handler is considered *active* when initialization is complete for the parameter (if any) of the handler.
+
+{/* source:cpp-language-catch:0033 */}
+Also, an implicit handler is considered active when [`std::terminate`](/docs/cpp/library/error/terminate) is entered due to a throw.
+
+{/* source:cpp-language-catch:0034 */}
+A handler is no longer considered active when the handler exits.
+
+{/* source:cpp-language-catch:0035 */}
+The exception with the most recently activated handler that is still active is called the *currently handled exception*. Such an exception can be [rethrown](/docs/cpp/language/exceptions/throw#throw_expressions).
+
+## Control flow
+
+{/* source:cpp-language-catch:0036 */}
+The *compound-statement* of a handler is a [control-flow-limited statement](/docs/cpp/language/statements#Control-flow-limited_statements):
+
+{/* source:cpp-language-catch:0037 */}
+```cpp
+void f()
+{
+    goto label;     // error
+    try
+    {
+        goto label; // error
+    }
+    catch (...)
+    {
+        goto label: // OK
+        label: ;
+    }
+}
+```
+
+## Notes
+
+{/* source:cpp-language-catch:0038 */}
+[Stack unwinding](/docs/cpp/language/exceptions/throw#Stack_unwinding) occurs while control is transferring to a handler. When a handler becomes active, stack unwinding is already completed.
+
+{/* source:cpp-language-catch:0039 */}
+The exception thrown by the `throw` expression `throw 0` does not match a handler of pointer or pointer-to-member type.
+
+{/* source:cpp-language-catch:0040 */}
+<Revision since="C++11">
+- `throw nullptr` can be used instead to throw a null pointer that matches such handlers.
+</Revision>
+
+{/* source:cpp-language-catch:0041 */}
+[Exception objects](/docs/cpp/language/exceptions/throw#Exception_object) can never have array or function types, therefore a handler of reference to array or function type is never a match for any exception object.
+
+{/* source:cpp-language-catch:0042 */}
+It is possible to write handlers that can never be executed, for example by placing a handler for a final derived class after a handler for a corresponding unambiguous public base class:
+
+{/* source:cpp-language-catch:0043 */}
+```cpp
+try
+{
+    f();
+}
+catch (const std::exception& e)
+{} // will be executed if f() throws std::runtime_error
+catch (const std::runtime_error& e)
+{} // dead code!
+```
+
+{/* source:cpp-language-catch:0044 */}
+Many implementations overly extend the resolution of [CWG issue 388](https://cplusplus.github.io/CWG/issues/388.html) to handlers of reference to non-const pointer types:
+
+{/* source:cpp-language-catch:0045 */}
+```cpp
+int i;
+try
+{
+    try
+    {
+        throw static_cast<float*>(nullptr);
+    }
+    catch (void*& pv)
+    {
+        pv = &i;
+        throw;
+    }
+}
+catch (const float* pf)
+{
+    assert(pf == nullptr); // should pass, but fails on MSVC and Clang
+}
+```
+
+## Keywords
+
+{/* source:cpp-language-catch:0046 */}
+[`catch`](/docs/cpp/language/keywords/catch)
+
+## Example
+
+{/* source:cpp-language-catch:0047 */}
+The following example demonstrates several usage cases of the handlers:
+
+```cpp
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    try
+    {
+        std::cout << "Throwing an integer exception...\n";
+        throw 42;
+    }
+    catch (int i)
+    {
+        std::cout << " the integer exception was caught, with value: " << i << '\n';
+    }
+ 
+    try
+    {
+        std::cout << "Creating a vector of size 5... \n";
+        std::vector<int> v(5);
+        std::cout << "Accessing the 11th element of the vector...\n";
+        std::cout << v.at(10); // vector::at() throws std::out_of_range
+    }
+    catch (const std::exception& e) // caught by reference to base
+    {
+        std::cout << " a standard exception was caught, with message: '"
+                  << e.what() << "'\n";
+    }
+}
+```
+
+Possible output:
+
+```text
+Throwing an integer exception...
+ the integer exception was caught, with value: 42
+Creating a vector of size 5...
+Accessing the 11th element of the vector...
+ a standard exception was caught, with message: 'out_of_range'
+```
+
+## Defect reports
+
+{/* source:cpp-language-catch:0048 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-catch:0049 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={98} standard="C++98">
+    <PublishedBehavior>a `switch` statement can transfer control into a handler</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={210} standard="C++98">
+    <PublishedBehavior>`throw` expressions were matched against the handlers</PublishedBehavior>
+    <CorrectedBehavior>exception objects are matched against the handlers</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={388} standard="C++98">
+    <PublishedBehavior>an exception of pointer or pointer to member type could not be matched by a const reference to a different type</PublishedBehavior>
+    <CorrectedBehavior>made matchable when convertible</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1166} standard="C++98">
+    <PublishedBehavior>the behavior was unspecified when a handler whose type is a reference to an abstract class type is matched</PublishedBehavior>
+    <CorrectedBehavior>abstract class types are not allowed for handlers</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1769} standard="C++98">
+    <PublishedBehavior>when the type of the handler is a base of the type of the exception object, a converting constructor might be used for the initialization of the handler parameter</PublishedBehavior>
+    <CorrectedBehavior>the parameter is copy-initialized from the corresponding base class subobject of the exception object</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2093} standard="C++98">
+    <PublishedBehavior>an exception object of pointer to object type could not match a handler of pointer to object type through qualification conversion</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-catch:0050 */}
+- C++23 standard (ISO/IEC 14882:2024): 14.4 Handling an exception [except.handle]
+
+{/* source:cpp-language-catch:0051 */}
+- C++20 standard (ISO/IEC 14882:2020): 14.4 Handling an exception [except.handle]
+
+{/* source:cpp-language-catch:0052 */}
+- C++17 standard (ISO/IEC 14882:2017): 18.3 Handling an exception [except.handle]
+
+{/* source:cpp-language-catch:0053 */}
+- C++14 standard (ISO/IEC 14882:2014): 15.3 Handling an exception [except.handle]
+
+{/* source:cpp-language-catch:0054 */}
+- C++11 standard (ISO/IEC 14882:2011): 15.3 Handling an exception [except.handle]
+
+{/* source:cpp-language-catch:0055 */}
+- C++03 standard (ISO/IEC 14882:2003): 15.3 Handling an exception [except.handle]
+
+{/* source:cpp-language-catch:0056 */}
+- C++98 standard (ISO/IEC 14882:1998): 15.3 Handling an exception [except.handle]
+
+## See also
+
+{/* source:cpp-language-catch:0057 */}
+- [`try` block](/docs/cpp/language/exceptions/try)
+- [Throwing exceptions](/docs/cpp/language/exceptions/throw)
+- [Exception handling](/docs/cpp/library/error#Exception_handling)

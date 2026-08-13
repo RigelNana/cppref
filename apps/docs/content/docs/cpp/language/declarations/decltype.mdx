@@ -1,0 +1,159 @@
+---
+title: "decltype specifier (since C++11)"
+description: "Inspects the declared type of an entity or the type and value category of an expression."
+source_url: "https://en.cppreference.com/w/cpp/language/decltype"
+language: "C++"
+---
+
+{/* source:cpp-language-decltype:0000 */}
+Inspects the declared type of an entity or the type and value category of an expression.
+
+## Syntax
+
+{/* source:cpp-language-decltype:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="decltype ( entity )" />
+  <Declaration id="2" language="cpp" grammar code="decltype ( expression )" />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-decltype:0002 */}
+1. If the argument is an unparenthesized [id-expression](/docs/cpp/language/basic_concepts/name) or an unparenthesized [class member access](/docs/cpp/language/expressions/operator_member_access) expression, then decltype yields the type of the *entity* named by this expression. If there is no such entity, or if the argument names a set of overloaded functions, the program is ill-formed.
+
+   <Revision since="C++17">
+   If the argument is an unparenthesized [id-expression](/docs/cpp/language/basic_concepts/name) naming a [structured binding](/docs/cpp/language/declarations/structured_binding), then decltype yields the *referenced type* (described in the specification of the structured binding declaration).
+   </Revision>
+
+   <Revision since="C++20">
+   If the argument is an unparenthesized [id-expression](/docs/cpp/language/basic_concepts/name) naming a [non-type template parameter](/docs/cpp/language/templates/template_parameters#Non-type_template_parameter), then decltype yields the type of the template parameter (after performing any necessary type deduction if the template parameter is declared with a placeholder type). The type is non-const even if the entity is a template parameter object (which is a const object).
+   </Revision>
+
+{/* source:cpp-language-decltype:0003 */}
+2. If the argument is any other expression of type `T`, and
+
+{/* source:cpp-language-decltype:0004 */}
+   a. if the [value category](/docs/cpp/language/expressions/value_category) of *expression* is [*xvalue*](/docs/cpp/language/expressions/value_category#xvalue), then decltype yields `T&&`;
+
+{/* source:cpp-language-decltype:0005 */}
+   b. if the [value category](/docs/cpp/language/expressions/value_category) of *expression* is [*lvalue*](/docs/cpp/language/expressions/value_category#lvalue), then decltype yields `T&`;
+
+{/* source:cpp-language-decltype:0006 */}
+   c. if the [value category](/docs/cpp/language/expressions/value_category) of *expression* is [*prvalue*](/docs/cpp/language/expressions/value_category#prvalue), then decltype yields `T`.
+
+   <Revision until="C++17">
+   If *expression* is a function call which returns a prvalue of class type or is a [comma expression](/docs/cpp/language/expressions/operator_other) whose right operand is such a function call, a temporary object is not introduced for that prvalue.
+   </Revision>
+
+   <Revision since="C++17">
+   If *expression* is a prvalue<InlineRevision since="C++20"> other than a (possibly parenthesized) [immediate invocation](/docs/cpp/language/declarations/consteval)</InlineRevision>, a temporary object is not [materialized](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) from that prvalue: such prvalue has no result object.
+   </Revision>
+
+   Because no temporary object is created, the type need not be [complete](/docs/cpp/language/basic_concepts/incomplete_type) or have an available [destructor](/docs/cpp/language/classes/destructor), and can be [abstract](/docs/cpp/language/classes/abstract_class). This rule doesn't apply to sub-expressions: in `decltype(f(g()))`, `g()` must have a complete type, but `f()` need not.
+
+{/* source:cpp-language-decltype:0007 */}
+Note that if the name of an object is parenthesized, it is treated as an ordinary lvalue expression, thus `decltype(x)` and `decltype((x))` are often different types.
+
+{/* source:cpp-language-decltype:0008 */}
+decltype is useful when declaring types that are difficult or impossible to declare using standard notation, like lambda-related types or types that depend on template parameters.
+
+## Notes
+
+{/* source:cpp-language-decltype:0009 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_decltype`](/docs/cpp/library/feature_test#cpp_decltype) | [`200707L`](/docs/cpp/library/compiler_support/11#cpp_decltype_200707L) | (C++11) | `decltype` |
+
+## Keywords
+
+{/* source:cpp-language-decltype:0010 */}
+[`decltype`](/docs/cpp/language/keywords/decltype)
+
+## Example
+
+{/* source:cpp-language-decltype:0011 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <type_traits>
+
+struct A { double x; };
+const A* a;
+
+decltype(a->x) y;       // type of y is double (declared type)
+decltype((a->x)) z = y; // type of z is const double& (lvalue expression)
+
+template<typename T, typename U>
+auto add(T t, U u) -> decltype(t + u) // return type depends on template parameters
+                                      // return type can be deduced since C++14
+{
+    return t + u;
+}
+
+const int& getRef(const int* p) { return *p; }
+static_assert(std::is_same_v<decltype(getRef), const int&(const int*)>);
+auto getRefFwdBad(const int* p) { return getRef(p); }
+static_assert(std::is_same_v<decltype(getRefFwdBad), int(const int*)>,
+    "Just returning auto isn't perfect forwarding.");
+decltype(auto) getRefFwdGood(const int* p) { return getRef(p); }
+static_assert(std::is_same_v<decltype(getRefFwdGood), const int&(const int*)>,
+    "Returning decltype(auto) perfectly forwards the return type.");
+
+// Alternatively:
+auto getRefFwdGood1(const int* p) -> decltype(getRef(p)) { return getRef(p); }
+static_assert(std::is_same_v<decltype(getRefFwdGood1), const int&(const int*)>,
+    "Returning decltype(return expression) also perfectly forwards the return type.");
+
+int main()
+{
+    int i = 33;
+    decltype(i) j = i * 2;
+    static_assert(std::is_same_v<decltype(i), decltype(j)>);
+    assert(i == 33 && 66 == j);
+
+    auto f = [i](int av, int bv) -> int { return av * bv + i; };
+    auto h = [i](int av, int bv) -> int { return av * bv + i; };
+    static_assert(!std::is_same_v<decltype(f), decltype(h)>,
+        "The type of a lambda function is unique and unnamed");
+
+    decltype(f) g = f;
+    std::cout << f(3, 3) << ' ' << g(3, 3) << '\n';
+}
+```
+
+Output:
+
+```text
+42 42
+```
+
+## References
+
+{/* source:cpp-language-decltype:0012 */}
+**Extended content**
+
+- C++23 standard (ISO/IEC 14882:2024):
+  - 9.2.9.5 Decltype specifiers [dcl.type.decltype]
+- C++20 standard (ISO/IEC 14882:2020):
+  - 9.2.8.4 Decltype specifiers [dcl.type.decltype]
+- C++17 standard (ISO/IEC 14882:2017):
+  - TBD Decltype specifiers [dcl.type.decltype]
+- C++14 standard (ISO/IEC 14882:2014):
+  - TBD Decltype specifiers [dcl.type.decltype]
+- C++11 standard (ISO/IEC 14882:2011):
+  - TBD Decltype specifiers [dcl.type.decltype]
+
+{/* source:cpp-language-decltype:0013 */}
+This section is incomplete
+
+Reason: Requires correction. See: [Talk: Wrong References](/docs/Talk:cpp/language/decltype#Wrong_References).
+
+## See also
+
+{/* source:cpp-language-decltype:0014 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`auto` specifier](/docs/cpp/language/declarations/auto) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>specifies a type deduced from an expression</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`declval`](/docs/cpp/library/utility/declval) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>obtains a reference to an object of the template type argument for use in an unevaluated context (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`is_same`](/docs/cpp/library/meta/is_same) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>checks if two types are the same (class template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[C documentation](/docs/c/language/expressions/typeof_unqual)</DescriptionTerm><DescriptionBody>for `typeof`</DescriptionBody></DescriptionItem>
+</DescriptionList>

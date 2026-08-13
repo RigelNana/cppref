@@ -1,0 +1,410 @@
+---
+title: "new expression"
+description: "Creates and initializes objects with dynamic storage duration, that is, objects whose lifetime is not necessarily limited by the scope in which they were created."
+source_url: "https://en.cppreference.com/w/cpp/language/new"
+language: "C++"
+---
+
+{/* source:cpp-language-new:0000 */}
+Creates and initializes objects with dynamic [storage duration](/docs/cpp/language/declarations/storage_duration), that is, objects whose lifetime is not necessarily limited by the scope in which they were created.
+
+## Syntax
+
+{/* source:cpp-language-new:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code=":: (optional) new ( type ) new-initializer (optional)" />
+  <Declaration id="2" language="cpp" grammar code=":: (optional) new type new-initializer (optional)" />
+  <Declaration id="3" language="cpp" grammar code=":: (optional) new ( placement-args ) ( type ) new-initializer (optional)" />
+  <Declaration id="4" language="cpp" grammar code=":: (optional) new ( placement-args ) type new-initializer (optional)" />
+</DeclarationDoc>
+
+{/* source:cpp-language-new:0002 */}
+1. Attempts to create an object of type, denoted by the [type-id](/docs/cpp/language/basic_concepts/type-id#Type_naming) *type*, which may be array type<InlineRevision since="C++11">, and may include a [placeholder type specifier](/docs/cpp/language/declarations/auto)</InlineRevision><InlineRevision since="C++17">, or include a class template name whose argument is to be deduced by [class template argument deduction](/docs/cpp/language/templates/ctad)</InlineRevision>.
+
+{/* source:cpp-language-new:0003 */}
+2. Same as (1,2), but provides additional arguments to the allocation function, see [placement new](/docs/cpp/language/expressions/new#Placement_new).
+
+## Explanation
+
+{/* source:cpp-language-new:0004 */}
+<ParameterList>
+  <Parameter name="type">the target type-id</Parameter>
+  <Parameter name="new-initializer">a parentheses-enclosed expression list <InlineRevision since="C++11">or a [brace-enclosed initializer list](/docs/cpp/language/initialization)</InlineRevision></Parameter>
+  <Parameter name="placement-args">additional placement arguments</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-new:0005 */}
+The `new` expression attempts to allocate storage and then attempts to construct and initialize either a single unnamed object, or an unnamed array of objects in the allocated storage. The `new` expression returns a prvalue pointer to the constructed object or, if an array of objects was constructed, a pointer to the initial element of the array.
+
+{/* source:cpp-language-new:0006 */}
+Syntax (1) or (3) is required if *type* includes parentheses:
+
+{/* source:cpp-language-new:0007 */}
+```cpp
+new int(*[10])();    // error: parsed as (new int) (*[10]) ()
+new (int (*[10])()); // okay: allocates an array of 10 pointers to functions
+```
+
+{/* source:cpp-language-new:0008 */}
+In addition, *type* is parsed greedily: it will be taken include every token that can be a part of a declarator:
+
+{/* source:cpp-language-new:0009 */}
+```cpp
+new int + 1; // okay: parsed as (new int) + 1, increments a pointer returned by new int
+new int * 1; // error: parsed as (new int*) (1)
+```
+
+{/* source:cpp-language-new:0010 */}
+The *new-initializer* is not optional if
+
+{/* source:cpp-language-new:0011 */}
+- *type* is an [array of unknown bound](/docs/cpp/language/declarations/array#Arrays_of_unknown_bound),
+
+{/* source:cpp-language-new:0012 */}
+<Revision since="C++11">
+- a [placeholder](/docs/cpp/language/declarations/auto) is used in *type*, that is, `auto` <InlineRevision since="C++14">or `decltype(auto)`</InlineRevision><InlineRevision since="C++20">, possibly combined with a [type constraint](/docs/cpp/language/templates/constraints#Concepts)</InlineRevision>,
+</Revision>
+
+<Revision since="C++17">
+- a class template is used in *type* whose arguments need to be [deduced](/docs/cpp/language/templates/ctad).
+</Revision>
+
+{/* source:cpp-language-new:0013 */}
+```cpp
+double* p = new double[]{1, 2, 3}; // creates an array of type double[3]
+auto p = new auto('c');            // creates a single object of type char. p is a char*
+
+auto q = new std::integral auto(1);         // OK: q is an int*
+auto q = new std::floating_point auto(true) // ERROR: type constraint not satisfied
+
+auto r = new std::pair(1, true); // OK: r is a std::pair<int, bool>*
+auto r = new std::vector;        // ERROR: element type can't be deduced
+```
+
+## Dynamic arrays
+
+{/* source:cpp-language-new:0014 */}
+If *type* is an array type, all dimensions other than the first must be specified as positive <InlineRevision until="C++14">[integral constant expression](/docs/cpp/language/expressions/constant_expression)</InlineRevision><InlineRevision since="C++14">[converted constant expression](/docs/cpp/language/expressions/constant_expression) of type [`std::size_t`](/docs/cpp/library/utility/types/size_t)</InlineRevision>, but (only when using un-parenthesized syntaxes (2) and (4)) the first dimension may be <InlineRevision until="C++14">an expression of integral type, enumeration type, or class type with a single non-explicit conversion function to integral or enumeration type</InlineRevision><InlineRevision since="C++14">any expression convertible to [`std::size_t`](/docs/cpp/library/utility/types/size_t)</InlineRevision>. This is the only way to directly create an array with size defined at runtime, such arrays are often referred to as dynamic arrays:
+
+{/* source:cpp-language-new:0015 */}
+```cpp
+int n = 42;
+double a[n][5]; // error
+auto p1 = new  double[n][5];  // OK
+auto p2 = new  double[5][n];  // error: only the first dimension may be non-constant
+auto p3 = new (double[n][5]); // error: syntax (1) cannot be used for dynamic arrays
+```
+
+{/* source:cpp-language-new:0016 */}
+<Revision until="C++11">
+The behavior is undefined if the value in the first dimension (converted to integral or enumeration type if needed) is negative.
+</Revision>
+
+<Revision since="C++11">
+In the following cases the value of the expression specifying the first dimension is invalid:
+
+- the expression is of non-class type and its value before conversion to [`std::size_t`](/docs/cpp/library/utility/types/size_t) is negative;
+- the expression is of class type and its value after user-defined conversion function and before the [second standard conversion](/docs/cpp/language/expressions/implicit_cast) is negative;
+- the value of the expression is larger than some implementation-defined limit;
+- the value is smaller than the number of array elements provided in the brace-enclosed initializer list (including the terminating `'\0'` on a [string literal](/docs/cpp/language/expressions/string_literal)).
+
+If the value in the first dimension is invalid for any of these reasons,
+
+- if, after conversion to [`std::size_t`](/docs/cpp/library/utility/types/size_t), the first dimension is a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expressions) and it is [potentially evaluated](/docs/cpp/language/expressions#Potentially-evaluated_expressions), the program is ill-formed,
+- otherwise, if the allocation function that would have been called is non-throwing (including [`std::nothrow`](/docs/cpp/library/memory/new/nothrow) overloads not declared `noexcept`), the `new` expression returns the null pointer of the required result type,
+- otherwise, the `new` expression does not call the allocation function, and instead throws an exception of a type that would match a [handler](/docs/cpp/language/exceptions/catch) of type [`std::bad_array_new_length`](/docs/cpp/library/memory/new/bad_array_new_length).
+</Revision>
+
+{/* source:cpp-language-new:0017 */}
+The first dimension of zero is acceptable, and the allocation function is called.
+
+{/* source:cpp-language-new:0018 */}
+<Revision since="C++11">
+If *new-initializer* is a braced-enclosed initializer list, and the first dimension is [potentially evaluated](/docs/cpp/language/expressions#Potentially-evaluated_expressions) and not a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expressions), the semantic constraints of [copy-initializing](/docs/cpp/language/initialization/copy_initialization) a hypothetical element of the array from an empty initializer list are checked.
+</Revision>
+
+## Allocation
+
+{/* source:cpp-language-new:0019 */}
+The `new` expression allocates storage by calling the appropriate [allocation function](/docs/cpp/library/memory/new/operator_new). If *type* is a non-array type, the name of the function is `operator new`. If *type* is an array type, the name of the function is `operator new[]`.
+
+{/* source:cpp-language-new:0020 */}
+As described in allocation function, the C++ program may provide global and class-specific replacements for these functions. If the `new` expression begins with the optional `::` operator, as in `::new T` or `::new T[n]`, class-specific replacements will be ignored (the function is [looked up](/docs/cpp/language/basic_concepts/lookup) in global [scope](/docs/cpp/language/basic_concepts/scope)). Otherwise, if T is a class type, lookup begins in the class scope of T.
+
+{/* source:cpp-language-new:0021 */}
+When calling the allocation function, the `new` expression passes the number of bytes requested as the first argument, of type [`std::size_t`](/docs/cpp/library/utility/types/size_t), which is exactly `sizeof(T)` for non-array T.
+
+{/* source:cpp-language-new:0022 */}
+Array allocation may supply unspecified overhead, which may vary from one call to `new` to the next, unless the allocation function selected is the standard non-allocating form. The pointer returned by the `new` expression will be offset by that value from the pointer returned by the allocation function. Many implementations use the array overhead to store the number of objects in the array which is used by the [`delete[]`](/docs/cpp/language/expressions/delete) expression to call the correct number of destructors. In addition, if the `new` expression is used to allocate an array of `char`, `unsigned char`<InlineRevision since="C++17">, or [`std::byte`](/docs/cpp/library/utility/types/byte)</InlineRevision>, it may request additional memory from the allocation function if necessary to guarantee correct alignment of objects of all types no larger than the requested array size, if one is later placed into the allocated array.
+
+{/* source:cpp-language-new:0023 */}
+<Revision since="C++14">
+`new` expressions are allowed to elide or combine allocations made through replaceable allocation functions. In case of elision, the storage may be provided by the compiler without making the call to an allocation function (this also permits optimizing out unused `new` expression). In case of combining, the allocation made by a `new` expression `E1` may be extended to provide additional storage for another `new` expression `E2` if all of the following is true:
+
+1. The lifetime of the object allocated by `E1` strictly contains the lifetime of the object allocated by `E2`.
+2. `E1` and `E2` would invoke the same replaceable global allocation function.
+3. For a throwing allocation function, exceptions in `E1` and `E2` would be first caught in the same handler.
+
+Note that this optimization is only permitted when `new` expressions are used, not any other methods to call a replaceable allocation function: `delete[] new int[10];` can be optimized out, but `operator delete(operator new(10));` cannot.
+</Revision>
+
+<Revision since="C++20">
+During an evaluation of a [constant expression](/docs/cpp/language/expressions/constant_expression), a call to an allocation function is always omitted. Only `new` expressions that would otherwise result in a call to a replaceable global allocation function can be evaluated in constant expressions.
+</Revision>
+
+### Placement new
+
+{/* source:cpp-language-new:0024 */}
+If placement-args are provided, they are passed to the allocation function as additional arguments. Such allocation functions are known as "placement new", after the standard allocation function `void* operator new(std::size_t, void*)`, which simply returns its second argument unchanged. This is used to construct objects in allocated storage:
+
+{/* source:cpp-language-new:0025 */}
+```cpp
+// within any block scope...
+{
+    // Statically allocate the storage with automatic storage duration
+    // which is large enough for any object of type “T”.
+    alignas(T) unsigned char buf[sizeof(T)];
+
+    T* tptr = new(buf) T; // Construct a “T” object, placing it directly into your 
+                          // pre-allocated storage at memory address “buf”.
+
+    tptr->~T();           // You must **manually** call the object's destructor
+                          // if its side effects is depended by the program.
+}                         // Leaving this block scope automatically deallocates “buf”.
+```
+
+{/* source:cpp-language-new:0026 */}
+Note: this functionality is encapsulated by the member functions of the [Allocator](/docs/cpp/library/named_req/Allocator) classes.
+
+{/* source:cpp-language-new:0027 */}
+<Revision since="C++17">
+When allocating an object whose alignment requirement exceeds [`__STDCPP_DEFAULT_NEW_ALIGNMENT__`](/docs/cpp/language/preprocessor/replace#Predefined_macros) or an array of such objects, the `new` expression passes the alignment requirement (wrapped in [`std::align_val_t`](/docs/cpp/library/memory/new/align_val_t)) as the second argument for the allocation function (for placement forms, placement-arg appear after the alignment, as the third, fourth, etc arguments). If overload resolution fails (which happens when a class-specific allocation function is defined with a different signature, since it hides the globals), overload resolution is attempted a second time, without alignment in the argument list. This allows alignment-unaware class-specific allocation functions to take precedence over the global alignment-aware allocation functions.
+</Revision>
+
+{/* source:cpp-language-new:0028 */}
+```cpp
+new T;      // calls operator new(sizeof(T))
+            // (C++17) or operator new(sizeof(T), std::align_val_t(alignof(T))))
+new T[5];   // calls operator new[](sizeof(T)*5 + overhead)
+            // (C++17) or operator new(sizeof(T)*5+overhead, std::align_val_t(alignof(T))))
+new(2,f) T; // calls operator new(sizeof(T), 2, f)
+            // (C++17) or operator new(sizeof(T), std::align_val_t(alignof(T)), 2, f)
+```
+
+{/* source:cpp-language-new:0029 */}
+If a non-throwing allocation function (e.g. the one selected by `new(std::nothrow) T`) returns a null pointer because of an allocation failure, then the `new` expression returns immediately, it does not attempt to initialize an object or to call a deallocation function. If a null pointer is passed as the argument to a non-allocating placement `new` expression, which makes the selected standard non-allocating placement allocation function return a null pointer, the behavior is undefined.
+
+## Initialization
+
+{/* source:cpp-language-new:0030 */}
+The object created by a `new` expression is initialized according to the following rules.
+
+{/* source:cpp-language-new:0031 */}
+If *type* is not an array type, the single object is constructed in the acquired memory area:
+
+{/* source:cpp-language-new:0032 */}
+- If *new-initializer* is absent, the object is [default-initialized](/docs/cpp/language/initialization/default_initialization).
+- If *new-initializer* is a parentheses-enclosed expression list, the object is [direct-initialized](/docs/cpp/language/initialization/direct_initialization).
+
+{/* source:cpp-language-new:0033 */}
+<Revision since="C++11">
+- If *new-initializer* is a braced-enclosed initializer list, the object is [list-initialized](/docs/cpp/language/initialization/list_initialization).
+</Revision>
+
+{/* source:cpp-language-new:0034 */}
+If *type* is an array type, an array of objects is initialized:
+
+{/* source:cpp-language-new:0035 */}
+- If *new-initializer* is absent, each element is [default-initialized](/docs/cpp/language/initialization/default_initialization).
+
+{/* source:cpp-language-new:0036 */}
+Even if the first dimension is zero, the semantic constraints of default-initializing a hypothetical element still need to be met.
+
+{/* source:cpp-language-new:0037 */}
+- If *new-initializer* is a pair of parentheses, each element is [value-initialized](/docs/cpp/language/initialization/value_initialization).
+
+{/* source:cpp-language-new:0038 */}
+Even if the first dimension is zero, the semantic constraints of value-initializing a hypothetical element still need to be met.
+
+{/* source:cpp-language-new:0039 */}
+<Revision since="C++11">
+- If *new-initializer* is a braced-enclosed initializer list, the array is [aggregate-initialized](/docs/cpp/language/initialization/aggregate_initialization).
+</Revision>
+
+<Revision since="C++20">
+- If *new-initializer* is a parentheses-enclosed non-empty expression list, the array is [aggregate-initialized](/docs/cpp/language/initialization/aggregate_initialization).
+</Revision>
+
+### Initialization failure
+
+{/* source:cpp-language-new:0040 */}
+If initialization terminates by throwing an exception (e.g. from the constructor), the program looks up a matching deallocation function, then:
+
+{/* source:cpp-language-new:0041 */}
+- If a suitable deallocation function can be found, the deallocation function is called to free the memory in which the object was being constructed. After that, the exception continues to propagate in the context of the `new` expression.
+- If no unambiguous matching deallocation function can be found, propagating the exception does not cause the object's memory to be freed. It is only appropriate if the called allocation function does not allocate memory, otherwise it is likely to result in a memory leak.
+
+{/* source:cpp-language-new:0042 */}
+The scope of the [lookup](/docs/cpp/language/basic_concepts/lookup) of the matching deallocation function is determined as follows:
+
+{/* source:cpp-language-new:0043 */}
+- If the `new` expression does not begin with `::`, and the allocated type is either a class type T or an array of class type T, a search is performed for the deallocation function's name in the class scope of T.
+- Otherwise, or if nothing is found in the T's class scope, the deallocation function's name is looked up by searching for it in the [global scope](/docs/cpp/language/basic_concepts/scope).
+
+{/* source:cpp-language-new:0044 */}
+For a non-placement allocation function, the normal deallocation function lookup is used to find the matching deallocation function (see [delete-expression](/docs/cpp/language/expressions/delete)).
+
+{/* source:cpp-language-new:0045 */}
+For a placement allocation function, the matching deallocation function must have the same number of parameter, and each parameter type except the first is identical to the corresponding parameter type of the allocation function (after [parameter transformations](/docs/cpp/language/functions/function#Function_type)).
+
+{/* source:cpp-language-new:0046 */}
+- If the lookup finds a single matching deallocation function, that function will be called; otherwise, no deallocation function will be called.
+- If the lookup finds a non-placement deallocation function and that function, considered as a placement deallocation function, would have been selected as a match for the allocation function, the program is ill-formed.
+
+{/* source:cpp-language-new:0047 */}
+In any case, the matching deallocation function (if any) must be<InlineRevision since="C++11"> non-deleted and</InlineRevision> accessible from the point where the `new` expression appears.
+
+{/* source:cpp-language-new:0048 */}
+```cpp
+struct S
+{
+    // Placement allocation function:
+    static void* operator new(std::size_t, std::size_t);
+
+    // Non-placement deallocation function:
+    static void operator delete(void*, std::size_t);
+};
+
+S* p = new (0) S; // error: non-placement deallocation function matches
+                  //        placement allocation function
+```
+
+{/* source:cpp-language-new:0049 */}
+If a deallocation function is called in a `new` expression (due to initialization failure), the arguments passed to that function are determined as follows:
+
+{/* source:cpp-language-new:0050 */}
+- The first argument is the value (of type `void*`) returned from the allocation function call.
+- Other arguments (only for placement deallocation functions) are the placement-args passed to the placement allocation function.
+
+{/* source:cpp-language-new:0051 */}
+If the implementation is allowed to introduce a temporary object or make a copy of any argument as part of the call to the allocation function, it is unspecified whether the same object is used in the call to both the allocation and deallocation functions.
+
+## Memory leaks
+
+{/* source:cpp-language-new:0052 */}
+The objects created by `new` expressions (objects with dynamic storage duration) persist until the pointer returned by the `new` expression is used in a matching [delete-expression](/docs/cpp/language/expressions/delete). If the original value of pointer is lost, the object becomes unreachable and cannot be deallocated: a *memory leak* occurs.
+
+{/* source:cpp-language-new:0053 */}
+This may happen if the pointer is assigned to:
+
+{/* source:cpp-language-new:0054 */}
+```cpp
+int* p = new int(7); // dynamically allocated int with value 7
+p = nullptr; // memory leak
+```
+
+{/* source:cpp-language-new:0055 */}
+or if the pointer goes out of scope:
+
+{/* source:cpp-language-new:0056 */}
+```cpp
+void f()
+{
+    int* p = new int(7);
+} // memory leak
+```
+
+{/* source:cpp-language-new:0057 */}
+or due to exception:
+
+{/* source:cpp-language-new:0058 */}
+```cpp
+void f()
+{
+    int* p = new int(7);
+    g();      // may throw
+    delete p; // okay if no exception
+} // memory leak if g() throws
+```
+
+{/* source:cpp-language-new:0059 */}
+To simplify management of dynamically-allocated objects, the result of a `new` expression is often stored in a [smart pointer](/docs/cpp/library/memory#Smart_pointers): <InlineRevision until="C++17">[`std::auto_ptr`](/docs/cpp/library/memory/auto_ptr) </InlineRevision><InlineRevision since="C++11">[`std::unique_ptr`](/docs/cpp/library/memory/unique_ptr), or [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr)</InlineRevision>. These pointers guarantee that the delete expression is executed in the situations shown above.
+
+## Notes
+
+{/* source:cpp-language-new:0060 */}
+[Itanium C++ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#array-cookies) requires that the array allocation overhead is zero if the element type of the created array is trivially destructible. So does MSVC.
+
+{/* source:cpp-language-new:0061 */}
+Some implementations (e.g. MSVC before VS 2019 v16.7) require non-zero array allocation overhead on non-allocating placement array `new` if the element type is not trivially destructible, which is no longer conforming since [CWG issue 2382](https://cplusplus.github.io/CWG/issues/2382.html).
+
+{/* source:cpp-language-new:0062 */}
+A non-allocating placement array `new` expression that creates an array of `unsigned char`<InlineRevision since="C++17">, or [`std::byte`](/docs/cpp/library/utility/types/byte)</InlineRevision> can be used to [implicitly create objects](/docs/cpp/language/basic_concepts/lifetime) on given region of storage: it ends lifetime of objects overlapping with the array, and then implicitly creates objects of implicit-lifetime types in the array.
+
+{/* source:cpp-language-new:0063 */}
+[`std::vector`](/docs/cpp/library/container/vector) offers similar functionality for one-dimensional dynamic arrays.
+
+## Keywords
+
+{/* source:cpp-language-new:0064 */}
+[`new`](/docs/cpp/language/keywords/new)
+
+## Defect reports
+
+{/* source:cpp-language-new:0065 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-new:0066 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={74} standard="C++98">
+    <PublishedBehavior>value in the first dimension must have integral type</PublishedBehavior>
+    <CorrectedBehavior>enumeration types permitted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={299} standard="C++98">
+    <PublishedBehavior>value in the first dimension must have integral or enumeration type</PublishedBehavior>
+    <CorrectedBehavior>class types with a single conversion function to integral or enumeration type permitted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={624} standard="C++98">
+    <PublishedBehavior>the behavior was unspecified when the size of the allocated object would exceed the implementation-defined limit</PublishedBehavior>
+    <CorrectedBehavior>no storage is obtained and an exception is thrown in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1748} standard="C++98">
+    <PublishedBehavior>non-allocating placement `new` need to check if the argument is null</PublishedBehavior>
+    <CorrectedBehavior>undefined behavior for null argument</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1992} standard="C++11">
+    <PublishedBehavior>`new (std::nothrow) int[N]` could throw [`std::bad_array_new_length`](/docs/cpp/library/memory/new/bad_array_new_length)</PublishedBehavior>
+    <CorrectedBehavior>changed to return a null pointer</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2102} standard="C++98">
+    <PublishedBehavior>it was unclear whether default/value-initialization is required to be well-formed when initializing empty arrays</PublishedBehavior>
+    <CorrectedBehavior>required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2382} standard="C++98">
+    <PublishedBehavior>non-allocating placement array `new` could require allocation overhead</PublishedBehavior>
+    <CorrectedBehavior>such allocation overhead disallowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2392} standard="C++11">
+    <PublishedBehavior>the program might be ill-formed even if the first dimension is not potentially-evaluated</PublishedBehavior>
+    <CorrectedBehavior>well-formed in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P1009R2" standard="C++11">
+    <PublishedBehavior>the array bound could not be deduced in a `new` expression</PublishedBehavior>
+    <CorrectedBehavior>deduction permitted</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-new:0067 */}
+- [constructor](/docs/cpp/language/classes/initializer_list)
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [`delete`](/docs/cpp/language/expressions/delete)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [initialization](/docs/cpp/language/initialization)
+  - [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+  - [default initialization](/docs/cpp/language/initialization/default_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)

@@ -1,0 +1,83 @@
+---
+title: "Converting constructor"
+description: "A constructor that is not declared with the specifier explicit and which can be called with a single parameter is called a converting constructor."
+source_url: "https://en.cppreference.com/w/cpp/language/converting_constructor"
+language: "C++"
+---
+
+{/* source:cpp-language-converting-constructor:0000 */}
+A constructor that is not declared with the specifier [explicit](/docs/cpp/language/classes/explicit) <InlineRevision until="C++11">and which can be called with a single parameter</InlineRevision> is called a *converting constructor*.
+
+{/* source:cpp-language-converting-constructor:0001 */}
+Unlike explicit constructors, which are only considered during [direct initialization](/docs/cpp/language/initialization/direct_initialization) (which includes [explicit conversions](/docs/cpp/language/expressions/explicit_cast) such as [static_cast](/docs/cpp/language/expressions/static_cast)), converting constructors are also considered during [copy initialization](/docs/cpp/language/initialization/copy_initialization), as part of [user-defined conversion sequence](/docs/cpp/language/expressions/implicit_cast).
+
+{/* source:cpp-language-converting-constructor:0002 */}
+It is said that a converting constructor specifies an implicit conversion from the types of its arguments (if any) to the type of its class. Note that non-explicit [user-defined conversion function](/docs/cpp/language/expressions/cast_operator) also specifies an implicit conversion.
+
+{/* source:cpp-language-converting-constructor:0003 */}
+Implicitly-declared and user-defined non-explicit [copy constructors](/docs/cpp/language/classes/copy_constructor) and [move constructors](/docs/cpp/language/classes/move_constructor) are converting constructors.
+
+## Example
+
+{/* source:cpp-language-converting-constructor:0004 */}
+```cpp
+struct A
+{
+    A() { }         // converting constructor (since C++11)  
+    A(int) { }      // converting constructor
+    A(int, int) { } // converting constructor (since C++11)
+};
+
+struct B
+{
+    explicit B() { }
+    explicit B(int) { }
+    explicit B(int, int) { }
+};
+
+int main()
+{
+    A a1 = 1;      // OK: copy-initialization selects A::A(int)
+    A a2(2);       // OK: direct-initialization selects A::A(int)
+    A a3{4, 5};    // OK: direct-list-initialization selects A::A(int, int)
+    A a4 = {4, 5}; // OK: copy-list-initialization selects A::A(int, int)
+    A a5 = (A)1;   // OK: explicit cast performs static_cast, direct-initialization
+
+//  B b1 = 1;      // error: copy-initialization does not consider B::B(int)
+    B b2(2);       // OK: direct-initialization selects B::B(int)
+    B b3{4, 5};    // OK: direct-list-initialization selects B::B(int, int)
+//  B b4 = {4, 5}; // error: copy-list-initialization selected an explicit constructor
+                   //        B::B(int, int)
+    B b5 = (B)1;   // OK: explicit cast performs static_cast, direct-initialization
+    B b6;          // OK, default-initialization
+    B b7{};        // OK, direct-list-initialization
+//  B b8 = {};     // error: copy-list-initialization selected an explicit constructor
+                   //        B::B()
+
+    [](...){}(a1, a4, a4, a5, b5); // may suppress "unused variable" warnings
+}
+```
+
+## See also
+
+{/* source:cpp-language-converting-constructor:0005 */}
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [`explicit`](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+  - [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+  - [default initialization](/docs/cpp/language/initialization/default_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [initializer list](/docs/cpp/language/classes/initializer_list)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)
+  - [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

@@ -1,0 +1,167 @@
+---
+title: "Class template"
+description: "A class template defines a family of classes."
+source_url: "https://en.cppreference.com/w/cpp/language/class_template"
+language: "C++"
+---
+
+{/* source:cpp-language-class-template:0000 */}
+A class template defines a family of classes.
+
+## Syntax
+
+{/* source:cpp-language-class-template:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="template < parameter-list > class-declaration" />
+  <Declaration id="2" language="cpp" since="C++20" grammar code="template < parameter-list > requires constraint class-declaration" />
+  <Declaration id="3" language="cpp" removed="C++11" grammar code="export template < parameter-list > class-declaration" />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-class-template:0002 */}
+<ParameterList>
+  <Parameter name="class-declaration">
+    a [class declaration](/docs/cpp/language/classes/class). The class name declared becomes a template name.
+  </Parameter>
+  <Parameter name="parameter-list">
+    a non-empty comma-separated list of the [template parameters](/docs/cpp/language/templates/template_parameters), each of which is either a [non-type parameter](/docs/cpp/language/templates/template_parameters#Non-type_template_parameter), a [type parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter), a [template parameter](/docs/cpp/language/templates/template_parameters#Template_template_parameter), or a [parameter pack](/docs/cpp/language/templates/parameter_pack) of any of those.
+  </Parameter>
+  <Parameter name="constraint">
+    a [constraint expression](/docs/cpp/language/templates/constraints) which restricts the template parameters accepted by this class template
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-class-template:0003 */}
+<Revision until="C++11">
+`export` was an optional modifier which declared the template as *exported* (when used with a class template, it declared all of its members exported as well). Files that instantiated exported templates did not need to include their definitions: the declaration was sufficient. Implementations of `export` were rare and disagreed with each other on details.
+</Revision>
+
+## Class template instantiation
+
+{/* source:cpp-language-class-template:0004 */}
+A class template by itself is not a type, or an object, or any other entity. No code is generated from a source file that contains only template definitions. In order for any code to appear, a template must be instantiated: the template arguments must be provided so that the compiler can generate an actual class (or function, from a function template).
+
+### Explicit instantiation
+
+{/* source:cpp-language-class-template:0005 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="template class-key template-name < argument-list > ;" />
+  <Declaration id="2" language="cpp" since="C++11" grammar code="extern template class-key template-name < argument-list > ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-class-template:0006 */}
+<ParameterList>
+  <Parameter name="class-key">
+    `class`, `struct` or `union`
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-class-template:0007 */}
+1. Explicit instantiation definition
+
+{/* source:cpp-language-class-template:0008 */}
+2. Explicit instantiation declaration
+
+{/* source:cpp-language-class-template:0009 */}
+An explicit instantiation definition forces instantiation of the class, struct, or union they refer to. It may appear in the program anywhere after the template definition, and for a given *argument-list*, is only allowed to appear once in the entire program, no diagnostic required.
+
+{/* source:cpp-language-class-template:0010 */}
+<Revision since="C++11">
+An explicit instantiation declaration (an extern template) skips implicit instantiation step: the code that would otherwise cause an implicit instantiation instead uses the explicit instantiation definition provided elsewhere (resulting in link errors if no such instantiation exists). This can be used to reduce compilation times by explicitly declaring a template instantiation in all but one of the source files using it, and explicitly defining it in the remaining file.
+</Revision>
+
+{/* source:cpp-language-class-template:0011 */}
+Classes, functions<InlineRevision since="C++14">, variables</InlineRevision>, and member template specializations can be explicitly instantiated from their templates. Member functions, member classes, and static data members of class templates can be explicitly instantiated from their member definitions.
+
+{/* source:cpp-language-class-template:0012 */}
+Explicit instantiation can only appear in the enclosing namespace of the template, unless it uses qualified-id:
+
+{/* source:cpp-language-class-template:0013 */}
+```cpp
+namespace N
+{
+    template<class T>
+    class Y // template definition
+    {
+        void mf() {}
+    };
+}
+
+// template class Y<int>; // error: class template Y not visible in the global namespace
+using N::Y;
+// template class Y<int>; // error: explicit instantiation outside
+                          // of the namespace of the template
+template class N::Y<char*>;       // OK: explicit instantiation
+template void N::Y<double>::mf(); // OK: explicit instantiation
+```
+
+{/* source:cpp-language-class-template:0014 */}
+Explicit instantiation has no effect if an [explicit specialization](/docs/cpp/language/templates/template_specialization) appeared before for the same set of template arguments.
+
+{/* source:cpp-language-class-template:0015 */}
+Only the declaration is required to be visible when explicitly instantiating a function template<InlineRevision since="C++14">, a variable template</InlineRevision>, a member function or static data member of a class template, or a member function template. The complete definition must appear before the explicit instantiation of a class template, a member class of a class template, or a member class template, unless an explicit specialization with the same template arguments appeared before.
+
+{/* source:cpp-language-class-template:0016 */}
+If a function template<InlineRevision since="C++14">, variable template</InlineRevision>, member function template, or member function or static data member of a class template is explicitly instantiated with an explicit instantiation definition, the template definition must be present in the same translation unit.
+
+{/* source:cpp-language-class-template:0017 */}
+When an explicit instantiation names a class template specialization, it serves as an explicit instantiation of the same kind (declaration or definition) of each of its non-inherited non-template members that has not been previously explicitly specialized in the translation unit. If this explicit instantiation is a definition, it is also an explicit instantiation definition only for the members that have been defined at this point.
+
+{/* source:cpp-language-class-template:0018 */}
+Explicit instantiation definitions ignore member access specifiers: parameter types and return types may be private.
+
+### Implicit instantiation
+
+{/* source:cpp-language-class-template:0019 */}
+When code refers to a template in context that requires a completely defined type, or when the completeness of the type affects the code, and this particular type has not been explicitly instantiated, implicit instantiation occurs. For example, when an object of this type is constructed, but not when a pointer to this type is constructed.
+
+{/* source:cpp-language-class-template:0020 */}
+This applies to the members of the class template: unless the member is used in the program, it is not instantiated, and does not require a definition.
+
+{/* source:cpp-language-class-template:0021 */}
+```cpp
+template<class T>
+struct Z // template definition
+{
+    void f() {}
+    void g(); // never defined
+};
+
+template struct Z<double>; // explicit instantiation of Z<double>
+Z<int> a;                  // implicit instantiation of Z<int>
+Z<char>* p;                // nothing is instantiated here
+
+p->f(); // implicit instantiation of Z<char> and Z<char>::f() occurs here.
+        // Z<char>::g() is never needed and never instantiated:
+        // it does not have to be defined
+```
+
+{/* source:cpp-language-class-template:0022 */}
+If a class template has been declared, but not defined, at the point of instantiation, the instantiation yields an incomplete class type:
+
+{/* source:cpp-language-class-template:0023 */}
+```cpp
+template<class T>
+class X;    // declaration, not definition
+
+X<char> ch; // error: incomplete type X<char>
+```
+
+{/* source:cpp-language-class-template:0024 */}
+<Revision since="C++17">
+[Local classes](/docs/cpp/language/classes/class#Local_classes) and any templates used in their members are instantiated as part of the instantiation of the entity within which the local class or enumeration is declared.
+</Revision>
+
+## Keywords
+
+{/* source:cpp-language-class-template:0025 */}
+<InlineRevision until="C++11">[`export`](/docs/cpp/language/keywords/export)</InlineRevision><InlineRevision since="C++11">[`extern`](/docs/cpp/language/keywords/extern)</InlineRevision>
+
+## See also
+
+{/* source:cpp-language-class-template:0026 */}
+- [template parameters and arguments](/docs/cpp/language/templates/template_parameters) allow templates to be parameterized
+- [function template declaration](/docs/cpp/language/templates/function_template) declares a function template
+- [template specialization](/docs/cpp/language/templates/template_specialization) defines an existing template for a specific type
+- [parameter packs](/docs/cpp/language/templates/parameter_pack) allows the use of lists of types in templates <InlineRevision since="C++11" />

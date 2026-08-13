@@ -1,0 +1,193 @@
+---
+title: "sizeof operator"
+description: "Queries size of the object or type."
+source_url: "https://en.cppreference.com/w/cpp/language/sizeof"
+language: "C++"
+---
+
+{/* source:cpp-language-sizeof:0000 */}
+Queries size of the object or type.
+
+{/* source:cpp-language-sizeof:0001 */}
+Used when actual size of the object must be known.
+
+## Syntax
+
+{/* source:cpp-language-sizeof:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="sizeof( type )" />
+  <Declaration id="2" language="cpp" grammar code="sizeof expression" />
+</DeclarationDoc>
+
+{/* source:cpp-language-sizeof:0003 */}
+1) Yields the size in bytes of the [object representation](/docs/cpp/language/basic_concepts/objects) of *type*.
+
+{/* source:cpp-language-sizeof:0004 */}
+2) Yields the size in bytes of the object representation of the type of *expression*, if that expression is evaluated.
+
+{/* source:cpp-language-sizeof:0005 */}
+<ParameterList>
+  <Parameter name="type">
+    a *type-id* (see [type naming](/docs/cpp/language/basic_concepts/type-id#Type_naming))
+  </Parameter>
+  <Parameter name="expression">
+    an expression whose [operator precedence](/docs/cpp/language/expressions/operator_precedence) is not lower than `sizeof` (e.g. `sizeof a + b` is parsed as `(sizeof a) + b` instead of `sizeof (a + b)`)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-sizeof:0006 */}
+The result of a `sizeof` expression is a [constant expression](/docs/cpp/language/expressions/constant_expression) of type [`std::size_t`](/docs/cpp/library/utility/types/size_t).
+
+## Notes
+
+{/* source:cpp-language-sizeof:0007 */}
+Depending on the computer architecture, a [byte](https://en.wikipedia.org/wiki/byte) may consist of 8 or more bits, the exact number being recorded in [`CHAR_BIT`](/docs/cpp/library/utility/types/climits).
+
+{/* source:cpp-language-sizeof:0008 */}
+The following `sizeof` expressions always evaluate to `1`:
+
+{/* source:cpp-language-sizeof:0009 */}
+- `sizeof(char)`
+- `sizeof(signed char)`
+- `sizeof(unsigned char)`
+
+{/* source:cpp-language-sizeof:0010 */}
+- <Revision since="C++17">`sizeof(std::byte)`</Revision>
+- <Revision since="C++20">`sizeof(char8_t)`</Revision>
+
+{/* source:cpp-language-sizeof:0011 */}
+`sizeof` cannot be used with function types, incomplete types, or bit-field <InlineRevision until="C++11">lvalues</InlineRevision> <InlineRevision since="C++11">glvalues</InlineRevision>.
+
+{/* source:cpp-language-sizeof:0012 */}
+When applied to a reference type, the result is the size of the referenced type.
+
+{/* source:cpp-language-sizeof:0013 */}
+When applied to a class type, the result is the number of bytes occupied by a complete object of that class, including any additional padding required to place such object in an array. The number of bytes occupied by a [potentially-overlapping subobject](/docs/cpp/language/basic_concepts/objects#Subobjects) may be less than the size of that object.
+
+{/* source:cpp-language-sizeof:0014 */}
+The result of `sizeof` is always nonzero, even if applied to an empty class type.
+
+{/* source:cpp-language-sizeof:0015 */}
+When applied to an expression, `sizeof` does [not evaluate the expression](/docs/cpp/language/expressions#Potentially-evaluated_expressions)<InlineRevision since="C++11"> (i.e. the expression is an unevaluated operand)</InlineRevision>, and even if the expression designates a polymorphic object, the result is the size of the static type of the expression. Lvalue-to-rvalue, array-to-pointer, or function-to-pointer conversions are not performed.<InlineRevision since="C++17"> [Temporary materialization](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization), however, is (formally) performed for prvalue arguments: the program is ill-formed if the argument is not destructible.</InlineRevision>
+
+## Keywords
+
+{/* source:cpp-language-sizeof:0016 */}
+[`sizeof`](/docs/cpp/language/keywords/sizeof)
+
+## Example
+
+{/* source:cpp-language-sizeof:0017 */}
+The example output corresponds to a system with 64-bit pointers and 32-bit int (a.k.a. [LP64 or LLP64](/docs/cpp/language/basic_concepts/types#Data_models)).
+
+```cpp
+#include <cstdlib>
+#include <iostream>
+
+struct Empty          { };
+struct Base           { int a; };
+struct Derived : Base { int b; };
+struct Bit            { unsigned bit: 1; };
+struct CharChar       { char c; char c2; };
+struct CharCharInt    { char c; char c2; int i; };
+struct IntCharChar    { int i;  char c;  char c2; };
+struct CharIntChar    { char c; int i;   char c2; };
+struct CharShortChar  { char c; short s; char c2; };
+
+int main()
+{
+    Empty e;
+    Derived d;
+    Base& b = d;
+    [[maybe_unused]] Bit bit;
+    int a[10];
+
+    auto f = [&]() { return sizeof(int[10]) == sizeof a ? throw 1 : e; };
+//  f(); // the return type is Empty, but always throws 1
+
+    auto println = [](auto rem, std::size_t size) { std::cout << rem << size << '\n'; };
+
+    println( "1) sizeof empty class:              ", sizeof e                     );
+    println( "2) sizeof pointer:                  ", sizeof &e                    );
+    println( "3) sizeof(Bit) class:               ", sizeof(Bit)                  );
+    println( "4) sizeof(int[10]) array of 10 int: ", sizeof(int[10])              );
+    println( "5) sizeof a        array of 10 int: ", sizeof a                     );
+    println( "6) length of array of 10 int:       ", ((sizeof a) / (sizeof *a))   );
+    println( "7) length of array of 10 int (2):   ", ((sizeof a) / (sizeof a[0])) );
+    println( "8) sizeof the Derived class:        ", sizeof d                     );
+    println( "9) sizeof the Derived through Base: ", sizeof b                     );
+    println( "A) sizeof(unsigned):                ", sizeof(unsigned)             );
+    println( "B) sizeof(int):                     ", sizeof(int)                  );
+    println( "C) sizeof(short):                   ", sizeof(short)                );
+    println( "D) sizeof(char):                    ", sizeof(char)                 );
+    println( "E) sizeof(CharChar):                ", sizeof(CharChar)             );
+    println( "F) sizeof(CharCharInt):             ", sizeof(CharCharInt)          );
+    println( "G) sizeof(IntCharChar):             ", sizeof(IntCharChar)          );
+    println( "H) sizeof(CharIntChar):             ", sizeof(CharIntChar)          );
+    println( "I) sizeof(CharShortChar):           ", sizeof(CharShortChar)        );
+    println( "J) sizeof f():                      ", sizeof f()                   );
+    println( "K) sizeof Base::a:                  ", sizeof Base::a               );
+
+//  println( "sizeof function:        ", sizeof(void()) ); // error
+//  println( "sizeof incomplete type: ", sizeof(int[])  ); // error
+//  println( "sizeof bit-field:       ", sizeof bit.bit ); // error
+}
+```
+
+Possible output:
+
+```text
+1) sizeof empty class:              1
+2) sizeof pointer:                  8
+3) sizeof(Bit) class:               4
+4) sizeof(int[10]) array of 10 int: 40
+5) sizeof a        array of 10 int: 40
+6) length of array of 10 int:       10
+7) length of array of 10 int (2):   10
+8) sizeof the Derived class:        8
+9) sizeof the Derived through Base: 4
+A) sizeof(unsigned):                4
+B) sizeof(int):                     4
+C) sizeof(short):                   2
+D) sizeof(char):                    1
+E) sizeof(CharChar):                2
+F) sizeof(CharCharInt):             8
+G) sizeof(IntCharChar):             8
+H) sizeof(CharIntChar):             12
+I) sizeof(CharShortChar):           6
+J) sizeof f():                      1
+K) sizeof Base::a:                  4
+```
+
+## Defect reports
+
+{/* source:cpp-language-sizeof:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-sizeof:0019 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1553} standard="C++11">
+    <PublishedBehavior>`sizeof` could be used with bit-field xvalues</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-sizeof:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`alignof`](/docs/cpp/language/expressions/alignof) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>queries alignment requirements of a type (operator)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sizeof...` operator](/docs/cpp/language/templates/sizeof...) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>queries the number of elements in a [pack](/docs/cpp/language/templates/parameter_pack)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`numeric_limits`](/docs/cpp/library/utility/types/numeric_limits)</DescriptionTerm>
+    <DescriptionBody>provides an interface to query properties of all fundamental numeric types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/language/expressions/sizeof) for `sizeof`

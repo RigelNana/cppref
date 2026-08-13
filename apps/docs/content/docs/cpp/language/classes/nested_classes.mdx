@@ -1,0 +1,138 @@
+---
+title: "Nested classes"
+description: "A declaration of a class/struct or union may appear within another class. Such declaration declares a nested class."
+source_url: "https://en.cppreference.com/w/cpp/language/nested_classes"
+language: "C++"
+---
+
+{/* source:cpp-language-nested-classes:0000 */}
+A declaration of a [class/struct](/docs/cpp/language/classes/class) or [union](/docs/cpp/language/classes/union) may appear within another class. Such declaration declares a nested class.
+
+## Explanation
+
+{/* source:cpp-language-nested-classes:0001 */}
+The name of the nested class exists in the scope of the enclosing class, and name lookup from a member function of a nested class visits the scope of the enclosing class after examining the scope of the nested class. Like any member of its enclosing class, the nested class has access to all names (private, protected, etc) to which the enclosing class has access, but it is otherwise independent and has no special access to the [`this` pointer](/docs/cpp/language/classes/this) of the enclosing class. Declarations in a nested class can use any members of the enclosing class, following the [usual usage rules](/docs/cpp/language/classes/data_members#Usage) for the non-static members.
+
+{/* source:cpp-language-nested-classes:0002 */}
+```cpp
+int x, y; // globals
+class enclose // enclosing class
+{
+    // note: private members
+    int x;
+    static int s;
+public:
+    struct inner // nested class
+    {
+        void f(int i)
+        {
+            x = i; // Error: can't write to non-static enclose::x without instance
+            int a = sizeof x; // Error until C++11,
+                              // OK in C++11: operand of sizeof is unevaluated,
+                              // this use of the non-static enclose::x is allowed.
+            s = i;   // OK: can assign to the static enclose::s
+            ::x = i; // OK: can assign to global x
+            y = i;   // OK: can assign to global y
+        }
+
+        void g(enclose* p, int i)
+        {
+            p->x = i; // OK: assign to enclose::x
+        }
+    };
+};
+```
+
+{/* source:cpp-language-nested-classes:0003 */}
+[Friend](/docs/cpp/language/classes/friend) functions defined within a nested class have no special access to the members of the enclosing class even if lookup from the body of a member function that is defined within a nested class can find the private members of the enclosing class.
+
+{/* source:cpp-language-nested-classes:0004 */}
+Out-of-class definitions of the members of a nested class appear in the namespace of the enclosing class:
+
+{/* source:cpp-language-nested-classes:0005 */}
+```cpp
+struct enclose
+{
+    struct inner
+    {
+        static int x;
+        void f(int i);
+    };
+};
+
+int enclose::inner::x = 1;       // definition
+void enclose::inner::f(int i) {} // definition
+```
+
+{/* source:cpp-language-nested-classes:0006 */}
+Nested classes can be forward-declared and later defined, either within the same enclosing class body, or outside of it:
+
+{/* source:cpp-language-nested-classes:0007 */}
+```cpp
+class enclose
+{
+    class nested1;    // forward declaration
+    class nested2;    // forward declaration
+    class nested1 {}; // definition of nested class
+};
+
+class enclose::nested2 {}; // definition of nested class
+```
+
+{/* source:cpp-language-nested-classes:0008 */}
+Nested class declarations obey [member access](/docs/cpp/language/classes/access) specifiers, a private member class cannot be named outside the scope of the enclosing class, although objects of that class may be manipulated:
+
+{/* source:cpp-language-nested-classes:0009 */}
+```cpp
+class enclose
+{
+    struct nested // private member
+    {
+        void g() {}
+    };
+public:
+    static nested f() { return nested{}; }
+};
+
+int main()
+{
+    //enclose::nested n1 = enclose::f(); // error: 'nested' is private
+
+    enclose::f().g();       // OK: does not name 'nested'
+    auto n2 = enclose::f(); // OK: does not name 'nested'
+    n2.g();
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-nested-classes:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-nested-classes:0011 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={45} standard="C++98">
+    <PublishedBehavior>the members of a nested class cannot access the enclosing class and its friends</PublishedBehavior>
+    <CorrectedBehavior>they have the same access rights as other members of the enclosing class (also resolves CWG issues #8 and #10)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-nested-classes:0012 */}
+C++23 standard (ISO/IEC 14882:2024): 11.4.12 Nested class declarations [class.nest]
+
+{/* source:cpp-language-nested-classes:0013 */}
+C++20 standard (ISO/IEC 14882:2020): 11.4.10 Nested class declarations [class.nest]
+
+{/* source:cpp-language-nested-classes:0014 */}
+C++17 standard (ISO/IEC 14882:2017): 12.2.5 Nested class declarations [class.nest]
+
+{/* source:cpp-language-nested-classes:0015 */}
+C++14 standard (ISO/IEC 14882:2014): 9.7 Nested class declarations [class.nest]
+
+{/* source:cpp-language-nested-classes:0016 */}
+C++11 standard (ISO/IEC 14882:2011): 9.7 Nested class declarations [class.nest]
+
+{/* source:cpp-language-nested-classes:0017 */}
+C++98 standard (ISO/IEC 14882:1998): 9.7 Nested class declarations [class.nest]

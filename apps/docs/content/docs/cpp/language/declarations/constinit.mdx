@@ -1,0 +1,136 @@
+---
+title: "constinit specifier (since C++20)"
+description: "constinit - asserts that a variable has static initialization, i.e. zero initialization and constant initialization, otherwise the program is ill-formed."
+source_url: "https://en.cppreference.com/w/cpp/language/constinit"
+language: "C++"
+---
+
+{/* source:cpp-language-constinit:0000 */}
+`constinit` - asserts that a variable has static initialization, i.e. [zero initialization](/docs/cpp/language/initialization/zero_initialization) and [constant initialization](/docs/cpp/language/initialization/constant_initialization), otherwise the program is ill-formed.
+
+## Explanation
+
+{/* source:cpp-language-constinit:0001 */}
+The `constinit` specifier declares a variable with static or thread [storage duration](/docs/cpp/language/declarations/storage_duration).
+
+{/* source:cpp-language-constinit:0002 */}
+<Revision since="C++26">
+The `constinit` specifier can also be applied to [structured binding](/docs/cpp/language/declarations/structured_binding) declarations. In this case, `constinit` is also applied to the [uniquely-named variable](/docs/cpp/language/declarations/structured_binding#Binding_process) introduced by the declaration.
+</Revision>
+
+{/* source:cpp-language-constinit:0003 */}
+If a variable is declared with `constinit`, its [initializing declaration](/docs/cpp/language/initialization) must be applied with `constinit`. If a variable declared with `constinit` has [dynamic initialization](/docs/cpp/language/initialization#Dynamic_initialization) (even if it is [performed as static initialization](/docs/cpp/language/initialization#Early_dynamic_initialization)), the program is ill-formed.
+
+{/* source:cpp-language-constinit:0004 */}
+If no `constinit` declaration is reachable at the point of the initializing declaration, the program is ill-formed, no diagnostic required.
+
+{/* source:cpp-language-constinit:0005 */}
+`constinit` cannot be used together with `constexpr`. When the declared variable is a reference, `constinit` is equivalent to `constexpr`. When the declared variable is an object, `constexpr` mandates that the object must have static initialization and constant destruction and makes the object const-qualified, however, `constinit` does not mandate constant destruction and const-qualification. As a result, an object of a type which has constexpr constructors and no constexpr destructor (e.g. `std::shared_ptr<T>`) might be declared with `constinit` but not `constexpr`.
+
+{/* source:cpp-language-constinit:0006 */}
+```cpp
+const char* g() { return "dynamic initialization"; }
+constexpr const char* f(bool p) { return p ? "constant initializer" : g(); }
+
+constinit const char* c = f(true);     // OK
+// constinit const char* d = f(false); // error
+```
+
+{/* source:cpp-language-constinit:0007 */}
+`constinit` can also be used in a non-initializing declaration to tell the compiler that a `thread_local` variable is already initialized, [reducing overhead](/docs/cpp/language/declarations/storage_duration#Static_local_variables) that would otherwise be incurred by a hidden guard variable.
+
+{/* source:cpp-language-constinit:0008 */}
+```cpp
+extern thread_local constinit int x;
+int f() { return x; } // no check of a guard variable needed
+```
+
+## Notes
+
+{/* source:cpp-language-constinit:0009 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_constinit`](/docs/cpp/library/feature_test#cpp_constinit) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_constinit_201907L) | (C++20) | constinit |
+
+## Keywords
+
+{/* source:cpp-language-constinit:0010 */}
+[`constinit`](/docs/cpp/language/keywords/constinit)
+
+## Example
+
+{/* source:cpp-language-constinit:0011 */}
+```cpp
+#include <cassert>
+
+constexpr int square(int i)
+{
+    return i * i;
+}
+
+int twice(int i)
+{
+    return i + i;
+}
+
+constinit int sq = square(2);    // OK: initialization is done at compile time
+// constinit int x_x = twice(2); // Error: compile time initializer required
+
+int square_4_gen()
+{
+    static constinit int pow = square(4);
+
+    // constinit int prev = pow; // Error: constinit can only be applied to a
+                                 // variable with static or thread storage duration
+    int prev = pow;
+    pow = pow * pow;
+    return prev;
+}
+
+int main()
+{
+    assert(sq == 4);
+    sq = twice(1); // Unlike constexpr this value can be changed later at runtime
+    assert(sq == 2);
+
+    assert(square_4_gen() == 16);
+    assert(square_4_gen() == 256);
+    assert(square_4_gen() == 65536);
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-constinit:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-constinit:0013 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2543} standard="C++20"><PublishedBehavior>the behavior was unclear if the variable declared with `constinit` is dynamically initialized as part of static initialization</PublishedBehavior><CorrectedBehavior>the program is ill-formed in this case</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-constinit:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`consteval` specifier](/docs/cpp/language/declarations/consteval) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a function is an *immediate function*, that is, every call to the function must be in a constant evaluation</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`constexpr` specifier](/docs/cpp/language/declarations/constexpr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies that the value of a variable or function can be computed at compile time</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[constant expression](/docs/cpp/language/expressions/constant_expression)</DescriptionTerm>
+    <DescriptionBody>defines an [expression](/docs/cpp/language/expressions) that can be evaluated at compile time</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[constant initialization](/docs/cpp/language/initialization/constant_initialization)</DescriptionTerm>
+    <DescriptionBody>sets the initial values of the [static](/docs/cpp/language/declarations/storage_duration) variables to a compile-time constant</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[zero initialization](/docs/cpp/language/initialization/zero_initialization)</DescriptionTerm>
+    <DescriptionBody>sets the initial value of an object to zero</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

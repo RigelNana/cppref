@@ -1,0 +1,279 @@
+---
+title: "Copy constructors"
+description: "A copy constructor is a constructor which can be called with an argument of the same class type and copies the content of the argument without mutating the argument."
+source_url: "https://en.cppreference.com/w/cpp/language/copy_constructor"
+language: "C++"
+---
+
+{/* source:cpp-language-copy-constructor:0000 */}
+A copy constructor is a [constructor](/docs/cpp/language/classes/initializer_list) which can be called with an argument of the same class type and copies the content of the argument without mutating the argument.
+
+## Syntax
+
+{/* source:cpp-language-copy-constructor:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="class-name ( parameter-list );" />
+  <Declaration id="2" language="cpp" grammar code="class-name ( parameter-list ) function-body" />
+  <Declaration id="3" language="cpp" since="C++11" grammar code="class-name ( single-parameter-list ) = default;" />
+  <Declaration id="4" language="cpp" since="C++11" grammar code="class-name ( parameter-list ) = delete;" />
+  <Declaration id="5" language="cpp" grammar code="class-name :: class-name ( parameter-list ) function-body" />
+  <Declaration id="6" language="cpp" since="C++11" grammar code="class-name :: class-name ( single-parameter-list ) = default;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-copy-constructor:0002 */}
+<ParameterList>
+  <Parameter name="class-name">
+    the class whose copy constructor is being declared
+  </Parameter>
+  <Parameter name="parameter-list">
+    a non-empty [parameter list](/docs/cpp/language/functions/function#Parameter_list) satisfying all following conditions:
+
+    - given the class type as `T`, the first parameter is of type `T&`, `const T&`, `volatile T&` or `const volatile T&`, and either there are no other parameters, or all other parameters have [default arguments](/docs/cpp/language/functions/default_arguments).
+  </Parameter>
+  <Parameter name="single-parameter-list">
+    a parameter list of only one parameter, which is of type `T&`, `const T&`, `volatile T&` or `const volatile T&` and does not have a default argument
+  </Parameter>
+  <Parameter name="function-body">
+    the [function body](/docs/cpp/language/classes/initializer_list) of the copy constructor
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-copy-constructor:0003 */}
+- 1) Declaration of a copy constructor inside of class definition.
+
+{/* source:cpp-language-copy-constructor:0004 */}
+- 2-4) Definition of a copy constructor inside of class definition.
+
+{/* source:cpp-language-copy-constructor:0005 */}
+  - 3) The copy constructor is explicitly-defaulted.
+
+{/* source:cpp-language-copy-constructor:0006 */}
+  - 4) The copy constructor is deleted.
+
+{/* source:cpp-language-copy-constructor:0007 */}
+- 5,6) Definition of a copy constructor outside of class definition (the class must contain a declaration (1)).
+
+{/* source:cpp-language-copy-constructor:0008 */}
+  - 6) The copy constructor is explicitly-defaulted.
+
+{/* source:cpp-language-copy-constructor:0009 */}
+```cpp
+struct X
+{
+    X(X& other); // copy constructor
+//  X(X other);  // Error: incorrect parameter type
+};
+
+union Y
+{
+    Y(Y& other, int num = 1); // copy constructor with multiple parameters
+//  Y(Y& other, int num);     // Error: `num` has no default argument
+};
+```
+
+{/* source:cpp-language-copy-constructor:0010 */}
+The copy constructor is called whenever an object is [initialized](/docs/cpp/language/initialization) (by [direct-initialization](/docs/cpp/language/initialization/direct_initialization) or [copy-initialization](/docs/cpp/language/initialization/copy_initialization)) from another object of the same type (unless [overload resolution](/docs/cpp/language/functions/overload_resolution) selects a better match or the call is [elided](/docs/cpp/language/initialization/copy_elision)), which includes
+
+{/* source:cpp-language-copy-constructor:0011 */}
+- initialization: `T a = b;` or `T a(b);`, where `b` is of type `T`;
+- function argument passing: `f(a);`, where `a` is of type `T` and `f` is `void f(T t)`;
+- function return: `return a;` inside a function such as `T f()`, where `a` is of type `T`, which has no [move constructor](/docs/cpp/language/classes/move_constructor).
+
+## Implicitly-declared copy constructor
+
+{/* source:cpp-language-copy-constructor:0012 */}
+If no user-defined copy constructors are provided for a class type, the compiler will always declare a copy constructor as a non-[explicit](/docs/cpp/language/classes/explicit) `inline public` member of its class. This implicitly-declared copy constructor has the form `T::T(const T&)` if all of the following are true:
+
+{/* source:cpp-language-copy-constructor:0013 */}
+- each direct and virtual base `B` of `T` has a copy constructor whose parameters are of type `const B&` or `const volatile B&`;
+- each non-static data member `M` of `T` of class type or array of class type has a copy constructor whose parameters are of type `const M&` or `const volatile M&`.
+
+{/* source:cpp-language-copy-constructor:0014 */}
+Otherwise, the implicitly-declared copy constructor is `T::T(T&)`.
+
+{/* source:cpp-language-copy-constructor:0015 */}
+Due to these rules, the implicitly-declared copy constructor cannot bind to a `volatile` lvalue argument.
+
+{/* source:cpp-language-copy-constructor:0016 */}
+A class can have multiple copy constructors, e.g. both `T::T(const T&)` and `T::T(T&)`.
+
+{/* source:cpp-language-copy-constructor:0017 */}
+<Revision since="C++11">
+Even if some user-defined copy constructors are present, the user may still force the implicit copy constructor declaration with the keyword `default`.
+</Revision>
+
+{/* source:cpp-language-copy-constructor:0018 */}
+The implicitly-declared (or defaulted on its first declaration) copy constructor has an exception specification as described in <InlineRevision until="C++17">[dynamic exception specification](/docs/cpp/language/exceptions/except_spec)</InlineRevision><InlineRevision since="C++17">[noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)</InlineRevision>.
+
+## Implicitly-defined copy constructor
+
+{/* source:cpp-language-copy-constructor:0019 */}
+If the implicitly-declared copy constructor is not deleted, it is defined (that is, a function body is generated and compiled) by the compiler if [odr-used](/docs/cpp/language/basic_concepts/definition#ODR-use)<InlineRevision since="C++11"> or [needed for constant evaluation](/docs/cpp/language/expressions/constant_expression#Functions_and_variables_needed_for_constant_evaluation)</InlineRevision>. For union types, the implicitly-defined copy constructor copies the object representation (as by [`std::memmove`](/docs/cpp/library/text/byte/memmove)). For non-union class types, the constructor performs full member-wise copy of the object's direct base subobjects and member subobjects, in their initialization order, using direct initialization. For each non-static data member of a reference type, the copy constructor binds the reference to the same object or function to which the source reference is bound.
+
+{/* source:cpp-language-copy-constructor:0020 */}
+<Revision since="C++11">
+If this satisfies the requirements of a <InlineRevision until="C++23">[constexpr constructor](/docs/cpp/language/declarations/constexpr#constexpr_constructor)</InlineRevision><InlineRevision since="C++23">[constexpr function](/docs/cpp/language/declarations/constexpr#constexpr_function)</InlineRevision>, the generated copy constructor is `constexpr`.
+
+The generation of the implicitly-defined copy constructor is deprecated if `T` has a user-defined destructor or user-defined copy assignment operator.
+</Revision>
+
+## Deleted copy constructor
+
+{/* source:cpp-language-copy-constructor:0021 */}
+The implicitly-declared<InlineRevision since="C++11"> or explicitly-defaulted</InlineRevision> copy constructor for class `T` is <InlineRevision until="C++11">undefined</InlineRevision><InlineRevision since="C++11">defined as deleted</InlineRevision> if any of the following conditions is satisfied:
+
+{/* source:cpp-language-copy-constructor:0022 */}
+<Revision since="C++11">
+- `T` has a non-static data member of rvalue reference type.
+</Revision>
+
+{/* source:cpp-language-copy-constructor:0023 */}
+- `T` has a [potentially constructed subobject](/docs/cpp/language/basic_concepts/objects#Potentially_constructed_subobject) of class type `M` (or possibly multi-dimensional array thereof) such that
+
+{/* source:cpp-language-copy-constructor:0024 */}
+  - `M` has a destructor that is<InlineRevision since="C++11"> deleted or</InlineRevision> inaccessible from the copy constructor, or
+  - the overload resolution as applied to find `M`'s copy constructor
+    - does not result in a usable candidate, or
+    - in the case of the subobject being a [variant member](/docs/cpp/language/classes/union#Union-like_classes), selects a non-trivial function.
+
+{/* source:cpp-language-copy-constructor:0025 */}
+<Revision since="C++11">
+The implicitly-declared copy constructor for class `T` is defined as deleted if `T` declares a [move constructor](/docs/cpp/language/classes/move_constructor) or [move assignment operator](/docs/cpp/language/classes/move_operator).
+</Revision>
+
+## Trivial copy constructor
+
+{/* source:cpp-language-copy-constructor:0026 */}
+The copy constructor for class `T` is trivial if all of the following are true:
+
+{/* source:cpp-language-copy-constructor:0027 */}
+- it is not user-provided (that is, it is implicitly-defined or defaulted);
+- `T` has no virtual member functions;
+- `T` has no virtual base classes;
+- the copy constructor selected for every direct base of `T` is trivial;
+- the copy constructor selected for every non-static class type (or array of class type) member of `T` is trivial;
+
+{/* source:cpp-language-copy-constructor:0028 */}
+A trivial copy constructor for a non-union class effectively copies every scalar subobject (including, recursively, subobject of subobjects and so forth) of the argument and performs no other action. However, padding bytes need not be copied, and even the object representations of the copied subobjects need not be the same as long as their values are identical.
+
+{/* source:cpp-language-copy-constructor:0029 */}
+[TriviallyCopyable](/docs/cpp/library/named_req/TriviallyCopyable) objects can be copied by copying their object representations manually, e.g. with [`std::memmove`](/docs/cpp/library/text/byte/memmove). All data types compatible with the C language (POD types) are trivially copyable.
+
+## Eligible copy constructor
+
+{/* source:cpp-language-copy-constructor:0030 */}
+<Revision until="C++11">
+A copy constructor is eligible if it is either user-declared or both implicitly-declared and definable.
+</Revision>
+
+<Revision since="C++11" until="C++20">
+A copy constructor is eligible if it is not deleted.
+</Revision>
+
+<Revision since="C++20">
+A copy constructor is eligible if all following conditions are satisfied:
+
+- It is not deleted.
+- Its [associated constraints](/docs/cpp/language/templates/constraints) (if any) are satisfied.
+- No copy constructor whose associated constraints are satisfied is [more constrained](/docs/cpp/language/templates/constraints#Partial_ordering_of_constraints).
+</Revision>
+
+{/* source:cpp-language-copy-constructor:0031 */}
+Triviality of eligible copy constructors determines whether the class is an [implicit-lifetime type](/docs/cpp/language/basic_concepts/lifetime#Implicit-lifetime_types), and whether the class is a [trivially copyable type](/docs/cpp/library/named_req/TriviallyCopyable).
+
+## Notes
+
+{/* source:cpp-language-copy-constructor:0032 */}
+In many situations, copy constructors are optimized out even if they would produce observable side-effects, see [copy elision](/docs/cpp/language/initialization/copy_elision).
+
+## Example
+
+{/* source:cpp-language-copy-constructor:0033 */}
+```cpp
+struct A
+{
+    int n;
+    A(int n = 1) : n(n) {}
+    A(const A& a) : n(a.n) {} // user-defined copy constructor
+};
+
+struct B : A
+{
+    // implicit default constructor B::B()
+    // implicit copy constructor B::B(const B&)
+};
+
+struct C : B
+{
+    C() : B() {}
+private:
+    C(const C&); // non-copyable, C++98 style
+};
+
+int main()
+{
+    A a1(7);
+    A a2(a1); // calls the copy constructor
+
+    B b;
+    B b2 = b;
+    A a3 = b; // conversion to A& and copy constructor
+
+    volatile A va(10);
+    // A a4 = va; // compile error
+
+    C c;
+    // C c2 = c; // compile error
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-copy-constructor:0034 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-copy-constructor:0035 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1353} standard="C++98">
+    <PublishedBehavior>the conditions where implicitly-declared copy constructors are undefined did not consider multi-dimensional array types</PublishedBehavior>
+    <CorrectedBehavior>consider these types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2094} standard="C++11">
+    <PublishedBehavior>volatile members make copy non-trivial ([CWG issue 496](https://cplusplus.github.io/CWG/issues/496.html))</PublishedBehavior>
+    <CorrectedBehavior>triviality not affected</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2171} standard="C++11">
+    <PublishedBehavior>`X(X&) = default` was non-trivial</PublishedBehavior>
+    <CorrectedBehavior>made trivial</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2595} standard="C++20">
+    <PublishedBehavior>a copy constructor was not eligible if there is another copy constructor which is more constrained but does not satisfy its associated constraints</PublishedBehavior>
+    <CorrectedBehavior>it can be eligible in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-copy-constructor:0036 */}
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [`explicit`](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+  - [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+  - [default initialization](/docs/cpp/language/initialization/default_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [initializer list](/docs/cpp/language/classes/initializer_list)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)
+  - [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

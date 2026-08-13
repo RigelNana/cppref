@@ -1,0 +1,597 @@
+---
+title: "Aggregate initialization"
+description: "Initializes an aggregate from an initializer list."
+source_url: "https://en.cppreference.com/w/cpp/language/aggregate_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-aggregate-initialization:0000 */}
+Initializes an aggregate from an initializer list<InlineRevision since="C++11">. It is a form of [list-initialization](/docs/cpp/language/initialization/list_initialization)</InlineRevision>.
+
+## Syntax
+
+{/* source:cpp-language-aggregate-initialization:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" grammar code="T object = { arg1, arg2, ... };" />
+  <Declaration language="cpp" id="2" grammar code="T object { arg1, arg2, ... };" since="C++11" />
+  <Declaration language="cpp" id="3" grammar code="T object = { . des1 = arg1 , . des2 { arg2 } ... };" since="C++20" />
+  <Declaration language="cpp" id="4" grammar code="T object { . des1 = arg1 , . des2 { arg2 } ... };" since="C++20" />
+</DeclarationDoc>
+
+{/* source:cpp-language-aggregate-initialization:0002 */}
+1,2) Initializing an aggregate with an ordinary initializer list.
+
+{/* source:cpp-language-aggregate-initialization:0003 */}
+3,4) Initializing an aggregate with [designated initializers](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers) (aggregate class only).
+
+## Definitions
+
+### Aggregate
+
+{/* source:cpp-language-aggregate-initialization:0004 */}
+An aggregate is one of the following types:
+
+{/* source:cpp-language-aggregate-initialization:0005 */}
+- array types
+- class types that has
+
+{/* source:cpp-language-aggregate-initialization:0006 */}
+<Revision until="C++11">
+  - no user-declared constructors
+</Revision>
+<Revision since="C++11" until="C++20">
+  - no [user-provided](/docs/cpp/language/functions/function#User-provided_functions), [inherited](/docs/cpp/language/classes/using_declaration#Inheriting_constructors), or [explicit](/docs/cpp/language/classes/explicit) constructors
+</Revision>
+<Revision since="C++20">
+  - no user-declared or inherited constructors
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0007 */}
+- no private or protected direct non-static data members
+
+{/* source:cpp-language-aggregate-initialization:0008 */}
+<Revision until="C++17">
+  - no [base classes](/docs/cpp/language/classes/derived_class)
+</Revision>
+<Revision since="C++17">
+  - no [virtual base classes](/docs/cpp/language/classes/derived_class#Virtual_base_classes)
+  - no [private](/docs/cpp/language/classes/derived_class#Private_inheritance) or [protected](/docs/cpp/language/classes/derived_class#Protected_inheritance) direct base classes
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0009 */}
+- no virtual member functions
+
+{/* source:cpp-language-aggregate-initialization:0010 */}
+<Revision since="C++11" until="C++14">
+  - no [default member initializers](/docs/cpp/language/classes/data_members#Member_initialization)
+</Revision>
+
+### Element
+
+{/* source:cpp-language-aggregate-initialization:0011 */}
+The elements of an aggregate are:
+
+{/* source:cpp-language-aggregate-initialization:0012 */}
+- for an array, the array elements in increasing subscript order, or
+
+{/* source:cpp-language-aggregate-initialization:0013 */}
+<Revision until="C++17">
+  - for a class, the non-static data members that are not anonymous [bit-fields](/docs/cpp/language/classes/bit_field), in declaration order.
+</Revision>
+<Revision since="C++17">
+  - for a class, the direct base classes in declaration order, followed by the direct non-static data members that are neither anonymous [bit-fields](/docs/cpp/language/classes/bit_field) nor members of an [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions), in declaration order.
+</Revision>
+
+### Appertainment
+
+{/* source:cpp-language-aggregate-initialization:0014 */}
+Each [initializer clause](/docs/cpp/language/initialization) in a brace-enclosed initializer list is said to appertain to an element of the aggregate being initialized or to an element of one of its subaggregates.
+
+{/* source:cpp-language-aggregate-initialization:0015 */}
+Considering the sequence of initializer clauses, and the sequence of aggregate elements initially formed as the sequence of elements of the aggregate being initialized and potentially modified as described below:
+
+{/* source:cpp-language-aggregate-initialization:0016 */}
+- For each initializer clause, if any of the following conditions is satisfied, it appertains to the corresponding aggregate element `elem`:
+
+{/* source:cpp-language-aggregate-initialization:0017 */}
+- `elem` is not an aggregate.
+- The initializer clause begins with `{`.
+- The initializer clause is an expression, and an [implicit conversion sequence](/docs/cpp/language/expressions/implicit_cast) can be formed that converts the expression to the type of `elem`.
+- `elem` is an aggregate that itself has no aggregate elements.
+
+{/* source:cpp-language-aggregate-initialization:0018 */}
+- Otherwise, `elem` is an aggregate and that subaggregate is replaced in the list of aggregate elements by the sequence of its own aggregate elements, and the appertainment analysis resumes with the first such element and the same initializer clause. In other words, these rules apply recursively to the aggregate’s subaggregates.
+
+{/* source:cpp-language-aggregate-initialization:0019 */}
+The analysis is complete when all initializer clauses have been exhausted. If any initializer clause remains that does not appertain to an element of the aggregate or one of its subaggregates, the program is ill-formed.
+
+{/* source:cpp-language-aggregate-initialization:0020 */}
+```cpp
+struct S1 { int a, b; };
+struct S2 { S1 s, t; };
+
+// Each subaggregate of “x” is appertained to an initializer clause starting with {
+S2 x[2] =
+{
+    // appertains to “x[0]”
+    {
+        {1, 2}, // appertains to “x[0].s”
+        {3, 4}  // appertains to “x[0].t”
+    },
+    // appertains to “x[1]”
+    {
+        {5, 6}, // appertains to “x[1].s”
+        {7, 8}  // appertains to “x[1].t”
+    }
+};
+
+// “x” and “y” have the same value (see below)
+S2 y[2] = {1, 2, 3, 4, 5, 6, 7, 8};
+
+// The process of the appertainment analysis of “y”:
+// 1. Initializes the aggregate element sequence (x[0], x[1]) and
+//    the initializer clause sequence (1, 2, 3, 4, 5, 6, 7, 8).
+// 2. Starting from the first elements of each sequence,
+//    checks whether 1 appertains to x[0]:
+//    · x[0] is an aggregate.
+//    · 1 does not begin with {.
+//    · 1 is an expression, but it cannot be implicitly converted to S2.
+//    · x[0] has aggregate elements.
+// 3. 0 cannot appertain to x[0], therefore x[0] is replaced by x[0].s and x[0].t,
+//    the aggregate element sequence becomes (x[0].s, x[0].t, x[1]).
+// 4. Resumes the appertainment check, but 1 cannot appertain to x[0].s either.
+// 5. The aggregate element sequence now becomes (x[0].s.a, x[0].s.b, x[0].t, x[1]).
+// 6. Resumes the appertainment check again:
+//    1 appertains to x[0].s.a, and 2 appertains to x[0].s.b.
+// 7. The rest of the appertainment analysis works similarly.
+
+char cv[4] = {'a', 's', 'd', 'f', 0}; // Error: too many initializer clauses
+```
+
+## Initialization process
+
+### Determining element kind
+
+{/* source:cpp-language-aggregate-initialization:0021 */}
+The effects of aggregate initialization are:
+
+{/* source:cpp-language-aggregate-initialization:0022 */}
+1) Determine the explicitly initialized elements of the aggregate as follows:
+
+{/* source:cpp-language-aggregate-initialization:0023 */}
+<Revision since="C++20">
+  - If the initializer list is a [designated initializer list](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers) (the aggregate can only be of class type), the identifier in each designator shall name a direct non-static data member of the class, and the explicitly initialized elements of the aggregate are the elements that are, or contain, those members.
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0024 */}
+- Otherwise, if the initializer list is non-empty, the explicitly initialized elements of the aggregate are the elements with an appertained initializer clause and the elements having a subaggregate with an appertained initializer clause.
+- Otherwise, the initializer list must be empty (`{}`), and there are no explicitly initialized elements.
+
+{/* source:cpp-language-aggregate-initialization:0025 */}
+The program is ill-formed if the aggregate is a union and there are two or more explicitly initialized elements:
+
+{/* source:cpp-language-aggregate-initialization:0026 */}
+```cpp
+union u { int a; const char* b; };
+
+u a = {1};                   // OK: explicitly initializes member `a`
+u b = {0, "asdf"};           // error: explicitly initializes two members
+u c = {"asdf"};              // error: int cannot be initialized by "asdf"
+
+// C++20 designated initializer lists
+u d = {.b = "asdf"};         // OK: can explicitly initialize a non-initial member
+u e = {.a = 1, .b = "asdf"}; // error: explicitly initializes two members
+```
+
+{/* source:cpp-language-aggregate-initialization:0027 */}
+2) Initialize each element of the aggregate<InlineRevision since="C++11"> in the element order. That is, all value computations and side effects associated with a given element are [sequenced before](/docs/cpp/language/expressions/eval_order) those of any element that follows it in order</InlineRevision>.
+
+### Explicitly initialized elements
+
+{/* source:cpp-language-aggregate-initialization:0028 */}
+For each explicitly initialized element:
+
+{/* source:cpp-language-aggregate-initialization:0029 */}
+<Revision since="C++20">
+  - If the element is an anonymous union member and the initializer list is a [designated initializer list](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers), the element is initialized by the designated initializer list `{D}`, where `D` is the designated initializer clause naming a member of the anonymous union member. There shall be only one such designated initializer clause.
+```cpp
+struct C
+{
+    union
+    {
+        int a;
+        const char* p;
+    };
+
+    int x;
+} c = {.a = 1, .x = 3}; // initializes c.a with 1 and c.x with 3
+```
+  - Otherwise, if the initializer list is a designated initializer list, the element is initialized with the initializer of the corresponding designated initializer clause.
+  - If that initializer is of [syntax (1)](/docs/cpp/language/initialization), and a narrowing conversion is required to convert the expression, the program is ill-formed.
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0030 */}
+<Revision until="C++20">
+  - The initializer list is a brace-enclosed initializer list:
+</Revision>
+<Revision since="C++20">
+  - Otherwise, the initializer list is a non-designated brace-enclosed initializer list:
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0031 */}
+- If an initializer clause appertains to the aggregate element, then the aggregate element is [copy-initialized](/docs/cpp/language/initialization/copy_initialization) from the initializer clause.
+- Otherwise, the aggregate element is copy-initialized from a brace-enclosed initializer list consisting of all of the initializer clauses that appertain to subobjects of the aggregate element, in the order of appearance.
+
+{/* source:cpp-language-aggregate-initialization:0032 */}
+```cpp
+struct A
+{
+    int x;
+
+    struct B
+    {
+        int i;
+        int j;
+    } b;
+} a = {1, {2, 3}}; // initializes a.x with 1, a.b.i with 2, a.b.j with 3
+
+struct base1 { int b1, b2 = 42; };
+
+struct base2
+{
+    base2()
+    {
+        b3 = 42;
+    }
+
+    int b3;
+};
+
+struct derived : base1, base2
+{
+    int d;
+};
+
+derived d1{{1, 2}, {}, 4}; // initializes d1.b1 with 1, d1.b2 with 2,
+                           //             d1.b3 with 42, d1.d with 4
+derived d2{{}, {}, 4};     // initializes d2.b1 with 0, d2.b2 with 42,
+                           //             d2.b3 with 42, d2.d with 4
+```
+
+### Implicitly initialized elements
+
+{/* source:cpp-language-aggregate-initialization:0033 */}
+For a non-union aggregate, each element that is not an explicitly initialized element is initialized as follows:
+
+{/* source:cpp-language-aggregate-initialization:0034 */}
+<Revision since="C++11">
+  - If the element has a [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization), the element is initialized from that initializer.
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0035 */}
+- Otherwise, if the element is not a reference, the element is [copy-initialized](/docs/cpp/language/initialization/copy_initialization) from an empty initializer list.
+- Otherwise, the program is ill-formed.
+
+{/* source:cpp-language-aggregate-initialization:0036 */}
+```cpp
+struct S
+{
+    int a;
+    const char* b;
+    int c;
+    int d = b[a];
+};
+
+// initializes ss.a with 1,
+//             ss.b with "asdf",
+//             ss.c with the value of an expression of the form int{} (that is, 0),
+//         and ss.d with the value of ss.b[ss.a] (that is, 's')
+S ss = {1, "asdf"};
+```
+
+{/* source:cpp-language-aggregate-initialization:0037 */}
+If the aggregate is a union and the initializer list is empty, then
+
+{/* source:cpp-language-aggregate-initialization:0038 */}
+<Revision since="C++11">
+  - If any variant member has a default member initializer, that member is initialized from its default member initializer.
+</Revision>
+
+{/* source:cpp-language-aggregate-initialization:0039 */}
+- Otherwise, the first member of the union (if any) is copy-initialized from an empty initializer list.
+
+## Arrays with unknown bounds
+
+{/* source:cpp-language-aggregate-initialization:0040 */}
+The number of elements in an array of unknown bound initialized with a brace-enclosed initializer list is the number of explicitly initialized elements of the array. An array of unknown bound cannot be initialized with `{}`.
+
+{/* source:cpp-language-aggregate-initialization:0041 */}
+```cpp
+int x[] = {1, 3, 5}; // x has 3 elements
+
+struct Y { int i, j, k; };
+
+Y y[] = {1, 2, 3, 4, 5, 6}; // y has only 2 elements:
+                            // 1, 2 and 3 appertain to y[0],
+                            // 4, 5 and 6 appertain to y[1]
+
+int z[] = {} // Error: cannot declare an array without any element
+```
+
+{/* source:cpp-language-aggregate-initialization:0042 */}
+<Revision since="C++20">
+## Designated initializers
+The syntax forms (3,4) are known as designated initializers: each designator must name a direct non-static data member of T, and all designator ﻿s used in the expression must appear in the same order as the data members of T.
+```cpp
+struct A { int x; int y; int z; };
+
+A a{.y = 2, .x = 1}; // error; designator order does not match declaration order
+A b{.x = 1, .z = 2}; // ok, b.y initialized to 0
+```
+Each direct non-static data member named by the designated initializer is initialized from the corresponding brace-or-equals initializer that follows the designator. Narrowing conversions are prohibited.
+Designated initializer can be used to initialize a [union](/docs/cpp/language/classes/union) into the state other than the first. Only one initializer may be provided for a union.
+```cpp
+union u { int a; const char* b; };
+
+u f = {.b = "asdf"};         // OK, active member of the union is b
+u g = {.a = 1, .b = "asdf"}; // Error, only one initializer may be provided
+```
+For a non-union aggregate, elements for which a designated initializer is not provided are initialized the same as described above for when the number of initializer clauses is less than the number of members (default member initializers where provided, empty list-initialization otherwise):
+```cpp
+struct A
+{
+    string str;
+    int n = 42;
+    int m = -1;
+};
+
+A{.m = 21} // Initializes str with {}, which calls the default constructor
+           // then initializes n with = 42
+           // then initializes m with = 21
+```
+If the aggregate that is initialized with a designated initializer clause has an anonymous union member, the corresponding designated initializer must name one of the members of that anonymous union.
+Note: out-of-order designated initialization, nested designated initialization, mixing of designated initializers and regular initializers, and designated initialization of arrays are all supported in the [C programming language](/docs/c/language/initialization/struct_initialization), but are not allowed in C++.
+```cpp
+struct A { int x, y; };
+struct B { struct A a; };
+
+struct A a = {.y = 1, .x = 2}; // valid C, invalid C++ (out of order)
+int arr[3] = {[1] = 5};        // valid C, invalid C++ (array)
+struct B b = {.a.x = 0};       // valid C, invalid C++ (nested)
+struct A a = {.x = 1, 2};      // valid C, invalid C++ (mixed)
+```
+</Revision>
+
+## Character arrays
+
+{/* source:cpp-language-aggregate-initialization:0043 */}
+Arrays of ordinary character types (`char`, `signed char`, `unsigned char`)<InlineRevision since="C++20">, `char8_t`</InlineRevision><InlineRevision since="C++11">, `char16_t`, `char32_t`</InlineRevision>, or `wchar_t` can be initialized from ordinary [string literals](/docs/cpp/language/expressions/string_literal)<InlineRevision since="C++20">, UTF-8 string literals</InlineRevision><InlineRevision since="C++11">, UTF-16 string literals, UTF-32 string literals</InlineRevision>, or wide string literals, respectively, optionally enclosed in braces<InlineRevision since="C++20">. Additionally, an array of `char` or `unsigned char` may be initialized by a UTF-8 string literal, optionally enclosed in braces</InlineRevision>. Successive characters of the string literal (which includes the implicit terminating null character) initialize the elements of the array<InlineRevision since="C++20">, with an [integral conversion](/docs/cpp/language/expressions/implicit_cast#Integral_conversions) if necessary for the source and destination value</InlineRevision>. If the size of the array is specified and it is larger than the number of characters in the string literal, the remaining characters are zero-initialized.
+
+{/* source:cpp-language-aggregate-initialization:0044 */}
+```cpp
+char a[] = "abc";
+// equivalent to char a[4] = {'a', 'b', 'c', '\0'};
+
+//  unsigned char b[3] = "abc"; // Error: initializer string too long
+unsigned char b[5]{"abc"};
+// equivalent to unsigned char b[5] = {'a', 'b', 'c', '\0', '\0'};
+
+wchar_t c[] = {L"кошка"}; // optional braces
+// equivalent to wchar_t c[6] = {L'к', L'о', L'ш', L'к', L'а', L'\0'};
+```
+
+## Notes
+
+{/* source:cpp-language-aggregate-initialization:0045 */}
+An aggregate class or array may include non-aggregate<InlineRevision since="C++17"> public bases</InlineRevision>, members, or elements, which are initialized as described above (e.g. copy-initialization from the corresponding initializer clause).
+
+{/* source:cpp-language-aggregate-initialization:0046 */}
+Until C++11, narrowing conversions were permitted in aggregate initialization, but they are no longer allowed.
+
+{/* source:cpp-language-aggregate-initialization:0047 */}
+Until C++11, aggregate initialization could only be used in variable definition, and could not be used in a [constructor initializer list](/docs/cpp/language/classes/initializer_list), a [new-expression](/docs/cpp/language/expressions/new), or temporary object creation due to syntax restrictions.
+
+{/* source:cpp-language-aggregate-initialization:0048 */}
+In C, character array of size one less than the size of the string literal may be initialized from a string literal; the resulting array is not null-terminated. This is not allowed in C++.
+
+{/* source:cpp-language-aggregate-initialization:0049 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_aggregate_bases`](/docs/cpp/library/feature_test#cpp_aggregate_bases) | [`201603L`](/docs/cpp/library/compiler_support/17#cpp_aggregate_bases_201603L) | (C++17) | Aggregate classes with base classes |
+| [`__cpp_aggregate_nsdmi`](/docs/cpp/library/feature_test#cpp_aggregate_nsdmi) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_aggregate_nsdmi_201304L) | (C++14) | Aggregate classes with default member initializers |
+| [`__cpp_aggregate_paren_init`](/docs/cpp/library/feature_test#cpp_aggregate_paren_init) | [`201902L`](/docs/cpp/library/compiler_support/20#cpp_aggregate_paren_init_201902L) | (C++20) | Aggregate initialization in the form of [direct initialization](/docs/cpp/language/initialization/direct_initialization) |
+| [`__cpp_char8_t`](/docs/cpp/library/feature_test#cpp_char8_t) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_char8_t_202207L) | (C++23) (DR20) | `char8_t` compatibility and portability fix ([allow initialization of (`unsigned char` arrays](/docs/cpp/language/initialization/aggregate_initialization#Character_arrays) from [UTF-8 string literals](/docs/cpp/language/expressions/string_literal)) |
+| [`__cpp_designated_initializers`](/docs/cpp/library/feature_test#cpp_designated_initializers) | [`201707L`](/docs/cpp/library/compiler_support/20#cpp_designated_initializers_201707L) | (C++20) | [Designated initializers](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers) |
+
+## Example
+
+{/* source:cpp-language-aggregate-initialization:0050 */}
+```cpp
+#include <array>
+#include <cstdio>
+#include <string>
+ 
+struct S
+{
+    int x;
+ 
+    struct Foo
+    {
+        int i;
+        int j;
+        int a[3];
+    } b;
+};
+ 
+int main()
+{
+    S s1 = {1, {2, 3, {4, 5, 6}}};
+    S s2 = {1, 2, 3, 4, 5, 6}; // same, but with brace elision
+    S s3{1, {2, 3, {4, 5, 6}}}; // same, using direct-list-initialization syntax
+    S s4{1, 2, 3, 4, 5, 6}; // error until CWG 1270:
+                            // brace elision only allowed with equals sign
+ 
+    int ar[] = {1, 2, 3}; // ar is int[3]
+//  char cr[3] = {'a', 'b', 'c', 'd'}; // too many initializer clauses
+    char cr[3] = {'a'}; // array initialized as {'a', '\0', '\0'}
+ 
+    int ar2d1[2][2] = {{1, 2}, {3, 4}}; // fully-braced 2D array: {1, 2}
+                                        //                        {3, 4}
+    int ar2d2[2][2] = {1, 2, 3, 4}; // brace elision: {1, 2}
+                                    //                {3, 4}
+    int ar2d3[2][2] = {{1}, {2}};   // only first column: {1, 0}
+                                    //                    {2, 0}
+ 
+    std::array<int, 3> std_ar2{{1, 2, 3}};  // std::array is an aggregate
+    std::array<int, 3> std_ar1 = {1, 2, 3}; // brace-elision okay
+ 
+//  int ai[] = {1, 2.0}; // narrowing conversion from double to int:
+                         // error in C++11, okay in C++03
+ 
+    std::string ars[] = {std::string("one"), // copy-initialization
+                         "two",              // conversion, then copy-initialization
+                         {'t', 'h', 'r', 'e', 'e'}}; // list-initialization
+    union U
+    {
+        int a;
+        const char* b;
+    };
+    U u1 = {1};         // OK, first member of the union
+//  U u2 = {0, "asdf"}; // error: too many initializers for union
+//  U u3 = {"asdf"};    // error: invalid conversion to int
+ 
+    [](...) { std::puts("Garbage collecting unused variables... Done."); }
+    (
+        s1, s2, s3, s4, ar, cr, ar2d1, ar2d2, ar2d3, std_ar2, std_ar1, u1
+    );
+}
+ 
+// aggregate
+struct base1 { int b1, b2 = 42; };
+ 
+// non-aggregate
+struct base2
+{
+    base2() : b3(42) {}
+ 
+    int b3;
+};
+ 
+// aggregate in C++17
+struct derived : base1, base2 { int d; };
+ 
+derived d1{{1, 2}, {}, 4}; // d1.b1 = 1, d1.b2 = 2,  d1.b3 = 42, d1.d = 4
+derived d2{{}, {}, 4};     // d2.b1 = 0, d2.b2 = 42, d2.b3 = 42, d2.d = 4
+```
+Output:
+```text
+Garbage collecting unused variables... Done.
+```
+
+## Defect reports
+
+{/* source:cpp-language-aggregate-initialization:0051 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-aggregate-initialization:0052 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={413} standard="C++98">
+    <PublishedBehavior>
+    anonymous bit-fields were initialized in aggregate initialization
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    they are ignored
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={737} standard="C++98">
+    <PublishedBehavior>
+    when a character array is initialized with a string literal having fewer characters than the array size, the character elements after the trailing `'\0'` was uninitialized
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    they are zero-initialized
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1270} standard="C++11">
+    <PublishedBehavior>
+    brace elision was only allowed to be used in copy-list-initialization
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    allowed elsewhere
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1518} standard="C++11">
+    <PublishedBehavior>
+    a class that declares  an explicit default constructor or has inherited constructors should could be an aggregate
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    it is not an aggregate
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1622} standard="C++98">
+    <PublishedBehavior>
+    a union could not be initialized with `{}`
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    allowed
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2149} standard="C++98">
+    <PublishedBehavior>
+    it was unclear whether brace elision is applicable during array size deduction
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    applicable
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2272} standard="C++98">
+    <PublishedBehavior>
+    a non-static reference member that is not explicitly initialized was copy-initialized from an empty initializer list
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    the program is ill- formed in this case
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2610} standard="C++17">
+    <PublishedBehavior>
+    aggregate types could not have private or protected indirect base classes
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    allowed
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2619} standard="C++20">
+    <PublishedBehavior>
+    the kind of the initialization from designated initializers was unclear
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    it depends on the kind of the initializer
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2513R4" standard="C++20">
+    <PublishedBehavior>
+    a UTF-8 string literal could not initialize an array of `char` or `unsigned char`, which was incompatible with C or C++17
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    such initialization is valid
+    </CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-aggregate-initialization:0053 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [initialization](/docs/cpp/language/initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)
+  - [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+
+{/* source:cpp-language-aggregate-initialization:0054 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/initialization/struct_initialization)</DescriptionTerm>
+    <DescriptionBody>for Struct and union initialization</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

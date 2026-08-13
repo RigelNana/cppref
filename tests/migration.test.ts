@@ -312,6 +312,76 @@ Output:
     expect(citeLinks).toEqual([]);
   });
 
+  test("technical specification revision tokens require their visible labels", () => {
+    const source = {
+      meta: { slug: "cpp/language/x", title: "X", language: "C++", locale: "en", sourcePath: "x", sourceUrl: "https://en.cppreference.com/w/cpp/language/x", adapter: "english-geshi" },
+      sections: [
+        {
+          sourceId: "x:section",
+          heading: "X",
+          headingLevel: 1,
+          blocks: [
+            {
+              sourceId: "x:0000",
+              order: 0,
+              tagName: "p",
+              domPath: "p",
+              html: "<p>x</p>",
+              visibleText: "synchronized/atomic (TM TS)",
+              classes: [],
+              attributes: {},
+              headingContext: ["X"],
+              immutable: { code: [], links: [], inlineRevisions: [], revisions: ["t-since-tm_ts", "t-since-concepts-ts"], tableSpans: [] },
+            },
+          ],
+        },
+      ],
+    } as never;
+    const mdx = "x\n\n{/* source:x:0000 */}\n[`synchronized`](/docs/x)/[`atomic`](/docs/x) (TM TS) (Concepts TS)";
+    const report = validateDirectMdx(source as never, mdx);
+    expect(report.issues).toEqual([]);
+  });
+
+  test("inline revision scopes with mid-content links and dual markers validate", () => {
+    const source = {
+      meta: { slug: "cpp/language/x", title: "X", language: "C++", locale: "en", sourcePath: "x", sourceUrl: "https://en.cppreference.com/w/cpp/language/x", adapter: "english-geshi" },
+      sections: [
+        {
+          sourceId: "x:section",
+          heading: "X",
+          headingLevel: 1,
+          blocks: [
+            {
+              sourceId: "x:0000",
+              order: 0,
+              tagName: "p",
+              domPath: "p",
+              html: "<p>x</p>",
+              visibleText: "a prvalue temporary until C++17",
+              classes: [],
+              attributes: {},
+              headingContext: ["X"],
+              immutable: {
+                code: [],
+                links: [{ text: "declaration specifier sequence", href: "x.html", normalizedHref: "cpp/language/declarations", kind: "internal" }],
+                inlineRevisions: [
+                  { text: "prvalue temporary", html: "", marker: "(until C++17)", revisions: ["t-rev-inl", "t-since-cxx11", "t-until-cxx17"] },
+                  { text: "declaration specifier sequence can only contain type specifiers", html: "", marker: "(since C++11)", revisions: ["t-rev-inl", "t-since-cxx11"] },
+                ],
+                revisions: [],
+                tableSpans: [],
+              },
+            },
+          ],
+        },
+      ],
+    } as never;
+    const mdx =
+      "x\n\n{/* source:x:0000 */}\na <InlineRevision since=\"C++11\" until=\"C++17\">prvalue temporary</InlineRevision> <InlineRevision since=\"C++11\">[`declaration specifier sequence`](/docs/cpp/language/declarations) can only contain type specifiers</InlineRevision> until C++17";
+    const report = validateDirectMdx(source as never, mdx);
+    expect(report.issues).toEqual([]);
+  });
+
   test("hidden MathJax source spans are excluded from visible text", async () => {
     const source = extractEnglishPage(await readFile("ref/cppreference-en/reference/en/cpp/chrono/duration/abs.html", "utf8"), { sourcePath: "ref/cppreference-en/reference/en/cpp/chrono/duration/abs.html" });
     const texts = source.sections.flatMap((section) => section.blocks).map((block) => block.visibleText);

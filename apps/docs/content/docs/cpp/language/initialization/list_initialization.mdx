@@ -1,0 +1,417 @@
+---
+title: "List-initialization (since C++11)"
+description: "Initializes an object from a brace-enclosed initializer list."
+source_url: "https://en.cppreference.com/w/cpp/language/list_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-list-initialization:0000 */}
+Initializes an object from a [brace-enclosed initializer list](/docs/cpp/language/initialization).
+
+## Syntax
+
+### Direct-list-initialization
+
+{/* source:cpp-language-list-initialization:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="T object { arg1, arg2, ... };" />
+  <Declaration language="cpp" grammar since="C++20" code="T object {. des1 = arg1, . des2 { arg2 } ... };" />
+  <Declaration id="2" language="cpp" grammar code="T { arg1, arg2, ... }" />
+  <Declaration language="cpp" grammar since="C++20" code="T {. des1 = arg1, . des2 { arg2 } ... }" />
+  <Declaration id="3" language="cpp" grammar code="new T { arg1, arg2, ... }" />
+  <Declaration language="cpp" grammar since="C++20" code="new T {. des1 = arg1, . des2 { arg2 } ... }" />
+  <Declaration id="4" language="cpp" grammar code="Class { T member { arg1, arg2, ... }; };" />
+  <Declaration language="cpp" grammar since="C++20" code="Class { T member {. des1 = arg1, . des2 { arg2 } ... }; };" />
+  <Declaration id="5" language="cpp" grammar code="Class::Class() : member { arg1, arg2, ... } {...}" />
+  <Declaration language="cpp" grammar since="C++20" code="Class::Class() : member {. des1 = arg1, . des2 { arg2 } ... } {...}" />
+</DeclarationDoc>
+
+### Copy-list-initialization
+
+{/* source:cpp-language-list-initialization:0002 */}
+<DeclarationDoc>
+  <Declaration id="6" language="cpp" grammar code="T object = { arg1, arg2, ... };" />
+  <Declaration language="cpp" grammar since="C++20" code="T object = {. des1 = arg1, . des2 { arg2 } ... };" />
+  <Declaration id="7" language="cpp" grammar code="function ({ arg1, arg2, ... })" />
+  <Declaration language="cpp" grammar since="C++20" code="function ({. des1 = arg1, . des2 { arg2 } ... })" />
+  <Declaration id="8" language="cpp" grammar code="return { arg1, arg2, ... };" />
+  <Declaration language="cpp" grammar since="C++20" code="return {. des1 = arg1, . des2 { arg2 } ... };" />
+  <Declaration id="9" language="cpp" grammar code="object [{ arg1, arg2, ... }]" />
+  <Declaration language="cpp" grammar since="C++20" code="object [{. des1 = arg1, . des2 { arg2 } ... }]" />
+  <Declaration id="10" language="cpp" grammar code="object = { arg1, arg2, ... }" />
+  <Declaration language="cpp" grammar since="C++20" code="object = {. des1 = arg1, . des2 { arg2 } ... }" />
+  <Declaration id="11" language="cpp" grammar code="U ({ arg1, arg2, ... })" />
+  <Declaration language="cpp" grammar since="C++20" code="U ({. des1 = arg1, . des2 { arg2 } ... })" />
+  <Declaration id="12" language="cpp" grammar code="Class { T member = { arg1, arg2, ... }; };" />
+  <Declaration language="cpp" grammar since="C++20" code="Class { T member = {. des1 = arg1, . des2 { arg2 } ... }; };" />
+</DeclarationDoc>
+
+{/* source:cpp-language-list-initialization:0003 */}
+List initialization is performed in the following situations:
+
+{/* source:cpp-language-list-initialization:0004 */}
+- direct-list-initialization (both explicit and non-explicit constructors are considered)
+
+{/* source:cpp-language-list-initialization:0005 */}
+1. initialization of a named variable with a brace-enclosed initializer list
+
+{/* source:cpp-language-list-initialization:0006 */}
+2. initialization of an unnamed temporary with a brace-enclosed initializer list
+
+{/* source:cpp-language-list-initialization:0007 */}
+3. initialization of an object with dynamic storage duration with a [new-expression](/docs/cpp/language/expressions/new), where the initializer is a brace-enclosed initializer list
+
+{/* source:cpp-language-list-initialization:0008 */}
+4. in a non-static [data member initializer](/docs/cpp/language/classes/data_members#Member_initialization) that does not use the equals sign
+
+{/* source:cpp-language-list-initialization:0009 */}
+5. in a [member initializer list](/docs/cpp/language/classes/initializer_list) of a constructor if a brace-enclosed initializer list is used
+
+{/* source:cpp-language-list-initialization:0010 */}
+- copy-list-initialization (both explicit and non-explicit constructors are considered, but only non-explicit constructors may be called)
+
+{/* source:cpp-language-list-initialization:0011 */}
+6. initialization of a named variable with a brace-enclosed initializer list after an equals sign
+
+{/* source:cpp-language-list-initialization:0012 */}
+7. in a function call expression, with a brace-enclosed initializer list used as an argument and list-initialization initializes the function parameter
+
+{/* source:cpp-language-list-initialization:0013 */}
+8. in a `return` statement with a brace-enclosed initializer list used as the return expression and list-initialization initializes the returned object
+
+{/* source:cpp-language-list-initialization:0014 */}
+9. in a [subscript expression](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) with a user-defined `operator[]`, where list-initialization initializes the parameter of the overloaded operator
+
+{/* source:cpp-language-list-initialization:0015 */}
+10. in an [assignment expression](/docs/cpp/language/expressions/operator_assignment), where list-initialization initializes the parameter of the overloaded operator
+
+{/* source:cpp-language-list-initialization:0016 */}
+11. [functional cast expression](/docs/cpp/language/expressions/explicit_cast) or other constructor invocations, where a brace-enclosed initializer list is used in place of a constructor argument. Copy-list-initialization initializes the constructor's parameter (note; the type `U` in this example is not the type that is being list-initialized; `U`'s constructor's parameter is)
+
+{/* source:cpp-language-list-initialization:0017 */}
+12. in a non-static [data member initializer](/docs/cpp/language/classes/data_members#Member_initialization) that uses the equals sign
+
+## Explanation
+
+{/* source:cpp-language-list-initialization:0018 */}
+The effects of list-initialization of an object of type (possibly cv-qualified) `T` are:
+
+{/* source:cpp-language-list-initialization:0019 */}
+<Revision since="C++20">
+- If the brace-enclosed initializer list contains a [designated initializer list](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers) and `T` is not a reference type, `T` must be an aggregate class. The ordered identifiers in the designators of the designated initializer list must form a subsequence of the ordered identifiers in the direct non-static data members of `T`. [Aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization) is performed.
+</Revision>
+
+{/* source:cpp-language-list-initialization:0020 */}
+- If `T` is an aggregate class and the brace-enclosed initializer list<InlineRevision since="C++20">, which does not contain a designated initializer list,</InlineRevision> has a single initializer clause of the same or derived type (possibly cv-qualified), the object is initialized from that initializer clause (by [copy-initialization](/docs/cpp/language/initialization/copy_initialization) for copy-list-initialization, or by [direct-initialization](/docs/cpp/language/initialization/direct_initialization) for direct-list-initialization). Otherwise, if `T` is a character array and the brace-enclosed initializer list has a single initializer clause that is an appropriately-typed string literal, the array is [initialized from the string literal as usual](/docs/cpp/language/initialization/aggregate_initialization#Character_arrays).
+
+{/* source:cpp-language-list-initialization:0021 */}
+- Otherwise, if `T` is an [aggregate type](/docs/cpp/language/initialization/aggregate_initialization), [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization) is performed.
+
+{/* source:cpp-language-list-initialization:0022 */}
+- Otherwise, if the brace-enclosed initializer list is empty and `T` is a class type with a default constructor, [value-initialization](/docs/cpp/language/initialization/value_initialization) is performed.
+
+{/* source:cpp-language-list-initialization:0023 */}
+- Otherwise, if `T` is a specialization of [`std::initializer_list`](/docs/cpp/library/utility/initializer_list), the object is initialized as described [below](/docs/cpp/language/initialization/list_initialization#List-initializing_std::initializer_list).
+
+{/* source:cpp-language-list-initialization:0024 */}
+- Otherwise, if `T` is a class type, the constructors of `T` are considered, in two phases:
+
+{/* source:cpp-language-list-initialization:0025 */}
+  - All constructors that take `std::initializer_list` as the only argument, or as the first argument if the remaining arguments have default values, are examined, and matched by [overload resolution](/docs/cpp/language/functions/overload_resolution) against a single argument of type `std::initializer_list`.
+
+{/* source:cpp-language-list-initialization:0026 */}
+  - If the previous stage does not produce a match, all constructors of `T` participate in [overload resolution](/docs/cpp/language/functions/overload_resolution#Implicit_conversion_sequence_in_list-initialization) against the set of arguments that consists of the initializer clauses of the brace-enclosed initializer list, with the restriction that only non-narrowing conversions are allowed. If this stage produces an explicit constructor as the best match for a copy-list-initialization, compilation fails (note, in simple copy-initialization, explicit constructors are not considered at all).
+
+{/* source:cpp-language-list-initialization:0027 */}
+<Revision since="C++17">
+- Otherwise, if `T` is an [enumeration type](/docs/cpp/language/declarations/enum) that with fixed underlying type `U`, the brace-enclosed initializer list has only one initializer `v`, and all following conditions are satisfied, then the enumeration is initialized with the result of converting `v` to `U`:
+  - The initialization is direct-list-initialization.
+  - `v` is of [scalar type](/docs/cpp/library/named_req/ScalarType).
+  - `v` is implicitly convertible to `U`.
+  - The conversion from `v` to `U` is non-narrowing.
+</Revision>
+
+{/* source:cpp-language-list-initialization:0028 */}
+- Otherwise (if `T` is not a class type), if the brace-enclosed initializer list has only one initializer clause and either `T` is not a reference type or is a reference type whose referenced type is same as or is a base class of the type of the initializer clause, `T` is [direct-initialized](/docs/cpp/language/initialization/direct_initialization) (in direct-list-initialization) or [copy-initialized](/docs/cpp/language/initialization/copy_initialization) (in copy-list-initialization), except that narrowing conversions are not allowed.
+
+{/* source:cpp-language-list-initialization:0029 */}
+- Otherwise, if `T` is a reference type that is not compatible with the type of the initializer clause:
+
+{/* source:cpp-language-list-initialization:0030 */}
+  <Revision until="C++17">
+  - a prvalue temporary of the type referenced by `T` is copy-list-initialized, and the reference is bound to that temporary (this fails if the reference is a non-const lvalue reference).
+  </Revision>
+
+  <Revision since="C++17">
+  - a prvalue is generated. The prvalue initializes its result object by copy-list-initialization. The prvalue is then used to direct-initialize the reference (this fails if the reference is a non-const lvalue reference). The type of the temporary is the type referenced by `T`<InlineRevision since="C++20">, unless `T` is "reference to array of unknown bound of `U`", in which case the type of the temporary is the type of `x` in the declaration `U x[] H`, where `H` is the initializer list</InlineRevision>.
+  </Revision>
+
+{/* source:cpp-language-list-initialization:0031 */}
+- Otherwise, if the brace-enclosed initializer list has no initializer clause, `T` is [value-initialized](/docs/cpp/language/initialization/value_initialization).
+
+## List-initializing std::initializer_list
+
+{/* source:cpp-language-list-initialization:0032 */}
+An object of type `std::initializer_list<E>` is constructed from an initializer list as if the compiler generated <InlineRevision since="C++17">and [materialized](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization)</InlineRevision> a [prvalue](/docs/cpp/language/expressions/value_category) of type "array of `N` `const E`", where `N` is the number of initializer clauses in the initializer list; this is called the initializer list's backing array.
+
+{/* source:cpp-language-list-initialization:0033 */}
+Each element of the backing array is [copy-initialized](/docs/cpp/language/initialization/copy_initialization) with the corresponding initializer clause of the initializer list, and the `std::initializer_list<E>` object is constructed to refer to that array. A constructor or conversion function selected for the copy is required to be [accessible](/docs/cpp/language/classes/access) in the context of the initializer list. If a narrowing conversion is required to initialize any of the elements, the program is ill-formed.
+
+{/* source:cpp-language-list-initialization:0034 */}
+The backing array has the same lifetime as any other [temporary object](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime), except that initializing an `std::initializer_list` object from the backing array extends the lifetime of the array exactly like [binding a reference to a temporary](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary).
+
+{/* source:cpp-language-list-initialization:0035 */}
+```cpp
+void f(std::initializer_list<double> il);
+
+void g(float x)
+{
+   f({1, x, 3});
+}
+
+void h()
+{
+   f({1, 2, 3});
+}
+
+struct A { mutable int i; };
+
+void q(std::initializer_list<A>);
+
+void r()
+{
+    q({A{1}, A{2}, A{3}});
+}
+
+// The initialization above will be implemented in a way roughly equivalent to below,
+// assuming that the compiler can construct an initializer_list object with a pair of
+// pointers, and with the understanding that `__b` does not outlive the call to `f`.
+
+void g(float x)
+{
+    const double __a[3] = {double{1}, double{x}, double{3}}; // backing array
+    f(std::initializer_list<double>(__a, __a + 3));
+}
+
+void h()
+{
+    static constexpr double __b[3] =
+        {double{1}, double{2}, double{3}}; // backing array
+    f(std::initializer_list<double>(__b, __b + 3));
+}
+
+void r()
+{
+    const A __c[3] = {A{1}, A{2}, A{3}}; // backing array
+    q(std::initializer_list<A>(__c, __c + 3));
+}
+```
+
+{/* source:cpp-language-list-initialization:0036 */}
+Whether all backing arrays are distinct (that is, are stored in [non-overlapping objects](/docs/cpp/language/basic_concepts/objects#Subobjects)) is unspecified:
+
+{/* source:cpp-language-list-initialization:0037 */}
+```cpp
+bool fun(std::initializer_list<int> il1, std::initializer_list<int> il2)
+{
+    return il2.begin() == il1.begin() + 1;
+}
+
+bool overlapping = fun({1, 2, 3}, {2, 3, 4}); // the result is unspecified:
+                                              // the back arrays can share
+                                              // storage within {1, 2, 3, 4}
+```
+
+## Narrowing conversions
+
+{/* source:cpp-language-list-initialization:0038 */}
+List-initialization limits the allowed [implicit conversions](/docs/cpp/language/expressions/implicit_cast) by prohibiting the following:
+
+{/* source:cpp-language-list-initialization:0039 */}
+- conversion from a floating-point type to an integer type
+
+{/* source:cpp-language-list-initialization:0040 */}
+- conversion from a floating-point type `T` to another floating-point type whose [floating-point conversion rank](/docs/cpp/language/expressions/usual_arithmetic_conversions#Floating-point_conversion_rank) is neither greater than nor equal to that of `T`, except where the conversion result is a [constant expression](/docs/cpp/language/expressions/constant_expression) and one of the following conditions is satisfied:
+  - The converted value is finite, and the conversion does not overflow.
+  - The values before and after the conversion are not finite.
+
+{/* source:cpp-language-list-initialization:0041 */}
+- conversion from an integer type to a floating-point type, except where the source is a constant expression whose value can be stored exactly in the target type
+
+{/* source:cpp-language-list-initialization:0042 */}
+- conversion from integer or unscoped enumeration type to integer type that cannot represent all values of the original, except where the source is a [bit-field](/docs/cpp/language/classes/bit_field) whose width `w` is less than that of its type (or, for an [enumeration type](/docs/cpp/language/declarations/enum), its underlying type) and the target type can represent all the values of a hypothetical extended integer type with width `w` and with the same signedness as the original type, or the source is a constant expression whose value can be stored exactly in the target type
+
+{/* source:cpp-language-list-initialization:0043 */}
+- conversion from a pointer type or pointer-to-member type to `bool`
+
+## Notes
+
+{/* source:cpp-language-list-initialization:0044 */}
+Every initializer clause is [sequenced before](/docs/cpp/language/expressions/eval_order) any initializer clause that follows it in the brace-enclosed initializer list. This is in contrast with the arguments of a [function call expression](/docs/cpp/language/expressions/operator_other#Built-in_function_call_operator), which are <InlineRevision until="C++17">[unsequenced](/docs/cpp/language/expressions/eval_order)</InlineRevision><InlineRevision since="C++17">[indeterminately sequenced](/docs/cpp/language/expressions/eval_order)</InlineRevision>.
+
+{/* source:cpp-language-list-initialization:0045 */}
+A brace-enclosed initializer list is not an expression and therefore has no type, e.g. `decltype({1, 2})` is ill-formed. Having no type implies that template type deduction cannot deduce a type that matches a brace-enclosed initializer list, so given the declaration `template<class T> void f(T);` the expression `f({1, 2, 3})` is ill-formed. However, the template parameter can otherwise be deduced, as is the case for `std::vector<int> v(std::istream_iterator<int>(std::cin), {})`, where the iterator type is deduced by the first argument but also used in the second parameter position. A special exception is made for [type deduction using the keyword `auto`](/docs/cpp/language/templates/template_argument_deduction#Other_contexts), which deduces any brace-enclosed initializer list as `std::initializer_list` in copy-list-initialization.
+
+{/* source:cpp-language-list-initialization:0046 */}
+Also because a brace-enclosed initializer list has no type, [special rules for overload resolution](/docs/cpp/language/functions/overload_resolution#Implicit_conversion_sequence_in-list-initialization) apply when it is used as an argument to an overloaded function call.
+
+{/* source:cpp-language-list-initialization:0047 */}
+Aggregates copy/move initialize directly from brace-enclosed initializer list of a single initializer clause of the same type, but non-aggregates consider `std::initializer_list` constructors first:
+
+{/* source:cpp-language-list-initialization:0048 */}
+```cpp
+struct X {}; // aggregate
+
+struct Q     // non-aggregate
+{
+    Q() = default;
+    Q(Q const&) = default;
+    Q(std::initializer_list<Q>) {}
+};
+
+int main()
+{
+    X x;
+    X x2 = X{x}; // copy-constructor (not aggregate initialization)
+
+    Q q;
+    Q q2 = Q{q}; // initializer-list constructor (not copy constructor)
+}
+```
+
+{/* source:cpp-language-list-initialization:0049 */}
+Some compilers (e.g., gcc 10) only consider conversion from a pointer or a pointer-to-member to `bool` narrowing in C++20 mode.
+
+{/* source:cpp-language-list-initialization:0050 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_initializer_lists`](/docs/cpp/library/feature_test#cpp_initializer_lists) | [`200806L`](/docs/cpp/library/compiler_support/11#cpp_initializer_lists_200806L) | (C++11) | List-initialization and [`std::initializer_list`](/docs/cpp/library/utility/initializer_list) |
+
+## Example
+
+{/* source:cpp-language-list-initialization:0051 */}
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
+
+struct Foo
+{
+    std::vector<int> mem = {1, 2, 3}; // list-initialization of a non-static member
+    std::vector<int> mem2;
+
+    Foo() : mem2{-1, -2, -3} {} // list-initialization of a member in constructor
+};
+
+std::pair<std::string, std::string> f(std::pair<std::string, std::string> p)
+{
+    return {p.second, p.first}; // list-initialization in return statement
+}
+
+int main()
+{
+    int n0{};  // value-initialization (to zero)
+    int n1{1}; // direct-list-initialization
+
+    std::string s1{'a', 'b', 'c', 'd'}; // initializer-list constructor call
+    std::string s2{s1, 2, 2};           // regular constructor call
+    std::string s3{0x61, 'a'}; // initializer-list ctor is preferred to (int, char)
+
+    int n2 = {1}; // copy-list-initialization
+    double d = double{1.2}; // list-initialization of a prvalue, then copy-init
+    auto s4 = std::string{"HelloWorld"}; // same as above, no temporary
+                                         // created since C++17
+
+    std::map<int, std::string> m = // nested list-initialization
+    {
+        {1, "a"},
+        {2, {'a', 'b', 'c'}},
+        {3, s1}
+    };
+
+    std::cout << f({"hello", "world"}).first // list-initialization in function call
+              << '\n';
+
+    const int (&ar)[2] = {1, 2}; // binds an lvalue reference to a temporary array
+    int&& r1 = {1}; // binds an rvalue reference to a temporary int
+//  int& r2 = {2}; // error: cannot bind rvalue to a non-const lvalue ref
+
+//  int bad{1.0}; // error: narrowing conversion
+    unsigned char uc1{10}; // okay
+//  unsigned char uc2{-1}; // error: narrowing conversion
+
+    Foo f;
+
+    std::cout << n0 << ' ' << n1 << ' ' << n2 << '\n'
+              << s1 << ' ' << s2 << ' ' << s3 << '\n';
+    for (auto p : m)
+        std::cout << p.first << ' ' << p.second << '\n';
+    for (auto n : f.mem)
+        std::cout << n << ' ';
+    for (auto n : f.mem2)
+        std::cout << n << ' ';
+    std::cout << '\n';
+
+    [](...){}(d, ar, r1, uc1); // has effect of [[maybe_unused]]
+}
+```
+
+Output:
+
+```text
+world
+0 1 1
+abcd cd aa
+1 a
+2 abc
+3 abcd
+1 2 3 -1 -2 -3
+```
+
+## Defect reports
+
+{/* source:cpp-language-list-initialization:0052 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-list-initialization:0053 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1288} standard="C++11"><PublishedBehavior>list-initializing a reference with a brace-enclosed initializer list of a single initializer clause always bound the reference to a temporary</PublishedBehavior><CorrectedBehavior>bind to that initializer clause if valid</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1290} standard="C++11"><PublishedBehavior>the lifetime of the backing array was not correctly specified</PublishedBehavior><CorrectedBehavior>specified same as other temporary objects</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1324} standard="C++11"><PublishedBehavior>initialization considered first for initialization from `{}`</PublishedBehavior><CorrectedBehavior>aggregate initialization considered first</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1418} standard="C++11"><PublishedBehavior>the type of the backing array lacked `const`</PublishedBehavior><CorrectedBehavior>`const` added</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1467} standard="C++11"><PublishedBehavior>same-type initialization of aggregates and character arrays was prohibited; initializer-list constructors had priority over copy constructors for single-clause lists</PublishedBehavior><CorrectedBehavior>same-type initialization allowed; single-clause lists initialize directly</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1494} standard="C++11"><PublishedBehavior>when list-initializing a reference with an initializer clause of an incompatible type, it was unspecified whether the temporary created is direct-list-initialized or copy-list-initialized</PublishedBehavior><CorrectedBehavior>it depends on the kind of initialization for the reference</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2137} standard="C++11"><PublishedBehavior>initializer-list constructors lost to copy constructors when list-initializing `X` from `{X}`</PublishedBehavior><CorrectedBehavior>non-aggregates consider initializer-lists first</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2252} standard="C++17"><PublishedBehavior>enumerations could be list-initialized from non-scalar values</PublishedBehavior><CorrectedBehavior>prohibited</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2267} standard="C++11"><PublishedBehavior>the resolution of [CWG issue 1494](https://cplusplus.github.io/CWG/issues/1494.html) made clear that temporaries could be direct-list-initialized</PublishedBehavior><CorrectedBehavior>they are copy-list-initialized when list-initializing references</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2374} standard="C++17"><PublishedBehavior>direct-list-initialization of an enum allowed too many source types</PublishedBehavior><CorrectedBehavior>restricted</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2627} standard="C++11"><PublishedBehavior>a narrow bit-field of a larger integer type can be promoted to a smaller integer type, but it was still a narrowing conversion</PublishedBehavior><CorrectedBehavior>it is not a narrowing conversion</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2713} standard="C++20"><PublishedBehavior>references to aggregate classes could not be initialized by designated initializer lists</PublishedBehavior><CorrectedBehavior>allowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2830} standard="C++11"><PublishedBehavior>list-initialization did not ignore the top-level cv-qualification</PublishedBehavior><CorrectedBehavior>ignores</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2864} standard="C++11"><PublishedBehavior>floating-point conversions that overflow were not narrowing</PublishedBehavior><CorrectedBehavior>they are narrowing</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P1957R2" standard="C++11"><PublishedBehavior>conversion from a pointer/pointer-to-member to `bool` was not narrowing</PublishedBehavior><CorrectedBehavior>considered narrowing</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P2752R3" standard="C++11"><PublishedBehavior>backing arrays with overlapping lifetime could not overlap</PublishedBehavior><CorrectedBehavior>they may overlap</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-list-initialization:0054 */}
+- [constructor](/docs/cpp/language/classes/initializer_list)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [explicit](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+- [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+- [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+- [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+- [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+- [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+- [value initialization](/docs/cpp/language/initialization/value_initialization)
+- [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

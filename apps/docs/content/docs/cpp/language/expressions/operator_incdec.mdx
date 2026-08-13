@@ -1,0 +1,296 @@
+---
+title: "Increment/decrement operators"
+description: "Increment/decrement operators increment or decrement the value of the object."
+source_url: "https://en.cppreference.com/w/cpp/language/operator_incdec"
+language: "C++"
+---
+
+{/* source:cpp-language-operator-incdec:0000 */}
+Increment/decrement operators increment or decrement the value of the object.
+
+{/* source:cpp-language-operator-incdec:0001 */}
+| Operator name | Syntax | [Over​load​able](/docs/cpp/language/expressions/operators) | Prototype examples (for `class T`) | |
+| --- | --- | --- | --- | --- |
+| | | | Inside class definition | Outside class definition |
+| pre-increment | `++a` | Yes | `T& T::operator++();` | `T& operator++(T& a);` |
+| pre-decrement | `--a` | Yes | `T& T::operator--();` | `T& operator--(T& a);` |
+| post-increment | `a++` | Yes | `T T::operator++(int);` | `T operator++(T& a, int);` |
+| post-decrement | `a--` | Yes | `T T::operator--(int);` | `T operator--(T& a, int);` |
+
+**Notes**
+
+- Prefix versions of the built-in operators return *references* and postfix versions return *values*, and typical [user-defined overloads](/docs/cpp/language/expressions/operators) follow the pattern so that the user-defined operators can be used in the same manner as the built-ins. However, in a user-defined operator overload, any type can be used as return type (including `void`).
+- The `int` parameter is a dummy parameter used to differentiate between prefix and postfix versions of the operators. When the user-defined postfix operator is called, the value passed in that parameter is always zero, although it may be changed by calling the operator using function call notation (e.g., `a.operator++(2)` or `operator++(a, 2)`).
+
+## Prefix operators
+
+{/* source:cpp-language-operator-incdec:0002 */}
+The prefix increment and decrement expressions have the form
+
+{/* source:cpp-language-operator-incdec:0003 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code={`++ expression`} />
+  <Declaration language="cpp" grammar code={`-- expression`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-incdec:0004 */}
+1. prefix increment (pre-increment)
+
+{/* source:cpp-language-operator-incdec:0005 */}
+2. prefix decrement (pre-decrement)
+
+### Built-in prefix operators
+
+{/* source:cpp-language-operator-incdec:0006 */}
+1. The expression `++x` is equivalent to `x += 1`, with the following exceptions:
+   - <Revision until="C++17">If the type of *expression* is (possibly volatile-qualified) `bool`, *expression* is set to `true`. Such a increment is deprecated.</Revision>
+   - <Revision since="C++17">If the type of *expression* is (possibly cv-qualified) `bool`, the program is ill-formed.</Revision>
+   - <Revision since="C++20">If the type of *expression* is volatile-qualified, the increment is deprecated.</Revision>
+
+{/* source:cpp-language-operator-incdec:0007 */}
+2. The expression `--x` is equivalent to `x -= 1`, with the following exceptions:
+   - If the type of *expression* is (possibly cv-qualified) `bool`, the program is ill-formed.
+   - <Revision since="C++20">If the type of *expression* is volatile-qualified, the decrement is deprecated.</Revision>
+
+### Overloads
+
+{/* source:cpp-language-operator-incdec:0008 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every optionally volatile-qualified arithmetic type `A` other than `bool`, and for every optionally volatile-qualified pointer `P` to optionally cv-qualified object type, the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-incdec:0009 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`A& operator++(A&)`} />
+  <Declaration language="cpp" until="C++17" code={`bool& operator++(bool&)`} />
+  (deprecated)
+  <Declaration language="cpp" code={`P& operator++(P&)`} />
+  <Declaration language="cpp" code={`A& operator--(A&)`} />
+  <Declaration language="cpp" code={`P& operator--(P&)`} />
+</DeclarationDoc>
+
+## Postfix operators
+
+{/* source:cpp-language-operator-incdec:0010 */}
+The postfix increment and decrement expressions have the form
+
+{/* source:cpp-language-operator-incdec:0011 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code={`expression ++`} />
+  <Declaration language="cpp" grammar code={`expression --`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-incdec:0012 */}
+1. postfix increment (post-increment)
+
+{/* source:cpp-language-operator-incdec:0013 */}
+2. postfix decrement (post-decrement)
+
+### Built-in postfix operators
+
+{/* source:cpp-language-operator-incdec:0014 */}
+The result of postfix increment or decrement is the value obtained by applying the [lvalue-to-rvalue conversion](/docs/cpp/language/expressions/implicit_cast#Lvalue-to-rvalue_conversion) to *expression* (before modification). The type of the result is the cv-unqualified version of the type of *expression*.
+
+{/* source:cpp-language-operator-incdec:0015 */}
+If *expression* is not a modifiable lvalue of an arithmetic type<InlineRevision since="C++17"> other than (possibly cv-qualified) `bool`</InlineRevision>, or a pointer to a complete object type, the program is ill-formed.
+
+<Revision since="C++20">
+
+{/* source:cpp-language-operator-incdec:0016 */}
+If the type of *expression* is volatile-qualified, the increment or decrement is deprecated.
+
+</Revision>
+
+{/* source:cpp-language-operator-incdec:0017 */}
+1. The value of *expression* is modified as if it were the operand of the prefix `++` operator.
+
+{/* source:cpp-language-operator-incdec:0018 */}
+2. The value of *expression* is modified as if it were the operand of the prefix `--` operator.
+
+{/* source:cpp-language-operator-incdec:0019 */}
+The value computation of a postfix increment or decrement is [sequenced before](/docs/cpp/language/expressions/eval_order) the modification of *expression*. With respect to an indeterminately-sequenced function call, the operation of a postfix increment or decrement is a single evaluation.
+
+### Overloads
+
+{/* source:cpp-language-operator-incdec:0020 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every optionally volatile-qualified arithmetic type `A` other than `bool`, and for every optionally volatile-qualified pointer `P` to optionally cv-qualified object type, the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-incdec:0021 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`A operator++(A&, int)`} />
+  <Declaration language="cpp" until="C++17" code={`bool operator++(bool&, int)`} />
+  (deprecated)
+  <Declaration language="cpp" code={`P operator++(P&, int)`} />
+  <Declaration language="cpp" code={`A operator--(A&, int)`} />
+  <Declaration language="cpp" code={`P operator--(P&, int)`} />
+</DeclarationDoc>
+
+### Example
+
+{/* source:cpp-language-operator-incdec:0022 */}
+```cpp
+#include <iostream>
+
+int main()
+{
+    int n1 = 1;
+    int n2 = ++n1;
+    int n3 = ++ ++n1;
+    int n4 = n1++;
+//  int n5 = n1++ ++;   // error
+//  int n6 = n1 + ++n1; // undefined behavior
+    std::cout << "n1 = " << n1 << '\n'
+              << "n2 = " << n2 << '\n'
+              << "n3 = " << n3 << '\n'
+              << "n4 = " << n4 << '\n';
+}
+```
+
+Output:
+
+```text
+n1 = 5
+n2 = 2
+n3 = 4
+n4 = 4
+```
+
+## Notes
+
+{/* source:cpp-language-operator-incdec:0023 */}
+Because of the side-effects involved, built-in increment and decrement operators must be used with care to avoid undefined behavior due to violations of [sequencing rules](/docs/cpp/language/expressions/eval_order).
+
+{/* source:cpp-language-operator-incdec:0024 */}
+Because a temporary copy of the object is constructed during post-increment and post-decrement, pre-increment or pre-decrement operators are usually more efficient in contexts where the returned value is not used.
+
+## Standard library
+
+{/* source:cpp-language-operator-incdec:0025 */}
+Increment and decrement operators are overloaded for many standard library types. In particular, every [LegacyIterator](/docs/cpp/library/named_req/Iterator) overloads `operator++` and every [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator) overloads `operator--`, even if those operators are no-ops for the particular iterator.
+
+{/* source:cpp-language-operator-incdec:0026 */}
+#### overloads for arithmetic types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator--`, `operator--(int)`](/docs/cpp/library/atomic/atomic/operator_arith)</DescriptionTerm>
+    <DescriptionBody>increments or decrements the atomic value by one (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator--`, `operator--(int)`](/docs/cpp/library/chrono/duration/operator_arith2)</DescriptionTerm>
+    <DescriptionBody>increments or decrements the tick count (public member function of `std::chrono::duration<Rep,Period>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### overloads for iterator types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/memory/raw_storage_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances the iterator (public member function of `std::raw_storage_iterator<OutputIt,T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator+=`, `operator+`, `operator--`, `operator--(int)`, `operator-=`, `operator-`](/docs/cpp/library/iterator/reverse_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances or decrements the iterator (public member function of `std::reverse_iterator<Iter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator+=`, `operator+`, `operator--`, `operator--(int)`, `operator-=`, `operator-`](/docs/cpp/library/iterator/move_iterator/operator_arith)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>advances or decrements the iterator (public member function of `std::move_iterator<Iter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/iterator/front-insert-iterator/operator%2B%2B)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::front_insert_iterator<Container>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/iterator/back-insert-iterator/operator%2B%2B)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::back_insert_iterator<Container>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/iterator/insert-iterator/operator%2B%2B)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::insert_iterator<Container>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/iterator/istream_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances the iterator (public member function of `std::istream_iterator<T,CharT,Traits,Distance>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/iterator/ostream_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::ostream_iterator<T,CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/iterator/istreambuf_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances the iterator (public member function of `std::istreambuf_iterator<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/iterator/ostreambuf_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::ostreambuf_iterator<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/text/regex/regex_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances the iterator to the next match (public member function of `std::regex_iterator<BidirIt,CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/text/regex/regex_token_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances the iterator to the next submatch (public member function of `std::regex_token_iterator<BidirIt,CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## Defect reports
+
+{/* source:cpp-language-operator-incdec:0027 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-operator-incdec:0028 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2855} standard="C++98">
+    <PublishedBehavior>usual arithmetic conversions are applied for built-in pre-increment and pre-decrement, but were not applied for their postfix counterparts[^1]</PublishedBehavior>
+    <CorrectedBehavior>also applied</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2901} standard="C++98">
+    <PublishedBehavior>lvalue-to-rvalue conversions were not applied for built-in post-increment and post-decrement</PublishedBehavior>
+    <CorrectedBehavior>applied</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-language-operator-incdec:0029 */}
+[^1]: The prefix `++x` is equivalent to `x += 1`, and the latter is applicable for usual arithmetic conversions (i.e. yield a common type between `decltype(x)` and `int`). However, the effect of the postfix `x++` is simply "adding one to `x`", there is no binary operator present, so no usual arithmetic conversions will take place.
+
+## See also
+
+{/* source:cpp-language-operator-incdec:0030 */}
+[Operator precedence](/docs/cpp/language/expressions/operator_precedence)
+
+{/* source:cpp-language-operator-incdec:0031 */}
+[Operator overloading](/docs/cpp/language/expressions/operators)
+
+{/* source:cpp-language-operator-incdec:0032 */}
+**Common operators:**
+
+- [assignment](/docs/cpp/language/expressions/operator_assignment): `a = b`, `a += b`, `a -= b`, `a *= b`, `a /= b`, `a %= b`, `a &= b`, `a |= b`, `a ^= b`, `a <<= b`, `a >>= b`
+- [increment decrement](/docs/cpp/language/expressions/operator_incdec): `++a`, `--a`, `a++`, `a--`
+- [arithmetic](/docs/cpp/language/expressions/operator_arithmetic): `+a`, `-a`, `a + b`, `a - b`, `a * b`, `a / b`, `a % b`, `~a`, `a & b`, `a | b`, `a ^ b`, `a << b`, `a >> b`
+- [logical](/docs/cpp/language/expressions/operator_logical): `!a`, `a && b`, `a || b`
+- [comparison](/docs/cpp/language/expressions/operator_comparison): `a == b`, `a != b`, `a < b`, `a > b`, `a <= b`, `a >= b`, `a <=> b`
+- [member access](/docs/cpp/language/expressions/operator_member_access): `a[...]`, `*a`, `&a`, `a->b`, `a.b`, `a->*b`, `a.*b`
+- [other](/docs/cpp/language/expressions/operator_other): function call `a(...)`; comma `a, b`; conditional `a ? b : c`
+
+**Special operators:**
+
+- [`static_cast`](/docs/cpp/language/expressions/static_cast) converts one type to another related type
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) converts within inheritance hierarchies
+- [`const_cast`](/docs/cpp/language/expressions/const_cast) adds or removes [`cv`](/docs/cpp/language/declarations/cv)-qualifiers
+- [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) converts type to unrelated type
+- [C-style cast](/docs/cpp/language/expressions/explicit_cast) converts one type to another by a mix of `static_cast`, `const_cast`, and `reinterpret_cast`
+- [`new`](/docs/cpp/language/expressions/new) creates objects with dynamic storage duration
+- [`delete`](/docs/cpp/language/expressions/delete) destructs objects previously created by the new expression and releases obtained memory area
+- [`sizeof`](/docs/cpp/language/expressions/sizeof) queries the size of a type
+- [`sizeof...`](/docs/cpp/language/templates/sizeof...) queries the size of a [`pack`](/docs/cpp/language/templates/parameter_pack) <InlineRevision since="C++11" />
+- [`typeid`](/docs/cpp/language/expressions/typeid) queries the type information of a type
+- [`noexcept`](/docs/cpp/language/exceptions/noexcept) checks if an expression can throw an exception <InlineRevision since="C++11" />
+- [`alignof`](/docs/cpp/language/expressions/alignof) queries alignment requirements of a type <InlineRevision since="C++11" />
+
+{/* source:cpp-language-operator-incdec:0033 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/expressions/operator_incdec)</DescriptionTerm>
+    <DescriptionBody>for Increment/decrement operators</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

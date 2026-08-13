@@ -1,0 +1,842 @@
+---
+title: "Constant expressions"
+description: "Defines an expression that can be evaluated at compile time."
+source_url: "https://en.cppreference.com/w/cpp/language/constant_expression"
+language: "C++"
+---
+
+{/* source:cpp-language-constant-expression:0000 */}
+Defines an [expression](/docs/cpp/language/expressions) that can be evaluated at compile time.
+
+{/* source:cpp-language-constant-expression:0001 */}
+Such expressions can be used as non-type template arguments, array sizes, and in other contexts that require constant expressions, e.g.
+
+{/* source:cpp-language-constant-expression:0002 */}
+```cpp
+int n = 1;
+std::array<int, n> a1;  // Error: “n” is not a constant expression
+const int cn = 2;
+std::array<int, cn> a2; // OK: “cn” is a constant expression
+```
+
+## Definition
+
+<Revision until="C++11">
+
+{/* source:cpp-language-constant-expression:0003 */}
+An expression that belongs to any of the constant expression categories listed below is a *constant expression*.
+
+**C++98 constant expression categories**
+
+#### Integral constant expression (C++98)
+
+In the following places, C++ requires expressions that evaluate to an integral or enumeration constant:
+
+- [array bounds](/docs/cpp/language/declarations/array) (including the dimensions in [`new` expressions](/docs/cpp/language/expressions/new) other than the first)
+- [`case` label](/docs/cpp/language/statements#Labels) constants
+- [bit-field](/docs/cpp/language/classes/bit_field) lengths
+- [enumerator](/docs/cpp/language/declarations/enum) initializers
+- [static data member](/docs/cpp/language/classes/static) initializers
+- [template non-type arguments](/docs/cpp/language/templates/template_parameters#Template_non-type_arguments) of integral or enumeration type
+
+An expression satisfying all following conditions is an *integral constant-expression*:
+
+- It only involves the following entities:
+  - literals of arithmetic types
+  - enumerators
+  - variables or static data members satisfying all following conditions:
+    - They are const-qualified.
+    - They are not volatile-qualified.
+    - They are of integral or enumeration types.
+    - They are initialized with constant expressions.
+  - [non-type template parameters](/docs/cpp/language/templates/template_parameters#Non-type_template_parameters) of integral or enumeration types
+  - [`sizeof`](/docs/cpp/language/expressions/sizeof) expressions
+- It does not use any floating-point literals, unless they are [explicitly converted](/docs/cpp/language/expressions/explicit_cast) to integral or enumeration types.
+- It does not apply any conversion to non-integral and non-enumeration types.
+- It does not use any of the following entities except in the operands of `sizeof`:
+  - function
+  - class object
+  - pointer
+  - reference
+  - assignment operator
+  - increment operator
+  - decrement operator
+  - function-call operator
+  - comma operator
+
+#### Other constant expression categories
+
+Other expressions are considered constant expressions only for the purpose of [constant initialization](/docs/cpp/language/initialization/constant_initialization). Such a constant expression must be one of the following expressions:
+
+- an expression that evaluates to a [null pointer value](/docs/cpp/language/declarations/pointer#Null_pointers)
+- an expression that evaluates to a null pointer-to-member value
+- an arithmetic constant expression
+- an address constant expression
+- a reference constant expression
+- an address constant expression for a complete object type, plus or minus an integral constant expression
+- a pointer-to-member constant expression
+
+An *arithmetic constant expression* is an expression satisfying the requirements for an integral constant expression, with the following exceptions:
+
+- Floating-point literals can be used without explicit conversion.
+- Conversions to floating-point types can be applied.
+
+An *address constant expression* is an expression of pointer type satisfying all following conditions:
+
+- The pointer points to an lvalue designating an object of [static storage duration](/docs/cpp/language/declarations/storage_duration#Static_storage_duration), a [string literal](/docs/cpp/language/expressions/string_literal), or a [function](/docs/cpp/language/functions/function). The object is not a [subobject](/docs/cpp/language/basic_concepts/objects#Subobjects) of non-[POD class](/docs/cpp/language/classes#POD_class) type.
+- The pointer is created by one of the following methods:
+  - explicitly using the address-of operator
+  - implicitly using a non-type template parameter of pointer type
+  - using an expression of array or function type
+- The expression does not call any function.
+- The expression uses explicit pointer conversions (except [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)) and the following operators without accessing the result object:
+  - subscript operator
+  - indirection operator
+  - address-of operator
+  - member access operator
+- If the subscript operator is used, one of its operands is an integral constant expression.
+
+A *reference constant expression* is an expression of reference type satisfying all following conditions:
+
+- The reference designates an object of static storage duration, a non-type template parameter of reference type, or a function. The reference does not designate a member or base class of non-POD class type.
+- The expression does not call any function.
+- The expression uses explicit reference conversions (except [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)) and the following operators without accessing the result object:
+  - subscript operator
+  - indirection operator
+  - address-of operator
+  - member access operator
+- If the subscript operator is used, one of its operands is an integral constant expression.
+
+A *pointer-to-member constant expression* is an expression of pointer-to-member type where the pointer is created by applying the address-of operator to a qualified identifier, optionally preceded by an explicit pointer-to-member conversion.
+
+</Revision>
+
+<Revision since="C++11" until="C++14">
+
+The following expressions are collectively called *constant expressions*:
+
+- prvalue [core constant expressions](/docs/cpp/language/expressions/constant_expression#Core_constant_expression) of non-pointer [literal type](/docs/cpp/language/expressions/constant_expression#Literal_types)
+- lvalue core constant expressions that designate objects with [static storage duration](/docs/cpp/language/declarations/storage_duration#Static_storage_duration) or functions
+- prvalue core constant expressions of pointer type that evaluate to one of the following values:
+  - the address of an object with static storage duration
+  - the address of a function
+  - a [null pointer value](/docs/cpp/language/declarations/pointer#Null_pointers)
+- prvalue core constant expressions of type [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t)
+
+</Revision>
+
+<Revision since="C++14" until="C++26">
+
+The following entities are *permitted results of a constant expression*:
+
+- temporary objects with [static storage duration](/docs/cpp/language/declarations/storage_duration#Static_storage_duration)
+- non-temporary objects with static storage duration whose values satisfy the constraints listed below
+- <InlineRevision since="C++20">non-[immediate](/docs/cpp/language/declarations/consteval)</InlineRevision> functions
+
+A *constant expression* is either a glvalue [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expression) that refers to an entity that is a permitted result of a constant expression, or a prvalue core constant expression whose value satisfies the following constraints:
+
+- If the value is an object of class type, each non-static data member of reference type refers to an entity that is a permitted result of a constant expression.
+- If the value is an object of [scalar type](/docs/cpp/language/basic_concepts/type-id#Scalar_type), it does not have an [indeterminate](/docs/cpp/language/initialization/default_initialization#Indeterminate_and_erroneous_values) value.
+- If the value is of [pointer type](/docs/cpp/language/declarations/pointer), it is one of the following values:
+  - the address of an object with static storage duration
+  - the address past the end of an object with static storage duration
+  - the address of a<InlineRevision since="C++20"> non-immediate</InlineRevision> function
+  - a [null pointer value](/docs/cpp/language/declarations/pointer#Null_pointers)
+  - <Revision since="C++20">If the value is of pointer-to-member-function type, it does not designate an immediate function.</Revision>
+- If the value is an object of class or array type, each subobject satisfies these constraints for the value.
+
+</Revision>
+
+<Revision since="C++26">
+
+A *constant expression* is either a glvalue [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expression) that refers to an object or a non-[immediate function](/docs/cpp/language/declarations/consteval), or a prvalue core constant expression whose value satisfies the following constraints:
+
+- Each [constituent reference](/docs/cpp/language/expressions/constant_expression#Constituent_entities) refers to an object or a non-immediate function.
+- No [constituent value](/docs/cpp/language/expressions/constant_expression#Constituent_entities) of [scalar type](/docs/cpp/language/basic_concepts/type-id#Scalar_type) is an [indeterminate or erroneous value](/docs/cpp/language/initialization/default_initialization#Indeterminate_and_erroneous_values).
+- No constituent value of pointer type is a pointer to an immediate function or an [invalid pointer value](/docs/cpp/language/declarations/pointer#Invalid_pointers).
+- No constituent value of pointer-to-member type designates an immediate function.
+
+</Revision>
+
+{/* source:cpp-language-constant-expression:0004 */}
+When determining whether an expression is a constant expression, [copy elision](/docs/cpp/language/initialization/copy_elision) is assumed not to be performed.
+
+{/* source:cpp-language-constant-expression:0005 */}
+The C++98 definition of constant expressions is entirely within the collpase box. The following description applies to C++11 and later C++ versions.
+
+## Literal type
+
+{/* source:cpp-language-constant-expression:0006 */}
+The following types are collectively called *literal types*:
+
+{/* source:cpp-language-constant-expression:0007 */}
+- possibly cv-qualified `void`
+- [scalar type](/docs/cpp/language/basic_concepts/type-id#Scalar_type)
+- [reference type](/docs/cpp/language/declarations/reference)
+- an [array](/docs/cpp/language/declarations/array) of literal type
+- possibly cv-qualified class type that satisfies all following conditions:
+
+{/* source:cpp-language-constant-expression:0008 */}
+  - It has a [trivial destructor](/docs/cpp/language/classes/destructor#Trivial_destructor)<InlineRevision since="C++20"> [constexpr destructor](/docs/cpp/language/declarations/constexpr#constexpr_destructor)</InlineRevision>.
+  - All of its non-static non-variant data members and base classes are of non-volatile literal types.
+  - It is one of the following types:
+
+{/* source:cpp-language-constant-expression:0009 */}
+    - <Revision since="C++17">a [closure type](/docs/cpp/language/functions/lambda#Closure_type)</Revision>
+
+{/* source:cpp-language-constant-expression:0010 */}
+    - an [aggregate](/docs/cpp/language/initialization/aggregate_initialization#Definitions) union type that satisfies one of the following conditions:
+      - It has no [variant member](/docs/cpp/language/classes/union#Union-like_classes).
+      - It has at least one variant member of non-volatile literal type.
+    - a non-union aggregate type, and each of its [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions) members satisfies one of the following conditions:
+      - It has no variant member.
+      - It has at least one variant member of non-volatile literal type.
+    - a type with at least one `constexpr` constructor (template) that is not a copy or move constructor
+
+{/* source:cpp-language-constant-expression:0011 */}
+Only objects of literal types can be created within a constant expression.
+
+## Core constant expression
+
+{/* source:cpp-language-constant-expression:0012 */}
+A core constant expression is any expression whose evaluation would not evaluate any one of the following language constructs:
+
+{/* source:cpp-language-constant-expression:0013 */}
+| Language construct | Version | Paper(s) |
+| --- | --- | --- |
+| the [`this`](/docs/cpp/language/classes/this) pointer, except in a [`constexpr` function](/docs/cpp/language/declarations/constexpr#constexpr_function) that is being evaluated as part of the expression, or when appearing in an implicit or explicit class member access expression | | [N2235](https://wg21.link/N2235) |
+| a control flow that passes through a declaration of a [block variable](/docs/cpp/language/basic_concepts/scope#Block_scope) with static or thread [storage duration](/docs/cpp/language/declarations/storage_duration) that is not [usable in constant expressions](/docs/cpp/language/expressions/constant_expression#Usable_in_constant_expressions) | (C++23) | [P2242R3](https://wg21.link/P2242R3) |
+
+{/* source:cpp-language-constant-expression:0014 */}
+This section is incomplete
+
+Reason: Transfer the contents from the raw-HTML ordered list below to the wikitable above, while adding the papers/CWG issues that introduced the corresponding item to the standard. The mini-examples are not preserved, they can be combined to form a large example at the bottom of this page.
+
+{/* source:cpp-language-constant-expression:0015 */}
+1. a function call expression that calls a function (or a constructor) that is not declared [`constexpr`](/docs/cpp/language/declarations/constexpr)
+
+```cpp
+constexpr int n = std::numeric_limits<int>::max(); // OK: max() is constexpr
+constexpr int m = std::time(nullptr); // Error: std::time() is not constexpr
+```
+
+2. a function call to a constexpr function which is declared, but not defined
+3. a function call to a constexpr function/constructor template instantiation where the instantiation fails to satisfy [constexpr function/constructor](/docs/cpp/language/declarations/constexpr) requirements.
+4. a function call to a constexpr virtual function, invoked on an object whose dynamic type is constexpr-unknown
+5. an expression that would exceed the implementation-defined limits
+6. an expression whose evaluation leads to any form of core language [undefined](/docs/cpp/language/basic_concepts/ub)<InlineRevision since="C++26"> or erroneous</InlineRevision> behavior, except for any potential undefined behavior introduced by [standard attributes](/docs/cpp/language/declarations/attributes#Standard_attributes).
+
+```cpp
+constexpr double d1 = 2.0 / 1.0; // OK
+constexpr double d2 = 2.0 / 0.0; // Error: not defined
+constexpr int n = std::numeric_limits<int>::max() + 1; // Error: overflow
+int x, y, z[30];
+constexpr auto e1 = &y - &x;        // Error: undefined
+constexpr auto e2 = &z[20] - &z[3]; // OK
+constexpr std::bitset<2> a; 
+constexpr bool b = a[2]; // UB, but unspecified if detected
+```
+
+7. <Revision until="C++17">a [lambda expression](/docs/cpp/language/functions/lambda)</Revision>
+8. an lvalue-to-rvalue [implicit conversion](/docs/cpp/language/expressions/implicit_cast) unless applied to
+   - a glvalue of type (possibly cv-qualified) [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t)
+   - a non-volatile literal-type glvalue that designates an object that is [usable in constant expressions](/docs/cpp/language/expressions/constant_expression#Usable_in_constant_expressions)
+
+```cpp
+int main()
+{
+    const std::size_t tabsize = 50;
+    int tab[tabsize]; // OK: tabsize is a constant expression
+                      // because tabsize is usable in constant expressions
+                      // because it has const-qualified integral type, and
+                      // its initializer is a constant initializer
+
+    std::size_t n = 50;
+    const std::size_t sz = n;
+    int tab2[sz]; // Error: sz is not a constant expression
+                  // because sz is not usable in constant expressions
+                  // because its initializer was not a constant initializer
+}
+```
+
+   - a non-volatile literal-type glvalue that refers to a non-volatile object whose lifetime began within the evaluation of this expression
+9. an lvalue-to-rvalue [implicit conversion](/docs/cpp/language/expressions/implicit_cast) or modification applied to a non-active member of a [union](/docs/cpp/language/classes/union) or its subobject (even if it shares a common initial sequence with the active member)
+10. an lvalue-to-rvalue implicit conversion on an object [whose value is indeterminate](/docs/cpp/language/initialization/default_initialization)
+11. an invocation of implicit copy/move constructor/assignment for a union whose active member is mutable (if any), with lifetime beginning outside the evaluation of this expression
+12. <Revision until="C++20">an assignment expression that would change the active member of a union</Revision>
+13. conversion from [pointer to `void`](/docs/cpp/language/declarations/pointer#Pointers_to_void) to a pointer-to-object type `T*`<InlineRevision since="C++26"> unless the pointer holds a null pointer value or points to an object whose type is [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types) to `T`</InlineRevision>
+14. [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)<InlineRevision since="C++20"> whose operand is a glvalue that refers to an object whose dynamic type is constexpr-unknown</InlineRevision>
+15. [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast)
+16. <Revision until="C++20">pseudo-destructor call</Revision>
+17. <Revision until="C++14">an increment or a decrement operator</Revision>
+18. <Revision since="C++14">modification of an object, unless the object has non-volatile literal type and its lifetime began within the evaluation of the expression</Revision>
+
+```cpp
+constexpr int incr(int& n)
+{
+    return ++n;
+}
+
+constexpr int g(int k)
+{
+    constexpr int x = incr(k); // Error: incr(k) is not a core constant
+                               // expression because lifetime of k
+                               // began outside the expression incr(k)
+    return x;
+}
+
+constexpr int h(int k)
+{
+    int x = incr(k); // OK: x is not required to be initialized
+                     // with a core constant expression
+    return x;
+}
+
+constexpr int y = h(1); // OK: initializes y with the value 2
+                        // h(1) is a core constant expression because
+                        // the lifetime of k begins inside the expression h(1)
+```
+
+19. <Revision since="C++20">a destructor call or pseudo destructor call for an object whose lifetime did not begin within the evaluation of this expression</Revision>
+20. a [`typeid`](/docs/cpp/language/expressions/typeid) expression applied to a glvalue of polymorphic type<InlineRevision since="C++20"> and that glvalue refers to an object whose dynamic type is constexpr-unknown</InlineRevision>
+21. a [`new` expression](/docs/cpp/language/expressions/new)<InlineRevision since="C++20">, unless one of the following conditions is satisfied:</InlineRevision>
+    - <Revision since="C++20">The selected [allocation function](/docs/cpp/library/memory/new/operator_new) is a replaceable global allocation function and the allocated storage is deallocated within the evaluation of this expression.</Revision>
+    <Revision since="C++26">
+    - The selected allocation function is a non-allocating form with an allocated type `T`, and the placement argument satisfies all following conditions:
+      - It points to:
+        - an object whose type is similar to `T`, if `T` is not an array type, or
+        - the first element of an object of a type similar to `T`, if `T` is an array type.
+      - It points to storage whose duration began within the evaluation of this expression.
+    </Revision>
+22. a [`delete` expression](/docs/cpp/language/expressions/delete)<InlineRevision since="C++20">, unless it deallocates a region of storage allocated within the evaluation of this expression</InlineRevision>
+23. <Revision since="C++20">Coroutines: an [await-expression](/docs/cpp/language/functions/coroutines#co_await) or a [yield-expression](/docs/cpp/language/functions/coroutines#co_yield)</Revision>
+24. <Revision since="C++20">a [three-way comparison](/docs/cpp/language/expressions/operator_comparison#Three-way_comparison) when the result is unspecified</Revision>
+25. an equality or relational operator whose result is unspecified
+26. <Revision until="C++14">an assignment or a compound assignment operator</Revision>
+27. <Revision until="C++26">a throw expression</Revision>
+28. <Revision since="C++26">a construction of an exception object, unless the exception object and all of its implicit copies created by invocations of [std::current_exception](/docs/cpp/library/error/current_exception) or [std::rethrow_exception](/docs/cpp/library/error/rethrow_exception) are destroyed within the evaluation of this expression</Revision>
+
+```cpp
+constexpr void check(int i)
+{
+    if (i < 0)
+        throw i;
+}
+
+constexpr bool is_ok(int i)
+{
+    try {
+        check(i);
+    } catch (...) {
+        return false;
+    }
+    return true;
+}
+
+constexpr bool always_throw()
+{
+    throw 12;
+    return true;
+}
+
+static_assert(is_ok(5)); // OK
+static_assert(!is_ok(-1)); // OK since C++26
+static_assert(always_throw()); // Error: uncaught exception
+```
+
+29. an [asm-declaration](/docs/cpp/language/declarations/asm)
+30. an invocation of the [va_arg](/docs/cpp/library/utility/variadic/va_arg) macro
+31. a [`goto`](/docs/cpp/language/statements/goto) statement
+32. a [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) or [`typeid`](/docs/cpp/language/expressions/typeid) expression<InlineRevision since="C++26"> or [`new` expression](/docs/cpp/language/expressions/new)</InlineRevision> that would throw an exception<InlineRevision since="C++26"> where no definition of the exception type is reachable</InlineRevision>
+33. inside a lambda expression, a reference to `this` or to a variable defined outside that lambda, if that reference would be an odr-use
+
+```cpp
+void g()
+{
+    const int n = 0;
+
+    constexpr int j = *&n; // OK: outside of a lambda-expression
+
+    [=]
+    {
+        constexpr int i = n;   // OK: 'n' is not odr-used and not captured here.
+        constexpr int j = *&n; // Ill-formed: '&n' would be an odr-use of 'n'.
+    };
+}
+```
+
+<Revision since="C++17">
+- note that if the ODR-use takes place in a function call to a closure, it does not refer to `this` or to an enclosing variable, since it accesses a closure's data member instead
+
+```cpp
+// OK: 'v' & 'm' are odr-used but do not occur in a constant-expression
+// within the nested lambda
+auto monad = [](auto v){ return [=]{ return v; }; };
+auto bind = [](auto m){ return [=](auto fvm){ return fvm(m()); }; };
+
+// OK to have captures to automatic objects created during constant expression evaluation.
+static_assert(bind(monad(2))(monad)() == monad(2)());
+```
+
+</Revision>
+
+### Extra requirements
+
+{/* source:cpp-language-constant-expression:0016 */}
+Even if an expression `E` does not evaluate anything stated above, it is implementation-defined whether `E` is a core constant expression if evaluating `E` would result in [runtime-undefined behavior](/docs/cpp/language/basic_concepts/ub).
+
+{/* source:cpp-language-constant-expression:0017 */}
+Even if an expression `E` does not evaluate anything stated above, it is unspecified whether `E` is a core constant expression if evaluating `E` would evalute any of the following:
+
+{/* source:cpp-language-constant-expression:0018 */}
+- An operation with undefined behavior in the [standard library](/docs/cpp/library/standard_library).
+- An invocation of the [va_start](/docs/cpp/library/utility/variadic/va_start) macro.
+
+{/* source:cpp-language-constant-expression:0019 */}
+For the purposes of determining whether an expression is a core constant expression, the evaluation of the body of a member function of `std::allocator<T>` is ignored if `T` is a literal type.
+
+{/* source:cpp-language-constant-expression:0020 */}
+For the purposes of determining whether an expression is a core constant expression, the evaluation of a call to a trivial copy/move constructor or copy/move assignment operator of a [union](/docs/cpp/language/classes/union) is considered to copy/move the active member of the union, if any.
+
+<Revision since="C++26">
+
+{/* source:cpp-language-constant-expression:0021 */}
+For the purposes of determining whether an expression is a core constant expression, the evaluation of an identifier expression that names a [structured binding](/docs/cpp/language/declarations/structured_binding) `bd` has the following semantics:
+
+- If `bd` is an lvalue referring to the object bound to an invented reference `ref`, the behavior is as if `ref` were nominated.
+- Otherwise, if `bd` names an array element, the behavior is that of evaluating `e[i]`, where `e` is the name of the variable initialized from the initializer of the structured binding declaration, and `i` is the index of the element referred to by `bd`.
+- Otherwise, if `bd` names a class member, the behavior is that of evaluating `e.m`, where `e` is the name of the variable initialized from the initializer of the structured binding declaration, and `m` is the name of the member referred to by `bd`.
+
+</Revision>
+
+{/* source:cpp-language-constant-expression:0022 */}
+During the evaluation of the expression as a core constant expression, all identifier expressions and uses of `*this` that refer to an object or reference whose lifetime began outside the evaluation of the expression are treated as referring to a specific instance of that object of that object or reference whose lifetime and that of all subobjects (including all union members) includes the entire constant evaluation.
+
+{/* source:cpp-language-constant-expression:0023 */}
+- For such an object<InlineRevision since="C++20"> that is not usable in constant expressions</InlineRevision>, the dynamic type of the object is constexpr-unknown.
+- For such a reference<InlineRevision since="C++20"> that is not usable constant expression</InlineRevision>, the reference is treated as binding to an unspecified object of the referenced type whose lifetime and that of all subobjects includes the entire constant evaluation and whose dynamic type is constexpr-unknown.
+
+## Integral constant expression
+
+{/* source:cpp-language-constant-expression:0024 */}
+Integral constant expression is an expression of integral or unscoped enumeration type implicitly converted to a prvalue, where the converted expression is a core constant expression.
+
+{/* source:cpp-language-constant-expression:0025 */}
+If an expression of class type is used where an integral constant expression is expected, the expression is [contextually implicitly converted](/docs/cpp/language/expressions/implicit_cast) to an integral or unscoped enumeration type.
+
+## Converted constant expression
+
+{/* source:cpp-language-constant-expression:0026 */}
+A converted constant expression of type `T` is an expression [implicitly converted](/docs/cpp/language/expressions/implicit_cast) to type `T`, where the converted expression is a constant expression, and the implicit conversion sequence contains only:
+
+{/* source:cpp-language-constant-expression:0027 */}
+- [constexpr user-defined conversions](/docs/cpp/language/expressions/cast_operator)
+- [lvalue-to-rvalue conversions](/docs/cpp/language/expressions/implicit_cast#Lvalue-to-rvalue_conversion)
+- [integral promotions](/docs/cpp/language/expressions/implicit_cast#Integral_promotion)
+- non-narrowing [integral conversions](/docs/cpp/language/expressions/implicit_cast#Integral_conversions)
+- [floating-point promotions](/docs/cpp/language/expressions/implicit_cast#Floating-point_promotion)
+- non-narrowing [floating-point conversions](/docs/cpp/language/expressions/implicit_cast#Floating-point_conversions)
+
+<Revision since="C++17">
+
+{/* source:cpp-language-constant-expression:0028 */}
+- [array-to-pointer conversions](/docs/cpp/language/expressions/implicit_cast#Array-to-pointer_conversion)
+- [function-to-pointer conversions](/docs/cpp/language/expressions/implicit_cast#Function-to-pointer_conversion)
+- [function pointer conversions](/docs/cpp/language/expressions/implicit_cast#Function_pointer_conversions)
+- [qualification conversions](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions)
+- [null pointer conversions](/docs/cpp/language/expressions/implicit_cast#Pointer_conversions) from [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t)
+- [null member pointer conversions](/docs/cpp/language/expressions/implicit_cast#Pointer-to-member_conversions) from [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t)
+
+</Revision>
+
+{/* source:cpp-language-constant-expression:0029 */}
+And if any [reference binding](/docs/cpp/language/initialization/reference_initialization) takes place, it can only be [direct binding](/docs/cpp/language/initialization/reference_initialization#Direct_binding).
+
+{/* source:cpp-language-constant-expression:0030 */}
+The following contexts require a converted constant expression:
+
+{/* source:cpp-language-constant-expression:0031 */}
+- the constant-expression of [`case` labels](/docs/cpp/language/statements/switch#Labels)
+- [enumerator initializers](/docs/cpp/language/declarations/enum) when the underlying type is fixed<InlineRevision until="C++17"> integral and enumeration</InlineRevision>
+- [template arguments](/docs/cpp/language/templates/template_parameters)
+
+{/* source:cpp-language-constant-expression:0032 */}
+<Revision since="C++14">
+
+- [array bounds](/docs/cpp/language/declarations/array)
+- the dimensions in [`new` expressions](/docs/cpp/language/expressions/new) other than the first
+
+</Revision>
+
+<Revision since="C++26">
+
+- the index of [pack indexing expression](/docs/cpp/language/templates/pack_indexing) and [pack indexing specifier](/docs/cpp/language/templates/pack_indexing)
+
+</Revision>
+
+{/* source:cpp-language-constant-expression:0033 */}
+A contextually converted constant expression of type `bool` is an expression, [contextually converted to bool](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions), where the converted expression is a constant expression and the conversion sequence contains only the conversions above.
+
+{/* source:cpp-language-constant-expression:0034 */}
+The following contexts require a contextually converted constant expression of type `bool`:
+
+{/* source:cpp-language-constant-expression:0035 */}
+- [`noexcept` specifications](/docs/cpp/language/exceptions/noexcept_spec)
+
+{/* source:cpp-language-constant-expression:0036 */}
+<Revision until="C++23">
+
+- [`static_assert` declarations](/docs/cpp/language/declarations/static_assert)
+
+</Revision>
+
+<Revision since="C++17">
+
+- [`constexpr` if-statements](/docs/cpp/language/statements/if#Constexpr_if)
+
+</Revision>
+
+<Revision since="C++20">
+
+- [conditional `explicit` specifiers](/docs/cpp/language/classes/explicit)
+
+</Revision>
+
+{/* source:cpp-language-constant-expression:0037 */}
+<Revision since="C++26">
+
+## Constituent entities
+
+The *constituent values* of an object `obj` are defined as follows:
+
+- If `obj` has scalar type, the constituent value is the value of `obj`.
+- Otherwise, the constituent values are the constituent values of any direct [subobjects](/docs/cpp/language/basic_concepts/objects#Subobjects) of `obj` other than [inactive union members](/docs/cpp/language/classes/union).
+
+The *constituent references* of an object `obj` include the following references:
+
+- any direct members of `obj` that have reference type
+- the constituent references of any direct subobjects of `obj` other than inactive union members
+
+The *constituent values* and *constituent references* of a variable `var` are defined as follows:
+
+- If `var` declares an object, the constituent values and references are the constituent values and references of that object.
+- If `var` declares a reference, the constituent reference is that reference.
+
+For any constituent reference `ref` of a variable `var`, if `ref` is bound to a temporary object or subobject thereof whose lifetime is [extended](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) to that of `ref`, the constituent values and references of that temporary object are also constituent values and references of `var`, recursively.
+
+## Constexpr-representable entities
+
+Objects with static storage duration is *constexpr-referenceable* at any point in the program.
+
+An object `obj` with automatic storage duration is *constexpr-referenceable* from a point `P` if the smallest [scope](/docs/cpp/language/basic_concepts/scope) enclosing the variable `var` and the smallest scope enclosing `P` that are the same function parameter scope that does not associate with the parameter list of a [`requires` expression](/docs/cpp/language/templates/requires), where `var` is the variable corresponding to `obj`'s complete object or the variable to whose lifetime that of `obj` is [extended](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary).
+
+An object or reference `x` is *constexpr-representable* at a point `P` if all following conditions are satisfied:
+
+- For each constituent value of `x` that points to an object `obj`, `obj` is constexpr-referenceable from `P`.
+- For each constituent value of `x` that points past an object `obj`, `obj` is constexpr-referenceable from `P`.
+- For each constituent reference of `x` that refers to an object `obj`, `obj` is constexpr-referenceable from `P`.
+
+</Revision>
+
+<Revision since="C++20">
+
+## Constant-initialized entities
+
+<Revision until="C++26">
+
+A variable or temporary object `obj` is *constant-initialized* if all following conditions are satisfied:
+
+- Either it has an initializer, or its type is [const-default-constructible](/docs/cpp/language/initialization/default_initialization#Default-initialization_of_a_const_object).
+- The [full-expression](/docs/cpp/language/expressions#Full-expressions) of its initialization is a constant expression in the context of requiring a constant expression, except that if `obj` is an object, that full-expression may also invoke [`constexpr` constructors](/docs/cpp/language/declarations/constexpr#constexpr_constructor) for `obj` and its subobjects even if those objects are of non-literal class types.
+
+</Revision>
+
+<Revision since="C++26">
+
+A variable `var` is *constant-initializable* if all following conditions are satisfied:
+
+- The [full-expression](/docs/cpp/language/expressions#Full-expressions) of its initialization is a constant expression in the context of requiring a constant expression.
+- Immediately after the initializing declaration of `var`, the object or reference declared by `var` is constexpr-representable.
+- If the object or reference `x` declared by `var` has static or thread storage duration, `x` is constexpr-representable at the nearest point whose immediate scope is a namespace scope that follows the initializing declaration of `var`.
+
+A constant-initializable variable is *constant-initialized* if either it has an initializer, or its type is [const-default-constructible](/docs/cpp/language/initialization/default_initialization#Default-initialization_of_a_const_object).
+
+</Revision>
+
+## Usable in constant expressions
+
+A variable is *potentially-constant* if it is a [`constexpr` variable](/docs/cpp/language/declarations/constexpr#constexpr_variable) or it has reference or non-volatile const-qualified integral or enumeration type.
+
+A constant-initialized potentially-constant variable `var` is *usable in constant expressions* at a point `P` if `var`'s initializing declaration `D` is reachable from `P` and any of the following conditions is satisfied:
+
+- `var` is a `constexpr` variable.
+- `var` is not initialized to a [TU-local](/docs/cpp/language/declarations/tu_local) value.
+- `P` is in the same translation unit as `D`.
+
+<Revision until="C++26">
+
+An object or reference is *usable in constant expressions* at a point `P` if it is one of the following entities:
+
+- a variable that is usable in constant expressions at `P`
+- a temporary object of non-volatile const-qualified literal type whose lifetime is extended to that of a variable that is usable in constant expressions at `P`
+- a [template parameter object](/docs/cpp/language/templates/template_parameters#template_parameter_object)
+- a [string literal](/docs/cpp/language/expressions/string_literal) object
+- a non-mutable subobject of any of the above
+- a reference member of any of the above
+
+</Revision>
+
+<Revision since="C++26">
+
+An object or reference is *potentially usable in constant expressions* at a point `P` if it is one of the following entities:
+
+- a variable that is usable in constant expressions at `P`
+- a temporary object of non-volatile const-qualified literal type whose lifetime is extended to that of a variable that is usable in constant expressions at `P`
+- a [template parameter object](/docs/cpp/language/templates/template_parameters#template_parameter_object)
+- a [string literal](/docs/cpp/language/expressions/string_literal) object
+- a non-mutable subobject of any of the above
+- a reference member of any of the above
+
+An object or reference is *usable in constant expressions* at point `P` if it is an object or reference that is potentially usable in constant expressions at `P` and is constexpr-representable at `P`.
+
+</Revision>
+
+## Manifestly constant-evaluated expressions
+
+The following expressions (including conversions to the destination type) are *manifestly constant-evaluated*:
+
+- [array bounds](/docs/cpp/language/declarations/array)
+- the dimensions in [`new` expressions](/docs/cpp/language/expressions/new) other than the first
+- [bit-field](/docs/cpp/language/classes/bit_field) lengths
+- [enumeration](/docs/cpp/language/declarations/enum) initializers
+- [alignments](/docs/cpp/language/declarations/alignas)
+- the *constant-expression* of [`case` labels](/docs/cpp/language/statements/switch#Labels)
+- non-type [template arguments](/docs/cpp/language/templates/template_parameters)
+- expressions in [`noexcept` specifications](/docs/cpp/language/exceptions/noexcept_spec)
+- expressions in [`static_assert` declarations](/docs/cpp/language/declarations/static_assert)
+- initializers of [constexpr variables](/docs/cpp/language/declarations/constexpr)
+- conditions of [`constexpr` if-statements](/docs/cpp/language/statements/if#Constexpr_if)
+- expressions in [conditional `explicit` specifiers](/docs/cpp/language/classes/explicit)
+- [immediate invocations](/docs/cpp/language/declarations/consteval)
+- constraint expressions in [concept](/docs/cpp/language/templates/constraints#Concepts) definitions, [nested requirements](/docs/cpp/language/templates/constraints#Nested_requirements), and [`requires` clauses](/docs/cpp/language/templates/constraints#Requires_clauses), when determining whether the constraints are satisfied
+- initializers of variables with reference type or const-qualified integral or enumeration type, but only if the initializers are constant expressions
+- initializers of static and thread local variables, but only if all subexpressions of the initializers (including constructor calls and implicit conversions) are constant expressions (that is, if the initializers are [constant initializers](/docs/cpp/language/initialization/constant_initialization))
+
+Whether an evaluation occurs in a manifestly constant-evaluated context can be detected by [`std::is_constant_evaluated`](/docs/cpp/library/utility/is_constant_evaluated)<InlineRevision since="C++23"> and [`if consteval`](/docs/cpp/language/statements/if#Consteval_if)</InlineRevision>.
+
+</Revision>
+
+## Functions and variables needed for constant evaluation
+
+{/* source:cpp-language-constant-expression:0038 */}
+Following expressions or conversions are potentially constant evaluated:
+
+{/* source:cpp-language-constant-expression:0039 */}
+- manifestly constant-evaluated expressions
+- potentially-evaluated expressions
+- immediate subexpressions of a [braced-enclosed initializer list](/docs/cpp/language/initialization) (constant evaluation may be necessary to determine whether [a conversion is narrowing](/docs/cpp/language/initialization/list_initialization#Narrowing_conversions))
+- address-of expressions that occur within a [templated entity](/docs/cpp/language/templates#Templated_entity) (constant evaluation may be necessary to determine whether such an expression is [value-dependent](/docs/cpp/language/templates/dependent_name#Value-dependent_expressions))
+- subexpressions of one of the above that are not a subexpression of a nested [unevaluated operand](/docs/cpp/language/expressions#Unevaluated_expressions)
+
+{/* source:cpp-language-constant-expression:0040 */}
+A function is needed for constant evaluation if it is a constexpr function and [named by](/docs/cpp/language/basic_concepts/definition#Naming_a_function) an expression that is potentially constant evaluated.
+
+{/* source:cpp-language-constant-expression:0041 */}
+A variable is needed for constant evaluation if it is either a constexpr variable or is of non-volatile const-qualified integral type or of reference type and the [identifier expression](/docs/cpp/language/expressions#Primary_expressions) that denotes it is potentially constant evaluated.
+
+{/* source:cpp-language-constant-expression:0042 */}
+Definition of a defaulted function and instantiation of a [function template](/docs/cpp/language/templates/function_template) specialization<InlineRevision since="C++14"> or [variable template](/docs/cpp/language/templates/variable_template) specialization</InlineRevision> are triggered if the function<InlineRevision since="C++14"> or variable</InlineRevision> is needed for constant evaluation.
+
+## Constant subexpression
+
+{/* source:cpp-language-constant-expression:0043 */}
+A constant subexpression is an expression whose evaluation as [subexpression](/docs/cpp/language/expressions#Full-expressions) of an expression `e` would not prevent `e` from being a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expressions), where `e` is not any of the following expressions:
+
+{/* source:cpp-language-constant-expression:0044 */}
+- [`throw` expression](/docs/cpp/language/exceptions/throw)
+
+{/* source:cpp-language-constant-expression:0045 */}
+- <Revision since="C++20">[yield expression](/docs/cpp/language/functions/coroutines)</Revision>
+
+{/* source:cpp-language-constant-expression:0046 */}
+- [assignment expression](/docs/cpp/language/expressions/operator_assignment)
+- [comma expression](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator)
+
+## Notes
+
+{/* source:cpp-language-constant-expression:0047 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_constexpr_in_decltype`](/docs/cpp/library/feature_test#cpp_constexpr_in_decltype) | [`201711L`](/docs/cpp/library/compiler_support/20#cpp_constexpr_in_decltype_201711L) | (C++20) (DR11) | Generation of function and variable definitions when [needed for constant evaluation](/docs/cpp/language/expressions/constant_expression#Functions_and_variables_needed_for_constant_evaluation) |
+| [`__cpp_constexpr_dynamic_alloc`](/docs/cpp/library/feature_test#cpp_constexpr_dynamic_alloc) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_constexpr_dynamic_alloc_201907L) | (C++20) | Operations for dynamic storage duration in `constexpr` functions |
+| [`__cpp_constexpr`](/docs/cpp/library/feature_test#cpp_constexpr) | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_constexpr_202306L) | (C++26) | `constexpr` cast from `void*`: towards constexpr type-erasure |
+| [`__cpp_constexpr`](/docs/cpp/library/feature_test#cpp_constexpr) | [`202406L`](/docs/cpp/library/compiler_support/26#cpp_constexpr_202406L) | (C++26) | `constexpr` placement `new` and `new[]` |
+| [`__cpp_constexpr_exceptions`](/docs/cpp/library/feature_test#cpp_constexpr_exceptions) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_constexpr_exceptions_202411L) | (C++26) | `constexpr` exceptions |
+
+## Example
+
+{/* source:cpp-language-constant-expression:0048 */}
+This section is incomplete
+
+Reason: no example
+
+## Defect reports
+
+{/* source:cpp-language-constant-expression:0049 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-constant-expression:0050 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={94} standard="C++98">
+    <PublishedBehavior>arithmetic constant expressions could not involve variables and static data members</PublishedBehavior>
+    <CorrectedBehavior>they can</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={366} standard="C++98">
+    <PublishedBehavior>expressions involving string literals could be integral constant expressions</PublishedBehavior>
+    <CorrectedBehavior>they are not</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={457} standard="C++98">
+    <PublishedBehavior>expressions involving volatile variables could be integral constant expressions</PublishedBehavior>
+    <CorrectedBehavior>they are not</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1293} standard="C++11">
+    <PublishedBehavior>it was unclear whether string literals are usable in constant expressions</PublishedBehavior>
+    <CorrectedBehavior>they are usable</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1311} standard="C++11">
+    <PublishedBehavior>volatile glvalues could be used in constant expressions</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1312} standard="C++11">
+    <PublishedBehavior>`reinterpret_cast` is prohibited in constant expressions, but casting to and from `void*` could achieve the same effect</PublishedBehavior>
+    <CorrectedBehavior>prohibited conversions from type *cv* `void*` to a pointer-to-object type</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1313} standard="C++11">
+    <PublishedBehavior>undefined behavior was permitted; all pointer subtraction was prohibited</PublishedBehavior>
+    <CorrectedBehavior>UB prohibited; same-array pointer subtraction OK</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1405} standard="C++11">
+    <PublishedBehavior>for objects that are usable in constant expressions, their mutable subobjects were also usable</PublishedBehavior>
+    <CorrectedBehavior>they are not usable</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1454} standard="C++11">
+    <PublishedBehavior>passing constants through constexpr functions via references was not allowed</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1455} standard="C++11">
+    <PublishedBehavior>converted constant expressions could only be prvalues</PublishedBehavior>
+    <CorrectedBehavior>can be lvalues</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1456} standard="C++11">
+    <PublishedBehavior>an address constant expression could not designate the address one past the end of an array</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1535} standard="C++11">
+    <PublishedBehavior>a `typeid` expression whose operand is of a polymorphic class type was not a core constant expression even if no runtime check is involved</PublishedBehavior>
+    <CorrectedBehavior>the operand constraint is limited to glvalues of polymorphic class types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1581} standard="C++11">
+    <PublishedBehavior>functions needed for constant evaluation were not required to be defined or instantiated</PublishedBehavior>
+    <CorrectedBehavior>required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1613} standard="C++11">
+    <PublishedBehavior>core constant expressions could evaluate any ODR-used reference inside lambda expressions</PublishedBehavior>
+    <CorrectedBehavior>some references could not be evaluated</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1694} standard="C++11">
+    <PublishedBehavior>binding the value of a temporary to a static storage duration reference was a constant expression</PublishedBehavior>
+    <CorrectedBehavior>it is not a constant expression</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1872} standard="C++11">
+    <PublishedBehavior>core constant expressions could invoke `constexpr` function template insantiations that do not satisfy the `constexpr` function requirements</PublishedBehavior>
+    <CorrectedBehavior>such instantiations cannot be invoked</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1952} standard="C++11">
+    <PublishedBehavior>standard library undefined behaviors were required to be diagnosed</PublishedBehavior>
+    <CorrectedBehavior>unspecified whether they are diagnosed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2022} standard="C++98">
+    <PublishedBehavior>the determination of constant expression might depend on whether copy elision is performed</PublishedBehavior>
+    <CorrectedBehavior>assume that copy elision is always performed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2126} standard="C++11">
+    <PublishedBehavior>constant initialized lifetime-extended temporaries of const-qualified literal types were not usable in constant expressions</PublishedBehavior>
+    <CorrectedBehavior>usable</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2129} standard="C++11">
+    <PublishedBehavior>integer literals were not constant expressions</PublishedBehavior>
+    <CorrectedBehavior>they are</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2167} standard="C++11">
+    <PublishedBehavior>non-member references local to an evaluation made the evaluation non-constexpr</PublishedBehavior>
+    <CorrectedBehavior>non-member references allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2278} standard="C++98">
+    <PublishedBehavior>the resolution of [CWG issue 2022](https://cplusplus.github.io/CWG/issues/2022.html) was not implementable</PublishedBehavior>
+    <CorrectedBehavior>assume that copy elision is never performed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2299} standard="C++14">
+    <PublishedBehavior>it was unclear whether macros in [`<cstdarg>`](/docs/cpp/library/headers/cstdarg) can be used in constant evaluation</PublishedBehavior>
+    <CorrectedBehavior>`va_arg` forbidden, `va_start` unspecified</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2400} standard="C++11">
+    <PublishedBehavior>invoking a constexpr virtual function on an object not usable in constant expressions and whose lifetime began outside the expression containing the invocation could be a constant expression</PublishedBehavior>
+    <CorrectedBehavior>it is not a constant expression</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2490} standard="C++20">
+    <PublishedBehavior>(pseudo) destructor calls lacked restrictions in constant evaluation</PublishedBehavior>
+    <CorrectedBehavior>restriction added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2552} standard="C++23">
+    <PublishedBehavior>when evaluating a core constant expression, the control flow could not pass through a declaration of a non-block variable</PublishedBehavior>
+    <CorrectedBehavior>it can</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2558} standard="C++11">
+    <PublishedBehavior>an indeterminate value could be a constant expression</PublishedBehavior>
+    <CorrectedBehavior>not a constant expression</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2647} standard="C++20">
+    <PublishedBehavior>variables of volatile-qualified types could be potentially-constant</PublishedBehavior>
+    <CorrectedBehavior>they are not</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2763} standard="C++11">
+    <PublishedBehavior>the violation of [`[[noreturn]]`](/docs/cpp/language/declarations/attributes/noreturn) was not required to be detected during constant evaluation</PublishedBehavior>
+    <CorrectedBehavior>required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2851} standard="C++11">
+    <PublishedBehavior>converted constant expressions did not allow floating-point conversions</PublishedBehavior>
+    <CorrectedBehavior>allow non-narrowing floating-point conversions</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2907} standard="C++11">
+    <PublishedBehavior>core constant expressions could not apply lvalue-to-rvalue conversions to [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) glvalues</PublishedBehavior>
+    <CorrectedBehavior>can apply such conversions</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2909} standard="C++20">
+    <PublishedBehavior>a variable without an initializer could only be constant-initialized if its default-initialization results in some initialization being performed</PublishedBehavior>
+    <CorrectedBehavior>can only be constant-initialized if its type is const-default-initializable</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2924} standard="C++11 C++23">
+    <PublishedBehavior>it was unspecified whether an expression violating the constraints of [`[[noreturn]]`](/docs/cpp/language/declarations/attributes/noreturn) (C++11) or [`[[assume]]`](/docs/cpp/language/declarations/attributes/assume) (C++23) is a core constant expression</PublishedBehavior>
+    <CorrectedBehavior>it is implementation-defined</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2280R4" standard="C++11">
+    <PublishedBehavior>evaluating an expression containing an identifier expression or `*this` that refers to an object or reference whose lifetime began outside this evaluation is not a constant expression</PublishedBehavior>
+    <CorrectedBehavior>it can be a constant expression</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-constant-expression:0051 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`constexpr` specifier](/docs/cpp/language/declarations/constexpr)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies that the value of a variable or function can be computed at compile time</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_literal_type`](/docs/cpp/library/meta/is_literal_type)<InlineRevision since="C++11" /> (deprecated in C++17) <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a literal type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/language/expressions/constant_expression) for Constant expressions

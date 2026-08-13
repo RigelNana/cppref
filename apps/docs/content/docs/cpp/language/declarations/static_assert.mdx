@@ -1,0 +1,216 @@
+---
+title: "static_assert declaration (since C++11)"
+description: "Performs compile-time assertion checking."
+source_url: "https://en.cppreference.com/w/cpp/language/static_assert"
+language: "C++"
+---
+
+{/* source:cpp-language-static-assert:0000 */}
+Performs compile-time assertion checking.
+
+## Syntax
+
+{/* source:cpp-language-static-assert:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="static_assert( bool-constexpr , unevaluated-string )" />
+  <Declaration id="2" language="cpp" since="C++17" grammar code="static_assert( bool-constexpr )" />
+  <Declaration id="3" language="cpp" since="C++26" grammar code="static_assert( bool-constexpr , constant-expression )" />
+</DeclarationDoc>
+
+{/* source:cpp-language-static-assert:0002 */}
+Declares a static assertion. If the assertion fails, the program is ill-formed, and a diagnostic error message may be generated.
+
+{/* source:cpp-language-static-assert:0003 */}
+1. A static assertion with fixed error message.
+
+{/* source:cpp-language-static-assert:0004 */}
+2. A static assertion without error message.
+
+{/* source:cpp-language-static-assert:0005 */}
+3. A static assertion with user-generated error message.
+
+{/* source:cpp-language-static-assert:0006 */}
+This syntax can only be matched if syntax [(1)](/docs/cpp/language/declarations/static_assert#Version_1) does not match.
+
+## Explanation
+
+{/* source:cpp-language-static-assert:0007 */}
+<ParameterList>
+  <Parameter name="bool-constexpr">
+    <Revision until="C++23">
+    a [contextually converted constant expression of type `bool`](/docs/cpp/language/expressions/constant_expression#Converted_constant_expression). Built-in conversions are not allowed, except for non-[narrowing](/docs/cpp/language/initialization/list_initialization#Narrowing_conversions) [integral conversions](/docs/cpp/language/expressions/implicit_cast#Integral_conversions) to `bool`.
+    </Revision>
+    <Revision since="C++23">
+    an expression [contextually converted to `bool`](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions) where the conversion is a [constant expression](/docs/cpp/language/expressions/constant_expression)
+    </Revision>
+  </Parameter>
+  <Parameter name="unevaluated-string">
+    an [unevaluated string literal](/docs/cpp/language/expressions/string_literal#Unevaluated_strings) that will appear as the error message
+  </Parameter>
+  <Parameter name="constant-expression">
+    a [constant expression](/docs/cpp/language/expressions/constant_expression) `msg` satisfying all following conditions:
+    - `msg.size()` is implicitly convertible to [`std::size_t`](/docs/cpp/library/utility/types/size_t).
+    - `msg.data()` is implicitly convertible to `const char*`.
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-static-assert:0008 */}
+A `static_assert` declaration may appear at namespace and block [scope](/docs/cpp/language/basic_concepts/scope) (as a [block declaration](/docs/cpp/language/declarations)) and inside a class body (as a [member declaration](/docs/cpp/language/classes/class)).
+
+{/* source:cpp-language-static-assert:0009 */}
+If `bool-constexpr` is well-formed and evaluates to `true`, or is evaluated in the context of a template definition and the template is uninstantiated, this declaration has no effect. Otherwise a compile-time error is issued, and the user-provided message, if any, is included in the diagnostic message.
+
+{/* source:cpp-language-static-assert:0010 */}
+The text of the user-provided message is determined as follows:
+
+{/* source:cpp-language-static-assert:0011 */}
+- If the message matches the syntactic requirements of `unevaluated-string`, the text of the message is the text of the `unevaluated-string`.
+
+{/* source:cpp-language-static-assert:0012 */}
+<Revision since="C++26">
+Otherwise, given the following values:
+
+- Let `msg` denote the value of `constant-expression`.
+- Let `len` denote the value of `msg.size()`, which must be a [converted constant expression](/docs/cpp/language/expressions/constant_expression#Converted_constant_expression) of type [`std::size_t`](/docs/cpp/library/utility/types/size_t).
+- Let `ptr` denote the expression `msg.data()`, [implicitly converted](/docs/cpp/language/expressions/implicit_cast) to `const char*`. `ptr` must be a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expression).
+
+The text of the message is formed by the sequence of [len](/docs/cpp/language/basic_concepts/charset#Code_unit_and_literal_encoding) [code units](/docs/cpp/language/basic_concepts/charset#Code_unit_and_literal_encoding), starting at `ptr`, of the [ordinary literal encoding](/docs/cpp/language/basic_concepts/charset#Code_unit_and_literal_encoding). For each integer `i` in `[0, len)`, `ptr[i]` must be an [integral constant expression](/docs/cpp/language/expressions/constant_expression#Integral_constant_expression).
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-static-assert:0013 */}
+The standard does not require a compiler to print the verbatim text of [error message](/docs/cpp/language/declarations/static_assert#error_message), though compilers generally do so as much as possible.
+
+{/* source:cpp-language-static-assert:0014 */}
+<Revision until="C++26">
+Since the error message has to be a string literal, it cannot contain dynamic information or even a [constant expression](/docs/cpp/language/expressions/constant_expression) that is not a string literal itself. In particular, it cannot contain the [name](/docs/cpp/language/basic_concepts/name) of the [template type argument](/docs/cpp/language/templates/template_parameters).
+</Revision>
+
+{/* source:cpp-language-static-assert:0015 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_static_assert`](/docs/cpp/library/feature_test#cpp_static_assert) | [`200410L`](/docs/cpp/library/compiler_support/11#cpp_static_assert_200410L) | (C++11) | `static_assert` (syntax [(1)](/docs/cpp/language/declarations/static_assert#Version_1)) |
+| | [`201411L`](/docs/cpp/library/compiler_support/17#cpp_static_assert_201411L) | (C++17) | Single-argument `static_assert` (syntax [(2)](/docs/cpp/language/declarations/static_assert#Version_2)) |
+| | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_static_assert_202306L) | (C++26) | user-generated error messages (syntax [(3)](/docs/cpp/language/declarations/static_assert#Version_3)) |
+
+## Keywords
+
+{/* source:cpp-language-static-assert:0016 */}
+[`static_assert`](/docs/cpp/language/keywords/static_assert)
+
+## Example
+
+{/* source:cpp-language-static-assert:0017 */}
+```cpp
+#include <format>
+#include <type_traits>
+
+static_assert(03301 == 1729); // since C++17 the message string is optional
+
+template<class T>
+void swap(T& a, T& b) noexcept
+{
+    static_assert(std::is_copy_constructible_v<T>,
+                  "Swap requires copying");
+    static_assert(std::is_nothrow_copy_constructible_v<T> &&
+                  std::is_nothrow_copy_assignable_v<T>,
+                  "Swap requires nothrow copy/assign");
+    auto c = b;
+    b = a;
+    a = c;
+}
+
+template<class T>
+struct data_structure
+{
+    static_assert(std::is_default_constructible_v<T>,
+                  "Data structure requires default-constructible elements");
+};
+
+template<class>
+constexpr bool dependent_false = false; // workaround before CWG2518/P2593R1
+
+template<class T>
+struct bad_type
+{
+    static_assert(dependent_false<T>, "error on instantiation, workaround");
+    static_assert(false, "error on instantiation"); // OK because of CWG2518/P2593R1
+};
+
+struct no_copy
+{
+    no_copy(const no_copy&) = delete;
+    no_copy() = default;
+};
+
+struct no_default
+{
+    no_default() = delete;
+};
+
+#if __cpp_static_assert >= 202306L
+// Not real C++ yet (std::format should be constexpr to work):
+static_assert(sizeof(int) == 4, std::format("Expected 4, got {}", sizeof(int)));
+#endif
+
+int main()
+{
+    int a, b;
+    swap(a, b);
+
+    no_copy nc_a, nc_b;
+    swap(nc_a, nc_b); // 1
+
+    [[maybe_unused]] data_structure<int> ds_ok;
+    [[maybe_unused]] data_structure<no_default> ds_error; // 2
+}
+```
+
+Possible output:
+
+```text
+1: error: static assertion failed: Swap requires copying
+2: error: static assertion failed: Data structure requires default-constructible elements
+3: error: static assertion failed: Expected 4, got 2
+```
+
+## Defect reports
+
+{/* source:cpp-language-static-assert:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-static-assert:0019 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2039} standard="C++11"><PublishedBehavior>only the expression before conversion is required to be constant</PublishedBehavior><CorrectedBehavior>the conversion must also be valid in a constant expression</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2518} standard="C++11"><PublishedBehavior>uninstantiated `static_assert(false, "");` was ill-formed</PublishedBehavior><CorrectedBehavior>made well-formed</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-static-assert:0020 */}
+C++23 standard (ISO/IEC 14882:2024): 9.1 Preamble [dcl.pre] (p: 10)
+
+{/* source:cpp-language-static-assert:0021 */}
+C++20 standard (ISO/IEC 14882:2020): 9.1 Preamble [dcl.pre] (p: 6)
+
+{/* source:cpp-language-static-assert:0022 */}
+C++17 standard (ISO/IEC 14882:2017): 10 Declarations [dcl.dcl] (p: 6)
+
+{/* source:cpp-language-static-assert:0023 */}
+C++14 standard (ISO/IEC 14882:2014): 7 Declarations [dcl.dcl] (p: 4)
+
+{/* source:cpp-language-static-assert:0024 */}
+C++11 standard (ISO/IEC 14882:2011): 7 Declarations [dcl.dcl] (p: 4)
+
+## See also
+
+{/* source:cpp-language-static-assert:0025 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`#error`](/docs/cpp/language/preprocessor/error)</DescriptionTerm><DescriptionBody>shows the given error message and renders the program ill-formed (preprocessing directive)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`assert`](/docs/cpp/library/error/assert)</DescriptionTerm><DescriptionBody>aborts the program if the user-specified condition is not `true`. May be disabled for release builds. (function macro)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`enable_if`](/docs/cpp/library/meta/enable_if) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>conditionally [`removes`](/docs/cpp/language/templates/sfinae) a function overload or template specialization from overload resolution (class template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`Type traits`](/docs/cpp/library/meta#Type_traits) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>define compile-time template-based interfaces to query the properties of types</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/language/declarations/static_assert) for Static assertion

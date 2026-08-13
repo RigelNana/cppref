@@ -1,0 +1,186 @@
+---
+title: "const_cast conversion"
+description: "Converts between types with different cv-qualification."
+source_url: "https://en.cppreference.com/w/cpp/language/const_cast"
+language: "C++"
+---
+
+{/* source:cpp-language-const-cast:0000 */}
+Converts between types with different cv-qualification.
+
+## Syntax
+
+{/* source:cpp-language-const-cast:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="const_cast< target-type >( expression )" />
+</DeclarationDoc>
+
+{/* source:cpp-language-const-cast:0002 */}
+Returns a value of type `target-type`.
+
+## Explanation
+
+{/* source:cpp-language-const-cast:0003 */}
+Only the following conversions can be done with `const_cast`:
+
+{/* source:cpp-language-const-cast:0004 */}
+1. For two [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types) object pointer or pointer to data member types `T1` and `T2`, a prvalue of type `T1` can be converted to `T2` if `T1` and `T2` differ only in cv-qualification (formally, if, considering the [qualification-decompositions](/docs/cpp/language/expressions/implicit_cast#Similar_types) of both types, each `P1_i` is the same as `P2_i` for all `i`).
+   - If `expression` is a null pointer value, the result is also a null pointer value.
+   - If `expression` is a null member pointer value, the result is also a null member pointer value.
+   - If `expression` points to an object, the result points to the same object.
+   - If `expression` points past an object, the result points past the same object.
+   - If `expression` points to a data member, the result points to the same data member.
+
+   <Revision since="C++17">
+   Even if `expression` is a prvalue, [temporary materialization](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) is not performed.
+   </Revision>
+
+{/* source:cpp-language-const-cast:0005 */}
+2. For two [object types](/docs/cpp/language/basic_concepts/type-id#Object_type) `T1` and `T2`, if a pointer to `T1` can be explicitly converted to the type "pointer to `T2`" using `const_cast<T2*>`, then the following conversions can also be made:
+   - An lvalue of type `T1` can be explicitly converted to an lvalue of type `T2` using `const_cast<T2&>`.
+
+   <Revision since="C++11">
+   - A glvalue of type `T1` can be explicitly converted to an xvalue of type `T2` using `const_cast<T2&&>`.
+   - If `T1` is a class or array type, a prvalue of type `T1` can be explicitly converted to an xvalue of type `T2` using `const_cast<T2&&>`.
+   </Revision>
+
+   <Revision until="C++17">
+   The result reference refers to the original object.
+   </Revision>
+
+   <Revision since="C++17">
+   If `expression` is a glvalue, the result reference refers to the original object. Otherwise, the result reference refers to the [materialized temporary](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization).
+   </Revision>
+
+{/* source:cpp-language-const-cast:0006 */}
+As with all cast expressions, the result is:
+
+{/* source:cpp-language-const-cast:0007 */}
+- an lvalue if `target-type` is an lvalue reference type<InlineRevision since="C++11"> or an rvalue reference to function type</InlineRevision>;
+
+{/* source:cpp-language-const-cast:0008 */}
+<Revision since="C++11">
+- an xvalue if `target-type` is an rvalue reference to object type;
+</Revision>
+
+{/* source:cpp-language-const-cast:0009 */}
+- a prvalue otherwise.
+
+## Casting away constness
+
+{/* source:cpp-language-const-cast:0010 */}
+For two different types `T1` and `T2`, a conversion from `T1` to `T2` casts away constness if there exists a [qualification-decomposition](/docs/cpp/language/expressions/implicit_cast#Similar_types) of `T2` of the form "cv2_0 P2_0 cv2_1 P2_1 ... cv2_n−1 P2_n−1 cv2_n U2", and there is no [qualification conversions](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions) that converts `T1` to "cv2_0 P1_0 cv2_1 P1_1 ... cv2_n−1 P1_n−1 cv2_n U1" (same cv-components, different P-components and U-components).
+
+{/* source:cpp-language-const-cast:0011 */}
+If a cast from a prvalue of type `T1*` to the type `T2*` casts away constness, casting from an expression of type `T1` to a reference to `T2` will also cast away constness.
+
+{/* source:cpp-language-const-cast:0012 */}
+Only `const_cast` may be used to cast away constness.
+
+{/* source:cpp-language-const-cast:0013 */}
+"Casting away constness" implies "casting away volatility", as qualification conversions cannot cast away volatility as well.
+
+## Notes
+
+{/* source:cpp-language-const-cast:0014 */}
+Pointers to functions and pointers to member functions are not subject to `const_cast`.
+
+{/* source:cpp-language-const-cast:0015 */}
+`const_cast` makes it possible to form a reference or pointer to non-const type that is actually referring to a [const object](/docs/cpp/language/declarations/cv) or a reference or pointer to non-volatile type that is actually referring to a [volatile object](/docs/cpp/language/declarations/cv). Modifying a const object through a non-const access path and referring to a volatile object through a non-volatile [glvalue](/docs/cpp/language/expressions/value_category#glvalue) results in undefined behavior.
+
+## Keywords
+
+{/* source:cpp-language-const-cast:0016 */}
+[`const_cast`](/docs/cpp/language/keywords/const_cast)
+
+## Example
+
+{/* source:cpp-language-const-cast:0017 */}
+```cpp
+#include <iostream>
+
+struct type
+{
+    int i;
+
+    type(): i(3) {}
+
+    void f(int v) const
+    {
+        // this->i = v;                 // compile error: this is a pointer to const
+        const_cast<type*>(this)->i = v; // OK as long as the type object isn't const
+    }
+};
+
+int main()
+{
+    int i = 3;                 // i is not declared const
+    const int& rci = i;
+    const_cast<int&>(rci) = 4; // OK: modifies i
+    std::cout << "i = " << i << '\n';
+
+    type t; // if this was const type t, then t.f(4) would be undefined behavior
+    t.f(4);
+    std::cout << "type::i = " << t.i << '\n';
+
+    const int j = 3; // j is declared const
+    [[maybe_unused]]
+    int* pj = const_cast<int*>(&j);
+    // *pj = 4;      // undefined behavior
+
+    [[maybe_unused]]
+    void (type::* pmf)(int) const = &type::f; // pointer to member function
+    // const_cast<void(type::*)(int)>(pmf);   // compile error: const_cast does
+                                              // not work on function pointers
+}
+```
+
+Output:
+
+```text
+i = 4
+type::i = 4
+```
+
+## Defect reports
+
+{/* source:cpp-language-const-cast:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-const-cast:0019 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1965} standard="C++11"><PublishedBehavior>`const_cast` could not bind rvalue references to array prvalues</PublishedBehavior><CorrectedBehavior>allowed to bind such references</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2879} standard="C++17"><PublishedBehavior>pointer pvalue operands were materialized</PublishedBehavior><CorrectedBehavior>they are not materialized</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-const-cast:0020 */}
+- C++23 standard (ISO/IEC 14882:2024): 7.6.1.11 Const cast [expr.const.cast]
+
+{/* source:cpp-language-const-cast:0021 */}
+- C++20 standard (ISO/IEC 14882:2020): 7.6.1.10 Const cast [expr.const.cast]
+
+{/* source:cpp-language-const-cast:0022 */}
+- C++17 standard (ISO/IEC 14882:2017): 8.2.11 Const cast [expr.const.cast]
+
+{/* source:cpp-language-const-cast:0023 */}
+- C++14 standard (ISO/IEC 14882:2014): 5.2.11 Const cast [expr.const.cast]
+
+{/* source:cpp-language-const-cast:0024 */}
+- C++11 standard (ISO/IEC 14882:2011): 5.2.11 Const cast [expr.const.cast]
+
+{/* source:cpp-language-const-cast:0025 */}
+- C++98 standard (ISO/IEC 14882:1998): 5.2.11 Const cast [expr.const.cast]
+
+{/* source:cpp-language-const-cast:0026 */}
+- C++03 standard (ISO/IEC 14882:2003): 5.2.11 Const cast [expr.const.cast]
+
+## See also
+
+{/* source:cpp-language-const-cast:0027 */}
+- [`static_cast`](/docs/cpp/language/expressions/static_cast)
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)
+- [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast)
+- [explicit cast](/docs/cpp/language/expressions/explicit_cast)
+- [implicit conversions](/docs/cpp/language/expressions/implicit_cast)

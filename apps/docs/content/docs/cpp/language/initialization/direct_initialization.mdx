@@ -1,0 +1,213 @@
+---
+title: "Direct-initialization"
+description: "Initializes an object from explicit set of constructor arguments."
+source_url: "https://en.cppreference.com/w/cpp/language/direct_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-direct-initialization:0000 */}
+Initializes an object from explicit set of constructor arguments.
+
+## Syntax
+
+{/* source:cpp-language-direct-initialization:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`T object ( arg );
+T object ( arg1, arg2, ... );`} />
+  <Declaration id="2" language="cpp" grammar since="C++11" code={`T object { arg };`} />
+  <Declaration id="3" language="cpp" grammar code={`T ( other )
+T ( arg1, arg2, ... )`} />
+  <Declaration id="4" language="cpp" grammar code={`static_cast<T>(other)`} />
+  <Declaration id="5" language="cpp" grammar code={`new T( args, ... )`} />
+  <Declaration id="6" language="cpp" grammar code={`Class::Class() : member( args, ... ) { ... }`} />
+  <Declaration id="7" language="cpp" grammar since="C++11" code={`[ arg ]() { ... }`} />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-direct-initialization:0002 */}
+Direct-initialization is performed in the following situations:
+
+{/* source:cpp-language-direct-initialization:0003 */}
+1. Initialization with a nonempty parenthesized list of expressions <InlineRevision since="C++11">or braced-init-lists</InlineRevision>.
+
+{/* source:cpp-language-direct-initialization:0004 */}
+2. Initialization of an object of non-class type with a single brace-enclosed initializer <InlineRevision since="C++11">(note: for class types and other uses of braced-init-list, see [list-initialization](/docs/cpp/language/initialization/list_initialization))</InlineRevision>.
+
+{/* source:cpp-language-direct-initialization:0005 */}
+3. Initialization of <InlineRevision until="C++17">a prvalue temporary</InlineRevision><InlineRevision since="C++17">the result object of a prvalue</InlineRevision> by [function-style cast](/docs/cpp/language/expressions/explicit_cast) or with a parenthesized expression list.
+
+{/* source:cpp-language-direct-initialization:0006 */}
+4. Initialization of <InlineRevision until="C++17">a prvalue temporary</InlineRevision><InlineRevision since="C++17">the result object of a prvalue</InlineRevision> by a [static_cast](/docs/cpp/language/expressions/static_cast) expression.
+
+{/* source:cpp-language-direct-initialization:0007 */}
+5. Initialization of an object with dynamic storage duration by a new-expression with an initializer.
+
+{/* source:cpp-language-direct-initialization:0008 */}
+6. Initialization of a base or a non-static member by constructor [initializer list](/docs/cpp/language/classes/initializer_list).
+
+{/* source:cpp-language-direct-initialization:0009 */}
+7. Initialization of closure object members from the variables caught by copy in a lambda-expression.
+
+{/* source:cpp-language-direct-initialization:0010 */}
+The effects of direct-initialization are:
+
+{/* source:cpp-language-direct-initialization:0011 */}
+- If `T` is an array type,
+
+{/* source:cpp-language-direct-initialization:0012 */}
+  <Revision until="C++20">
+  the program is ill-formed.
+  </Revision>
+
+  <Revision since="C++20">
+  the array is initialized as in [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization), except that narrowing conversions are allowed and any elements without an initializer are [value-initialized](/docs/cpp/language/initialization/value_initialization).
+
+  ```cpp
+  struct A
+  {
+      explicit A(int i = 0) {}
+  };
+
+  A a[2](A(1)); // OK: initializes a[0] with A(1) and a[1] with A()
+  A b[2]{A(1)}; // error: implicit copy-list-initialization of b[1]
+                //        from {} selected explicit constructor
+  ```
+  </Revision>
+
+{/* source:cpp-language-direct-initialization:0013 */}
+- If `T` is a class type,
+
+{/* source:cpp-language-direct-initialization:0014 */}
+  <Revision since="C++17">
+  if the initializer is a [prvalue](/docs/cpp/language/expressions/value_category) expression whose type is the same class as `T` (ignoring cv-qualification), the initializer expression itself, rather than a temporary materialized from it, is used to initialize the destination object.
+  (Before C++17, the compiler may elide the construction from the prvalue temporary in this case, but the appropriate constructor must still be accessible: see [copy elision](/docs/cpp/language/initialization/copy_elision))
+  </Revision>
+
+{/* source:cpp-language-direct-initialization:0015 */}
+  the constructors of `T` are examined and the best match is selected by overload resolution. The constructor is then called to initialize the object.
+
+{/* source:cpp-language-direct-initialization:0016 */}
+  <Revision since="C++20">
+  otherwise, if the destination type is a (possibly cv-qualified) aggregate class, it is initialized as described in [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization) except that narrowing conversions are permitted, designated initializers are not allowed, a temporary bound to a reference does not have its lifetime extended, there is no brace elision, and any elements without an initializer are [value-initialized](/docs/cpp/language/initialization/value_initialization).
+
+  ```cpp
+  struct B
+  {
+      int a;
+      int&& r;
+  };
+
+  int f();
+  int n = 10;
+
+  B b1{1, f()};            // OK, lifetime is extended
+  B b2(1, f());            // well-formed, but dangling reference
+  B b3{1.0, 1};            // error: narrowing conversion
+  B b4(1.0, 1);            // well-formed, but dangling reference
+  B b5(1.0, std::move(n)); // OK
+  ```
+  </Revision>
+
+{/* source:cpp-language-direct-initialization:0017 */}
+- Otherwise, if `T` is a non-class type but the source type is a class type, the conversion functions of the source type and its base classes, if any, are examined and the best match is selected by overload resolution. The selected user-defined conversion is then used to convert the initializer expression into the object being initialized.
+- Otherwise, if `T` is `bool` and the source type is [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t), the value of the initialized object is `false`.
+- Otherwise, [standard conversions](/docs/cpp/language/expressions/implicit_cast) are used, if necessary, to convert the value of *other* to the cv-unqualified version of `T`, and the initial value of the object being initialized is the (possibly converted) value.
+
+## Notes
+
+{/* source:cpp-language-direct-initialization:0018 */}
+Direct-initialization is more permissive than copy-initialization: copy-initialization only considers non-[explicit](/docs/cpp/language/classes/explicit) constructors and non-explicit user-defined [conversion functions](/docs/cpp/language/expressions/cast_operator), while direct-initialization considers all constructors and all user-defined conversion functions.
+
+{/* source:cpp-language-direct-initialization:0019 */}
+In case of ambiguity between a variable declaration using the direct-initialization syntax (1) (with round parentheses) and a [function declaration](/docs/cpp/language/functions/function), the compiler always chooses function declaration. This disambiguation rule is sometimes counter-intuitive and has been called the [most vexing parse](https://en.wikipedia.org/wiki/most_vexing_parse).
+
+{/* source:cpp-language-direct-initialization:0020 */}
+```cpp
+#include <fstream>
+#include <iterator>
+#include <string>
+
+int main()
+{
+    std::ifstream file("data.txt");
+
+    // The following is a function declaration:
+    std::string foo1(std::istreambuf_iterator<char>(file),
+                     std::istreambuf_iterator<char>());
+    // It declares a function called foo1, whose return type is std::string,
+    // first parameter has type std::istreambuf_iterator<char> and the name "file",
+    // second parameter has no name and has type std::istreambuf_iterator<char>(),
+    // which is rewritten to function pointer type std::istreambuf_iterator<char>(*)()
+
+    // Pre-C++11 fix (to declare a variable) - add extra parentheses around one
+    // of the arguments:
+    std::string str1((std::istreambuf_iterator<char>(file)),
+                      std::istreambuf_iterator<char>());
+
+    // Post-C++11 fix (to declare a variable) - use list-initialization for any
+    // of the arguments:
+    std::string str2(std::istreambuf_iterator<char>{file}, {});
+}
+```
+
+## Example
+
+{/* source:cpp-language-direct-initialization:0021 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <string>
+
+struct Foo
+{
+    int mem;
+    explicit Foo(int n) : mem(n) {}
+};
+
+int main()
+{
+    std::string s1("test"); // constructor from const char*
+    std::string s2(10, 'a');
+
+    std::unique_ptr<int> p(new int(1));  // OK: explicit constructors allowed
+//  std::unique_ptr<int> p = new int(1); // error: constructor is explicit
+
+    Foo f(2); // f is direct-initialized:
+              // constructor parameter n is copy-initialized from the rvalue 2
+              // f.mem is direct-initialized from the parameter n
+//  Foo f2 = 2; // error: constructor is explicit
+
+    std::cout << s1 << ' ' << s2 << ' ' << *p << ' ' << f.mem  << '\n';
+}
+```
+
+Output:
+
+```text
+test aaaaaaaaaa 1 2
+```
+
+## See also
+
+{/* source:cpp-language-direct-initialization:0022 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [explicit](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+- [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+- [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+- [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+- [default initialization](/docs/cpp/language/initialization/default_initialization)
+- [initializer list](/docs/cpp/language/classes/initializer_list)
+- [list initialization](/docs/cpp/language/initialization/list_initialization)
+- [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+- [value initialization](/docs/cpp/language/initialization/value_initialization)
+- [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

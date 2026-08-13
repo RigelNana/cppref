@@ -1,0 +1,206 @@
+---
+title: "User-defined conversion function"
+description: "Enables implicit conversion or explicit conversion from a class type to another type."
+source_url: "https://en.cppreference.com/w/cpp/language/cast_operator"
+language: "C++"
+---
+
+{/* source:cpp-language-cast-operator:0000 */}
+Enables [implicit conversion](/docs/cpp/language/expressions/implicit_cast) or [explicit conversion](/docs/cpp/language/expressions/explicit_cast) from a [class type](/docs/cpp/language/classes/class) to another type.
+
+## Syntax
+
+{/* source:cpp-language-cast-operator:0001 */}
+Conversion function is declared like a [non-static member function](/docs/cpp/language/classes/member_functions) or member [function template](/docs/cpp/language/templates/function_template) with no parameters, no explicit return type, and with the name of the form:
+
+{/* source:cpp-language-cast-operator:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="operator conversion-type-id" />
+  <Declaration id="2" language="cpp" grammar since="C++11" code="explicit operator conversion-type-id" />
+  <Declaration id="3" language="cpp" grammar since="C++20" code="explicit ( expression ) operator conversion-type-id" />
+</DeclarationDoc>
+
+{/* source:cpp-language-cast-operator:0003 */}
+1) Declares a user-defined conversion function that participates in all [implicit](/docs/cpp/language/expressions/implicit_cast) and [explicit conversions](/docs/cpp/language/expressions/explicit_cast).
+
+{/* source:cpp-language-cast-operator:0004 */}
+2) Declares a user-defined conversion function that participates in [direct-initialization](/docs/cpp/language/initialization/direct_initialization) and [explicit conversions](/docs/cpp/language/expressions/explicit_cast) only.
+
+{/* source:cpp-language-cast-operator:0005 */}
+3) Declares a user-defined conversion function that is [conditionally explicit](/docs/cpp/language/classes/explicit).
+
+{/* source:cpp-language-cast-operator:0006 */}
+*conversion-type-id* is a [type-id](/docs/cpp/language/basic_concepts/type-id#Type_naming) except that function and array operators `[]` or `()` are not allowed in its declarator (thus conversion to types such as pointer to array requires a type alias/typedef or an identity template: see below). Regardless of typedef, *conversion-type-id* cannot represent an array or a function type.
+
+{/* source:cpp-language-cast-operator:0007 */}
+Although the return type is not allowed in the declaration of a user-defined conversion function, the *decl-specifier-seq* of [the declaration grammar](/docs/cpp/language/declarations#Specifiers) may be present and may include any specifier other than *type-specifier* or the keyword `static`, In particular, besides [`explicit`](/docs/cpp/language/classes/explicit), the specifiers [`inline`](/docs/cpp/language/declarations/inline), [`virtual`](/docs/cpp/language/classes/virtual)<InlineRevision since="C++11">, [`constexpr`](/docs/cpp/language/declarations/constexpr)</InlineRevision><InlineRevision since="C++20">, [`consteval`](/docs/cpp/language/declarations/consteval)</InlineRevision>, and [`friend`](/docs/cpp/language/classes/friend) are also allowed (note that `friend` requires a qualified name: `friend A::operator B();`).
+
+{/* source:cpp-language-cast-operator:0008 */}
+When such member function is declared in class X, it performs conversion from X to conversion-type-id:
+
+{/* source:cpp-language-cast-operator:0009 */}
+```cpp
+struct X
+{
+    // implicit conversion
+    operator int() const { return 7; }
+ 
+    // explicit conversion
+    explicit operator int*() const { return nullptr; }
+ 
+    // Error: array operator not allowed in conversion-type-id
+//  operator int(*)[3]() const { return nullptr; }
+ 
+    using arr_t = int[3];
+    operator arr_t*() const { return nullptr; } // OK if done through typedef
+//  operator arr_t () const; // Error: conversion to array not allowed in any case
+};
+ 
+int main()
+{
+    X x;
+ 
+    int n = static_cast<int>(x);   // OK: sets n to 7
+    int m = x;                     // OK: sets m to 7
+ 
+    int* p = static_cast<int*>(x); // OK: sets p to null
+//  int* q = x; // Error: no implicit conversion
+ 
+    int (*pa)[3] = x;  // OK
+}
+```
+
+## Explanation
+
+{/* source:cpp-language-cast-operator:0010 */}
+User-defined conversion function is invoked in the second stage of the [implicit conversion](/docs/cpp/language/expressions/implicit_cast), which consists of zero or one [converting constructor](/docs/cpp/language/classes/converting_constructor) or zero or one user-defined conversion function.
+
+{/* source:cpp-language-cast-operator:0011 */}
+If both conversion functions and converting constructors can be used to perform some user-defined conversion, the conversion functions and constructors are both considered by [overload resolution](/docs/cpp/language/functions/overload_resolution) in [copy-initialization](/docs/cpp/language/initialization/copy_initialization) and [reference-initialization](/docs/cpp/language/initialization/reference_initialization) contexts, but only the constructors are considered in [direct-initialization](/docs/cpp/language/initialization/direct_initialization) contexts.
+
+{/* source:cpp-language-cast-operator:0012 */}
+```cpp
+struct To
+{
+    To() = default;
+    To(const struct From&) {} // converting constructor
+};
+ 
+struct From
+{
+    operator To() const {return To();} // conversion function
+};
+ 
+int main()
+{
+    From f;
+    To t1(f);  // direct-initialization: calls the constructor
+    // Note: if converting constructor is not available, implicit copy constructor
+    // will be selected, and conversion function will be called to prepare its argument
+ 
+//  To t2 = f; // copy-initialization: ambiguous
+    // Note: if conversion function is from a non-const type, e.g.
+    // From::operator To();, it will be selected instead of the ctor in this case
+ 
+    To t3 = static_cast<To>(f); // direct-initialization: calls the constructor
+    const To& r = f;            // reference-initialization: ambiguous
+}
+```
+
+{/* source:cpp-language-cast-operator:0013 */}
+Conversion function to its own (possibly cv-qualified) class (or to a reference to it), to the base of its own class (or to a reference to it), and to the type `void` can be defined, but can not be executed as part of the conversion sequence, except, in some cases, through [virtual](/docs/cpp/language/classes/virtual) dispatch:
+
+{/* source:cpp-language-cast-operator:0014 */}
+```cpp
+struct D;
+ 
+struct B
+{
+    virtual operator D() = 0;
+};
+ 
+struct D : B
+{
+    operator D() override { return D(); }
+};
+ 
+int main()
+{
+    D obj;
+    D obj2 = obj; // does not call D::operator D()
+    B& br = obj;
+    D obj3 = br;  // calls D::operator D() through virtual dispatch
+}
+```
+
+{/* source:cpp-language-cast-operator:0015 */}
+It can also be called using member function call syntax:
+
+{/* source:cpp-language-cast-operator:0016 */}
+```cpp
+struct B {};
+ 
+struct X : B
+{
+    operator B&() { return *this; };
+};
+ 
+int main()
+{
+    X x;
+    B& b1 = x;                  // does not call X::operatorB&()
+    B& b2 = static_cast<B&>(x); // does not call X::operatorB&
+    B& b3 = x.operator B&();    // calls X::operatorB&
+}
+```
+
+{/* source:cpp-language-cast-operator:0017 */}
+When making an explicit call to the conversion function, *conversion-type-id* is greedy: it is the longest sequence of tokens that could possibly form a *conversion-type-id* <InlineRevision since="C++11">(including attributes, if any)</InlineRevision>:
+
+{/* source:cpp-language-cast-operator:0018 */}
+```cpp
+& x.operator int * a; // error: parsed as & (x.operator int*) a,
+                      //           not as & (x.operator int) * a
+ 
+operator int [[noreturn]] (); // error: noreturn attribute applied to a type
+```
+
+{/* source:cpp-language-cast-operator:0019 */}
+<Revision since="C++14">
+The placeholder [auto](/docs/cpp/language/declarations/auto) can be used in *conversion-type-id*, indicating a [deduced return type](/docs/cpp/language/functions/function#Return_type_deduction):
+
+```cpp
+struct X
+{
+    operator int(); // OK
+    operator auto() -> short; // error: trailing return type not part of syntax
+    operator auto() const { return 10; } // OK: deduced return type
+    operator decltype(auto)() const { return 10l; } // OK: deduced return type
+};
+```
+
+Note: a [conversion function template](/docs/cpp/language/templates/member_template#Conversion_function_templates) is not allowed to have a deduced return type.
+</Revision>
+
+{/* source:cpp-language-cast-operator:0020 */}
+Conversion functions can be inherited and can be [virtual](/docs/cpp/language/classes/virtual), but cannot be [static](/docs/cpp/language/classes/static). A conversion function in the derived class does not hide a conversion function in the base class unless they are converting to the same type.
+
+{/* source:cpp-language-cast-operator:0021 */}
+Conversion function can be a template member function, for example, [std::auto_ptr\<T\>::operator auto_ptr\<Y\>](/docs/cpp/library/memory/auto_ptr/operator_auto_ptr). See [member template](/docs/cpp/language/templates/member_template#Conversion_function_templates) and [template argument deduction](/docs/cpp/language/templates/template_argument_deduction#Conversion_function_template) for applicable special rules.
+
+## Keywords
+
+{/* source:cpp-language-cast-operator:0022 */}
+[`operator`](/docs/cpp/language/keywords/operator)
+
+## Defect reports
+
+{/* source:cpp-language-cast-operator:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-cast-operator:0024 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={296} standard="C++98"><PublishedBehavior>conversion functions could be static</PublishedBehavior><CorrectedBehavior>they cannot be declared static</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2016} standard="C++98"><PublishedBehavior>conversion functions could not specify return types, but the types are present in *conversion-type-id*</PublishedBehavior><CorrectedBehavior>return types cannot be specified in the declaration specifiers of conversion functions</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2175} standard="C++11"><PublishedBehavior>it was unclear whether the `[[noreturn]]` in `operator int [[noreturn]] ();` is parsed as a part of *noptr-declarator* (of function declarator) or *conversion-type-id*</PublishedBehavior><CorrectedBehavior>it is parsed as a part of *conversion-type-id*</CorrectedBehavior></DefectReport>
+</DefectReportList>

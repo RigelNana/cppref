@@ -1,0 +1,156 @@
+---
+title: "Zero-initialization"
+description: "Sets the initial value of an object to zero."
+source_url: "https://en.cppreference.com/w/cpp/language/zero_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-zero-initialization:0000 */}
+Sets the initial value of an object to zero.
+
+## Syntax
+
+{/* source:cpp-language-zero-initialization:0001 */}
+Note that this is not the syntax for zero-initialization, which does not have a dedicated syntax in the language. These are examples of other types of initializations, which might perform zero-initialization.
+
+{/* source:cpp-language-zero-initialization:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`static T object ;`} />
+  <Declaration id="2" language="cpp" grammar code={`T () ;`} />
+  <Declaration id="2" language="cpp" grammar code={`T t = {} ;`} />
+  <Declaration id="2" language="cpp" grammar code={`T {} ;`} since="C++11" />
+  <Declaration id="3" language="cpp" grammar code={`CharT array [ n ] = " short-sequence ";`} />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-zero-initialization:0003 */}
+Zero-initialization is performed in the following situations:
+
+{/* source:cpp-language-zero-initialization:0004 */}
+1. For every named variable with static<InlineRevision since="C++11"> or thread-local</InlineRevision> [storage duration](/docs/cpp/language/declarations/storage_duration) that is not subject to [constant initialization](/docs/cpp/language/initialization/constant_initialization), before any other initialization.
+
+{/* source:cpp-language-zero-initialization:0005 */}
+2. As part of [value-initialization](/docs/cpp/language/initialization/value_initialization) sequence for non-class types and for members of value-initialized class types that have no constructors, including value initialization of elements of [aggregates](/docs/cpp/language/initialization/aggregate_initialization) for which no initializers are provided.
+
+{/* source:cpp-language-zero-initialization:0006 */}
+3. When an array of any [character type](/docs/cpp/language/basic_concepts/types#Character_types) is [initialized with a string literal](/docs/cpp/language/initialization/aggregate_initialization#Character_arrays) that is too short, the remainder of the array is zero-initialized.
+
+{/* source:cpp-language-zero-initialization:0007 */}
+The effects of zero-initialization are:
+
+{/* source:cpp-language-zero-initialization:0008 */}
+- If `T` is a [scalar type](/docs/cpp/library/named_req/ScalarType), the object is initialized to the value obtained by [explicitly converting](/docs/cpp/language/expressions/explicit_cast) the integer literal `0` (zero) to `T`.
+- If `T` is a non-union class type:
+  {/* source:cpp-language-zero-initialization:0009 */}
+  - all [padding bits](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation) are initialized to zero bits,
+  - each non-static [data member](/docs/cpp/language/classes/data_members) is zero-initialized,
+  - each non-virtual base class [subobject](/docs/cpp/language/basic_concepts/objects#Subobjects) is zero-initialized, and
+  - if the object is not a base class subobject, each [virtual base class](/docs/cpp/language/classes/derived_class#Virtual_base_classes) subobject is zero-initialized.
+
+{/* source:cpp-language-zero-initialization:0010 */}
+- If `T` is a union type:
+  {/* source:cpp-language-zero-initialization:0011 */}
+  - all padding bits are initialized to zero bits, and
+  - the object's first non-static named data member is zero-initialized.
+
+{/* source:cpp-language-zero-initialization:0012 */}
+- If `T` is array type, each element is zero-initialized.
+- If `T` is reference type, nothing is done.
+
+## Notes
+
+{/* source:cpp-language-zero-initialization:0013 */}
+As described in [non-local initialization](/docs/cpp/language/initialization#Non-local_variables), static<InlineRevision since="C++11"> and thread-local</InlineRevision> variables that aren't constant-initialized are zero-initialized before any other initialization takes place. If the definition of a non-class non-local variable has no initializer, then default initialization does nothing, leaving the result of the earlier zero-initialization unmodified.
+
+{/* source:cpp-language-zero-initialization:0014 */}
+A zero-initialized pointer is the null pointer value of its type, even if the value of the null pointer is not integral zero.
+
+## Example
+
+{/* source:cpp-language-zero-initialization:0015 */}
+```cpp
+#include <iostream>
+#include <string>
+
+struct A
+{
+    int a, b, c;
+};
+
+double f[3];   // zero-initialized to three 0.0's
+
+int* p;        // zero-initialized to null pointer value
+               // (even if the value is not integral 0)
+
+std::string s; // zero-initialized to indeterminate value, then
+               // default-initialized to "" by the std::string default constructor
+
+int main(int argc, char*[])
+{
+    delete p; // safe to delete a null pointer
+
+    static int n = argc; // zero-initialized to 0 then copy-initialized to argc
+    std::cout << "n = " << n << '\n';
+
+    A a = A(); // the effect is same as: A a{}; or A a = {};
+    std::cout << "a = {" << a.a << ' ' << a.b << ' ' << a.c << "}\n";
+}
+```
+
+Possible output:
+
+```text
+n = 1
+a = {0 0 0}
+```
+
+## Defect reports
+
+{/* source:cpp-language-zero-initialization:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-zero-initialization:0017 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={277} standard="C++98">
+    <PublishedBehavior>pointers might be initialized with a non-constant expression of value 0, which is not a null pointer constant</PublishedBehavior>
+    <CorrectedBehavior>must initialize with an integral constant expression of value 0</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={694} standard="C++98">
+    <PublishedBehavior>zero-initialization for class types ignored padding</PublishedBehavior>
+    <CorrectedBehavior>padding is initialized to zero bits</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={903} standard="C++98">
+    <PublishedBehavior>zero-initialization for scalar types set the initial value to the value converted from an integral constant expression with value 0</PublishedBehavior>
+    <CorrectedBehavior>the object is initialized to the value converted from the integer literal `0`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2026} standard="C++98">
+    <PublishedBehavior>zero-initialization was specified to always occur first, even before constant initialization</PublishedBehavior>
+    <CorrectedBehavior>no zero-initialization if constant initialization applies</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2196} standard="C++98">
+    <PublishedBehavior>zero-initialization for class types ignored base class subobjects</PublishedBehavior>
+    <CorrectedBehavior>they are also zero-initialized</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2253} standard="C++98">
+    <PublishedBehavior>it was unclear whether zero-initialization applies to unnamed bit-fields</PublishedBehavior>
+    <CorrectedBehavior>it applies (all padding bits are initialized to zero bits)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-zero-initialization:0018 */}
+- [constructor](/docs/cpp/language/classes/initializer_list)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [initialization](/docs/cpp/language/initialization)
+  - [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+  - [default initialization](/docs/cpp/language/initialization/default_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [`new`](/docs/cpp/language/expressions/new)

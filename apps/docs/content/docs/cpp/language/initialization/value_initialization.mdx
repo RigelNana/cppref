@@ -1,0 +1,184 @@
+---
+title: "Value-initialization"
+description: "This is the initialization performed when an object is constructed with an empty initializer."
+source_url: "https://en.cppreference.com/w/cpp/language/value_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-value-initialization:0000 */}
+This is the initialization performed when an object is constructed with an empty initializer.
+
+## Syntax
+
+{/* source:cpp-language-value-initialization:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`T ()`} />
+  <Declaration id="2" language="cpp" grammar code={`new T ()`} />
+  <Declaration id="3" language="cpp" grammar code={`Class :: Class ( ... ) : member () { ... }`} />
+  <Declaration id="4" language="cpp" grammar since="C++11" code={`T object {};`} />
+  <Declaration id="5" language="cpp" grammar since="C++11" code={`T {}`} />
+  <Declaration id="6" language="cpp" grammar since="C++11" code={`new T {}`} />
+  <Declaration id="7" language="cpp" grammar since="C++11" code={`Class :: Class ( ... ) : member {} { ... }`} />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-value-initialization:0002 */}
+Value-initialization is performed in these situations:
+
+{/* source:cpp-language-value-initialization:0003 */}
+- 1,5) when a nameless temporary object is created with the initializer consisting of an empty pair of parentheses<InlineRevision since="C++11"> or braces</InlineRevision>;
+
+{/* source:cpp-language-value-initialization:0004 */}
+- 2,6) when an object with dynamic storage duration is created by a [new expression](/docs/cpp/language/expressions/new) with the initializer consisting of an empty pair of parentheses<InlineRevision since="C++11"> or braces</InlineRevision>;
+
+{/* source:cpp-language-value-initialization:0005 */}
+- 3,7) when a non-static data member or a base class is initialized using a [member initializer](/docs/cpp/language/classes/initializer_list) with an empty pair of parentheses<InlineRevision since="C++11"> or braces</InlineRevision>;
+
+{/* source:cpp-language-value-initialization:0006 */}
+- 4) when a named object (automatic, static, or thread-local) is declared with the initializer consisting of a pair of braces.
+
+{/* source:cpp-language-value-initialization:0007 */}
+In all cases, if the empty pair of braces {} is used and `T` is an aggregate type, [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization) is performed instead of value-initialization.
+
+<Revision since="C++11">
+
+{/* source:cpp-language-value-initialization:0008 */}
+If `T` is a class type that has no default constructor but has a constructor taking [`std::initializer_list`](/docs/cpp/library/utility/initializer_list), [list-initialization](/docs/cpp/language/initialization/list_initialization) is performed.
+
+</Revision>
+
+{/* source:cpp-language-value-initialization:0009 */}
+The effects of value-initialization are:
+
+{/* source:cpp-language-value-initialization:0010 */}
+- If `T` is a (possibly cv-qualified) class type:
+  {/* source:cpp-language-value-initialization:0011 */}
+  - If the default-initialization for `T` selects a [constructor](/docs/cpp/language/classes/initializer_list), and the constructor is not <InlineRevision until="C++11">user-declared</InlineRevision><InlineRevision since="C++11">[user-provided](/docs/cpp/language/functions/function#User-provided_functions)</InlineRevision>, the object is first [zero-initialized](/docs/cpp/language/initialization/zero_initialization).
+  - In any case, the object is [default-initialized](/docs/cpp/language/initialization/default_initialization).
+
+{/* source:cpp-language-value-initialization:0012 */}
+- Otherwise, if `T` is an array type, each element of the array is value-initialized. Otherwise, the object is zero-initialized.
+
+## Notes
+
+{/* source:cpp-language-value-initialization:0013 */}
+The syntax `T object();` does not initialize an object; it declares a function that takes no arguments and returns `T`. The way to value-initialize a named variable before C++11 was `T object = T();`, which value-initializes a temporary and then copy-initializes the object: most compilers [optimize out the copy](/docs/cpp/language/initialization/copy_elision) in this case.
+
+{/* source:cpp-language-value-initialization:0014 */}
+References cannot be value-initialized.
+
+{/* source:cpp-language-value-initialization:0015 */}
+As described in [function-style cast](/docs/cpp/language/expressions/explicit_cast), the syntax `T()` (1) is prohibited if `T` names an array type, while `T{}` (5) is allowed.
+
+{/* source:cpp-language-value-initialization:0016 */}
+All standard containers ([`std::vector`](/docs/cpp/library/container/vector), [`std::list`](/docs/cpp/library/container/list), etc.) value-initialize their elements when constructed with a single `size_type` argument or when grown by a call to `resize()`, unless their allocator customizes the behavior of `construct`.
+
+## Example
+
+{/* source:cpp-language-value-initialization:0017 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <string>
+#include <vector>
+
+struct T1
+{
+    int mem1;
+    std::string mem2;
+    virtual void foo() {} // make sure T1 is not an aggregate
+}; // implicit default constructor
+
+struct T2
+{
+    int mem1;
+    std::string mem2;
+    T2(const T2&) {} // user-provided copy constructor
+};                   // no default constructor
+
+struct T3
+{
+    int mem1;
+    std::string mem2;
+    T3() {} // user-provided default constructor
+};
+
+std::string s{}; // class => default-initialization, the value is ""
+
+int main()
+{
+    int n{};                // scalar => zero-initialization, the value is 0
+    assert(n == 0);
+    double f = double();    // scalar => zero-initialization, the value is 0.0
+    assert(f == 0.0);
+    int* a = new int[10](); // array => value-initialization of each element
+    assert(a[9] == 0);      //          the value of each element is 0
+    T1 t1{};                // class with implicit default constructor =>
+    assert(t1.mem1 == 0);   //     t1.mem1 is zero-initialized, the value is 0
+    assert(t1.mem2 == "");  //     t1.mem2 is default-initialized, the value is ""
+//  T2 t2{};                // error: class with no default constructor
+    T3 t3{};                // class with user-provided default constructor =>
+    std::cout << t3.mem1;   //     t3.mem1 is default-initialized to indeterminate value
+    assert(t3.mem2 == "");  //     t3.mem2 is default-initialized, the value is ""
+    std::vector<int> v(3);  // value-initialization of each element
+    assert(v[2] == 0);      // the value of each element is 0
+    std::cout << '\n';
+    delete[] a;
+}
+```
+
+Possible output:
+
+```text
+42
+```
+
+## Defect reports
+
+{/* source:cpp-language-value-initialization:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-value-initialization:0019 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={178} standard="C++98">
+    <PublishedBehavior>there was no value-initialization; empty initializer invoked default-initialization (though `new T()` also performs zero-initialization)</PublishedBehavior>
+    <CorrectedBehavior>empty initializer invoke value-initialization</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={543} standard="C++98">
+    <PublishedBehavior>value-initialization for a class object without any user-provided constructors was equivalent to value-initializing each subobject (which need not zero-initialize a member with user-provided default constructor)</PublishedBehavior>
+    <CorrectedBehavior>zero-initializes the entire object, then calls the default constructor</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1301} standard="C++11">
+    <PublishedBehavior>value-initialization of unions with deleted default constructors led to zero-initialization</PublishedBehavior>
+    <CorrectedBehavior>they are default-initialized</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1368} standard="C++98">
+    <PublishedBehavior>any user-provided constructor caused zero-initialization to be skipped</PublishedBehavior>
+    <CorrectedBehavior>only a user-provided default constructor skips zero-initialization</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1502} standard="C++11">
+    <PublishedBehavior>value-initializing a union without a user-provided default constructor only zero-initialized the object, despite default member initializers</PublishedBehavior>
+    <CorrectedBehavior>performs default-initialization after zero-initialization</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1507} standard="C++98">
+    <PublishedBehavior>value-initialization for a class object without any user-provided constructors did not check the validity of the default constructor when the latter is trivial</PublishedBehavior>
+    <CorrectedBehavior>the validity of trivial default constructor is checked</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2820} standard="C++98">
+    <PublishedBehavior>the default-initialization following the zero-initialization required a non-trivial constructor</PublishedBehavior>
+    <CorrectedBehavior>not required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2859} standard="C++98">
+    <PublishedBehavior>value-initialization for a class object might involve zero-initialization even if the default-initialization does not actually select a user-provided constructor</PublishedBehavior>
+    <CorrectedBehavior>there is no zero-initialization in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-value-initialization:0020 */}
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [explicit](/docs/cpp/language/classes/explicit)
+- [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+- [list-initialization](/docs/cpp/language/initialization/list_initialization)

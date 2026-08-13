@@ -1,0 +1,425 @@
+---
+title: "Storage class specifiers"
+description: "The storage class specifiers are a part of the decl-specifier-seq of a name's declaration syntax."
+source_url: "https://en.cppreference.com/w/cpp/language/storage_duration"
+language: "C++"
+---
+
+{/* source:cpp-language-storage-duration:0000 */}
+The storage class specifiers are a part of the `decl-specifier-seq` of a name's [declaration syntax](/docs/cpp/language/declarations). Together with the [scope](/docs/cpp/language/basic_concepts/scope) of the name, they control two independent properties of the name: its *storage duration* and its *linkage*.
+
+## Storage duration
+
+{/* source:cpp-language-storage-duration:0001 */}
+The *storage duration* is the property of an [object](/docs/cpp/language/basic_concepts/objects) that defines the minimum potential lifetime of the storage containing the object. The storage duration is determined by the construct used to create the object and is one of the following:
+
+{/* source:cpp-language-storage-duration:0002 */}
+- static storage duration
+
+{/* source:cpp-language-storage-duration:0003 */}
+<Revision since="C++11">
+- thread storage duration
+</Revision>
+
+{/* source:cpp-language-storage-duration:0004 */}
+- automatic storage duration
+- dynamic storage duration
+
+{/* source:cpp-language-storage-duration:0005 */}
+Static<InlineRevision since="C++11">, thread,</InlineRevision> and automatic storage durations are associated with objects introduced by [declarations](/docs/cpp/language/declarations) and with [temporary objects](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime). The dynamic storage duration is associated with objects created by a [`new` expression](/docs/cpp/language/expressions/new) or with [implicitly created objects](/docs/cpp/language/basic_concepts/objects#Object_creation).
+
+{/* source:cpp-language-storage-duration:0006 */}
+The storage duration categories apply to references as well.
+
+{/* source:cpp-language-storage-duration:0007 */}
+The storage duration of [subobjects](/docs/cpp/language/basic_concepts/objects#Subobjects) and reference members is that of their complete object.
+
+### Specifiers
+
+{/* source:cpp-language-storage-duration:0008 */}
+The following keywords are *storage class specifiers*:
+
+{/* source:cpp-language-storage-duration:0009 */}
+<Revision until="C++11">
+- `auto`
+</Revision>
+
+<Revision until="C++17">
+- `register`
+</Revision>
+
+{/* source:cpp-language-storage-duration:0010 */}
+- `static`
+
+{/* source:cpp-language-storage-duration:0011 */}
+<Revision since="C++11">
+- `thread_local`
+</Revision>
+
+{/* source:cpp-language-storage-duration:0012 */}
+- `extern`
+- `mutable`
+
+{/* source:cpp-language-storage-duration:0013 */}
+In a `decl-specifier-seq`, there can be at most one storage class specifier<InlineRevision since="C++11">, except that `thread_local` may appear with `static` or `extern`</InlineRevision>.
+
+{/* source:cpp-language-storage-duration:0014 */}
+`mutable` has no effect on storage duration. For its usage, see [const/volatile](/docs/cpp/language/declarations/cv).
+
+{/* source:cpp-language-storage-duration:0015 */}
+Other storage class specifiers can appear in the `decl-specifier-seq`s of the following declarations:
+
+{/* source:cpp-language-storage-duration:0016 */}
+| Specifier | Variable: Non-member, Non-parameter | Variable: Non-member, Function parameter | Variable: Member, Non-static | Variable: Member, Static | Function: Non-member | Function: Member, Non-static | Function: Member, Static | Structured binding declarations (since C++17) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **Can appear in the `decl-specifier-seq`s of** | | | | | | | | |
+| `auto` | Block scope only | Yes | No | No | No | No | No | N/A |
+| `register` | Block scope only | Yes | No | No | No | No | No | N/A |
+| `static` | Yes | No | Declares static | Declares static | Namespace scope only | Declares static | Declares static | Yes |
+| `thread_local` | Yes | No | No | Yes | No | No | No | Yes |
+| `extern` | Yes | No | No | No | Yes | No | No | No |
+
+{/* source:cpp-language-storage-duration:0017 */}
+[Anonymous unions](/docs/cpp/language/classes/union#Anonymous_unions) can also be declared with `static`.
+
+{/* source:cpp-language-storage-duration:0018 */}
+<Revision until="C++17">
+`register` is a hint that the variable so declared will be heavily used, so that its value can be stored in a CPU register. The hint can be ignored, and in most implementations it will be ignored if the address of the variable is taken. This use is deprecated.
+</Revision>
+
+### Static storage duration
+
+{/* source:cpp-language-storage-duration:0019 */}
+A variable satisfying all following conditions has *static storage duration*:
+
+{/* source:cpp-language-storage-duration:0020 */}
+- It belongs to a [namespace scope](/docs/cpp/language/basic_concepts/scope#Namespace_scope) or are first declared with `static` or `extern`.
+
+{/* source:cpp-language-storage-duration:0021 */}
+<Revision since="C++11">
+- It does not have thread storage duration.
+</Revision>
+
+{/* source:cpp-language-storage-duration:0022 */}
+The storage for these entities lasts for the duration of the program.
+
+{/* source:cpp-language-storage-duration:0023 */}
+<Revision since="C++11">
+### Thread storage duration
+
+All variables declared with `thread_local` have *thread storage duration*.
+
+The storage for these entities lasts for the duration of the thread in which they are created. There is a distinct object or reference per thread, and use of the declared name refers to the entity associated with the current thread.
+</Revision>
+
+### Automatic storage duration
+
+{/* source:cpp-language-storage-duration:0024 */}
+The following variables have *automatic storage duration*:
+
+{/* source:cpp-language-storage-duration:0025 */}
+- Variables that belong to a [block scope](/docs/cpp/language/basic_concepts/scope#Block_scope) and are not explicitly declared `static`<InlineRevision since="C++11">, `thread_local`,</InlineRevision> or `extern`. The storage for such variables lasts until the block in which they are created exits.
+- Variables that belong to a parameter scope (i.e. function parameters). The storage for a function parameter lasts until immediately after its [destruction](/docs/cpp/language/expressions/operator_other#Built-in_function_call_operator).
+
+### Dynamic storage duration
+
+{/* source:cpp-language-storage-duration:0026 */}
+Objects created by the following methods during program execution have *dynamic storage duration*:
+
+{/* source:cpp-language-storage-duration:0027 */}
+- [`new` expressions](/docs/cpp/language/expressions/new). The storage for such objects is allocated by [allocation functions](/docs/cpp/library/memory/new/operator_new) and deallocated by [deallocation functions](/docs/cpp/library/memory/new/operator_delete).
+- [Implicitly creation](/docs/cpp/language/basic_concepts/objects#Object_creation) by other means. The storage for such objects overlaps with some existing storage.
+- [Exception objects](/docs/cpp/language/exceptions/throw#Exception_object). The storage for such objects is allocated and deallocated in an unspecified way.
+
+## Linkage
+
+{/* source:cpp-language-storage-duration:0028 */}
+A name can have *external linkage*<InlineRevision since="C++20">, *module linkage*</InlineRevision>, *internal linkage*, or *no linkage*:
+
+{/* source:cpp-language-storage-duration:0029 */}
+- An entity whose name has external linkage can be [redeclared](/docs/cpp/language/declarations/conflicting_declarations#Multiple_declarations_of_the_same_entity) in another [translation unit](/docs/cpp/language/basic_concepts/translation_phases)<InlineRevision since="C++20">, and the redeclaration can be [attached to a different module](/docs/cpp/language/basic_concepts/modules#Module_ownership)</InlineRevision>.
+
+{/* source:cpp-language-storage-duration:0030 */}
+<Revision since="C++20">
+- An entity whose name has module linkage can be redeclared in another translation unit, as long as the redeclaration is attached to the same module.
+</Revision>
+
+{/* source:cpp-language-storage-duration:0031 */}
+- An entity whose name has internal linkage can be redeclared in another scope in the same translation unit.
+- An entity whose name has no linkage can only be redeclared in the same scope.
+
+{/* source:cpp-language-storage-duration:0032 */}
+The following linkages are recognized:
+
+### No linkage
+
+{/* source:cpp-language-storage-duration:0033 */}
+Any of the following names declared at block scope have no linkage:
+
+{/* source:cpp-language-storage-duration:0034 */}
+- variables that are not explicitly declared `extern` (regardless of the `static` modifier);
+- [local classes](/docs/cpp/language/classes/class#Local_classes) and their member functions;
+- other names declared at block scope such as typedefs, enumerations, and enumerators.
+
+{/* source:cpp-language-storage-duration:0035 */}
+Names not specified with external<InlineRevision since="C++20">, module,</InlineRevision> or internal linkage also have no linkage, regardless of which scope they are declared in.
+
+### Internal linkage
+
+{/* source:cpp-language-storage-duration:0036 */}
+Any of the following names declared at namespace scope have internal linkage:
+
+{/* source:cpp-language-storage-duration:0037 */}
+- variables<InlineRevision since="C++14">, variable templates</InlineRevision>, functions, or function templates declared `static`;
+- <InlineRevision since="C++14">non-template </InlineRevision>variables of non-volatile const-qualified type, unless
+{/* source:cpp-language-storage-duration:0038 */}
+  - they are inline, <InlineRevision since="C++17" />
+  - they are declared in the purview of a [module interface unit](/docs/cpp/language/basic_concepts/modules#Module_declarations) (outside the [private module fragment](/docs/cpp/language/basic_concepts/modules#Private_module_fragment), if any) or [module partition](/docs/cpp/language/basic_concepts/modules#Module_partitions), <InlineRevision since="C++20" />
+{/* source:cpp-language-storage-duration:0039 */}
+  - they are explicitly declared `extern`, or
+  - they were previously declared and the prior declaration did not have internal linkage;
+
+{/* source:cpp-language-storage-duration:0040 */}
+- data members of [anonymous unions](/docs/cpp/language/classes/union).
+
+{/* source:cpp-language-storage-duration:0041 */}
+<Revision since="C++11">
+In addition, all names declared in [unnamed namespaces](/docs/cpp/language/declarations/namespace#Unnamed_namespaces) or a namespace within an unnamed namespace, even ones explicitly declared `extern`, have internal linkage.
+</Revision>
+
+### External linkage
+
+{/* source:cpp-language-storage-duration:0042 */}
+Variables and functions with external linkage also have [language linkage](/docs/cpp/language/declarations/language_linkage), which makes it possible to link translation units written in different programming languages.
+
+{/* source:cpp-language-storage-duration:0043 */}
+Any of the following names declared at namespace scope have external linkage, unless they are declared in an unnamed namespace<InlineRevision since="C++20"> or their declarations are attached to a named module and are not exported</InlineRevision>:
+
+{/* source:cpp-language-storage-duration:0044 */}
+- variables and functions not listed above (that is, functions not declared `static`, non-const variables not declared `static`, and any variables declared `extern`);
+- enumerations;
+- names of classes, their member functions, static data members (const or not), nested classes and enumerations, and functions first introduced with [friend](/docs/cpp/language/classes/friend) declarations inside class bodies;
+- names of all templates not listed above (that is, not function templates declared `static`).
+
+{/* source:cpp-language-storage-duration:0045 */}
+Any of the following names first declared at block scope have external linkage:
+
+{/* source:cpp-language-storage-duration:0046 */}
+- names of variables declared `extern`;
+- names of functions.
+
+{/* source:cpp-language-storage-duration:0047 */}
+<Revision since="C++20">
+### Module linkage
+
+Names declared at namespace scope have module linkage if their declarations are attached to a named module and are not exported, and do not have internal linkage.
+</Revision>
+
+{/* source:cpp-language-storage-duration:0048 */}
+This section is incomplete
+Reason: add the description of the behavior when an entity is declared with different linkages in the same translation unit (6.6 paragraph 6), note the difference between C++20 (ill-formed) and the current draft (well-formed)
+
+## Static block variables
+
+{/* source:cpp-language-storage-duration:0049 */}
+Block variables with static<InlineRevision since="C++11"> or thread</InlineRevision> storage duration are initialized the first time control passes through their declaration (unless their initialization is [zero-](/docs/cpp/language/initialization/zero_initialization) or [constant-initialization](/docs/cpp/language/initialization/constant_initialization), which can be performed before the block is first entered). On all further calls, the declaration is skipped.
+
+{/* source:cpp-language-storage-duration:0050 */}
+- If the initialization [throws an exception](/docs/cpp/language/exceptions/throw), the variable is not considered to be initialized, and initialization will be attempted again the next time control passes through the declaration.
+- If the initialization recursively enters the block in which the variable is being initialized, the behavior is undefined.
+
+{/* source:cpp-language-storage-duration:0051 */}
+<Revision since="C++11">
+- If multiple threads attempt to initialize the same static local variable concurrently, the initialization occurs exactly once (similar behavior can be obtained for arbitrary functions with [`std::call_once`](/docs/cpp/library/atomic/call_once)).
+  - Usual implementations of this feature use variants of the double-checked locking pattern, which reduces runtime overhead for already-initialized local statics to a single non-atomic boolean comparison.
+</Revision>
+
+{/* source:cpp-language-storage-duration:0052 */}
+The destructor for a block variable with static storage duration [is called at program exit](/docs/cpp/library/utility/program/exit), but only if the initialization took place successfully.
+
+{/* source:cpp-language-storage-duration:0053 */}
+Variables with static storage duration in all definitions of the same [inline function](/docs/cpp/language/declarations/inline) (which may be implicitly inline) all refer to the same object defined in one translation unit, as long as the function has external linkage.
+
+## Translation-unit-local entities
+
+{/* source:cpp-language-storage-duration:0054 */}
+The concept of translation-unit-local entities is standardized in C++20, see [this page](/docs/cpp/language/declarations/tu_local) for more details.
+
+{/* source:cpp-language-storage-duration:0055 */}
+An entity is *translation-unit-local* (or *TU-local* for short) if
+
+{/* source:cpp-language-storage-duration:0056 */}
+- it has a name with internal linkage, or
+- it does not have a name with linkage and is introduced within the definition of a TU-local entity, or
+- it is a template or template specialization whose template argument or template declaration uses a TU-local entity.
+
+{/* source:cpp-language-storage-duration:0057 */}
+Bad things (usually violation of [ODR](/docs/cpp/language/basic_concepts/definition)) can happen if the type of a non-TU-local entity depends on a TU-local entity, or if a declaration of<InlineRevision since="C++17">, or a [deduction guide](/docs/cpp/language/templates/ctad) for,</InlineRevision> a non-TU-local entity names a TU-local entity outside its
+
+{/* source:cpp-language-storage-duration:0058 */}
+- function-body for a non-inline function or function template
+- initializer for a variable or variable template
+- friend declarations in a class definition
+- use of value of a variable, if the variable is [usable in constant expressions](/docs/cpp/language/expressions/constant_expression#Usable_in_constant_expressions)
+
+{/* source:cpp-language-storage-duration:0059 */}
+<Revision since="C++20">
+Such uses are disallowed in a [module interface unit](/docs/cpp/language/basic_concepts/modules) (outside its private-module-fragment, if any) or a module partition, and are deprecated in any other context.
+
+A declaration that appears in one translation unit cannot name a TU-local entity declared in another translation unit that is not a header unit. A declaration instantiated for a [template](/docs/cpp/language/templates) appears at the point of instantiation of the specialization.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-storage-duration:0060 */}
+Names at the top-level namespace scope (file scope in C) that are `const` and not `extern` have external linkage in C, but internal linkage in C++.
+
+{/* source:cpp-language-storage-duration:0061 */}
+Since C++11, `auto` is no longer a storage class specifier; it is used to indicate type deduction.
+
+{/* source:cpp-language-storage-duration:0062 */}
+<Revision until="C++17">
+In C, the address of a `register` variable cannot be taken, but in C++, a variable declared `register` is semantically indistinguishable from a variable declared without any storage class specifiers.
+</Revision>
+
+<Revision since="C++17">
+In C++, unlike C, variables cannot be declared `register`.
+</Revision>
+
+{/* source:cpp-language-storage-duration:0063 */}
+Names of `thread_local` variables with internal or external linkage referred from different scopes may refer to the same or to different instances depending on whether the code is executing in the same or in different threads.
+
+{/* source:cpp-language-storage-duration:0064 */}
+The `extern` keyword can also be used to specify [language linkage](/docs/cpp/language/declarations/language_linkage) and [explicit template instantiation declarations](/docs/cpp/language/templates/class_template), but it's not a storage class specifier in those cases (except when a declaration is directly contained in a language linkage specification, in which case the declaration is treated as if it contains the `extern` specifier).
+
+{/* source:cpp-language-storage-duration:0065 */}
+Storage class specifiers, except for `thread_local`, are not allowed on [explicit specializations](/docs/cpp/language/templates/template_specialization) and [explicit instantiations](/docs/cpp/language/templates/class_template#Explicit_instantiation):
+
+{/* source:cpp-language-storage-duration:0066 */}
+```cpp
+template<class T>
+struct S
+{
+    thread_local static int tlm;
+};
+
+template<>
+thread_local int S<float>::tlm = 0; // "static" does not appear here
+```
+
+{/* source:cpp-language-storage-duration:0067 */}
+<Revision since="C++14">
+A `const` (may be implied by `constexpr`) variable template used to have internal linkage by default, which was inconsistent with other templated entities. Defect report [CWG2387](https://cplusplus.github.io/CWG/issues/2387.html) corrected this.
+</Revision>
+
+<Revision since="C++17">
+[`inline`](/docs/cpp/language/declarations/inline) acts as a workaround for [CWG2387](https://cplusplus.github.io/CWG/issues/2387.html) by giving external linkage by default. This is why the `inline` was [added](https://wg21.link/p0607r0) to many variable templates and then [removed](https://github.com/cplusplus/draft/pull/4625) after having CWG2387 accepted. Standard library implementations also need to use `inline` as long as a supported compiler has not get CWG2387 implemented. See [GCC Bugzilla #109126](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109126) and [MSVC STL PR #4546](https://github.com/microsoft/STL/pull/4546).
+</Revision>
+
+{/* source:cpp-language-storage-duration:0068 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_threadsafe_static_init`](/docs/cpp/library/feature_test#cpp_threadsafe_static_init) | [`200806L`](/docs/cpp/library/compiler_support/11#cpp_threadsafe_static_init_200806L) | (C++11) | [Dynamic initialization and destruction with concurrency](/docs/cpp/language/declarations/storage_duration#Static_local_variables) |
+
+## Keywords
+
+{/* source:cpp-language-storage-duration:0069 */}
+[`auto`](/docs/cpp/language/keywords/auto), [`register`](/docs/cpp/language/keywords/register), [`static`](/docs/cpp/language/keywords/static), [`extern`](/docs/cpp/language/keywords/extern), [`thread_local`](/docs/cpp/language/keywords/thread_local), [`mutable`](/docs/cpp/language/keywords/mutable)
+
+## Example
+
+{/* source:cpp-language-storage-duration:0070 */}
+```cpp
+#include <iostream>
+#include <mutex>
+#include <string>
+#include <thread>
+
+thread_local unsigned int rage = 1;
+std::mutex cout_mutex;
+
+void increase_rage(const std::string& thread_name)
+{
+    ++rage; // modifying outside a lock is okay; this is a thread-local variable
+    std::lock_guard<std::mutex> lock(cout_mutex);
+    std::cout << "Rage counter for " << thread_name << ": " << rage << '\n';
+}
+
+int main()
+{
+    std::thread a(increase_rage, "a"), b(increase_rage, "b");
+
+    {
+        std::lock_guard<std::mutex> lock(cout_mutex);
+        std::cout << "Rage counter for main: " << rage << '\n';
+    }
+
+    a.join();
+    b.join();
+}
+```
+
+Possible output:
+
+```text
+Rage counter for a: 2
+Rage counter for main: 1
+Rage counter for b: 2
+```
+
+## Defect reports
+
+{/* source:cpp-language-storage-duration:0071 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-storage-duration:0072 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={216} standard="C++98"><PublishedBehavior>unnamed class and enumeration in class scope have different linkage from those in namespace scope</PublishedBehavior><CorrectedBehavior>they all have external linkage in these scopes</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={389} standard="C++98"><PublishedBehavior>a name with no linkage should not be used to declare an entity with linkage</PublishedBehavior><CorrectedBehavior>a type without linkage shall not be used as the type of a variable or function with linkage, unless the variable or function has C language linkage</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={426} standard="C++98"><PublishedBehavior>an entity could be declared with both internal and external linkage in the same translation unit</PublishedBehavior><CorrectedBehavior>the program is ill-formed in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={527} standard="C++98"><PublishedBehavior>the type restriction introduced by the resolution of CWG 389 was also applied to variables and functions that cannot be named outside their own translation units</PublishedBehavior><CorrectedBehavior>the restriction is lifted for these variables and functions (i.e. with no linkage or internal linkage, or declared within unnamed namespaces)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={809} standard="C++98"><PublishedBehavior>`register` served very little function</PublishedBehavior><CorrectedBehavior>deprecated</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1648} standard="C++11"><PublishedBehavior>`static` was implied even if `thread_local` is combined with `extern`</PublishedBehavior><CorrectedBehavior>implied only if no other storage class specifier is present</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1686} standard="C++98 C++11"><PublishedBehavior>the name of a non-static variable declared in namespace scope had internal linkage only if it is explicitly declared const (C++98) or constexpr (C++11)</PublishedBehavior><CorrectedBehavior>only required the type to be const-qualified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2019} standard="C++98"><PublishedBehavior>the storage duration of reference members were unspecified</PublishedBehavior><CorrectedBehavior>same as their complete object</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2387} standard="C++14"><PublishedBehavior>unclear whether const-qualified variable template have internal linkage by default</PublishedBehavior><CorrectedBehavior>const qualifier does not affect the linkage of variable templates or their instances</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2533} standard="C++98"><PublishedBehavior>the storage duration of implicitly- created objects were unclear</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2850} standard="C++98"><PublishedBehavior>it was unclear when the storage for function parameters are deallocated</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2872} standard="C++98"><PublishedBehavior>the meaning of “can be referred to” was unclear</PublishedBehavior><CorrectedBehavior>improved wording</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P2788R0" standard="C++20"><PublishedBehavior>declaring a const-qualified variable in a namespace gave it internal linkage even in a module unit</PublishedBehavior><CorrectedBehavior>internal linkage is not given</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-storage-duration:0073 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 6.7.5 Storage duration [basic.stc]
+
+{/* source:cpp-language-storage-duration:0074 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 6.7.5 Storage duration [basic.stc]
+
+{/* source:cpp-language-storage-duration:0075 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 6.7 Storage duration [basic.stc]
+
+{/* source:cpp-language-storage-duration:0076 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 3.7 Storage duration [basic.stc]
+
+{/* source:cpp-language-storage-duration:0077 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 3.7 Storage duration [basic.stc]
+
+{/* source:cpp-language-storage-duration:0078 */}
+- C++03 standard (ISO/IEC 14882:2003):
+  - 3.7 Storage duration [basic.stc]
+
+{/* source:cpp-language-storage-duration:0079 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 3.7 Storage duration [basic.stc]
+
+## See also
+
+{/* source:cpp-language-storage-duration:0080 */}
+[C documentation](/docs/c/language/declarations/storage_duration) for storage duration

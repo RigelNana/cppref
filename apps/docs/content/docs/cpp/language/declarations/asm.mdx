@@ -1,0 +1,160 @@
+---
+title: "asm declaration"
+description: "asm-declaration gives the ability to embed assembly language source code within a C++ program."
+source_url: "https://en.cppreference.com/w/cpp/language/asm"
+language: "C++"
+---
+
+{/* source:cpp-language-asm:0000 */}
+`asm-declaration` gives the ability to embed assembly language source code within a C++ program. This declaration is conditionally-supported and implementation defined, meaning that it may not be present and, even when provided by the implementation, it does not have a fixed meaning.
+
+## Syntax
+
+{/* source:cpp-language-asm:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar until="C++26" code="attr (optional) asm ( string-literal ) ;" />
+  <Declaration id="2" language="cpp" grammar since="C++26" code="attr (optional) asm ( balanced-token-seq ) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-asm:0002 */}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="string-literal">
+    same as in [string literal](/docs/cpp/language/expressions/string_literal), including raw string literals
+  </Parameter>
+  <Parameter name="balanced-token-seq">
+    a sequence of tokens where parentheses, brackets and braces are balanced; any restrictions on the `balanced-token-seq` and its meaning are implementation-defined
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-asm:0003 */}
+The `balanced-token-seq` is typically a string literal that represents a short program written in assembly language, which is executed whenever this declaration is executed. Different C++ compilers have wildly varying rules for asm-declarations, and different conventions for the interaction with the surrounding C++ code.
+
+{/* source:cpp-language-asm:0004 */}
+As other block declarations, this declaration can appear inside a block (a function body or another compound statement), and, as all other declarations, this declaration can also appear outside a block.
+
+{/* source:cpp-language-asm:0005 */}
+This section is incomplete  
+Reason: write a note on GCC extended assembly syntax, since it is now supported by Intel, IBM, Sun (as of v12), etc
+
+## Notes
+
+{/* source:cpp-language-asm:0006 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_constexpr`](/docs/cpp/library/feature_test#cpp_constexpr) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_constexpr_201907L) | (C++20) | Trivial [default initialization](/docs/cpp/language/initialization/default_initialization) and [asm-declaration](/docs/cpp/language/declarations/asm#Syntax) in `constexpr` functions |
+
+## Keywords
+
+{/* source:cpp-language-asm:0007 */}
+[`asm`](/docs/cpp/language/keywords/asm)
+
+## Example
+
+{/* source:cpp-language-asm:0008 */}
+Demonstrates two kinds of inline assembly syntax offered by the GCC/Clang compilers. This program works correctly only on the x86_64 platform under Linux.
+
+```cpp
+#include <iostream>
+
+extern "C" int func(int x);
+// the definition of func is written in assembly language
+// raw string literal could be very useful
+asm(R"(
+.globl func
+    .type func, @function
+    func:
+    .cfi_startproc
+    movl %edi, %eax /* x is in RDI, see x86-64 calling convention */
+    addl $1, %eax
+    ret
+    .cfi_endproc
+)");
+
+int main()
+{
+    int n = func(0110);
+    // formerly non-standard inline assembly, made comforming by P2361R6
+    asm ("leal (%0,%0,4),%0"
+         : "=r" (n)
+         : "0" (n));
+    std::cout << "73*5 = " << n << std::endl; // flush is intentional
+
+    // standard inline assembly
+    asm ("movq $60, %rax\n" // the exit syscall number on Linux
+         "movq $2,  %rdi\n" // this program returns 2
+         "syscall");
+}
+```
+
+Output:
+
+```text
+73*5 = 365
+```
+
+## Defect reports
+
+{/* source:cpp-language-asm:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-asm:0010 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={195} standard="C++98"><PublishedBehavior>it was required to support all asm declarations</PublishedBehavior><CorrectedBehavior>made conditionally-supported</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2262} standard="C++11"><PublishedBehavior>attributes could not be applied to asm declarations</PublishedBehavior><CorrectedBehavior>allowed</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-asm:0011 */}
+C++26 standard (ISO/IEC 14882:2026): 9.10 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0012 */}
+C++23 standard (ISO/IEC 14882:2024): 9.10 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0013 */}
+C++20 standard (ISO/IEC 14882:2020): 9.10 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0014 */}
+C++17 standard (ISO/IEC 14882:2017): 10.4 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0015 */}
+C++14 standard (ISO/IEC 14882:2014): 7.4 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0016 */}
+C++11 standard (ISO/IEC 14882:2011): 7.4 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0017 */}
+C++03 standard (ISO/IEC 14882:2003): 7.4 The asm declaration [dcl.asm]
+
+{/* source:cpp-language-asm:0018 */}
+C++98 standard (ISO/IEC 14882:1998): 7.4 The asm declaration [dcl.asm]
+
+## See also
+
+{/* source:cpp-language-asm:0019 */}
+- [C++ ABIs](/docs/cpp/library/links#C.2B.2B_ABIs)
+
+{/* source:cpp-language-asm:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/asm)</DescriptionTerm>
+    <DescriptionBody>for Inline assembly</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## External links
+
+{/* source:cpp-language-asm:0021 */}
+1. [GCC Inline Assembly HOWTO](https://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)
+2. [GCC Inline ASM](http://locklessinc.com/articles/gcc_asm/) — Locklessinc.com
+3. [IBM XL C/C++ Inline Assembly](https://www.ibm.com/docs/en/xl-c-and-cpp-aix/16.1?topic=compatibility-inline-assembly-statements)
+4. [Intel C++ Inline Assembly](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/intrinsics/data-align-mem-alloc-intrins-and-inline-asmbly/inline-assembly.html)
+5. [Visual Studio Inline Assembler](https://learn.microsoft.com/en-us/cpp/assembler/inline/inline-assembler)
+6. [Sun Studio 12 Asm Statements](https://web.archive.org/web/20160528215011/https://blogs.oracle.com/x86be/entry/gcc_style_asm_inlining_support)
+7. [Inline assembly for Itanium-based HP-UX](https://web.archive.org/web/20151009200102/https://h21007.www2.hp.com/portal/site/dspp/menuitem.863c3e4cbcdc3f3515b49c108973a801?ciid=4308e2f5bde02110e2f5bde02110275d6e10RCRD)
+8. [X86 calling conventions](https://en.wikipedia.org/wiki/X86_calling_conventions) — Wikipedia

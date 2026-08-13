@@ -1,0 +1,376 @@
+---
+title: "Statements"
+description: "Statements are fragments of the C++ program that are executed in sequence."
+source_url: "https://en.cppreference.com/w/cpp/language/statements"
+language: "C++"
+---
+
+{/* source:cpp-language-statements:0000 */}
+*Statements* are fragments of the C++ program that are executed in sequence. The body of any function is a sequence of statements. For example:
+
+{/* source:cpp-language-statements:0001 */}
+```cpp
+int main()
+{
+    int n = 1;                        // declaration statement
+    n = n + 1;                        // expression statement
+    std::cout << "n = " << n << '\n'; // expression statement
+    return 0;                         // return statement
+}
+```
+
+{/* source:cpp-language-statements:0002 */}
+C++ includes the following types of statements:
+
+{/* source:cpp-language-statements:0003 */}
+1. labeled statements;
+
+{/* source:cpp-language-statements:0004 */}
+2. expression statements;
+
+{/* source:cpp-language-statements:0005 */}
+3. compound statements;
+
+{/* source:cpp-language-statements:0006 */}
+4. selection statements;
+
+{/* source:cpp-language-statements:0007 */}
+5. iteration statements;
+
+{/* source:cpp-language-statements:0008 */}
+6. jump statements;
+
+{/* source:cpp-language-statements:0009 */}
+7. declaration statements;
+
+{/* source:cpp-language-statements:0010 */}
+8. try blocks;
+
+{/* source:cpp-language-statements:0011 */}
+9. atomic and synchronized blocks (TM TS).
+
+## Labeled statements
+
+{/* source:cpp-language-statements:0012 */}
+A labeled statement labels a statement for control flow purposes.
+
+{/* source:cpp-language-statements:0013 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="label statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0014 */}
+<ParameterList>
+  <Parameter name="label">the label applied to the statement (defined below)</Parameter>
+  <Parameter name="statement">the statement which the label applies to, it can be a labeled statement itself, allowing multiple labels</Parameter>
+</ParameterList>
+
+### Labels
+
+{/* source:cpp-language-statements:0015 */}
+label is defined as
+
+{/* source:cpp-language-statements:0016 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) identifier :" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) case constexpr :" />
+  <Declaration id="3" language="cpp" grammar code="attr (optional) default:" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0017 */}
+1. target for [goto](/docs/cpp/language/statements/goto);
+
+{/* source:cpp-language-statements:0018 */}
+2. `case` label in a [switch](/docs/cpp/language/statements/switch) statement;
+
+{/* source:cpp-language-statements:0019 */}
+3. `default` label in a [switch](/docs/cpp/language/statements/switch) statement.
+
+{/* source:cpp-language-statements:0020 */}
+<Revision since="C++11">
+An [attribute](/docs/cpp/language/declarations/attributes) sequence attr may appear just at the beginning of the label (in which case it applies to the label), or just before any statement itself, in which case it applies to the entire statement.
+</Revision>
+
+{/* source:cpp-language-statements:0021 */}
+A label with an identifier declared inside a function matches all goto statements with the same identifier in that function, in all nested blocks, before and after its own declaration.
+
+{/* source:cpp-language-statements:0022 */}
+Two labels in a function must not have the same identifier.
+
+{/* source:cpp-language-statements:0023 */}
+<Revision since="C++23">
+Besides being added to a statement, labels can also be used anywhere in [compound statements](/docs/cpp/language/statements#Compound_statements).
+</Revision>
+
+{/* source:cpp-language-statements:0024 */}
+Labels are not found by [unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup): a label can have the same name as any other entity in the program.
+
+{/* source:cpp-language-statements:0025 */}
+```cpp
+void f()
+{
+    {
+        goto label; // label in scope even though declared later
+        label:      // label can appear at the end of a block standalone since C++23
+    }
+    goto label; // label ignores block scope
+}
+
+void g()
+{
+    goto label; // error: label not in scope in g()
+}
+```
+
+### Control-flow-limited statements
+
+{/* source:cpp-language-statements:0026 */}
+The following statements are *control-flow-limited statements*:
+
+{/* source:cpp-language-statements:0027 */}
+- The compound-statement of a [`try`](/docs/cpp/language/exceptions/try) block.
+- The compound-statement of a [handler](/docs/cpp/language/exceptions/catch).
+
+{/* source:cpp-language-statements:0028 */}
+<Revision since="C++17">
+- All [substatements](/docs/cpp/language/statements#Substatements) of a [constexpr `if` statement](/docs/cpp/language/statements/if#Constexpr_if).
+</Revision>
+
+<Revision since="C++23">
+- All substatements of a [consteval `if` statement](/docs/cpp/language/statements/if#Consteval_if).
+</Revision>
+
+{/* source:cpp-language-statements:0029 */}
+For each control-flow-limited statement `S`:
+
+{/* source:cpp-language-statements:0030 */}
+- All `goto` target labels delcared in `S` can only be referred to by statements in `S`.
+- Each `case` or `default` label appearing within `S` can only be associated with a [`switch`](/docs/cpp/language/statements/switch) statement within `S`.
+
+## Expression statements
+
+{/* source:cpp-language-statements:0031 */}
+An expression statement is an expression followed by a semicolon.
+
+{/* source:cpp-language-statements:0032 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="attr (optional) expression (optional) ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0033 */}
+<ParameterList>
+  <Parameter name="attr"><InlineRevision since="C++11" /> optional sequence of any number of [attributes](/docs/cpp/language/declarations/attributes)</Parameter>
+  <Parameter name="expression">an [expression](/docs/cpp/language/expressions)</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-statements:0034 */}
+Most statements in a typical C++ program are expression statements, such as assignments or function calls.
+
+{/* source:cpp-language-statements:0035 */}
+An expression statement without an expression is called a *null statement*. It is often used to provide an empty body to a [for](/docs/cpp/language/statements/for) or [while](/docs/cpp/language/statements/while) loop. <InlineRevision until="C++23">It can also be used to carry a label in the end of a compound statement.</InlineRevision>
+
+## Compound statements
+
+{/* source:cpp-language-statements:0036 */}
+A compound statement or *block* groups a sequence of statements into a single statement.
+
+{/* source:cpp-language-statements:0037 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="attr (optional) { statement... (optional) label... (optional) (since C++23) }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0038 */}
+When one statement is expected, but multiple statements need to be executed in sequence (for example, in an [if](/docs/cpp/language/statements/if) statement or a loop), a compound statement may be used:
+
+{/* source:cpp-language-statements:0039 */}
+```cpp
+if (x > 5)          // start of if statement
+{                   // start of block
+    int n = 1;      // declaration statement
+    std::cout << n; // expression statement
+}                   // end of block, end of if statement
+```
+
+{/* source:cpp-language-statements:0040 */}
+Each compound statement introduces its own block [scope](/docs/cpp/language/basic_concepts/scope); variables declared inside a block are destroyed at the closing brace in reverse order:
+
+{/* source:cpp-language-statements:0041 */}
+```cpp
+int main()
+{ // start of outer block
+    {                                // start of inner block
+        std::ofstream f("test.txt"); // declaration statement
+        f << "abc\n";                // expression statement
+    }                                // end of inner block, f is flushed and closed
+    std::ifstream f("test.txt"); // declaration statement
+    std::string str;             // declaration statement
+    f >> str;                    // expression statement
+} // end of outer block, str is destroyed, f is closed
+```
+
+{/* source:cpp-language-statements:0042 */}
+<Revision since="C++23">
+A [label](/docs/cpp/language/statements#Labeled_statements) at the end of a compound statement is treated as if it were followed by a null statement.
+</Revision>
+
+## Selection statements
+
+{/* source:cpp-language-statements:0043 */}
+A selection statement chooses between one of several control flows.
+
+{/* source:cpp-language-statements:0044 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) if constexpr (optional) ( init-statement (optional) condition ) statement" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) if constexpr (optional) ( init-statement (optional) condition ) statement else statement" />
+  <Declaration id="3" language="cpp" grammar code="attr (optional) switch ( init-statement (optional) condition ) statement" />
+  <Declaration id="4" language="cpp" since="C++23" grammar code="attr (optional) if ! (optional) consteval compound-statement" />
+  <Declaration id="5" language="cpp" since="C++23" grammar code="attr (optional) if ! (optional) consteval compound-statement else statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0045 */}
+1. [if](/docs/cpp/language/statements/if) statement;
+
+{/* source:cpp-language-statements:0046 */}
+2. [if](/docs/cpp/language/statements/if) statement with an else clause;
+
+{/* source:cpp-language-statements:0047 */}
+3. [switch](/docs/cpp/language/statements/switch) statement;
+
+{/* source:cpp-language-statements:0048 */}
+4. [consteval if](/docs/cpp/language/statements/if#Consteval_if) statement;
+
+{/* source:cpp-language-statements:0049 */}
+5. [consteval if](/docs/cpp/language/statements/if#Consteval_if) statement with an else clause.
+
+## Iteration statements
+
+{/* source:cpp-language-statements:0050 */}
+An iteration statement repeatedly executes some code.
+
+{/* source:cpp-language-statements:0051 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) while ( condition ) statement" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) do statement while ( expression ) ;" />
+  <Declaration id="3" language="cpp" grammar code="attr (optional) for ( init-statement condition (optional) ; expression (optional) ) statement" />
+  <Declaration id="4" language="cpp" since="C++11" grammar code="attr (optional) for ( init-statement (optional) (since C++20) for-range-decl : for-range-init ) statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0052 */}
+1. [while](/docs/cpp/language/statements/while) loop;
+
+{/* source:cpp-language-statements:0053 */}
+2. [do-while](/docs/cpp/language/statements/do) loop;
+
+{/* source:cpp-language-statements:0054 */}
+3. [for](/docs/cpp/language/statements/for) loop;
+
+{/* source:cpp-language-statements:0055 */}
+4. [range for](/docs/cpp/language/statements/range-for) loop.
+
+## Jump statements
+
+{/* source:cpp-language-statements:0056 */}
+A jump statement unconditionally transfers control flow.
+
+{/* source:cpp-language-statements:0057 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) break;" />
+  <Declaration id="2" language="cpp" grammar code="attr (optional) continue;" />
+  <Declaration id="3" language="cpp" grammar code="attr (optional) return expression (optional) ;" />
+  <Declaration id="4" language="cpp" since="C++11" grammar code="attr (optional) return braced-init-list ;" />
+  <Declaration id="5" language="cpp" grammar code="attr (optional) goto identifier ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0058 */}
+1. [break](/docs/cpp/language/statements/break) statement;
+
+{/* source:cpp-language-statements:0059 */}
+2. [continue](/docs/cpp/language/statements/continue) statement;
+
+{/* source:cpp-language-statements:0060 */}
+3. [return](/docs/cpp/language/statements/return) statement with an optional expression;
+
+{/* source:cpp-language-statements:0061 */}
+4. [return](/docs/cpp/language/statements/return) statement using [list initialization](/docs/cpp/language/initialization/list_initialization);
+
+{/* source:cpp-language-statements:0062 */}
+5. [goto](/docs/cpp/language/statements/goto) statement.
+
+{/* source:cpp-language-statements:0063 */}
+Note: for all jump statements, transfer out of a loop, out of a block, or back past an initialized variable with automatic storage duration involves the destruction of objects with automatic storage duration that are in scope at the point transferred from but not at the point transferred to. If multiple objects were initialized, the order of destruction is the opposite of the order of initialization.
+
+## Declaration statements
+
+{/* source:cpp-language-statements:0064 */}
+A declaration statement introduces one or more identifiers into a block.
+
+{/* source:cpp-language-statements:0065 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="block-declaration" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0066 */}
+1. See [Declarations](/docs/cpp/language/declarations) and [Initialization](/docs/cpp/language/initialization) for details.
+
+## try blocks
+
+{/* source:cpp-language-statements:0067 */}
+A `try` block catches exceptions thrown when executing other statements.
+
+{/* source:cpp-language-statements:0068 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) try compound-statement handler-sequence" />
+</DeclarationDoc>
+
+{/* source:cpp-language-statements:0069 */}
+1. See [`try`](/docs/cpp/language/exceptions/try) block for details.
+
+{/* source:cpp-language-statements:0070 */}
+### Atomic and synchronized blocks
+
+An atomic and synchronized block provides [transactional memory](/docs/cpp/language/statements/transactional_memory).
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="synchronized compound-statement" />
+  <Declaration id="2" language="cpp" grammar code="atomic_noexcept compound-statement" />
+  <Declaration id="3" language="cpp" grammar code="atomic_cancel compound-statement" />
+  <Declaration id="4" language="cpp" grammar code="atomic_commit compound-statement" />
+</DeclarationDoc>
+
+1. [synchronized block](/docs/cpp/language/statements/transactional_memory#Synchronized_blocks), executed in single total order with all synchronized blocks; (TM TS)
+2. [atomic block](/docs/cpp/language/statements/transactional_memory#Atomic_blocks) that aborts on exceptions; (TM TS)
+3. [atomic block](/docs/cpp/language/statements/transactional_memory#Atomic_blocks) that rolls back on exceptions; (TM TS)
+4. [atomic block](/docs/cpp/language/statements/transactional_memory#Atomic_blocks) that commits on exceptions. (TM TS)
+
+## Substatements
+
+{/* source:cpp-language-statements:0071 */}
+A *substatement* of a statement is one of the following:
+
+{/* source:cpp-language-statements:0072 */}
+- For a [labeled statement](/docs/cpp/language/statements#Labeled_statements), its statement.
+- For a [compound statement](/docs/cpp/language/statements#Compound_statements), any statement of its statement....
+- For a [selection statement](/docs/cpp/language/statements#Selection_statements), any of its statement <InlineRevision since="C++23">or compound-statement</InlineRevision>.
+- For an [iteration statement](/docs/cpp/language/statements#Iteration_statements), its statement.
+
+{/* source:cpp-language-statements:0073 */}
+A statement `S1` *encloses* a statement `S2` if any of the following conditions is satisfied:
+
+{/* source:cpp-language-statements:0074 */}
+- `S2` is a substatement of `S1`
+- `S1` is a selection statement or iteration statement, and `S2` is the init-statement of `S1`.
+- `S1` is a [`try`](/docs/cpp/language/exceptions/try) block, and `S2` is either its compound-statement or the compound-statement of any [handler](/docs/cpp/language/exceptions/catch) in its handler-seq.
+- `S1` encloses a statement `S3` and `S3` encloses `S2`.
+
+{/* source:cpp-language-statements:0075 */}
+A statement `S1` is *enclosed by* a statement `S2` if `S2` encloses `S1`.
+
+## See also
+
+{/* source:cpp-language-statements:0076 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`C documentation`](/docs/c/language/statements)</DescriptionTerm>
+    <DescriptionBody>for `Statements`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,273 @@
+---
+title: "Argument-dependent lookup"
+description: "Argument-dependent lookup (ADL), also known as Koenig lookup, is the set of rules for looking up the unqualified function names in function-call expressions, including implicit function calls to overloaded operators."
+source_url: "https://en.cppreference.com/w/cpp/language/adl"
+language: "C++"
+---
+
+{/* source:cpp-language-adl:0000 */}
+Argument-dependent lookup (ADL), also known as Koenig lookup[^1], is the set of rules for looking up the unqualified function names in [function-call expressions](/docs/cpp/language/expressions/operator_other), including implicit function calls to [overloaded operators](/docs/cpp/language/expressions/operators). These function names are looked up in the namespaces of their arguments in addition to the scopes and namespaces considered by the usual [unqualified name lookup](/docs/cpp/language/basic_concepts/lookup).
+
+{/* source:cpp-language-adl:0001 */}
+Argument-dependent lookup makes it possible to use operators defined in a different namespace. Example:
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    std::cout << "Test\n"; // There is no operator<< in global namespace, but ADL
+                           // examines std namespace because the left argument is in
+                           // std and finds std::operator<<(std::ostream&, const char*)
+    operator<<(std::cout, "Test\n"); // Same, using function call notation
+
+    // However,
+    std::cout << endl; // Error: “endl” is not declared in this namespace.
+                       // This is not a function call to endl(), so ADL does not apply
+
+    endl(std::cout); // OK: this is a function call: ADL examines std namespace
+                     // because the argument of endl is in std, and finds std::endl
+
+    (endl)(std::cout); // Error: “endl” is not declared in this namespace.
+                       // The sub-expression (endl) is not an unqualified-id
+}
+```
+
+## Details
+
+{/* source:cpp-language-adl:0002 */}
+First, the argument-dependent lookup is not considered if the lookup set produced by usual [unqualified lookup](/docs/cpp/language/basic_concepts/lookup) contains any of the following:
+
+{/* source:cpp-language-adl:0003 */}
+1. a declaration of a class member.
+
+{/* source:cpp-language-adl:0004 */}
+2. a declaration of a function at block scope (that's not a [using declaration](/docs/cpp/language/declarations/namespace#Using-declarations)).
+
+{/* source:cpp-language-adl:0005 */}
+3. any declaration that is not a function or a function template (e.g. a function object or another variable whose name conflicts with the name of the function that's being looked up).
+
+{/* source:cpp-language-adl:0006 */}
+Otherwise, for every argument in a function call expression its type is examined to determine the associated set of namespaces and classes that it will add to the lookup.
+
+{/* source:cpp-language-adl:0007 */}
+1. For arguments of fundamental type, the associated set of namespaces and classes is empty.
+
+{/* source:cpp-language-adl:0008 */}
+2. For arguments of class type (including union), the set consists of:
+
+{/* source:cpp-language-adl:0009 */}
+   - a) The class itself.
+
+{/* source:cpp-language-adl:0010 */}
+   - b) If the class is [complete](/docs/cpp/language/basic_concepts/type-id#Incomplete_type), all of its direct and indirect base classes.
+
+{/* source:cpp-language-adl:0011 */}
+   - c) If the class is a [member of another class](/docs/cpp/language/classes/nested_classes), the class of which it is a member.
+
+{/* source:cpp-language-adl:0012 */}
+   - d) The innermost enclosing namespaces of the classes added to the set.
+
+{/* source:cpp-language-adl:0013 */}
+3. For arguments whose type is a [class template](/docs/cpp/language/templates/class_template) specialization, in addition to the class rules, the following associated classes and namespaces are added to the set.
+
+{/* source:cpp-language-adl:0014 */}
+   - a) The types of all template arguments provided for type template parameters (skipping non-type template parameters and skipping template template parameters).
+
+{/* source:cpp-language-adl:0015 */}
+   - b) The namespaces in which any template template arguments are members.
+
+{/* source:cpp-language-adl:0016 */}
+   - c) The classes in which any template template arguments are members (if they happen to be class member templates).
+
+{/* source:cpp-language-adl:0017 */}
+4. For arguments of enumeration type, the innermost enclosing namespace of the declaration of the enumeration type is defined is added to the set. If the enumeration type is a member of a class, that class is added to the set.
+
+{/* source:cpp-language-adl:0018 */}
+5. For arguments of type pointer to `T` or pointer to an array of `T`, the type `T` is examined and its associated set of classes and namespaces is added to the set.
+
+{/* source:cpp-language-adl:0019 */}
+6. For arguments of function type, the function parameter types and the function return type are examined and their associated set of classes and namespaces are added to the set.
+
+{/* source:cpp-language-adl:0020 */}
+7. For arguments of type pointer to member function `F` of class `X`, the function parameter types, the function return type, and the class `X` are examined and their associated set of classes and namespaces are added to the set.
+
+{/* source:cpp-language-adl:0021 */}
+8. For arguments of type pointer to data member `T` of class `X`, the member type and the type `X` are both examined and their associated set of classes and namespaces are added to the set.
+
+{/* source:cpp-language-adl:0022 */}
+9. If the argument is the name or the [address-of expression for a set of overloaded functions](/docs/cpp/language/functions/overloaded_address) (or function templates), every function in the overload set is examined and its associated set of classes and namespaces is added to the set. Additionally, if the set of overloads is named by a [template identifier](/docs/cpp/language/templates#Template_identifiers), all of its type template arguments and template template arguments (but not non-type template arguments) are examined and their associated set of classes and namespaces are added to the set.
+
+{/* source:cpp-language-adl:0023 */}
+<Revision since="C++11">
+If any namespace in the associated set of classes and namespaces is an [inline namespace](/docs/cpp/language/declarations/namespace), its enclosing namespace is also added to the set. If any namespace in the associated set of classes and namespaces directly contains an inline namespace, that inline namespace is added to the set.
+</Revision>
+
+{/* source:cpp-language-adl:0024 */}
+After the associated set of classes and namespaces is determined, all declarations found in classes of this set are discarded for the purpose of further ADL processing, except namespace-scoped friend functions and function templates, as stated in point 2 below.
+
+{/* source:cpp-language-adl:0025 */}
+The set of declarations found by ordinary [unqualified lookup](/docs/cpp/language/basic_concepts/lookup) and the set of declarations found in all elements of the associated set produced by ADL, are merged, with the following special rules:
+
+{/* source:cpp-language-adl:0026 */}
+1. [using directives](/docs/cpp/language/declarations/namespace#Using-directives) in the associated namespaces are ignored.
+
+{/* source:cpp-language-adl:0027 */}
+2. namespace-scoped friend functions (and function templates) that are declared in an associated class are visible through ADL even if they are not visible through ordinary lookup.
+
+{/* source:cpp-language-adl:0028 */}
+3. all names except for the functions and function templates are ignored (no collision with variables).
+
+## Notes
+
+{/* source:cpp-language-adl:0029 */}
+Because of argument-dependent lookup, non-member functions and non-member operators defined in the same namespace as a class are considered part of the public interface of that class (if they are found through ADL)[^2].
+
+{/* source:cpp-language-adl:0030 */}
+ADL is the reason behind the established idiom for swapping two objects in generic code: `using std::swap; swap(obj1, obj2);` because calling `std::swap(obj1, obj2)` directly would not consider the user-defined `swap()` functions that could be defined in the same namespace as the types of `obj1` or `obj2`, and just calling the unqualified `swap(obj1, obj2)` would call nothing if no user-defined overload was provided. In particular, [`std::iter_swap`](/docs/cpp/library/algorithm/iter_swap) and all other standard library algorithms use this approach when dealing with [Swappable](/docs/cpp/library/named_req/Swappable) types.
+
+{/* source:cpp-language-adl:0031 */}
+Name lookup rules make it impractical to declare operators in global or user-defined namespace that operate on types from the std namespace, e.g. a custom `operator>>` or `operator+` for [`std::vector`](/docs/cpp/library/container/vector) or for [`std::pair`](/docs/cpp/library/utility/pair) (unless the element types of the vector/pair are user-defined types, which would add their namespace to ADL). Such operators would not be looked up from template instantiations, such as the standard library algorithms. See [dependent names](/docs/cpp/language/templates/dependent_name) for further details.
+
+{/* source:cpp-language-adl:0032 */}
+ADL can find a [friend function](/docs/cpp/language/classes/friend) (typically, an overloaded operator) that is defined entirely within a class or class template, even if it was never declared at namespace level.
+
+{/* source:cpp-language-adl:0033 */}
+```cpp
+template<typename T>
+struct number
+{
+    number(int);
+    friend number gcd(number x, number y) { return 0; }; // Definition within
+                                                         // a class template
+};
+
+// Unless a matching declaration is provided gcd is
+// an invisible (except through ADL) member of this namespace
+void g()
+{
+    number<double> a(3), b(4);
+    a = gcd(a, b); // Finds gcd because number<double> is an associated class,
+                   // making gcd visible in its namespace (global scope)
+//  b = gcd(3, 4); // Error; gcd is not visible
+}
+```
+
+{/* source:cpp-language-adl:0034 */}
+<Revision until="C++20">
+Although a function call can be resolved through ADL even if ordinary lookup finds nothing, a function call to a [function template](/docs/cpp/language/templates/function_template) with explicitly-specified template arguments requires that there is a declaration of the template found by ordinary lookup (otherwise, it is a syntax error to encounter an unknown name followed by a less-than character).
+
+```cpp
+namespace N1
+{
+    struct S {};
+
+    template<int X>
+    void f(S);
+}
+
+namespace N2
+{
+    template<class T>
+    void f(T t);
+}
+
+void g(N1::S s)
+{
+    f<3>(s);     // Syntax error until C++20 (unqualified lookup finds no f)
+    N1::f<3>(s); // OK, qualified lookup finds the template 'f'
+    N2::f<3>(s); // Error: N2::f does not take a non-type parameter
+                 //        N1::f is not looked up because ADL only works
+                 //              with unqualified names
+
+    using N2::f;
+    f<3>(s); // OK: Unqualified lookup now finds N2::f
+             //     then ADL kicks in because this name is unqualified
+             //     and finds N1::f
+}
+```
+</Revision>
+
+{/* source:cpp-language-adl:0035 */}
+In the following contexts ADL-only lookup (that is, lookup in associated namespaces only) takes place:
+
+{/* source:cpp-language-adl:0036 */}
+- <Revision since="C++11">the lookup of non-member functions `begin` and `end` performed by the [range-for](/docs/cpp/language/statements/range-for) loop if member lookup fails.</Revision>
+
+{/* source:cpp-language-adl:0037 */}
+- the [dependent name lookup](/docs/cpp/language/templates/dependent_name#Lookup_rules) from the point of template instantiation.
+
+{/* source:cpp-language-adl:0038 */}
+- <Revision since="C++17">the lookup of non-member function `get` performed by [structured binding declaration](/docs/cpp/language/declarations/structured_binding) for tuple-like types.</Revision>
+
+## Examples
+
+{/* source:cpp-language-adl:0039 */}
+This section is incomplete
+
+Reason: more examples
+
+{/* source:cpp-language-adl:0040 */}
+Example from [http://www.gotw.ca/gotw/030.htm](http://www.gotw.ca/gotw/030.htm)
+
+```cpp
+namespace A
+{
+    struct X;
+    struct Y;
+
+    void f(int);
+    void g(X);
+}
+
+namespace B
+{
+    void f(int i)
+    {
+        f(i); // Calls B::f (endless recursion)
+    }
+
+    void g(A::X x)
+    {
+        g(x); // Error: ambiguous between B::g (ordinary lookup)
+              //        and A::g (argument-dependent lookup)
+    }
+
+    void h(A::Y y)
+    {
+        h(y); // Calls B::h (endless recursion): ADL examines the A namespace
+              // but finds no A::h, so only B::h from ordinary lookup is used
+    }
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-adl:0041 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-adl:0042 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={33} standard="C++98"><PublishedBehavior>the associated namespaces or classes are unspecified if an argument used for lookup is the address of a group of overloaded functions or a function template</PublishedBehavior><CorrectedBehavior>specified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={90} standard="C++98"><PublishedBehavior>the associated classes of a nested non-union class did not include its enclosing class, but a nested union was associated with its enclosing class</PublishedBehavior><CorrectedBehavior>non-unions also associated</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={239} standard="C++98"><PublishedBehavior>a block-scope function declaration found in the ordinary unqualified lookup did not prevent ADL from happening</PublishedBehavior><CorrectedBehavior>ADL not considered except for `using` declarations</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={997} standard="C++98"><PublishedBehavior>dependent parameter types and return types were excluded from consideration in determining the associated classes and namespaces of a function template</PublishedBehavior><CorrectedBehavior>included</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1690} standard="C++98 C++11"><PublishedBehavior>ADL could not find lambdas (C++11) or objects of local class types (C++98) that are returned</PublishedBehavior><CorrectedBehavior>they can be found</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1691} standard="C++11"><PublishedBehavior>ADL had surprising behaviors for opaque enumeration declarations</PublishedBehavior><CorrectedBehavior>fixed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1692} standard="C++98"><PublishedBehavior>doubly-nested classes did not have associated namespaces (their enclosing classes are not members of any namespace)</PublishedBehavior><CorrectedBehavior>associated namespaces are extended to the innermost enclosing namespaces</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2857} standard="C++98"><PublishedBehavior>the associated classes of an incomplete class type included its base classes</PublishedBehavior><CorrectedBehavior>not included</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-adl:0043 */}
+- [Name lookup](/docs/cpp/language/basic_concepts/lookup)
+- [Template argument deduction](/docs/cpp/language/templates/function_template)
+- [Overload resolution](/docs/cpp/language/functions/overload_resolution)
+
+## External links
+
+{/* source:cpp-language-adl:0044 */}
+[^1]: ↑ Andrew Koenig: ["A Personal Note About Argument-Dependent Lookup"](https://www.drdobbs.com/cpp/a-personal-note-about-argument-dependent/232901443)
+
+[^2]: ↑ H. Sutter (1998) ["What's In a Class? - The Interface Principle"](http://www.gotw.ca/publications/mill02.htm) in C++ Report, 10(3)

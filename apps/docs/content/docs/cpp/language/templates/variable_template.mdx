@@ -1,0 +1,128 @@
+---
+title: "Variable template (since C++14)"
+description: "A variable template defines a family of variables or static data members."
+source_url: "https://en.cppreference.com/w/cpp/language/variable_template"
+language: "C++"
+---
+
+{/* source:cpp-language-variable-template:0000 */}
+A variable template defines a family of variables or static data members.
+
+## Syntax
+
+{/* source:cpp-language-variable-template:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="template < parameter-list > variable-declaration" />
+  <Declaration id="2" language="cpp" since="C++20" grammar code="template < parameter-list > requires constraint variable-declaration" />
+</DeclarationDoc>
+
+{/* source:cpp-language-variable-template:0002 */}
+<ParameterList>
+  <Parameter name="variable-declaration">
+    a [declaration](/docs/cpp/language/declarations) of a variable. The declared variable name becomes a template name.
+  </Parameter>
+  <Parameter name="parameter-list">
+    a non-empty comma-separated list of the [template parameters](/docs/cpp/language/templates/template_parameters), each of which is either [non-type parameter](/docs/cpp/language/templates/template_parameters#Non-type_template_parameter), a [type parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter), a [template parameter](/docs/cpp/language/templates/template_parameters#Template_template_parameter), or a [parameter pack](/docs/cpp/language/templates/parameter_pack) of any of those.
+  </Parameter>
+  <Parameter name="constraint">
+    a [constraint expression](/docs/cpp/language/templates/constraints) which restricts the template parameters accepted by this variable template
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-variable-template:0003 */}
+A variable instantiated from a variable template is called an *instantiated variable*. A static data member instantiated from a static data member template is called an *instantiated static data member*.
+
+{/* source:cpp-language-variable-template:0004 */}
+A variable template may be introduced by a template declaration at namespace scope, where *variable-declaration* declares a variable.
+
+{/* source:cpp-language-variable-template:0005 */}
+```cpp
+template<class T>
+constexpr T pi = T(3.1415926535897932385L); // variable template
+
+template<class T>
+T circular_area(T r) // function template
+{
+    return pi<T> * r * r; // pi<T> is a variable template instantiation
+}
+```
+
+{/* source:cpp-language-variable-template:0006 */}
+When used at class scope, variable template declares a static data member template.
+
+{/* source:cpp-language-variable-template:0007 */}
+```cpp
+using namespace std::literals;
+struct matrix_constants
+{
+    template<class T>
+    using pauli = hermitian_matrix<T, 2>; // alias template
+
+    template<class T> // static data member template
+    static constexpr pauli<T> sigmaX = {{0, 1}, {1, 0}};
+
+    template<class T>
+    static constexpr pauli<T> sigmaY = {{0, -1i}, {1i, 0}};
+
+    template<class T>
+    static constexpr pauli<T> sigmaZ = {{1, 0}, {0, -1}};
+};
+```
+
+{/* source:cpp-language-variable-template:0008 */}
+As with other [static members](/docs/cpp/language/classes/static), a definition of a static data member template may be required. Such definition is provided outside the class definition. A template declaration of a static data member at namespace scope may also be a definition of a non-template [data member of a class template](/docs/cpp/language/templates/member_template):
+
+{/* source:cpp-language-variable-template:0009 */}
+```cpp
+struct limits
+{
+    template<typename T>
+    static const T min; // declaration of a static data member template
+};
+
+template<typename T>
+const T limits::min = { }; // definition of a static data member template
+
+template<class T>
+class X
+{
+    static T s; // declaration of a non-template static data member of a class template
+};
+
+template<class T>
+T X<T>::s = 0; // definition of a non-template data member of a class template
+```
+
+{/* source:cpp-language-variable-template:0010 */}
+Unless a variable template was [explicitly specialized](/docs/cpp/language/templates/template_specialization) or explicitly instantiated, it is implicitly instantiated when a specialization of the variable template is referenced in a context that requires [a variable definition to exist](/docs/cpp/language/basic_concepts/definition#ODR-use) or if the existence of the definition affects the semantics of the program, i.e. if the variable is [needed for constant evaluation](/docs/cpp/language/expressions/constant_expression#Functions_and_variables_needed_for_constant_evaluation) by an expression (the definition may be not used).
+
+{/* source:cpp-language-variable-template:0011 */}
+The existence of a definition of a variable is considered to affect the semantics of the program if the variable is needed for constant evaluation by an expression, even if constant evaluation of the expression is not required or if constant expression evaluation does not use the definition.
+
+## Notes
+
+{/* source:cpp-language-variable-template:0012 */}
+Until variable templates were introduced in C++14, parametrized variables were typically implemented as either static data members of class templates or as constexpr function templates returning the desired values.
+
+{/* source:cpp-language-variable-template:0013 */}
+Variable templates cannot be used as [template template arguments](/docs/cpp/language/templates/template_parameters#Template_template_arguments).
+
+{/* source:cpp-language-variable-template:0014 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_variable_templates`](/docs/cpp/library/feature_test#cpp_variable_templates) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_variable_templates_201304L) | (C++14) | Variable templates |
+
+## Defect reports
+
+{/* source:cpp-language-variable-template:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-variable-template:0016 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2255} standard="C++14">
+    <PublishedBehavior>it was unclear whether a specialization of a static data member template is a static data member</PublishedBehavior>
+    <CorrectedBehavior>it is</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

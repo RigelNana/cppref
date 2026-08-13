@@ -1,0 +1,223 @@
+---
+title: "Fold expressions (since C++17)"
+description: "Reduces (folds) a pack over a binary operator."
+source_url: "https://en.cppreference.com/w/cpp/language/fold"
+language: "C++"
+---
+
+{/* source:cpp-language-fold:0000 */}
+Reduces ([folds](https://en.wikipedia.org/wiki/Fold_(higher-order_function))) a [pack](/docs/cpp/language/templates/parameter_pack) over a binary operator.
+
+## Syntax
+
+{/* source:cpp-language-fold:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="( pack op ... )" />
+  <Declaration id="2" language="cpp" grammar code="( ... op pack )" />
+  <Declaration id="3" language="cpp" grammar code="( pack op ... op init )" />
+  <Declaration id="4" language="cpp" grammar code="( init op ... op pack )" />
+</DeclarationDoc>
+
+{/* source:cpp-language-fold:0002 */}
+1. Unary right fold.
+
+{/* source:cpp-language-fold:0003 */}
+2. Unary left fold.
+
+{/* source:cpp-language-fold:0004 */}
+3. Binary right fold.
+
+{/* source:cpp-language-fold:0005 */}
+4. Binary left fold.
+
+{/* source:cpp-language-fold:0006 */}
+<ParameterList>
+  <Parameter name="op">
+    any of the following 32 *binary* operators: `+` `-` `*` `/` `%` `^` `&` `|` `=` `<` `>` `<<` `>>` `+=` `-=` `*=` `/=` `%=` `^=` `&=` `|=` `<<=` `>>=` `==` `!=` `<=` `>=` `&&` `||` `,` `.*` `->*`. In a binary fold, both ops must be the same.
+  </Parameter>
+  <Parameter name="pack">
+    an expression that contains an unexpanded pack and does not contain an operator with [precedence](/docs/cpp/language/expressions/operator_precedence) lower than cast at the top level (formally, a cast-expression)
+  </Parameter>
+  <Parameter name="init">
+    an expression that does not contain an unexpanded pack and does not contain an operator with [precedence](/docs/cpp/language/expressions/operator_precedence) lower than cast at the top level (formally, a cast-expression)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-fold:0007 */}
+Note that the opening and closing parentheses are a required part of the fold expression.
+
+## Explanation
+
+{/* source:cpp-language-fold:0008 */}
+The instantiation of a *fold expression* expands the expression `e` as follows:
+
+{/* source:cpp-language-fold:0009 */}
+1. Unary right fold `(E op ...)` becomes `(E1 op (... op (EN-1 op EN)))`
+
+{/* source:cpp-language-fold:0010 */}
+2. Unary left fold `(... op E)` becomes `(((E1 op E2) op ...) op EN)`
+
+{/* source:cpp-language-fold:0011 */}
+3. Binary right fold `(E op ... op I)` becomes `(E1 op (... op (EN−1 op (EN op I))))`
+
+{/* source:cpp-language-fold:0012 */}
+4. Binary left fold `(I op ... op E)` becomes `((((I op E1) op E2) op ...) op EN)`
+
+{/* source:cpp-language-fold:0013 */}
+(where `N` is the number of elements in the pack expansion)
+
+{/* source:cpp-language-fold:0014 */}
+For example,
+
+{/* source:cpp-language-fold:0015 */}
+```cpp
+template<typename... Args>
+bool all(Args... args) { return (... && args); }
+
+bool b = all(true, true, true, false);
+// within all(), the unary left fold expands as
+//  return ((true && true) && true) && false;
+// b is false
+```
+
+{/* source:cpp-language-fold:0016 */}
+When a unary fold is used with a pack expansion of length zero, only the following operators are allowed:
+
+{/* source:cpp-language-fold:0017 */}
+1. Logical AND (`&&`). The value for the empty pack is `true`.
+
+{/* source:cpp-language-fold:0018 */}
+2. Logical OR (`||`). The value for the empty pack is `false`.
+
+{/* source:cpp-language-fold:0019 */}
+3. The comma operator (`,`). The value for the empty pack is `void()`.
+
+## Notes
+
+{/* source:cpp-language-fold:0020 */}
+If the expression used as *init* or as *pack* has an operator with [precedence](/docs/cpp/language/expressions/operator_precedence) below cast at the top level, it must be parenthesized:
+
+{/* source:cpp-language-fold:0021 */}
+```cpp
+template<typename... Args>
+int sum(Args&&... args)
+{
+//  return (args + ... + 1 * 2);   // Error: operator with precedence below cast
+    return (args + ... + (1 * 2)); // OK
+}
+```
+
+{/* source:cpp-language-fold:0022 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_fold_expressions`](/docs/cpp/library/feature_test#cpp_fold_expressions) | [`201603L`](/docs/cpp/library/compiler_support/17#cpp_fold_expressions_201603L) | (C++17) | [Fold expressions](/docs/cpp/language/templates/fold#top) |
+
+## Example
+
+{/* source:cpp-language-fold:0023 */}
+```cpp
+#include <climits>
+#include <concepts>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+// Basic usage, folding variadic arguments over operator<< 
+template<typename... Args>
+void printer(Args&&... args)
+{
+    (std::cout << ... << args) << '\n';
+}
+
+// Folding an expression that uses the pack directly over operator,
+template<typename... Ts>
+void print_limits()
+{
+    ((std::cout << +std::numeric_limits<Ts>::max() << ' '), ...) << '\n';
+}
+
+// Both a fold over operator&& using the pack
+// and over operator, using the variadic arguments
+template<typename T, typename... Args>
+void push_back_vec(std::vector<T>& v, Args&&... args)
+{
+    static_assert((std::is_constructible_v<T, Args&&> && ...));
+    (v.push_back(std::forward<Args>(args)), ...);
+}
+
+// Using an integer sequence to execute an expression
+// N times by folding a lambda over operator,
+template<class T, std::size_t... dummy_pack>
+constexpr T bswap_impl(T i, std::index_sequence<dummy_pack...>)
+{
+    T low_byte_mask = static_cast<unsigned char>(-1);
+    T ret{};
+    ([&]
+    {
+        (void)dummy_pack;
+        ret <<= CHAR_BIT;
+        ret |= i & low_byte_mask;
+        i >>= CHAR_BIT;
+    }(), ...);
+    return ret;
+}
+
+constexpr auto bswap(std::unsigned_integral auto i)
+{
+    return bswap_impl(i, std::make_index_sequence<sizeof(i)>{});
+}
+
+int main()
+{
+    printer(1, 2, 3, "abc");
+    print_limits<uint8_t, uint16_t, uint32_t>();
+
+    std::vector<int> v;
+    push_back_vec(v, 6, 2, 45, 12);
+    push_back_vec(v, 1, 2, 9);
+    for (int i : v)
+        std::cout << i << ' ';
+    std::cout << '\n';
+
+    static_assert(bswap<std::uint16_t>(0x1234u) == 0x3412u);
+    static_assert(bswap<std::uint64_t>(0x0123456789abcdefull) == 0xefcdab8967452301ULL);
+}
+```
+
+Output:
+
+```text
+123abc
+255 65535 4294967295 
+6 2 45 12 1 2 9
+```
+
+## References
+
+{/* source:cpp-language-fold:0024 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 7.5.6 Fold expressions [expr.prim.fold]
+
+{/* source:cpp-language-fold:0025 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 7.5.6 Fold expressions [expr.prim.fold]
+
+{/* source:cpp-language-fold:0026 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 8.1.6 Fold expressions [expr.prim.fold]
+
+## Defect reports
+
+{/* source:cpp-language-fold:0027 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-fold:0028 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2611} standard="C++17">
+    <PublishedBehavior>the expansion results of fold expressions were not enclosed with parentheses</PublishedBehavior>
+    <CorrectedBehavior>enclosed with parentheses</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

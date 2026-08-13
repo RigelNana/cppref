@@ -1,0 +1,289 @@
+---
+title: "Dynamic exception specification (until C++17)"
+description: "Lists the exceptions that a function might directly or indirectly throw."
+source_url: "https://en.cppreference.com/w/cpp/language/except_spec"
+language: "C++"
+---
+
+{/* source:cpp-language-except-spec:0000 */}
+Lists the exceptions that a function might directly or indirectly throw.
+
+## Syntax
+
+{/* source:cpp-language-except-spec:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar removed="C++17" code="throw( type-id-list (optional) )" /> (deprecated in C++11)
+</DeclarationDoc>
+
+{/* source:cpp-language-except-spec:0002 */}
+1. Explicit dynamic exception specification.
+
+{/* source:cpp-language-except-spec:0003 */}
+<ParameterList>
+  <Parameter name="type-id-list">
+    comma-separated list of [`type-ids`](/docs/cpp/language/basic_concepts/type-id#Type_naming)<InlineRevision since="C++11">, a type-id representing a [`pack expansion`](/docs/cpp/language/templates/parameter_pack#Pack_expansion) is followed by an ellipsis (...)</InlineRevision>
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-except-spec:0004 */}
+An explicit dynamic exception specification shall appear only on a function declarator for a function type, pointer to function type, reference to function type, or pointer to member function type that is the top-level type of a declaration or definition, or on such a type appearing as a parameter or return type in a function declarator.
+
+{/* source:cpp-language-except-spec:0005 */}
+```cpp
+void f() throw(int);            // OK: function declaration
+void (*pf)() throw (int);       // OK: pointer to function declaration
+void g(void pfa() throw(int));  // OK: pointer to function parameter declaration
+typedef int (*pf)() throw(int); // Error: typedef declaration
+```
+
+## Explanation
+
+{/* source:cpp-language-except-spec:0006 */}
+If a function is declared with type `T` listed in its dynamic exception specification, the function may throw exceptions of that type or a type derived from it.
+
+{/* source:cpp-language-except-spec:0007 */}
+[`Incomplete types`](/docs/cpp/language/basic_concepts/incomplete_type), pointers or references to incomplete types other than `cv void*`<InlineRevision since="C++11">, and rvalue reference types</InlineRevision> are not allowed in the exception specification. Array and function types, if used, are adjusted to corresponding pointer types, top level cv-qualifications are also dropped. <InlineRevision since="C++11">[`parameter packs`](/docs/cpp/language/templates/parameter_pack) are allowed</InlineRevision>.
+
+{/* source:cpp-language-except-spec:0008 */}
+A dynamic exception specification whose set of adjusted types is empty<InlineRevision since="C++11">(after any packs are expanded)</InlineRevision> is non-throwing. A function with a non-throwing dynamic exception specification does not allow any exceptions.
+
+{/* source:cpp-language-except-spec:0009 */}
+A dynamic exception specification is not considered part of a function's type.
+
+{/* source:cpp-language-except-spec:0010 */}
+If the function throws an exception of the type not listed in its exception specification, the function [`std::unexpected`](/docs/cpp/library/error/unexpected) is called. The default function calls [`std::terminate`](/docs/cpp/library/error/terminate), but it may be replaced by a user-provided function (via [`std::set_unexpected`](/docs/cpp/library/error/exception/set_unexpected)) which may call [`std::terminate`](/docs/cpp/library/error/terminate) or throw an exception. If the exception thrown from [`std::unexpected`](/docs/cpp/library/error/unexpected) is accepted by the exception specification, stack unwinding continues as usual. If it isn't, but [`std::bad_exception`](/docs/cpp/library/error/bad_exception) is allowed by the exception specification, [`std::bad_exception`](/docs/cpp/library/error/bad_exception) is thrown. Otherwise, [`std::terminate`](/docs/cpp/library/error/terminate) is called.
+
+### Instantiation
+
+{/* source:cpp-language-except-spec:0011 */}
+The dynamic exception specification of a function template specialization is not instantiated along with the function declaration; it is instantiated only when needed (as defined below).
+
+{/* source:cpp-language-except-spec:0012 */}
+The dynamic exception specification of an implicitly-declared special member function is also evaluated only when needed (in particular, implicit declaration of a member function of a derived class does not require the exception-specification of a base member function to be instantiated).
+
+{/* source:cpp-language-except-spec:0013 */}
+When the dynamic exception specification of a function template specialization is needed, but has not yet been instantiated, the dependent names are looked up and any templates used in the expression are instantiated as if for the declaration of the specialization.
+
+{/* source:cpp-language-except-spec:0014 */}
+A dynamic exception specification of a function is considered to be needed in the following contexts:
+
+{/* source:cpp-language-except-spec:0015 */}
+- in an expression, where the function is selected by overload resolution
+- the function is [`odr-used`](/docs/cpp/language/basic_concepts/definition#ODR-use)
+- the function would be odr-used but appears in an unevaluated operand
+
+{/* source:cpp-language-except-spec:0016 */}
+```cpp
+template<class T>
+T f() throw(std::array<char, sizeof(T)>);
+
+int main()
+{
+    decltype(f<void>()) *p; // f unevaluated, but exception specification is needed
+                            // error because instantiation of the exception specification
+                            // calculates sizeof(void)
+}
+```
+
+{/* source:cpp-language-except-spec:0017 */}
+- the specification is needed to compare to another function declaration (e.g. on a virtual function overrider or on an explicit specialization of a function template)
+- in a function definition
+- the specification is needed because a defaulted special member function needs to check it in order to decide its own exception specification (this takes place only when the specification of the defaulted special member function is, itself, needed).
+
+## Potential exceptions
+
+{/* source:cpp-language-except-spec:0018 */}
+Each function `f`, pointer to function `pf`, and pointer to member function `pmf` has a set of potential exceptions, which consists of types that might be thrown. Set of all types indicates that any exception may be thrown. This set is defined as follows:
+
+{/* source:cpp-language-except-spec:0019 */}
+1. If the declaration of `f`, `pf`, or `pmf` uses a dynamic exception specification <InlineRevision until="C++11">that does not allow all exceptions</InlineRevision>, the set consists of the types listed in that specification.
+
+{/* source:cpp-language-except-spec:0020 */}
+<Revision since="C++11">
+2. Otherwise, if the declaration of `f`, `pf`, or `pmf` uses [`noexcept(true)`](/docs/cpp/language/exceptions/noexcept), the set is empty.
+</Revision>
+
+{/* source:cpp-language-except-spec:0021 */}
+3. Otherwise, the set is the set of all types.
+
+{/* source:cpp-language-except-spec:0022 */}
+Note: for implicitly-declared special member functions (constructors, assignment operators, and destructors)<InlineRevision since="C++11"> and for the inheriting constructors</InlineRevision>, the set of potential exceptions is a combination of the sets of the potential exceptions of everything they would call: constructors/assignment operators/destructors of non-variant non-static data members, direct bases, and, where appropriate, virtual bases (including default argument expressions, as always).
+
+{/* source:cpp-language-except-spec:0023 */}
+Each expression `e` has a set of potential exceptions. The set is empty if `e` is a [`core constant expression`](/docs/cpp/language/expressions/constant_expression), otherwise, it is the union of the sets of potential exceptions of all immediate subexpressions of `e` (including [`default argument expressions`](/docs/cpp/language/functions/default_arguments)), combined with another set that depends on the form of `e`, as follows:
+
+{/* source:cpp-language-except-spec:0024 */}
+<Revision since="C++11">
+1. If `e` is a function call expression, let `g` denote the function, function pointer, or pointer to member function that is that is called, then if the declaration of `g` uses a dynamic exception specification, the set of potential exceptions of `g` is added to the set; if the declaration of `g` uses [`noexcept(true)`](/docs/cpp/language/exceptions/noexcept), the set is empty; otherwise, the set is the set of all types.
+</Revision>
+
+{/* source:cpp-language-except-spec:0025 */}
+2. If `e` calls a function implicitly (it's an operator expression and the operator is overloaded, it is a [`new-expression`](/docs/cpp/language/expressions/new) and the allocation function is overloaded, or it is a full expression and the destructor of a temporary is called), then the set is the set of that function.
+
+{/* source:cpp-language-except-spec:0026 */}
+3. If `e` is a [`throw-expression`](/docs/cpp/language/exceptions/throw), the set is the exception that would be initialized by its operand, or the set of all types for the re-throwing throw-expression (with no operand).
+
+{/* source:cpp-language-except-spec:0027 */}
+4. If `e` is a [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) to a reference to a polymorphic type, the set consists of [`std::bad_cast`](/docs/cpp/library/utility/types/bad_cast).
+
+{/* source:cpp-language-except-spec:0028 */}
+5. If `e` is a [`typeid`](/docs/cpp/language/expressions/typeid) applied to a dereferenced pointer to a polymorphic type, the set consists of [`std::bad_typeid`](/docs/cpp/library/utility/types/bad_typeid).
+
+{/* source:cpp-language-except-spec:0029 */}
+<Revision since="C++11">
+6. If `e` is a [`new-expression`](/docs/cpp/language/expressions/new) with a non-constant array size, and the selected allocation function has a non-empty set of potential exceptions, the set consists of [`std::bad_array_new_length`](/docs/cpp/library/memory/new/bad_array_new_length).
+</Revision>
+
+{/* source:cpp-language-except-spec:0030 */}
+```cpp
+void f() throw(int); // f()'s set is "int"
+void g();            // g()'s set is the set of all types
+
+struct A { A(); };                  // "new A"'s set is the set of all types
+struct B { B() noexcept; };         // "B()"'s set is empty
+struct D() { D() throw (double); }; // new D's set is the set of all types
+```
+
+{/* source:cpp-language-except-spec:0031 */}
+All implicitly-declared member functions<InlineRevision since="C++11"> and inheriting constructors</InlineRevision> have exception specifications, selected as follows:
+
+{/* source:cpp-language-except-spec:0032 */}
+- If the set of potential exceptions is the set of all types, the implicit exception specification <InlineRevision until="C++11">allows all exceptions (the exception specification is considered present, even though it is inexpressible in code and behaves as if there is no exception specification)</InlineRevision><InlineRevision since="C++11">is `noexcept(false)`</InlineRevision>.
+- Otherwise, If the set of potential exceptions is not empty, the implicit exception specification lists every type from the set.
+- Otherwise, the implicit exception specification is <InlineRevision until="C++11">`throw()`</InlineRevision><InlineRevision since="C++11">`noexcept(true)`</InlineRevision>.
+
+{/* source:cpp-language-except-spec:0033 */}
+```cpp
+struct A
+{
+    A(int = (A(5), 0)) noexcept;
+    A(const A&) throw();
+    A(A&&) throw();
+    ~A() throw(X);
+};
+
+struct B
+{
+    B() throw();
+    B(const B&) = default; // exception specification is "noexcept(true)"
+    B(B&&, int = (throw Y(), 0)) noexcept;
+    ~B() throw(Y);
+};
+
+int n = 7;
+struct D : public A, public B
+{
+    // May throw an exception of a type that would match a handler of type
+    // std​::​bad_array_new_length, but does not throw a bad allocation exception
+    (void*) new (std::nothrow) int[n];
+
+    // D may have the following implicitly-declared members:
+    // D::D() throw(X, std::bad_array_new_length);
+    // D::D(const D&) noexcept(true);
+    // D::D(D&&) throw(Y);
+    // D::~D() throw(X, Y);
+};
+```
+
+## Notes
+
+{/* source:cpp-language-except-spec:0034 */}
+Clang considers the rule of instantiation of dynamic exception specification is changed in C++11 by [CWG1330](https://cplusplus.github.io/CWG/issues/1330.html), see [LLVM #56349](https://github.com/llvm/llvm-project/issues/56439).
+
+## Keywords
+
+{/* source:cpp-language-except-spec:0035 */}
+[`throw`](/docs/cpp/language/keywords/throw)
+
+## Example
+
+{/* source:cpp-language-except-spec:0036 */}
+Note: best be compiled in C++98 mode to avoid warnings. Incompatible with C++17 and newer revisions.
+
+```cpp
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+
+class X {};
+class Y {};
+class Z : public X {};
+class W {};
+
+void f() throw(X, Y) 
+{
+    bool n = false;
+
+    if (n)
+        throw X(); // OK, would call std::terminate()
+    if (n)
+        throw Z(); // also OK
+
+    throw W(); // will call std::unexpected()
+}
+
+void handler()
+{
+    std::cerr << "That was unexpected!\n"; // flush needed
+    std::abort();
+}
+
+int main()
+{
+    std::set_unexpected(handler);
+    f();
+}
+```
+
+Output:
+
+```text
+That was unexpected!
+```
+
+## Defect reports
+
+{/* source:cpp-language-except-spec:0037 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-except-spec:0038 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={25} standard="C++98">
+    <PublishedBehavior>the behavior of assignment and initialization between pointers to members with different exception specifications was unspecified</PublishedBehavior>
+    <CorrectedBehavior>apply the restriction for function pointers and references</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={973} standard="C++98">
+    <PublishedBehavior>exception specification may contain functions types, but the corresponding function pointer conversion was not specified</PublishedBehavior>
+    <CorrectedBehavior>specified</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1330} standard="C++98">
+    <PublishedBehavior>an exception specification might be eagerly instantiated</PublishedBehavior>
+    <CorrectedBehavior>it is only instantiated only if needed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1267} standard="C++11">
+    <PublishedBehavior>rvalue reference types were allowed in exception specifications</PublishedBehavior>
+    <CorrectedBehavior>not allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1351} standard="C++98, C++11">
+    <PublishedBehavior>default argument (C++98) and default member initializer (C++11) were ignored in implicit exception specification</PublishedBehavior>
+    <CorrectedBehavior>made considered</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1777} standard="C++11">
+    <PublishedBehavior>`throw(T...)` was not a non-throwing specification even if `T` is an empty pack</PublishedBehavior>
+    <CorrectedBehavior>it is non-throwing if the pack is empty</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2191} standard="C++98">
+    <PublishedBehavior>the set of potential exceptions of a `typeid` expression might contain `bad_typeid` even if it cannot be thrown</PublishedBehavior>
+    <CorrectedBehavior>contains `bad_typeid` only if it can be thrown</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-except-spec:0039 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`noexcept` specifier](/docs/cpp/language/exceptions/noexcept_spec) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies whether a function could throw exceptions</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

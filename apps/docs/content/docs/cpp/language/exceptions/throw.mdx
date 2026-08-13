@@ -1,0 +1,362 @@
+---
+title: "Throwing exceptions"
+description: "Throwing an exception transfers control to a handler."
+source_url: "https://en.cppreference.com/w/cpp/language/throw"
+language: "C++"
+---
+
+{/* source:cpp-language-throw:0000 */}
+Throwing an [exception](/docs/cpp/language/exceptions) transfers control to a [handler](/docs/cpp/language/exceptions/catch).
+
+{/* source:cpp-language-throw:0001 */}
+An exception can be thrown from [`throw`](/docs/cpp/language/exceptions/throw#throw_expressions) expressions, the following contexts may also throw exceptions:
+
+{/* source:cpp-language-throw:0002 */}
+- [allocation functions](/docs/cpp/library/memory/new/operator_new)
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)
+- [`typeid`](/docs/cpp/language/expressions/typeid)
+- [`new`](/docs/cpp/language/expressions/new) expressions
+- [standard library](/docs/cpp/library/standard_library) functions
+
+## Exception object
+
+{/* source:cpp-language-throw:0003 */}
+Throwing an exception initializes an object with dynamic [storage duration](/docs/cpp/language/declarations/storage_duration), called the *exception object*.
+
+{/* source:cpp-language-throw:0004 */}
+If the type of the exception object would be one of the following types, the program is ill-formed:
+
+{/* source:cpp-language-throw:0005 */}
+- an [incomplete type](/docs/cpp/language/basic_concepts/type-id#Incomplete_type)
+- an [abstract class type](/docs/cpp/language/classes/abstract_class)
+- a pointer to an incomplete type other than (possibly cv-qualified) `void`
+
+### Constructing and destructing exception objects
+
+{/* source:cpp-language-throw:0006 */}
+Given the type of the exception object as `T`:
+
+{/* source:cpp-language-throw:0007 */}
+- Let `obj` be an lvalue of type `const T`, the [copy-initialization](/docs/cpp/language/initialization/copy_initialization) of an object of type `T` from `obj` must be well-formed.
+- If `T` is a class type:
+
+{/* source:cpp-language-throw:0008 */}
+- The selected [constructor](/docs/cpp/language/classes/initializer_list) is [odr-used](/docs/cpp/language/basic_concepts/definition#ODR-use).
+- The [destructor](/docs/cpp/language/classes/destructor) of `T` is [potentially invoked](/docs/cpp/language/classes/destructor#Potentially-invoked_constructor).
+
+{/* source:cpp-language-throw:0009 */}
+The memory for the exception object is allocated in an unspecified way. The only guarantee is that the storage will never be allocated by global [allocation functions](/docs/cpp/library/memory/new/operator_new).
+
+{/* source:cpp-language-throw:0010 */}
+If a [handler](/docs/cpp/language/exceptions/catch) exits by [rethrowing](/docs/cpp/language/exceptions/throw#throw_expressions), control is passed to another handler for the same exception object. The exception object is not destructed in this case.
+
+{/* source:cpp-language-throw:0011 */}
+<Revision until="C++11">
+When the last remaining active handler for the exception exits by any means other than rethrowing, the exception object is destroyed and the implementation may deallocate the memory for the temporary object in an unspecified way.
+
+The destruction occurs immediately after the destruction of the object declared in the "parameter list" in the handler.
+</Revision>
+
+<Revision since="C++11">
+The points of potential destruction for the exception object are:
+
+- When an active handler for the exception exits by any means other than rethrowing, immediately after the destruction of the object (if any) declared in the "parameter list" in the handler.
+- When an object of type [std::exception_ptr](/docs/cpp/library/error/exception_ptr) that refers to the exception object is destroyed, before the destructor of [std::exception_ptr](/docs/cpp/library/error/exception_ptr) returns.
+
+Among all points of potential destruction for the exception object, there is an unspecified last one where the exception object is destroyed. All other points [happen before](/docs/cpp/language/basic_concepts/multithread) that last one. The implementation may then deallocate the memory for the exception object in an unspecified way.
+</Revision>
+
+## throw expressions
+
+{/* source:cpp-language-throw:0012 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="throw expression" />
+  <Declaration id="2" language="cpp" grammar code="throw" />
+</DeclarationDoc>
+
+{/* source:cpp-language-throw:0013 */}
+1. Throws a new exception.
+
+{/* source:cpp-language-throw:0014 */}
+2. Rethrows the exception currently being handled.
+
+{/* source:cpp-language-throw:0015 */}
+<ParameterList>
+  <Parameter name="expression">the expression used to construct the exception object</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-throw:0016 */}
+When a new exception is thrown, its exception object is determined as follows:
+
+{/* source:cpp-language-throw:0017 */}
+1. The [array-to-pointer](/docs/cpp/language/expressions/implicit_cast#Array-to-pointer_conversion) and [function-to-pointer](/docs/cpp/language/expressions/implicit_cast#Function-to-pointer_conversion) standard conversions are performed on expression.
+2. Let `ex` be the conversion result:
+
+{/* source:cpp-language-throw:0018 */}
+- The type of the exception object is determined by removing any top-level cv-qualifiers from the type of `ex`.
+- The exception object is [copy-initialized](/docs/cpp/language/initialization/copy_initialization) from `ex`.
+
+{/* source:cpp-language-throw:0019 */}
+If a program attempts to rethrow an exception when no exception is presently being handled, [std::terminate](/docs/cpp/library/error/terminate) will be invoked. Otherwise, the exception is reactivated with the existing exception object (no new exception object is created), and the exception is no longer considered to be caught.
+
+{/* source:cpp-language-throw:0020 */}
+```cpp
+try
+{
+    // throwing a new exception 123
+    throw 123;
+}
+catch (...) // catch all exceptions
+{
+    // respond (partially) to exception 123
+    throw; // pass the exception to some other handler
+}
+```
+
+## Stack unwinding
+
+{/* source:cpp-language-throw:0021 */}
+Once the exception object is constructed, the control flow works backwards (up the call stack) until it reaches the start of a [`try`](/docs/cpp/language/exceptions/try) block, at which point the parameters of all associated handlers are compared, in order of appearance, with the type of the exception object to find a [match](/docs/cpp/language/exceptions/catch#Matching_exceptions). If no match is found, the control flow continues to unwind the stack until the next `try` block, and so on. If a match is found, the control flow jumps to the matching handler.
+
+{/* source:cpp-language-throw:0022 */}
+As the control flow moves up the call stack, destructors are invoked for all objects with [automatic storage duration](/docs/cpp/language/declarations/storage_duration) that are constructed, but not yet destroyed, since the corresponding `try` block was entered, in reverse order of completion of their constructors. If an exception is thrown from a destructor of a local variable or of a temporary used in a [return](/docs/cpp/language/statements/return) statement, the destructor for the object returned from the function is also invoked.
+
+{/* source:cpp-language-throw:0023 */}
+If an exception is thrown from a constructor or (rare) from a destructor of an object (regardless of the object's storage duration), destructors are called for all fully-constructed non-static non-variant members and base classes, in reverse order of completion of their constructors. Variant members of [union-like classes](/docs/cpp/language/classes/union#Union-like_classes) are only destroyed in the case of unwinding from constructor, and if the active member changed between initialization and destruction, the behavior is undefined.
+
+{/* source:cpp-language-throw:0024 */}
+<Revision since="C++11">
+If a delegating constructor exits with an exception after the non-delegating constructor successfully completed, the destructor for this object is called.
+</Revision>
+
+{/* source:cpp-language-throw:0025 */}
+If the exception is thrown from a constructor that is invoked by a [new-expression](/docs/cpp/language/expressions/new), the matching [deallocation function](/docs/cpp/library/memory/new/operator_delete) is called, if available.
+
+{/* source:cpp-language-throw:0026 */}
+This process is called *stack unwinding*.
+
+{/* source:cpp-language-throw:0027 */}
+If any function that is called directly by the stack unwinding mechanism, after initialization of the exception object and before the start of the exception handler, exits with an exception, [std::terminate](/docs/cpp/library/error/terminate) is called. Such functions include [destructors](/docs/cpp/language/classes/destructor) of objects with automatic storage duration whose scopes are exited, and the copy constructor of the exception object that is called (if not [elided](/docs/cpp/language/initialization/copy_elision)) to initialize catch-by-value arguments.
+
+{/* source:cpp-language-throw:0028 */}
+If an exception is thrown and not caught, including exceptions that escape the initial function of [std::thread](/docs/cpp/library/atomic/thread), the main function, and the constructor or destructor of any static or thread-local objects, then [std::terminate](/docs/cpp/library/error/terminate) is called. It is implementation-defined whether any stack unwinding takes place for uncaught exceptions.
+
+## Notes
+
+{/* source:cpp-language-throw:0029 */}
+When rethrowing exceptions, the second form must be used to avoid object slicing in the (typical) case where exception objects use inheritance:
+
+{/* source:cpp-language-throw:0030 */}
+```cpp
+try
+{
+    std::string("abc").substr(10); // throws std::out_of_range
+}
+catch (const std::exception& e)
+{
+    std::cout << e.what() << '\n';
+//  throw e; // copy-initializes a new exception object of type std::exception
+    throw;   // rethrows the exception object of type std::out_of_range
+}
+```
+
+{/* source:cpp-language-throw:0031 */}
+The `throw`-expression is classified as [prvalue expression](/docs/cpp/language/expressions/value_category) of type `void`. Like any other expression, it may be a sub-expression in another expression, most commonly in the [conditional operator](/docs/cpp/language/expressions/operator_other#Conditional_operator):
+
+{/* source:cpp-language-throw:0032 */}
+```cpp
+double f(double d)
+{
+    return d > 1e7 ? throw std::overflow_error("too big") : d;
+}
+
+int main()
+{
+    try
+    {
+        std::cout << f(1e10) << '\n';
+    }
+    catch (const std::overflow_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+## Keywords
+
+{/* source:cpp-language-throw:0033 */}
+[`throw`](/docs/cpp/language/keywords/throw)
+
+## Example
+
+{/* source:cpp-language-throw:0034 */}
+```cpp
+#include <iostream>
+#include <stdexcept>
+
+struct A
+{
+    int n;
+
+    A(int n = 0): n(n) { std::cout << "A(" << n << ") constructed successfully\n"; }
+    ~A() { std::cout << "A(" << n << ") destroyed\n"; }
+};
+
+int foo()
+{
+    throw std::runtime_error("error");
+}
+
+struct B
+{
+    A a1, a2, a3;
+
+    B() try : a1(1), a2(foo()), a3(3)
+    {
+        std::cout << "B constructed successfully\n";
+    }
+    catch(...)
+    {
+        std::cout << "B::B() exiting with exception\n";
+    }
+
+    ~B() { std::cout << "B destroyed\n"; }
+};
+
+struct C : A, B
+{
+    C() try
+    {
+        std::cout << "C::C() completed successfully\n";
+    }
+    catch(...)
+    {
+        std::cout << "C::C() exiting with exception\n";
+    }
+
+    ~C() { std::cout << "C destroyed\n"; }
+};
+
+int main () try
+{
+    // creates the A base subobject
+    // creates the a1 member of B
+    // fails to create the a2 member of B
+    // unwinding destroys the a1 member of B
+    // unwinding destroys the A base subobject
+    C c;
+}
+catch (const std::exception& e)
+{
+    std::cout << "main() failed to create C with: " << e.what();
+}
+```
+
+Output:
+
+```text
+A(0) constructed successfully
+A(1) constructed successfully
+A(1) destroyed
+B::B() exiting with exception
+A(0) destroyed
+C::C() exiting with exception
+main() failed to create C with: error
+```
+
+## Defect reports
+
+{/* source:cpp-language-throw:0035 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-throw:0036 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={499} standard="C++98">
+    <PublishedBehavior>an array with unknown bound could not be thrown because its type is incomplete, but an exception object can be created from the decayed pointer without any problem</PublishedBehavior>
+    <CorrectedBehavior>apply the type completion requirement to the exception object instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={668} standard="C++98">
+    <PublishedBehavior>[std::terminate](/docs/cpp/library/error/terminate) was not called if an exception is thrown from the destructor of a local non-automatic object</PublishedBehavior>
+    <CorrectedBehavior>call [std::terminate](/docs/cpp/library/error/terminate) in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1863} standard="C++11">
+    <PublishedBehavior>copy constructor was not required for move-only exception objects when thrown, but copying allowed later</PublishedBehavior>
+    <CorrectedBehavior>copy constructor required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1866} standard="C++98">
+    <PublishedBehavior>variant members were leaked on stack unwinding from constructor</PublishedBehavior>
+    <CorrectedBehavior>variant members destroyed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2176} standard="C++98">
+    <PublishedBehavior>throw from a local variable destructor could skip return value destructor</PublishedBehavior>
+    <CorrectedBehavior>function return value added to unwinding</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2699} standard="C++98">
+    <PublishedBehavior>`throw "EX"` would actually throw `char*` rather than `const char*`</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2711} standard="C++98">
+    <PublishedBehavior>the source of the copy-initialization of the exception object was not specified</PublishedBehavior>
+    <CorrectedBehavior>copy-initialized from expression</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2775} standard="C++98">
+    <PublishedBehavior>the exception object copy-initialization requirement was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2854} standard="C++98">
+    <PublishedBehavior>the storage duration of exception objects was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P1825R0" standard="C++11">
+    <PublishedBehavior>implicit move from parameters was forbidden in throw</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-throw:0037 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 7.6.18 Throwing an exception [expr.throw]
+  - 14.2 Throwing an exception [except.throw]
+
+{/* source:cpp-language-throw:0038 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 7.6.18 Throwing an exception [expr.throw]
+  - 14.2 Throwing an exception [except.throw]
+
+{/* source:cpp-language-throw:0039 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 8.17 Throwing an exception [expr.throw]
+  - 18.1 Throwing an exception [except.throw]
+
+{/* source:cpp-language-throw:0040 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 15.1 Throwing an exception [except.throw]
+
+{/* source:cpp-language-throw:0041 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 15.1 Throwing an exception [except.throw]
+
+{/* source:cpp-language-throw:0042 */}
+- C++03 standard (ISO/IEC 14882:2003):
+  - 15.1 Throwing an exception [except.throw]
+
+{/* source:cpp-language-throw:0043 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 15.1 Throwing an exception [except.throw]
+
+## See also
+
+{/* source:cpp-language-throw:0044 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [`try`](/docs/cpp/language/exceptions/try) block
+- [handler](/docs/cpp/language/exceptions/catch)
+- [`noexcept` specifier](/docs/cpp/language/exceptions/noexcept_spec)
+- [Exception handling](/docs/cpp/library/error#Exception_handling)
+
+{/* source:cpp-language-throw:0045 */}
+<Revision until="C++17">
+- [dynamic exception specifications](/docs/cpp/language/exceptions/except_spec)
+</Revision>

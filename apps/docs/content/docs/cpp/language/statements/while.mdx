@@ -1,0 +1,190 @@
+---
+title: "while loop"
+description: "Conditionally executes a statement repeatedly."
+source_url: "https://en.cppreference.com/w/cpp/language/while"
+language: "C++"
+---
+
+{/* source:cpp-language-while:0000 */}
+Conditionally executes a statement repeatedly.
+
+## Syntax
+
+{/* source:cpp-language-while:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="attr (optional) while ( condition ) statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-while:0002 */}
+<ParameterList>
+  <Parameter name="attr">
+    <Revision since="C++11">
+      any number of [attributes](/docs/cpp/language/declarations/attributes)
+    </Revision>
+  </Parameter>
+  <Parameter name="condition">
+    a [condition](/docs/cpp/language/statements/while#Condition)
+  </Parameter>
+  <Parameter name="statement">
+    a [statement](/docs/cpp/language/statements) (typically a compound statement)
+  </Parameter>
+</ParameterList>
+
+## Condition
+
+{/* source:cpp-language-while:0003 */}
+A *condition* can either be an [expression](/docs/cpp/language/expressions) or a [simple declaration](/docs/cpp/language/declarations#Simple_declaration).
+
+{/* source:cpp-language-while:0004 */}
+<Revision since="C++26">
+- If it can be syntactically resolved as a [structured binding](/docs/cpp/language/declarations/structured_binding) declaration, it is interpreted as a structured binding declaration.
+</Revision>
+
+{/* source:cpp-language-while:0005 */}
+- If it can be syntactically resolved as an [expression](/docs/cpp/language/expressions), it is treated as an expression. Otherwise, it is treated as a declaration<InlineRevision since="C++26"> that is not a structured binding declaration</InlineRevision>.
+
+{/* source:cpp-language-while:0006 */}
+When control reaches condition, the condition will yield a value, which is used to determine whether *statement* will be executed.
+
+### Expression
+
+{/* source:cpp-language-while:0007 */}
+If *condition* is an [expression](/docs/cpp/language/expressions), the value it yields is the the value of the expression contextually converted to `bool`. If that conversion is ill-formed, the program is ill-formed.
+
+### Declaration
+
+{/* source:cpp-language-while:0008 */}
+If *condition* is a simple declaration, the value it yields is the value of the decision variable (see below) contextually converted to `bool`. If that conversion is ill-formed, the program is ill-formed.
+
+#### Non-structured binding declaration
+
+{/* source:cpp-language-while:0009 */}
+The declaration has the following restrictions:
+
+{/* source:cpp-language-while:0010 */}
+- Syntactically conforms to the following form:
+
+{/* source:cpp-language-while:0011 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar until="C++11" code="type-specifier-seq declarator = assignment-expression" />
+  <Declaration language="cpp" grammar since="C++11" code="attribute-specifier-seq (optional) decl-specifier-seq declarator brace-or-equal-initializer" />
+</DeclarationDoc>
+
+{/* source:cpp-language-while:0012 */}
+- The declarator cannot specify a [function](/docs/cpp/language/functions/function) or an [array](/docs/cpp/language/declarations/array).
+- The <InlineRevision until="C++11">[type specifier sequence](/docs/cpp/language/declarations#Specifiers)</InlineRevision><InlineRevision since="C++11">[declaration specifier sequence](/docs/cpp/language/declarations#Specifiers) can only contain type specifiers and `constexpr`, and it</InlineRevision> cannot define a [class](/docs/cpp/language/classes/class) or an [enumeration](/docs/cpp/language/declarations/enum).
+
+{/* source:cpp-language-while:0013 */}
+The decision variable of the declaration is the declared variable.
+
+{/* source:cpp-language-while:0014 */}
+<Revision since="C++26">
+#### Structured binding declaration
+
+The declaration has the following restrictions:
+
+- The *expression* in its [initializer](/docs/cpp/language/initialization) cannot be of an array type.
+- The [declaration specifier sequence](/docs/cpp/language/declarations#Specifiers) can only contain type specifiers and `constexpr`.
+
+The decision variable of the declaration is the invented variable `e` [introduced by the declaration](/docs/cpp/language/declarations/structured_binding).
+</Revision>
+
+## Explanation
+
+{/* source:cpp-language-while:0015 */}
+A `while` statement is equivalent to
+
+{/* source:cpp-language-while:0016 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code={`/* label */ : {
+    if ( condition ) {
+        statement
+        goto /* label */ ;
+    }
+}`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-while:0017 */}
+If *condition* is a declaration, the variable it declares is destroyed and created with each iteration of the loop.
+
+{/* source:cpp-language-while:0018 */}
+If the loop needs to be terminated within *statement*, a [`break` statement](/docs/cpp/language/statements/break) can be used as terminating statement.
+
+{/* source:cpp-language-while:0019 */}
+If the current iteration needs to be terminated within *statement*, a [`continue` statement](/docs/cpp/language/statements/continue) can be used as shortcut.
+
+## Notes
+
+{/* source:cpp-language-while:0020 */}
+Regardless of whether *statement* is a compound statement, it always introduces a [block scope](/docs/cpp/language/basic_concepts/scope). Variables declared in it are only visible in the loop body, in other words,
+
+{/* source:cpp-language-while:0021 */}
+```cpp
+while (--x >= 0)
+    int i;
+// i goes out of scope
+```
+
+{/* source:cpp-language-while:0022 */}
+is the same as
+
+{/* source:cpp-language-while:0023 */}
+```cpp
+while (--x >= 0)
+{
+    int i;
+} // i goes out of scope
+```
+
+{/* source:cpp-language-while:0024 */}
+As part of the C++ [forward progress guarantee](/docs/cpp/language/basic_concepts/multithread#Progress_guarantee), the behavior is [undefined](/docs/cpp/language/basic_concepts/ub) if a loop<InlineRevision since="C++26"> that is not a [trivial infinite loop](/docs/cpp/language/basic_concepts/multithread#Trivial_infinite_loops)</InlineRevision> without [observable behavior](/docs/cpp/language/basic_concepts/as_if) does not terminate. Compilers are permitted to remove such loops.
+
+## Keywords
+
+{/* source:cpp-language-while:0025 */}
+[`while`](/docs/cpp/language/keywords/while)
+
+## Example
+
+{/* source:cpp-language-while:0026 */}
+```cpp
+#include <iostream>
+ 
+int main()
+{
+    // while loop with a single statement
+    int i = 0;
+    while (i < 10)
+         i++;
+    std::cout << i << '\n';
+ 
+    // while loop with a compound statement
+    int j = 2;
+    while (j < 9)
+    {
+        std::cout << j << ' ';
+        j += 2;
+    }
+    std::cout << '\n';
+ 
+    // while loop with a declaration condition
+    char cstr[] = "Hello";
+    int k = 0;
+    while (char c = cstr[k++])
+        std::cout << c;
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+10
+2 4 6 8
+Hello
+```
+
+## See also
+
+{/* source:cpp-language-while:0027 */}
+[C documentation](/docs/c/language/statements/while) for `while`

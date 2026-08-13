@@ -1,0 +1,398 @@
+---
+title: "Constructors and member initializer lists"
+description: "Constructors are non-static member functions declared with a special declarator syntax, they are used to initialize objects of their class types."
+source_url: "https://en.cppreference.com/w/cpp/language/initializer_list"
+language: "C++"
+---
+
+{/* source:cpp-language-initializer-list:0000 */}
+Constructors are non-static [member functions](/docs/cpp/language/classes/member_functions) declared with a special declarator syntax, they are used to initialize objects of their class types.
+
+{/* source:cpp-language-initializer-list:0001 */}
+<Revision since="C++20">
+A constructor cannot be a [coroutine](/docs/cpp/language/functions/coroutines).
+</Revision>
+
+{/* source:cpp-language-initializer-list:0002 */}
+<Revision since="C++23">
+A constructor cannot have an [explicit object parameter](/docs/cpp/language/classes/member_functions#Explicit_object_parameter).
+</Revision>
+
+## Syntax
+
+{/* source:cpp-language-initializer-list:0003 */}
+Constructors are declared using member [function declarators](/docs/cpp/language/functions/function) of the following form:
+
+{/* source:cpp-language-initializer-list:0004 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="class-name ( parameter-list(optional) ) except(optional) attr(optional)" />
+</DeclarationDoc>
+
+{/* source:cpp-language-initializer-list:0005 */}
+<ParameterList>
+  <Parameter name="class-name">
+an [identifier expression](/docs/cpp/language/expressions#Primary_expressions),<InlineRevision since="C++11"> possibly followed by a list of [attributes](/docs/cpp/language/declarations/attributes), and</InlineRevision> possibly enclosed by a pair parentheses
+  </Parameter>
+  <Parameter name="parameter-list">
+[parameter list](/docs/cpp/language/functions/function#Parameter_list)
+  </Parameter>
+  <Parameter name="except">
+<Revision until="C++11">
+[dynamic exception specification](/docs/cpp/language/exceptions/except_spec)
+</Revision>
+<Revision since="C++11" until="C++17">
+either [dynamic exception specification](/docs/cpp/language/exceptions/except_spec) or [noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)
+</Revision>
+<Revision since="C++17">
+[noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)
+</Revision>
+  </Parameter>
+  <Parameter name="attr">
+a list of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-initializer-list:0006 */}
+The only specifiers allowed in the [declaration specifiers](/docs/cpp/language/declarations#Specifiers) of a constructor declaration are [`friend`](/docs/cpp/language/classes/friend), [`inline`](/docs/cpp/language/declarations/inline)<InlineRevision since="C++11">, [`constexpr`](/docs/cpp/language/declarations/constexpr)</InlineRevision><InlineRevision since="C++20">, [`consteval`](/docs/cpp/language/declarations/consteval)</InlineRevision>, and [`explicit`](/docs/cpp/language/classes/explicit) (in particular, no return type is allowed). Note that [cv- and ref-qualifiers](/docs/cpp/language/classes/member_functions) are not allowed either: const and volatile semantics of an object under construction only kick in after the most-derived constructor completes.
+
+{/* source:cpp-language-initializer-list:0007 */}
+The identifier expression of class-name must have one of the following forms:
+
+{/* source:cpp-language-initializer-list:0008 */}
+- In a [friend declaration](/docs/cpp/language/classes/friend), the identifier expression is a [qualified identifier](/docs/cpp/language/basic_concepts/name#Qualified_identifiers) that [names a constructor](/docs/cpp/language/basic_concepts/qualified_lookup#Class_members).
+- Otherwise, in a member declaration that belongs to the [member specification](/docs/cpp/language/classes/class#Member_specification) of a class or class template:
+
+{/* source:cpp-language-initializer-list:0009 */}
+- For classes, the identifier expression is the [injected-class-name](/docs/cpp/language/classes/injected-class-name) of the immediately-enclosing class.
+- For class templates, the identifier expression is <InlineRevision until="C++20">a class name that names the [current instantiation](/docs/cpp/language/templates/dependent_name#Current_instantiation)</InlineRevision><InlineRevision since="C++20">the injected-class-name</InlineRevision> of the immediately-enclosing class template.
+
+{/* source:cpp-language-initializer-list:0010 */}
+- Otherwise, the identifier expression is a qualified identifier whose terminal unqualified identifier is the injected-class-name of its [lookup](/docs/cpp/language/basic_concepts/lookup) context.
+
+## Member initializer list
+
+{/* source:cpp-language-initializer-list:0011 */}
+The body of a [function definition](/docs/cpp/language/functions/function) of any constructor, before the opening brace of the compound statement, may include the member initializer list, whose syntax is the colon character `:`, followed by the comma-separated list of one or more member-initializers, each of which has the following syntax:
+
+{/* source:cpp-language-initializer-list:0012 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" grammar code="class-or-identifier ( expression-list(optional) )" />
+  <Declaration language="cpp" id="2" grammar code="class-or-identifier braced-init-list" since="C++11" />
+  <Declaration language="cpp" id="3" grammar code="parameter-pack ..." since="C++11" />
+</DeclarationDoc>
+
+{/* source:cpp-language-initializer-list:0013 */}
+1) Initializes the base or member named by class-or-identifier using [direct-initialization](/docs/cpp/language/initialization/direct_initialization) or, if expression-list is empty, [value-initialization](/docs/cpp/language/initialization/value_initialization)
+
+{/* source:cpp-language-initializer-list:0014 */}
+2) Initializes the base or member named by class-or-identifier using [list-initialization](/docs/cpp/language/initialization/list_initialization) (which becomes [value-initialization](/docs/cpp/language/initialization/value_initialization) if the list is empty and [aggregate-initialization](/docs/cpp/language/initialization/aggregate_initialization) when initializing an aggregate)
+
+{/* source:cpp-language-initializer-list:0015 */}
+3) Initializes multiple bases using a [pack expansion](/docs/cpp/language/templates/parameter_pack#Base_specifiers_and_member_initializer_lists)
+
+{/* source:cpp-language-initializer-list:0016 */}
+<ParameterList>
+  <Parameter name="class-or-identifier">
+any identifier that names a non-static data member or any type name which names either the class itself (for delegating constructors) or a direct or virtual base.
+  </Parameter>
+  <Parameter name="expression-list">
+possibly empty, comma-separated list of the arguments to pass to the constructor of the base or member
+  </Parameter>
+  <Parameter name="braced-init-list">
+[brace-enclosed initializer list](/docs/cpp/language/initialization)
+  </Parameter>
+  <Parameter name="parameter-pack">
+name of a variadic template [parameter pack](/docs/cpp/language/templates/parameter_pack#Base_specifiers_and_member_initializer_lists)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-initializer-list:0017 */}
+```cpp
+struct S
+{
+    int n;
+ 
+    S(int);       // constructor declaration
+ 
+    S() : n(7) {} // constructor definition:
+                  // ": n(7)" is the initializer list
+                  // ": n(7) {}" is the function body
+};
+ 
+S::S(int x) : n{x} {} // constructor definition: ": n{x}" is the initializer list
+ 
+int main()
+{
+    S s;      // calls S::S()
+    S s2(10); // calls S::S(int)
+}
+```
+
+## Explanation
+
+{/* source:cpp-language-initializer-list:0018 */}
+Constructors have no names and cannot be called directly. They are invoked when [initialization](/docs/cpp/language/initialization) takes place, and they are selected according to the rules of initialization. The constructors without `explicit` specifier are [converting constructors](/docs/cpp/language/classes/converting_constructor). The constructors with a `constexpr` specifier make their type a [LiteralType](/docs/cpp/library/named_req/LiteralType). Constructors that may be called without any argument are [default constructors](/docs/cpp/language/classes/default_constructor). Constructors that take another object of the same type as the argument are [copy constructors](/docs/cpp/language/classes/copy_constructor) and [move constructors](/docs/cpp/language/classes/move_constructor).
+
+{/* source:cpp-language-initializer-list:0019 */}
+Before the compound statement that forms the function body of the constructor begins executing, initialization of all direct bases, virtual bases, and non-static data members is finished. The member initializer list is the place where non-default initialization of these subobjects can be specified. For bases that cannot be default-initialized and for non-static data members that cannot be initialized by default-initialization <InlineRevision since="C++11">or by their [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization), if any</InlineRevision>, such as members of reference and const-qualified types, member initializers must be specified. <InlineRevision since="C++11">(Note that default member initializers for non-static data members of class template instantiations may be invalid if the member type or initializer is dependent.)</InlineRevision> No initialization is performed for [anonymous unions](/docs/cpp/language/classes/union#Anonymous_unions) or [variant members](/docs/cpp/language/classes/union#Union-like_class) that do not have a member initializer <InlineRevision since="C++11">or default member initializer</InlineRevision>.
+
+{/* source:cpp-language-initializer-list:0020 */}
+The initializers where class-or-identifier names a [virtual base class](/docs/cpp/language/classes/derived_class) are ignored during construction of any class that is not the most derived class of the object that's being constructed.
+
+{/* source:cpp-language-initializer-list:0021 */}
+Names that appear in expression-list or braced-init-list are evaluated in scope of the constructor:
+
+{/* source:cpp-language-initializer-list:0022 */}
+```cpp
+class X
+{
+    int a, b, i, j;
+public:
+    const int& r;
+    X(int i)
+      : r(a) // initializes X::r to refer to X::a
+      , b{i} // initializes X::b to the value of the parameter i
+      , i(i) // initializes X::i to the value of the parameter i
+      , j(this->i) // initializes X::j to the value of X::i
+    {}
+};
+```
+
+{/* source:cpp-language-initializer-list:0023 */}
+Exceptions that are thrown from member initializers may be handled by a [function `try` block](/docs/cpp/language/exceptions/try#Function_try_block).
+
+{/* source:cpp-language-initializer-list:0024 */}
+Member functions (including virtual member functions) can be called from member initializers, but the behavior is undefined if not all direct bases are initialized at that point.
+
+{/* source:cpp-language-initializer-list:0025 */}
+For virtual calls (if the direct bases are initialized at that point), the same rules apply as the rules for the virtual calls from constructors and destructors: virtual member functions behave as if the dynamic type of `*this` is the static type of the class that's being constructed (dynamic dispatch does not propagate down the inheritance hierarchy) and virtual calls (but not static calls) to [pure virtual](/docs/cpp/language/classes/abstract_class) member functions are undefined behavior.
+
+{/* source:cpp-language-initializer-list:0026 */}
+<Revision since="C++11">
+If a non-static data member has a [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization) and also appears in a member initializer list, then the member initializer is used and the default member initializer is ignored:
+```cpp
+struct S
+{
+    int n = 42;   // default member initializer
+    S() : n(7) {} // will set n to 7, not 42
+};
+```
+</Revision>
+
+{/* source:cpp-language-initializer-list:0027 */}
+Reference members cannot be bound to temporaries in a member initializer list:
+
+{/* source:cpp-language-initializer-list:0028 */}
+```cpp
+struct A
+{
+    A() : v(42) {} // Error
+    const int& v;
+};
+```
+
+{/* source:cpp-language-initializer-list:0029 */}
+Note: same applies to [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization).
+
+{/* source:cpp-language-initializer-list:0030 */}
+<Revision since="C++11">
+### Delegating constructor
+If the name of the class itself appears as class-or-identifier in the member initializer list, then the list must consist of that one member initializer only; such a constructor is known as the delegating constructor, and the constructor selected by the only member of the initializer list is the target constructor.
+In this case, the target constructor is selected by overload resolution and executed first, then the control returns to the delegating constructor and its body is executed.
+Delegating constructors cannot be recursive.
+```cpp
+class Foo
+{
+public: 
+    Foo(char x, int y) {}
+    Foo(int y) : Foo('a', y) {} // Foo(int) delegates to Foo(char, int)
+};
+```
+### Inheriting constructors
+See [using declaration](/docs/cpp/language/classes/using_declaration#Inheriting_constructors).
+</Revision>
+
+### Initialization order
+
+{/* source:cpp-language-initializer-list:0031 */}
+The order of member initializers in the list is irrelevant: the actual order of initialization is as follows:
+
+{/* source:cpp-language-initializer-list:0032 */}
+1) If the constructor is for the most-derived class, virtual bases are initialized in the order in which they appear in depth-first left-to-right traversal of the base class declarations (left-to-right refers to the appearance in base-specifier lists).
+
+{/* source:cpp-language-initializer-list:0033 */}
+2) Then, direct bases are initialized in left-to-right order as they appear in this class's base-specifier list.
+
+{/* source:cpp-language-initializer-list:0034 */}
+3) Then, non-static data member are initialized in order of declaration in the class definition.
+
+{/* source:cpp-language-initializer-list:0035 */}
+4) Finally, the body of the constructor is executed.
+
+{/* source:cpp-language-initializer-list:0036 */}
+(Note: if initialization order was controlled by the appearance in the member initializer lists of different constructors, then the [destructor](/docs/cpp/language/classes/destructor) wouldn't be able to ensure that the order of destruction is the reverse of the order of construction.)
+
+## Notes
+
+{/* source:cpp-language-initializer-list:0037 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_delegating_constructors`](/docs/cpp/library/feature_test#cpp_delegating_constructors) | [`200604L`](/docs/cpp/library/compiler_support/11#cpp_delegating_constructors_200604L) | (C++11) | [Delegating constructors](/docs/cpp/language/classes/initializer_list#Delegating_constructor) |
+
+## Example
+
+{/* source:cpp-language-initializer-list:0038 */}
+```cpp
+#include <fstream>
+#include <string>
+#include <mutex>
+ 
+struct Base
+{
+    int n;
+};   
+ 
+struct Class : public Base
+{
+    unsigned char x;
+    unsigned char y;
+    std::mutex m;
+    std::lock_guard<std::mutex> lg;
+    std::fstream f;
+    std::string s;
+ 
+    Class(int x) : Base{123}, // initialize base class
+        x(x),     // x (member) is initialized with x (parameter)
+        y{0},     // y initialized to 0
+        f{"test.cc", std::ios::app}, // this takes place after m and lg are initialized
+        s(__func__), // __func__ is available because init-list is a part of constructor
+        lg(m),    // lg uses m, which is already initialized
+        m{}       // m is initialized before lg even though it appears last here
+    {}            // empty compound statement
+ 
+    Class(double a) : y(a + 1),
+        x(y), // x will be initialized before y, its value here is indeterminate
+        lg(m)
+    {} // base class initializer does not appear in the list, it is
+       // default-initialized (not the same as if Base() were used, which is value-init)
+ 
+    Class()
+    try // function try block begins before the function body, which includes init list
+      : Class(0.0) // delegate constructor
+    {
+        // ...
+    }
+    catch (...)
+    {
+        // exception occurred on initialization
+    }
+};
+ 
+int main()
+{
+    Class c;
+    Class c1(1);
+    Class c2(0.1);
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-initializer-list:0039 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-initializer-list:0040 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={194} standard="C++98">
+    <PublishedBehavior>
+    the declarator syntax of constructor only allowed at most one function specifier (e.g. a constructor cannot be declared `inline explicit`)
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    multiple function specifiers allowed
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={257} standard="C++98">
+    <PublishedBehavior>
+    it was unspecified whether an abstract class should provide member initializers for its virtual base classes
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    specified as not required and such member initializers are ignored during execution
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={263} standard="C++98">
+    <PublishedBehavior>
+    the declarator syntax of constructor prohibited constructors from being friends
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    allowed constructors to be friends
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1345} standard="C++98">
+    <PublishedBehavior>
+    anonymous union members without default member initializers were default-initialized
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    they are not initialized
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1435} standard="C++98">
+    <PublishedBehavior>
+    the meaning of “class name” in the declarator syntax of constructor was unclear
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    changed the syntax to a specialized function declarator syntax
+    </CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1696} standard="C++98">
+    <PublishedBehavior>
+    reference members could be initialized to temporaries (whose lifetime would end at the end of constructor)
+    </PublishedBehavior>
+    <CorrectedBehavior>
+    such initialization is ill-formed
+    </CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-initializer-list:0041 */}
+C++23 standard (ISO/IEC 14882:2024): 11.4.5 Constructors [class.ctor] 11.9.3 Initializing bases and members [class.base.init]
+
+{/* source:cpp-language-initializer-list:0042 */}
+C++20 standard (ISO/IEC 14882:2020): 11.4.4 Constructors [class.ctor] 11.10.2 Initializing bases and members [class.base.init]
+
+{/* source:cpp-language-initializer-list:0043 */}
+C++17 standard (ISO/IEC 14882:2017): 15.1 Constructors [class.ctor] 15.6.2 Initializing bases and members [class.base.init]
+
+{/* source:cpp-language-initializer-list:0044 */}
+C++14 standard (ISO/IEC 14882:2014): 12.1 Constructors [class.ctor] 12.6.2 Initializing bases and members [class.base.init]
+
+{/* source:cpp-language-initializer-list:0045 */}
+C++11 standard (ISO/IEC 14882:2011): 12.1 Constructors [class.ctor] 12.6.2 Initializing bases and members [class.base.init]
+
+{/* source:cpp-language-initializer-list:0046 */}
+C++98 standard (ISO/IEC 14882:1998): 12.1 Constructors [class.ctor] 12.6.2 Initializing bases and members [class.base.init]
+
+## See also
+
+{/* source:cpp-language-initializer-list:0047 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [destructor](/docs/cpp/language/classes/destructor)
+- [`explicit`](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+  - [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+  - [default initialization](/docs/cpp/language/initialization/default_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)
+  - [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [`new`](/docs/cpp/language/expressions/new)

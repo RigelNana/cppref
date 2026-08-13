@@ -1,0 +1,360 @@
+---
+title: "constexpr specifier (since C++11)"
+description: "The constexpr specifier declares that it is possible to evaluate the value of the entities at compile time."
+source_url: "https://en.cppreference.com/w/cpp/language/constexpr"
+language: "C++"
+---
+
+{/* source:cpp-language-constexpr:0000 */}
+`constexpr` - specifies that the value of a variable<InlineRevision since="C++26">, [structured binding](/docs/cpp/language/declarations/structured_binding)</InlineRevision> or function can appear in [constant expressions](/docs/cpp/language/expressions/constant_expression)
+
+## Explanation
+
+{/* source:cpp-language-constexpr:0001 */}
+The `constexpr` specifier declares that it is possible to evaluate the value of the entities at compile time. Such entities can then be used where only compile time [constant expressions](/docs/cpp/language/expressions/constant_expression) are allowed (provided that appropriate function arguments are given).
+
+{/* source:cpp-language-constexpr:0002 */}
+A `constexpr` specifier used in an object declaration<InlineRevision until="C++14"> or non-static member function</InlineRevision> implies `const`.
+
+{/* source:cpp-language-constexpr:0003 */}
+A `constexpr` specifier used in the first declaration of a function<InlineRevision since="C++17"> or [static](/docs/cpp/language/classes/static) data member</InlineRevision> implies `inline`. If any declaration of a function or function template has a `constexpr` specifier, then every declaration must contain that specifier.
+
+## constexpr variable
+
+{/* source:cpp-language-constexpr:0004 */}
+A variable<InlineRevision since="C++14"> or variable template</InlineRevision> can be declared `constexpr` if all following conditions are satisfied:
+
+{/* source:cpp-language-constexpr:0005 */}
+- The declaration is a [definition](/docs/cpp/language/basic_concepts/definition).
+- It is of a [literal type](/docs/cpp/language/expressions/constant_expression#Literal_type).
+- It is initialized (by the declaration).
+
+{/* source:cpp-language-constexpr:0006 */}
+<Revision until="C++26">
+- The [full-expression](/docs/cpp/language/expressions#Full-expressions) of its initialization is a [constant expression](/docs/cpp/language/expressions/constant_expression).
+</Revision>
+
+<Revision since="C++26">
+- It is [constant-initializable](/docs/cpp/language/expressions/constant_expression#Constant-initialized_entities).
+</Revision>
+
+{/* source:cpp-language-constexpr:0007 */}
+<Revision since="C++20">
+- It has constant destruction, which means one of the following conditions needs to be satisfied:
+  - It is not of class type nor (possibly multi-dimensional) array thereof.
+  - It is of a class type with a `constexpr` destructor or (possibly multi-dimensional) array thereof, and for a hypothetical expression `e` whose only effect is to destroy the object, `e` would be a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expression) if the lifetime of the object and its non-mutable subobjects (but not its mutable subobjects) were considered to start within `e`.
+
+If a `constexpr` variable is not [translation-unit-local](/docs/cpp/language/declarations/tu_local), it should not be initialized to refer to a translation-unit-local entity that is usable in constant expressions, nor have a subobject that refers to such an entity. Such initialization is disallowed in a [module interface unit](/docs/cpp/language/basic_concepts/modules) (outside its [private module fragment](/docs/cpp/language/basic_concepts/modules#Private_module_fragment), if any) or a module partition, and is deprecated in any other context.
+</Revision>
+
+## constexpr function
+
+{/* source:cpp-language-constexpr:0008 */}
+A function or function template can be declared `constexpr`.
+
+{/* source:cpp-language-constexpr:0009 */}
+A function is *constexpr-suitable* if all following conditions are satisfied:
+
+{/* source:cpp-language-constexpr:0010 */}
+- If it is a constructor<InlineRevision since="C++20"> or destructor</InlineRevision>, its class does not have any [virtual base class](/docs/cpp/language/classes/derived_class#Virtual_base_classes).
+
+{/* source:cpp-language-constexpr:0011 */}
+<Revision until="C++20">
+- It is not a [virtual](/docs/cpp/language/classes/virtual) function.
+</Revision>
+
+<Revision until="C++23">
+- Its return type (if exists) is a [literal type](/docs/cpp/language/expressions/constant_expression#Literal_type).
+- Each of its parameter types is a literal type.
+</Revision>
+
+<Revision since="C++20">
+- It is not a [coroutine](/docs/cpp/language/functions/coroutines).
+</Revision>
+
+{/* source:cpp-language-constexpr:0012 */}
+<Revision until="C++14">
+- Its function body is `= default`, `= delete`, or a compound statement [enclosing](/docs/cpp/language/statements#Substatements) only the following:
+  - [null statements](/docs/cpp/language/statements#Expression_statements)
+  - [`static_assert`](/docs/cpp/language/declarations/static_assert) declarations
+  - [`typedef`](/docs/cpp/language/declarations/typedef) declarations and [alias](/docs/cpp/language/declarations/type_alias) declarations that do not define classes or enumerations
+  - [`using` declarations](/docs/cpp/language/declarations/namespace#Using-declarations)
+  - [`using` directives](/docs/cpp/language/declarations/namespace#Using-directives)
+  - exactly one [`return`](/docs/cpp/language/statements/return) statement if the function is not a constructor
+</Revision>
+
+<Revision since="C++14" until="C++23">
+- Its function body is `= default`, `= delete`, or<InlineRevision until="C++20"> a compound statement that</InlineRevision> does **not** [enclose](/docs/cpp/language/statements#Substatements) the following:
+  - [goto](/docs/cpp/language/statements/goto) statements
+  - statements with [labels](/docs/cpp/language/statements#Labeled_statements) other than `case` and `default`
+  - [`try` blocks](/docs/cpp/language/exceptions/try) <InlineRevision until="C++20" />
+  - [inline assembly](/docs/cpp/language/declarations/asm) declarations <InlineRevision until="C++20" />
+  - definitions of variables for which [no initialization is performed](/docs/cpp/language/initialization/default_initialization) <InlineRevision until="C++20" />
+  - definitions of variables of non-literal types
+  - definitions of variables of static or thread [storage duration](/docs/cpp/language/declarations/storage_duration)
+</Revision>
+
+{/* source:cpp-language-constexpr:0013 */}
+Except for instantiated `constexpr` functions, non-templated `constexpr` functions must be constexpr-suitable.
+
+{/* source:cpp-language-constexpr:0014 */}
+<Revision until="C++23">
+For a non-constructor `constexpr` function that is neither defaulted nor templated, if no argument values exist such that an invocation of the function could be an evaluated subexpression of a [core constant expression](/docs/cpp/language/expressions/constant_expression#Core_constant_expression), the program is ill-formed, no diagnostic required.
+
+For a templated `constexpr` function, if no specialization of the function/class template would make the templated function constexpr-suitable when considered as a non-templated function, the program is ill-formed, no diagnostic required.
+</Revision>
+
+{/* source:cpp-language-constexpr:0015 */}
+An invocation of a `constexpr` function in a given context produces the same result as an invocation of an equivalent non-`constexpr` function in the same context in all respects, with the following exceptions:
+
+{/* source:cpp-language-constexpr:0016 */}
+- An invocation of a `constexpr` function can appear in a [constant expression](/docs/cpp/language/expressions/constant_expression).
+- [Copy elision](/docs/cpp/language/initialization/copy_elision) is not performed in a constant expression.
+
+## constexpr constructor
+
+{/* source:cpp-language-constexpr:0017 */}
+On top of the requirements of `constexpr` functions, a constructor also needs to satisfy all following conditions to be constexpr-suitable:
+
+{/* source:cpp-language-constexpr:0018 */}
+<Revision until="C++23">
+- Its function body is `= delete` or satisfies the following additional requirements:
+  - If the class is a [union](/docs/cpp/language/classes/union) having variant members, exactly one of them is initialized. <InlineRevision until="C++20" />
+  - If the class is a [union-like class](/docs/cpp/language/classes/union#Union-like_classes), but is not a union, for each of its anonymous union members having variant members, exactly one of them is initialized. <InlineRevision until="C++20" />
+  - Every non-variant non-static data member and base class subobject is initialized. <InlineRevision until="C++20" />
+  - If the constructor is a [delegating constructor](/docs/cpp/language/classes/initializer_list#Delegating_constructor), the target constructor is a `constexpr` constructor.
+  - If the constructor is a non-delegating constructor, every constructor selected to initialize non-static data members and base class subobjects is a `constexpr` constructor.
+</Revision>
+
+{/* source:cpp-language-constexpr:0019 */}
+- The class does not have any [virtual base class](/docs/cpp/language/classes/derived_class#Virtual_base_classes).
+
+{/* source:cpp-language-constexpr:0020 */}
+<Revision until="C++23">
+For a `constexpr` constructor that is neither defaulted nor templated, if no argument values exist such that an invocation of the function could be an evaluated subexpression of the initialization full-expression of some object subject to [constant expression](/docs/cpp/language/expressions/constant_expression), the program is ill-formed, no diagnostic required.
+</Revision>
+
+## constexpr destructor
+
+{/* source:cpp-language-constexpr:0021 */}
+<Revision until="C++20">
+Destructors cannot be `constexpr`, but a [trivial destructor](/docs/cpp/language/classes/destructor#Trivial_destructor) can be implicitly called in constant expressions.
+</Revision>
+
+<Revision since="C++20">
+On top of the requirements of `constexpr` functions, a destructor also needs to satisfy all following conditions to be constexpr-suitable:
+
+- For every subobject of class type or (possibly multi-dimensional) array thereof, that class type has a `constexpr` destructor. <InlineRevision until="C++23" />
+- The class does not have any virtual base class.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-constexpr:0022 */}
+<Revision until="C++17">
+Because the [`noexcept`](/docs/cpp/language/exceptions/noexcept) operator always returns `true` for a constant expression, it can be used to check if a particular invocation of a constexpr function takes the constant expression branch:
+
+```cpp
+constexpr int f(); 
+constexpr bool b1 = noexcept(f()); // false, undefined constexpr function
+constexpr int f() { return 0; }
+constexpr bool b2 = noexcept(f()); // true, f() is a constant expression
+```
+</Revision>
+
+{/* source:cpp-language-constexpr:0023 */}
+<Revision since="C++23">
+It is possible to write a constexpr function whose invocation can never satisfy the requirements of a core constant expression:
+
+```cpp
+void f(int& i) // not a constexpr function
+{
+    i = 0;
+}
+
+constexpr void g(int& i) // well-formed since C++23
+{
+    f(i); // unconditionally calls f, cannot be a constant expression
+}
+```
+</Revision>
+
+{/* source:cpp-language-constexpr:0024 */}
+Constexpr constructors are permitted for classes that are not literal types. For example, the default constructor of [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) is constexpr, allowing [constant initialization](/docs/cpp/language/initialization/constant_initialization).
+
+{/* source:cpp-language-constexpr:0025 */}
+Reference variables can be declared constexpr (their initializers have to be [reference constant expressions](/docs/cpp/language/expressions/constant_expression#Constant_expression)):
+
+{/* source:cpp-language-constexpr:0026 */}
+```cpp
+static constexpr int const& x = 42; // constexpr reference to a const int object
+                                    // (the object has static storage duration
+                                    //  due to life extension by a static reference)
+```
+
+{/* source:cpp-language-constexpr:0027 */}
+<Revision since="C++20">
+Even though `try` blocks and inline assembly are allowed in constexpr functions, throwing exceptions <InlineRevision since="C++26">that are uncaught</InlineRevision> or executing the assembly is still disallowed in a constant expression.
+
+If a variable has constant destruction, there is no need to generate machine code in order to call destructor for it, even if its destructor is not trivial.
+
+A non-lambda, non-special-member, and non-templated constexpr function cannot implicitly become an immediate function. Users need to explicitly mark it `consteval` to make such an intended function definition well-formed.
+</Revision>
+
+{/* source:cpp-language-constexpr:0028 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_constexpr`](/docs/cpp/library/feature_test#cpp_constexpr) | [`200704L`](/docs/cpp/library/compiler_support/11#cpp_constexpr_200704L) | (C++11) | `constexpr` |
+| | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_constexpr_201304L) | (C++14) | [Relaxed `constexpr`](/docs/cpp/language/declarations/constexpr#relaxed-constexpr), [non-`const` `constexpr` methods](/docs/cpp/language/declarations/constexpr#constexpr-method-is-const) |
+| | [`201603L`](/docs/cpp/library/compiler_support/17#cpp_constexpr_201603L) | (C++17) | [Constexpr lambda](/docs/cpp/language/functions/lambda) |
+| | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_constexpr_201907L) | (C++20) | Trivial [default initialization](/docs/cpp/language/initialization/default_initialization) and [asm-declaration](/docs/cpp/language/declarations/asm) in `constexpr` functions |
+| | [`202002L`](/docs/cpp/library/compiler_support/20#cpp_constexpr_202002L) | (C++20) | Changing the active member of a union in constant evaluation |
+| | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_constexpr_202110L) | (C++23) | Non-[literal](/docs/cpp/library/named_req/LiteralType) variables, labels, and [`goto`](/docs/cpp/language) statements in constexpr functions |
+| | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_constexpr_202207L) | (C++23) | Relaxing some `constexpr` restrictions |
+| | [`202211L`](/docs/cpp/library/compiler_support/23#cpp_constexpr_202211L) | (C++23) | Permitting `static` `constexpr` variables in `constexpr` functions |
+| | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_constexpr_202306L) | (C++26) | Constexpr cast from `void*`: towards constexpr type-erasure |
+| [`__cpp_constexpr_in_decltype`](/docs/cpp/library/feature_test#cpp_constexpr_in_decltype) | [`201711L`](/docs/cpp/library/compiler_support/11#cpp_constexpr_in_decltype_201711L) | (C++11)(DR) | Generation of function and variable definitions when [needed for constant evaluation](/docs/cpp/language/expressions/constant_expression#Functions_and_variables_needed_for_constant_evaluation) |
+| [`__cpp_constexpr_dynamic_alloc`](/docs/cpp/library/feature_test#cpp_constexpr_dynamic_alloc) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_constexpr_dynamic_alloc_201907L) | (C++20) | Operations for dynamic storage duration in constexpr functions |
+
+## Keywords
+
+{/* source:cpp-language-constexpr:0029 */}
+[`constexpr`](/docs/cpp/language/keywords/constexpr)
+
+## Example
+
+{/* source:cpp-language-constexpr:0030 */}
+Defines C++11/14 `constexpr` functions that compute factorials; defines a literal type that extends string literals:
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+
+// C++11 constexpr functions use recursion rather than iteration
+constexpr int factorial(int n)
+{
+    return n <= 1 ? 1 : (n * factorial(n - 1));
+}
+
+// C++14 constexpr functions may use local variables and loops
+#if __cplusplus >= 201402L
+constexpr int factorial_cxx14(int n)
+{
+    int res = 1;
+    while (n > 1)
+        res *= n--;
+    return res;
+}
+#endif // C++14
+
+// A literal class
+class conststr
+{
+    const char* p;
+    std::size_t sz;
+public:
+    template<std::size_t N>
+    constexpr conststr(const char(&a)[N]): p(a), sz(N - 1) {}
+
+    // constexpr functions signal errors by throwing exceptions
+    // in C++11, they must do so from the conditional operator ?:
+    constexpr char operator[](std::size_t n) const
+    {
+        return n < sz ? p[n] : throw std::out_of_range("");
+    }
+
+    constexpr std::size_t size() const { return sz; }
+};
+
+// C++11 constexpr functions had to put everything in a single return statement
+// (C++14 does not have that requirement)
+constexpr std::size_t countlower(conststr s, std::size_t n = 0,
+                                             std::size_t c = 0)
+{
+    return n == s.size() ? c :
+        'a' <= s[n] && s[n] <= 'z' ? countlower(s, n + 1, c + 1)
+                                   : countlower(s, n + 1, c);
+}
+
+// An output function that requires a compile-time constant, for testing
+template<int n>
+struct constN
+{
+    constN() { std::cout << n << '\n'; }
+};
+
+int main()
+{
+    std::cout << "4! = ";
+    constN<factorial(4)> out1; // computed at compile time
+
+    volatile int k = 8; // disallow optimization using volatile
+    std::cout << k << "! = " << factorial(k) << '\n'; // computed at run time
+
+    std::cout << "The number of lowercase letters in \"Hello, world!\" is ";
+    constN<countlower("Hello, world!")> out2; // implicitly converted to conststr
+
+    constexpr int a[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+    constexpr int length_a = sizeof a / sizeof(int); // std::size(a) in C++17,
+                                                      // std::ssize(a) in C++20
+    std::cout << "Array of length " << length_a << " has elements: ";
+    for (int i = 0; i < length_a; ++i)
+        std::cout << a[i] << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+4! = 24
+8! = 40320
+The number of lowercase letters in "Hello, world!" is 9
+Array of length 12 has elements: 0 1 2 3 4 5 6 7 8 0 0 0
+```
+
+## Defect reports
+
+{/* source:cpp-language-constexpr:0031 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-constexpr:0032 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1358} standard="C++11"><PublishedBehavior>templated `constexpr` functions also needed to have at least one valid argument value</PublishedBehavior><CorrectedBehavior>no need</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1359} standard="C++11"><PublishedBehavior>`constexpr` union constructors must initialize all data members</PublishedBehavior><CorrectedBehavior>initializes exactly one data member for non-empty unions</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1366} standard="C++11"><PublishedBehavior>classes with `constexpr` constructors whose function bodies are `= default` or `= delete` could have virtual base classes</PublishedBehavior><CorrectedBehavior>such classes can neither have virtual base classes</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1595} standard="C++11"><PublishedBehavior>`constexpr` delegating constructors required all involved constructors to be `constexpr`</PublishedBehavior><CorrectedBehavior>only requires the target constructor to be `constexpr`</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1712} standard="C++14"><PublishedBehavior>a `constexpr` variable template was required to have all its declarations contain the `constexpr` specifier[1]</PublishedBehavior><CorrectedBehavior>not required anymore</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1911} standard="C++11"><PublishedBehavior>`constexpr` constructors for non-literal types were not allowed</PublishedBehavior><CorrectedBehavior>allowed in constant initialization</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2004} standard="C++11"><PublishedBehavior>copy/move of a union with a mutable member was allowed in a constant expression</PublishedBehavior><CorrectedBehavior>mutable variants disqualify implicit copy/move</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2022} standard="C++98"><PublishedBehavior>whether equivalent `constexpr` and non-`constexpr` function produce equal result might depend on whether copy elision is performed</PublishedBehavior><CorrectedBehavior>assume that copy elision is always performed in constant expressions</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2163} standard="C++14"><PublishedBehavior>labels were allowed in `constexpr` functions even though `goto` statements are prohibited</PublishedBehavior><CorrectedBehavior>labels also prohibited</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2268} standard="C++11"><PublishedBehavior>copy/move of a union with a mutable member was prohibited by the resolution of [CWG issue 2004](https://cplusplus.github.io/CWG/issues/2004.html)</PublishedBehavior><CorrectedBehavior>allowed if the object is created within the constant expression</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2278} standard="C++98"><PublishedBehavior>the resolution of [CWG issue 2022](https://cplusplus.github.io/CWG/issues/2022.html) was not implementable</PublishedBehavior><CorrectedBehavior>assume that copy elision is never performed in constant expressions</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2531} standard="C++11"><PublishedBehavior>a non-inline variable became inline if it is redeclared with `constexpr`</PublishedBehavior><CorrectedBehavior>the variable does not become inline</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-language-constexpr:0033 */}
+[1] It is redundant because there cannot be more than one declaration of a variable template with the `constexpr` specifier.
+
+## See also
+
+{/* source:cpp-language-constexpr:0034 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[constant expression](/docs/cpp/language/expressions/constant_expression)</DescriptionTerm>
+    <DescriptionBody>defines an [expression](/docs/cpp/language/expressions) that can be evaluated at compile time</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`consteval` specifier](/docs/cpp/language/declarations/consteval) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a function is an *immediate function*, that is, every call to the function must be in a constant evaluation</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`constinit` specifier](/docs/cpp/language/declarations/constinit) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>asserts that a variable has static initialization, i.e. [zero initialization](/docs/cpp/language/initialization/zero_initialization) and [constant initialization](/docs/cpp/language/initialization/constant_initialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`C documentation`](/docs/c/language/declarations/constexpr)</DescriptionTerm>
+    <DescriptionBody>for `constexpr`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

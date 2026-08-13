@@ -1,0 +1,528 @@
+---
+title: "Reference initialization"
+description: "Binds a reference to an object."
+source_url: "https://en.cppreference.com/w/cpp/language/reference_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-reference-initialization:0000 */}
+Binds a reference to an object.
+
+## Syntax
+
+#### Non-list-initialization
+
+{/* source:cpp-language-reference-initialization:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`T & ref = target ;
+T & ref ( target );`} />
+  <Declaration id="2" language="cpp" since="C++11" grammar code={`T && ref = target ;
+T && ref ( target );`} />
+  <Declaration id="3" language="cpp" grammar code="func-refpar ( target )" />
+  <Declaration id="4" language="cpp" grammar code="return target ;" />
+  (inside the definition of *func-refret*)
+  <Declaration id="5" language="cpp" grammar code="Class :: Class ( ... ) : ref-member ( target ) { ... }" />
+  (inside the definition of *Class*)
+</DeclarationDoc>
+
+#### Ordinary list-initialization (since C++11)
+
+{/* source:cpp-language-reference-initialization:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`T & ref = { arg1 , arg2 , ... };
+T & ref { arg1 , arg2 , ... };`} />
+  <Declaration id="2" language="cpp" grammar code={`T && ref = { arg1 , arg2 , ... };
+T && ref { arg1 , arg2 , ... };`} />
+  <Declaration id="3" language="cpp" grammar code="func-refpar ({ arg1 , arg2 , ... });" />
+</DeclarationDoc>
+
+#### Designated list-initialization (since C++20)
+
+{/* source:cpp-language-reference-initialization:0003 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code={`T & ref = {. des1 = arg1 , . des2 { arg2 } ... };
+T & ref {. des1 = arg1 , . des2 { arg2 } ... };`} />
+  <Declaration id="2" language="cpp" grammar code={`T && ref = {. des1 = arg1 , . des2 { arg2 } ... };
+T && ref {. des1 = arg1 , . des2 { arg2 } ... };`} />
+  <Declaration id="3" language="cpp" grammar code="func-refpar ({. des1 = arg1 , . des2 { arg2 } ... });" />
+</DeclarationDoc>
+
+{/* source:cpp-language-reference-initialization:0004 */}
+A reference to `T` can be initialized with an object of type `T`, a function of type `T`, or an object implicitly convertible to `T`. Once initialized, a reference cannot be reseated (changed) to refer to another object.
+
+{/* source:cpp-language-reference-initialization:0005 */}
+References are initialized in the following situations:
+
+{/* source:cpp-language-reference-initialization:0006 */}
+- 1) When a named [lvalue reference](/docs/cpp/language/declarations/reference#Lvalue_references) variable is declared with an initializer.
+
+{/* source:cpp-language-reference-initialization:0007 */}
+- 2) When a named [rvalue reference](/docs/cpp/language/declarations/reference#Rvalue_references) variable is declared with an initializer.
+
+{/* source:cpp-language-reference-initialization:0008 */}
+- 3) In a function call expression, when the function parameter has reference type.
+
+{/* source:cpp-language-reference-initialization:0009 */}
+- 4) In the `return` statement, when the function returns a reference type. <InlineRevision since="C++26">The program is ill-formed if the returned reference is bound to the result of a [temporary expression](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary).</InlineRevision>
+
+{/* source:cpp-language-reference-initialization:0010 */}
+- 5) When a [non-static data member](/docs/cpp/language/classes/data_members) of reference type is initialized using a [member initializer](/docs/cpp/language/classes/initializer_list).
+
+## Explanation
+
+{/* source:cpp-language-reference-initialization:0011 */}
+<ParameterList>
+  <Parameter name="T">
+    the referenced type
+  </Parameter>
+  <Parameter name="ref">
+    the reference variable to be initialized
+  </Parameter>
+  <Parameter name="target">
+    the initializer expression being used
+  </Parameter>
+  <Parameter name="func-refpar">
+    a function with a parameter of reference type (`T &` <InlineRevision since="C++11">or `T &&`</InlineRevision>)
+  </Parameter>
+  <Parameter name="func-refret">
+    a function whose returns type is a reference type (`T &` <InlineRevision since="C++11">or `T &&`</InlineRevision>)
+  </Parameter>
+  <Parameter name="Class">
+    a class name
+  </Parameter>
+  <Parameter name="ref-member">
+    a non-static data member of reference type (`T &` <InlineRevision since="C++11">or `T &&`</InlineRevision>) of Class
+  </Parameter>
+  <Parameter name="des1, des2, ...">
+    designators
+  </Parameter>
+  <Parameter name="arg1, arg2, ...">
+    the initializers in initializer lists
+  </Parameter>
+</ParameterList>
+
+## Definitions
+
+{/* source:cpp-language-reference-initialization:0012 */}
+For two types `T1` and `T2`:
+
+{/* source:cpp-language-reference-initialization:0013 */}
+- Given the cv-unqualified versions of `T1` and `T2` as `U1` and `U2` respectively, if `U1` is [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types) to `U2`, or `U1` is a [base class](/docs/cpp/language/classes/derived_class) of `U2`, `T1` is *reference-related* to `T2`.
+- If a prvalue of type "pointer to `T2`" can be converted to the type "pointer to `T1`" via a standard conversion sequence, `T1` is *reference-compatible* with `T2`.
+
+## Initialization rules
+
+{/* source:cpp-language-reference-initialization:0014 */}
+<Revision since="C++11">
+If a reference initialization uses an ordinary<InlineRevision since="C++20"> or designated</InlineRevision> list-initialization, the rules of [list-initialization](/docs/cpp/language/initialization/list_initialization) are followed.
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0015 */}
+For non-list reference initialization, given the type of *target* as `U`, the reference either *binds directly* to *target* or binds to a value of type `T` converted from *target*. Direct binding is considered first, followed by indirect binding, if neither binding is available, the program is ill-formed.
+
+{/* source:cpp-language-reference-initialization:0016 */}
+In all cases where the reference-compatible relationship of two types is used to establish the validity of a reference binding and the standard conversion sequence would be ill-formed, a program that necessitates such a binding is ill-formed.
+
+### Direct binding
+
+{/* source:cpp-language-reference-initialization:0017 */}
+If all following conditions are satisfied:
+
+{/* source:cpp-language-reference-initialization:0018 */}
+- The reference to be initialized is an lvalue reference.
+- *target* is a non-[bit-field](/docs/cpp/language/classes/bit_field) lvalue.
+- `T` is reference-compatible with `U`.
+
+{/* source:cpp-language-reference-initialization:0019 */}
+Then the reference binds to *target*, or to its appropriate base class subobject:
+
+{/* source:cpp-language-reference-initialization:0020 */}
+```cpp
+double d = 2.0;
+double& rd = d;        // rd refers to d
+const double& rcd = d; // rcd refers to d
+
+struct A {};
+struct B : A {} b;
+
+A& ra = b;             // ra refers to A subobject in b
+const A& rca = b;      // rca refers to A subobject in b
+```
+
+{/* source:cpp-language-reference-initialization:0021 */}
+Otherwise, if all following conditions are satisfied:
+
+{/* source:cpp-language-reference-initialization:0022 */}
+- The reference to be initialized is an lvalue reference.
+- `U` is a class type.
+- `T` is not reference-related to `U`.
+- *target* can be converted to an lvalue of type `V` such that `T` is reference-compatible with `V`.
+
+{/* source:cpp-language-reference-initialization:0023 */}
+Then the reference binds to the lvalue result of the conversion, or to its appropriate base class subobject:
+
+{/* source:cpp-language-reference-initialization:0024 */}
+```cpp
+struct A {};
+struct B : A { operator int&(); };
+
+int& ir = B(); // ir refers to the result of B::operator int&
+```
+
+{/* source:cpp-language-reference-initialization:0025 */}
+Otherwise, if the reference to be initialized is an lvalue reference, and `T` is not const-qualified or is volatile-qualified, the prorgram is ill-formed:
+
+{/* source:cpp-language-reference-initialization:0026 */}
+```cpp
+double& rd2 = 2.0; // error: not an lvalue and reference is not const
+int i = 2;
+double& rd3 = i;   // error: type mismatch and reference is not const
+```
+
+{/* source:cpp-language-reference-initialization:0027 */}
+Otherwise, if all following conditions are satisfied:
+
+{/* source:cpp-language-reference-initialization:0028 */}
+- *target* is a value of any following category:
+
+{/* source:cpp-language-reference-initialization:0029 */}
+<Revision until="C++11">
+  - rvalue
+</Revision>
+
+<Revision since="C++11" until="C++17">
+  - non-bit-field xvalue
+  - class prvalue
+  - array prvalue
+  - function lvalue
+</Revision>
+
+<Revision since="C++17">
+  - non-bit-field rvalue
+  - function lvalue
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0030 */}
+- `T` is reference-compatible with `U`.
+
+{/* source:cpp-language-reference-initialization:0031 */}
+Then the reference binds to *target*, or to its appropriate base class subobject:
+
+{/* source:cpp-language-reference-initialization:0032 */}
+```cpp
+struct A {};
+struct B : A {};
+extern B f();
+
+const A& rca2 = f(); // bound to the A subobject of the B rvalue.
+A&& rra = f();       // same as above
+
+int i2 = 42;
+int&& rri = static_cast<int&&>(i2); // bound directly to i2
+```
+
+{/* source:cpp-language-reference-initialization:0033 */}
+<Revision since="C++17">
+If *target* is a prvalue, [temporary materialization](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) is applied to it, considering the type of the prvalue to be the adjusted type `P`.
+
+- `P` is [adjusted](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions) from the type of *target* (i.e. `U`) by adding the cv-qualification of `T` to it.
+
+In this case, the reference binds to the result object, or to its appropriate base class subobject.
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0034 */}
+Otherwise, if all following conditions are satisfied:
+
+{/* source:cpp-language-reference-initialization:0035 */}
+- `U` is a class type.
+- `T` is not reference-related to `U`.
+- *target* can be converted to a value `v` of type `V` such that `T` is reference-compatible with `V`, where `v` is of any following category:
+
+{/* source:cpp-language-reference-initialization:0036 */}
+<Revision until="C++11">
+  - rvalue
+</Revision>
+
+<Revision since="C++11" until="C++17">
+  - xvalue
+  - class prvalue
+  - function lvalue
+</Revision>
+
+<Revision since="C++17">
+  - rvalue
+  - function lvalue
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0037 */}
+Then the reference binds to the result of the conversion, or to its appropriate base class subobject:
+
+{/* source:cpp-language-reference-initialization:0038 */}
+```cpp
+struct A {};
+struct B : A {};
+struct X { operator B(); } x;
+
+const A& r = x; // bound to the A subobject of the result of the conversion
+B&& rrb = x;    // bound directly to the result of the conversion
+```
+
+{/* source:cpp-language-reference-initialization:0039 */}
+<Revision since="C++17">
+If the result of the conversion is a prvalue, [temporary materialization](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) is applied to it, considering the type of the prvalue to be the adjusted type `P`.
+
+- `P` is [adjusted](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions) from the type of the conversion result by adding the cv-qualification of `T` to it.
+
+In this case, the reference binds to the result object, or to its appropriate base class subobject.
+</Revision>
+
+### Indirect binding
+
+{/* source:cpp-language-reference-initialization:0040 */}
+If direct binding is not available, indirect binding is considered. In this case, `T` cannot be reference-related to `U`.
+
+{/* source:cpp-language-reference-initialization:0041 */}
+If `T` or `U` is a class type, user-defined conversions are considered using the rules for [copy-initialization](/docs/cpp/language/initialization/copy_initialization) of an object of type `T` by user-defined conversion. The program is ill-formed if the corresponding non-reference copy-initialization would be ill-formed. The result of the call to the conversion function, as described for the non-reference [copy-initialization](/docs/cpp/language/initialization/copy_initialization), is then used to direct-initialize the reference. For this direct-initialization, user-defined conversions are not considered.
+
+{/* source:cpp-language-reference-initialization:0042 */}
+<Revision until="C++17">
+Otherwise, a temporary of type `T` is created and copy-initialized from *target*. The reference is then bound to the temporary.
+</Revision>
+
+<Revision since="C++17">
+Otherwise, *target* is implicitly converted to a prvalue of type "cv-unqualified `T`". The temporary materialization conversion is applied, considering the type of the prvalue to be `T`, and the reference is bound to the result object.
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0043 */}
+```cpp
+const std::string& rs = "abc"; // rs refers to temporary copy-initialized from char array
+const double& rcd2 = 2;        // rcd2 refers to temporary with value 2.0
+int i3 = 2;
+double&& rrd3 = i3;            // rrd3 refers to temporary with value 2.0
+```
+
+## Lifetime of a temporary
+
+{/* source:cpp-language-reference-initialization:0044 */}
+Whenever a reference is bound to a temporary object or to a subobject thereof, the lifetime of the temporary object is extended to match the lifetime of the reference (check [temporary object lifetime exceptions](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime)), where the temporary object or its subobject is denoted by one of following expression:
+
+{/* source:cpp-language-reference-initialization:0045 */}
+<Revision until="C++17">
+- a [prvalue](/docs/cpp/language/expressions/value_category#prvalue) expression of an object type,
+</Revision>
+
+<Revision since="C++17">
+- a [temporary materialization conversion](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization),
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0046 */}
+- a parenthesized expression `(e)`, where `e` is one of these expressions,
+- a [built-in subscript expression](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) of form `a[n]` or `n[a]`, where `a` is an array and is one of these expressions,
+- a [class member access expression](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) of form `e.m`, where `e` is one of these expressions and `m` designates a non-static data member of object type,
+- a [pointer-to-member operation](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators) of form `e.*mp`, where `e` is one of these expressions and `mp` is a pointer to data member,
+- a [`const_cast`](/docs/cpp/language/expressions/const_cast), [`static_cast`](/docs/cpp/language/expressions/static_cast), [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast), or [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) conversion without a user-defined conversion that converts one of these expressions to the glvalue refers to the object designated by the operand, or to its complete object or a subobject thereof (an [explicit cast](/docs/cpp/language/expressions/explicit_cast) expression is interpreted as a sequence of these casts),
+- a [conditional expression](/docs/cpp/language/expressions/operator_other#Conditional_operator) of form `cond ? e1 : e2` that is a glvalue, where `e1` or `e2` is one of these expressions, or
+- a [built-in comma expression](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) of form `x, e` that is a glvalue, where `e` is one of these expressions.
+
+{/* source:cpp-language-reference-initialization:0047 */}
+There are following exceptions to this lifetime rule:
+
+{/* source:cpp-language-reference-initialization:0048 */}
+<Revision until="C++26">
+- a temporary bound to a return value of a function in a `return` statement is not extended: it is destroyed immediately at the end of the return expression. Such `return` statement always returns a dangling reference.
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0049 */}
+- a temporary bound to a reference parameter in a function call exists until the end of the full expression containing that function call: if the function returns a reference, which outlives the full expression, it becomes a dangling reference.
+
+{/* source:cpp-language-reference-initialization:0050 */}
+<Revision since="C++11">
+- a temporary bound to a reference in the initializer used in a new-expression exists until the end of the full expression containing that new-expression, not as long as the initialized object. If the initialized object outlives the full expression, its reference member becomes a dangling reference.
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0051 */}
+<Revision since="C++20">
+- a temporary bound to a reference in a reference element of an aggregate initialized using [direct-initialization](/docs/cpp/language/initialization/direct_initialization) syntax **(**parentheses**)** exists until the end of the full expression containing the initializer, as opposed to [list-initialization](/docs/cpp/language/initialization/list_initialization) syntax **\{**braces**\}**.
+
+```cpp
+struct A
+{
+    int&& r;
+};
+
+A a1{7}; // OK, lifetime is extended
+A a2(7); // well-formed, but dangling reference
+```
+</Revision>
+
+{/* source:cpp-language-reference-initialization:0052 */}
+In general, the lifetime of a temporary cannot be further extended by "passing it on": a second reference, initialized from the reference variable or data member to which the temporary was bound, does not affect its lifetime.
+
+## Notes
+
+{/* source:cpp-language-reference-initialization:0053 */}
+References appear without initializers only in function parameter declaration, in function return type declaration, in the declaration of a class member, and with the [`extern`](/docs/cpp/language/declarations/storage_duration) specifier.
+
+{/* source:cpp-language-reference-initialization:0054 */}
+Until the resolution of [CWG issue 1696](https://cplusplus.github.io/CWG/issues/1696.html), a temporary is permitted to bound to a reference member in a constructor [initializer list](/docs/cpp/language/classes/initializer_list), and it persists only until the constructor exits, not as long as the object exists. Such initialization is ill-formed since [CWG 1696](https://cplusplus.github.io/CWG/issues/1696.html), although many compilers still support it (a notable exception is clang).
+
+## Example
+
+{/* source:cpp-language-reference-initialization:0055 */}
+```cpp
+#include <sstream>
+#include <utility>
+
+struct S
+{
+    int mi;
+    const std::pair<int, int>& mp; // reference member
+};
+
+void foo(int) {}
+
+struct A {};
+
+struct B : A
+{
+    int n;
+    operator int&() { return n; }
+};
+
+B bar() { return B(); }
+
+//int& bad_r;      // error: no initializer
+extern int& ext_r; // OK
+
+int main()
+{
+//  Lvalues
+    int n = 1;
+    int& r1 = n;                    // lvalue reference to the object n
+    const int& cr(n);               // reference can be more cv-qualified
+    volatile int& cv{n};            // any initializer syntax can be used
+    int& r2 = r1;                   // another lvalue reference to the object n
+//  int& bad = cr;                  // error: less cv-qualified
+    int& r3 = const_cast<int&>(cr); // const_cast is needed
+
+    void (&rf)(int) = foo; // lvalue reference to function
+    int ar[3];
+    int (&ra)[3] = ar;     // lvalue reference to array
+
+    B b;
+    A& base_ref = b;        // reference to base subobject
+    int& converted_ref = b; // reference to the result of a conversion
+
+//  Rvalues
+//  int& bad = 1;        // error: cannot bind lvalue ref to rvalue
+    const int& cref = 1; // bound to rvalue
+    int&& rref = 1;      // bound to rvalue
+
+    const A& cref2 = bar(); // reference to A subobject of B temporary
+    A&& rref2 = bar();      // same
+
+    int&& xref = static_cast<int&&>(n); // bind directly to n
+//  int&& copy_ref = n;                 // error: can't bind to an lvalue
+    double&& copy_ref = n;              // bind to an rvalue temporary with value 1.0
+
+//  Restrictions on temporary lifetimes
+//  std::ostream& buf_ref = std::ostringstream() << 'a';
+                     // the ostringstream temporary was bound to the left operand
+                     // of operator<< but its lifetime ended at the semicolon so
+                     // the buf_ref is a dangling reference
+
+    S a {1, {2, 3}}; // temporary pair {2, 3} bound to the reference member
+                     // a.mp and its lifetime is extended to match 
+                     // the lifetime of object a
+
+    S* p = new S{1, {2, 3}}; // temporary pair {2, 3} bound to the reference
+                             // member p->mp, but its lifetime ended at the semicolon
+                             // p->mp is a dangling reference
+    delete p;
+
+    // Imitate [[maybe_unused]] applied to the following variables:
+    [](...){}
+    (
+        cv, r2, r3, rf, ra, base_ref, converted_ref,
+        a, cref, rref, cref2, rref2, copy_ref, xref
+    );
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-reference-initialization:0056 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-reference-initialization:0057 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={391} standard="C++98">
+    <PublishedBehavior>initialize a reference to const-qualified type with a class type rvalue might create a temporary, and a constructor of that class was required in order to copy the rvalue into that temporary</PublishedBehavior>
+    <CorrectedBehavior>no temporary is created, constructor is not required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={450} standard="C++98">
+    <PublishedBehavior>a reference to const-qualified array could not be initialized with a reference-compatible array rvalue</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={589} standard="C++98">
+    <PublishedBehavior>a reference could not bind directly to an array or class rvalue</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={656} standard="C++98">
+    <PublishedBehavior>a reference to const-qualified type initialized with a type which is not reference-compatible but has a conversion function to a reference-compatible type was bound to a temporary copied from the return value (or its base class subobject) of the conversion function</PublishedBehavior>
+    <CorrectedBehavior>bound to the return value (or its base class subobject) directly</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1287} standard="C++11">
+    <PublishedBehavior>the conversion from target of class type to another reference-compatible type could only be implicit</PublishedBehavior>
+    <CorrectedBehavior>allow explicit conversions</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1295} standard="C++11">
+    <PublishedBehavior>a reference could bind to a bit-field xvalue</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1299} standard="C++98">
+    <PublishedBehavior>the definition of temporary was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1571} standard="C++98">
+    <PublishedBehavior>user-defined conversions in indirect binding did not consider the type of target</PublishedBehavior>
+    <CorrectedBehavior>considered</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1604} standard="C++98">
+    <PublishedBehavior>user-defined conversions were not considered in indirect binding</PublishedBehavior>
+    <CorrectedBehavior>considered</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2352} standard="C++98">
+    <PublishedBehavior>reference compatibility did not consider qualification conversions</PublishedBehavior>
+    <CorrectedBehavior>considered</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2481} standard="C++17">
+    <PublishedBehavior>cv-qualification was not added to the result type of temporary materialization in indirect binding</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2657} standard="C++17">
+    <PublishedBehavior>cv-qualification was not added to the result type of temporary materialization in direct binding</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2801} standard="C++98">
+    <PublishedBehavior>reference-related types were allowed for indirect binding</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-reference-initialization:0058 */}
+- [constructor](/docs/cpp/language/classes/initializer_list)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy assignment](/docs/cpp/language/classes/as_operator)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [`explicit`](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+- [move assignment](/docs/cpp/language/classes/move_operator)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)

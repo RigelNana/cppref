@@ -1,0 +1,129 @@
+---
+title: "consteval specifier (since C++20)"
+description: "specifies that a function is an immediate function, that is, every call to the function must produce a compile-time constant"
+source_url: "https://en.cppreference.com/w/cpp/language/consteval"
+language: "C++"
+---
+
+{/* source:cpp-language-consteval:0000 */}
+`consteval` - specifies that a function is an *immediate function*, that is, every call to the function must produce a compile-time constant
+
+## Explanation
+
+{/* source:cpp-language-consteval:0001 */}
+The `consteval` specifier declares a function or function template to be an *immediate function*, that is, every [potentially-evaluated](/docs/cpp/language/expressions#Potentially-evaluated_expressions) call to the function must (directly or indirectly) produce a compile time [constant expression](/docs/cpp/language/expressions/constant_expression).
+
+{/* source:cpp-language-consteval:0002 */}
+An immediate function is a [constexpr function](/docs/cpp/language/declarations/constexpr#constexpr_function), subject to its requirements as the case may be. Same as `constexpr`, a `consteval` specifier implies `inline`. However, it may not be applied to destructors, allocation functions, or deallocation functions.
+
+{/* source:cpp-language-consteval:0003 */}
+A function or function template declaration specifying `consteval` may not also specify `constexpr`, and any redeclarations of that function or function template must also specify `consteval`.
+
+{/* source:cpp-language-consteval:0004 */}
+A [potentially-evaluated](/docs/cpp/language/expressions#Potentially-evaluated_expressions) invocation of an immediate function whose innermost non-block scope is not a [function parameter scope](/docs/cpp/language/basic_concepts/scope#Function_parameter_scope) of an immediate function <InlineRevision since="C++23">or the true-branch of a [consteval if statement](/docs/cpp/language/statements/if#Consteval_if)</InlineRevision> must produce a constant expression; such an invocation is known as an *immediate invocation*.
+
+{/* source:cpp-language-consteval:0005 */}
+```cpp
+consteval int sqr(int n)
+{
+    return n*n;
+}
+constexpr int r = sqr(100); // OK
+ 
+int x = 100;
+int r2 = sqr(x);            // Error: Call does not produce a constant
+ 
+consteval int sqrsqr(int n)
+{
+    return sqr(sqr(n));     // Not a constant expression at this point, but OK
+}
+ 
+constexpr int dblsqr(int n)
+{
+    return 2 * sqr(n);      // Error: Enclosing function is not consteval
+                            // and sqr(n) is not a constant
+}
+```
+
+{/* source:cpp-language-consteval:0006 */}
+An [identifier expression](/docs/cpp/language/basic_concepts/name#In_expressions) that denotes an immediate function may only appear within a subexpression of an immediate invocation or within an *immediate function context* (i.e. a context mentioned above, in which a call to an immediate function needs not to be a constant expression). A pointer or reference to an immediate function can be taken but cannot escape constant expression evaluation:
+
+{/* source:cpp-language-consteval:0007 */}
+```cpp
+consteval int f() { return 42; }
+consteval auto g() { return &f; }
+consteval int h(int (*p)() = g()) { return p(); }
+constexpr int r = h();  // OK
+constexpr auto e = g(); // ill-formed: a pointer to an immediate function is
+                        // not a permitted result of a constant expression
+```
+
+## Notes
+
+{/* source:cpp-language-consteval:0008 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_consteval`](/docs/cpp/library/feature_test#cpp_consteval) | [`201811L`](/docs/cpp/library/compiler_support/20#cpp_consteval_201811L) | (C++20) | Immediate functions |
+| | [`202211L`](/docs/cpp/library/compiler_support/23#cpp_consteval_202211L) | (C++23) (DR20) | Making `consteval` propagate up |
+
+## Keywords
+
+{/* source:cpp-language-consteval:0009 */}
+[`consteval`](/docs/cpp/language/keywords/consteval)
+
+## Example
+
+{/* source:cpp-language-consteval:0010 */}
+```cpp
+#include <iostream>
+ 
+// This function might be evaluated at compile-time, if the input
+// is known at compile-time. Otherwise, it is executed at run-time.
+constexpr unsigned factorial(unsigned n)
+{
+    return n < 2 ? 1 : n * factorial(n - 1);
+}
+ 
+// With consteval we enforce that the function will be evaluated at compile-time.
+consteval unsigned combination(unsigned m, unsigned n)
+{
+    return factorial(n) / factorial(m) / factorial(n - m);
+}
+ 
+static_assert(factorial(6) == 720);
+static_assert(combination(4, 8) == 70);
+ 
+int main(int argc, const char*[])
+{
+    constexpr unsigned x{factorial(4)};
+    std::cout << x << '\n';
+ 
+    [[maybe_unused]]
+    unsigned y = factorial(argc); // OK
+//  unsigned z = combination(argc, 7); // error: 'argc' is not a constant expression
+}
+```
+
+Output:
+
+```text
+24
+```
+
+## See also
+
+{/* source:cpp-language-consteval:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`constexpr` specifier](/docs/cpp/language/declarations/constexpr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies that the value of a variable or function can be computed at compile time</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`constinit` specifier](/docs/cpp/language/declarations/constinit) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>asserts that a variable has static initialization, i.e. [zero initialization](/docs/cpp/language/initialization/zero_initialization) and [constant initialization](/docs/cpp/language/initialization/constant_initialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[constant expression](/docs/cpp/language/expressions/constant_expression)</DescriptionTerm>
+    <DescriptionBody>defines an [expression](/docs/cpp/language/expressions) that can be evaluated at compile time</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

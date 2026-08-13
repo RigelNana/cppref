@@ -1,0 +1,705 @@
+---
+title: "Implicit conversions"
+description: "Implicit conversions are performed whenever an expression of some type T1 is used in context that does not accept that type, but accepts some other type T2; in particular:"
+source_url: "https://en.cppreference.com/w/cpp/language/implicit_conversion"
+language: "C++"
+---
+
+{/* source:cpp-language-implicit-conversion:0000 */}
+Implicit conversions are performed whenever an expression of some type `T1` is used in context that does not accept that type, but accepts some other type `T2`; in particular:
+
+{/* source:cpp-language-implicit-conversion:0001 */}
+- when the expression is used as the argument when calling a function that is declared with `T2` as parameter;
+- when the expression is used as an operand with an operator that expects `T2`;
+- when initializing a new object of type `T2`, including return statement in a function returning `T2`;
+- when the expression is used in a `switch` statement (`T2` is integral type);
+- when the expression is used in an `if` statement or a loop (`T2` is `bool`).
+
+{/* source:cpp-language-implicit-conversion:0002 */}
+The program is well-formed (compiles) only if there exists one unambiguous implicit conversion sequence from `T1` to `T2`.
+
+{/* source:cpp-language-implicit-conversion:0003 */}
+If there are multiple overloads of the function or operator being called, after the implicit conversion sequence is built from `T1` to each available `T2`, [`overload resolution`](/docs/cpp/language/functions/overload_resolution) rules decide which overload is compiled.
+
+{/* source:cpp-language-implicit-conversion:0004 */}
+Note: in arithmetic expressions, the destination type for the implicit conversions on the operands to binary operators is determined by a separate set of rules: [`usual arithmetic conversions`](/docs/cpp/language/expressions/usual_arithmetic_conversions).
+
+## Order of the conversions
+
+{/* source:cpp-language-implicit-conversion:0005 */}
+Implicit conversion sequence consists of the following, in this order:
+
+{/* source:cpp-language-implicit-conversion:0006 */}
+1. zero or one standard conversion sequence;
+
+{/* source:cpp-language-implicit-conversion:0007 */}
+2. zero or one user-defined conversion;
+
+{/* source:cpp-language-implicit-conversion:0008 */}
+3. zero or one standard conversion sequence (only if a user-defined conversion is used).
+
+{/* source:cpp-language-implicit-conversion:0009 */}
+When considering the argument to a constructor or to a user-defined conversion function, only one standard conversion sequence is allowed (otherwise user-defined conversions could be effectively chained). When converting from one non-class type to another non-class type, only a standard conversion sequence is allowed.
+
+{/* source:cpp-language-implicit-conversion:0010 */}
+A standard conversion sequence consists of the following, in this order:
+
+{/* source:cpp-language-implicit-conversion:0011 */}
+1. zero or one conversion from the following set: lvalue-to-rvalue conversion, array-to-pointer conversion, and function-to-pointer conversion;
+
+{/* source:cpp-language-implicit-conversion:0012 */}
+2. zero or one numeric promotion or numeric conversion;
+
+{/* source:cpp-language-implicit-conversion:0013 */}
+<Revision since="C++17">
+3. zero or one *function pointer conversion*;
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0014 */}
+4. zero or one qualification conversion.
+
+{/* source:cpp-language-implicit-conversion:0015 */}
+A user-defined conversion consists of zero or one non-explicit single-argument [`converting constructor`](/docs/cpp/language/classes/converting_constructor) or non-explicit [`conversion function`](/docs/cpp/language/expressions/cast_operator) call.
+
+{/* source:cpp-language-implicit-conversion:0016 */}
+An expression `e` is said to be implicitly convertible to `T2` if and only if `T2` can be [`copy-initialized`](/docs/cpp/language/initialization/copy_initialization) from `e`, that is the declaration `T2 t = e;` is well-formed (can be compiled), for some invented temporary `t`. Note that this is different from [`direct initialization`](/docs/cpp/language/initialization/direct_initialization) (`T2 t(e)`), where explicit constructors and conversion functions would additionally be considered.
+
+### Contextual conversions
+
+{/* source:cpp-language-implicit-conversion:0017 */}
+<Revision since="C++11">
+In the following contexts, the type `bool` is expected and the implicit conversion is performed if the declaration `bool t(e);` is well-formed (that is, an explicit conversion function such as `explicit T::operator bool() const;` is considered). Such expression `e` is said to be *contextually converted to bool*.
+
+- the controlling expression of `if`, `while`, `for`;
+- the operands of the built-in logical operators `!`, `&&` and `||`;
+- the first operand of the conditional operator `?:`;
+- the predicate in a [`static_assert`](/docs/cpp/language/declarations/static_assert) declaration;
+- the expression in a [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specifier;
+
+<Revision since="C++20">
+- the expression in an [`explicit`](/docs/cpp/language/classes/explicit) specifier;
+</Revision>
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0018 */}
+In the following contexts, a context-specific type `T` is expected, and the expression `e` of class type `E` is only allowed if
+
+{/* source:cpp-language-implicit-conversion:0019 */}
+<Revision until="C++14">
+- `E` has a single <InlineRevision since="C++11">non-explicit</InlineRevision> [`user-defined conversion function`](/docs/cpp/language/expressions/cast_operator) to an allowable type.
+</Revision>
+
+<Revision since="C++14">
+- there is exactly one type `T` among the allowable types such that `E` has non-explicit conversion functions whose return types are (possibly cv-qualified) `T` or reference to (possibly cv-qualified) `T`, and
+- `e` is implicitly convertible to `T`.
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0020 */}
+Such expression `e` is said to be *contextually implicitly converted to the specified type `T`*. <InlineRevision since="C++11">Note that explicit conversion functions are not considered, even though they are considered in contextual conversions to `bool`.</InlineRevision>
+
+{/* source:cpp-language-implicit-conversion:0021 */}
+- the argument of the [`delete-expression`](/docs/cpp/language/expressions/delete) (`T` is any object pointer type);
+- [`integral constant expression`](/docs/cpp/language/expressions/constant_expression#Integral_constant_expression), where a literal class is used (`T` is any integral or unscoped enumeration type, the selected user-defined conversion function must be [`constexpr`](/docs/cpp/language/declarations/constexpr));
+- the controlling expression of the [`switch`](/docs/cpp/language/statements/switch) statement (`T` is any integral or enumeration type).
+
+{/* source:cpp-language-implicit-conversion:0022 */}
+```cpp
+#include <cassert>
+
+template<typename T>
+class zero_init
+{
+    T val;
+public:
+    zero_init() : val(static_cast<T>(0)) {}
+    zero_init(T val) : val(val) {}
+    operator T&() { return val; }
+    operator T() const { return val; }
+};
+
+int main()
+{
+    zero_init<int> i;
+    assert(i == 0);
+
+    i = 7;
+    assert(i == 7);
+
+    switch (i) {}     // error until C++14 (more than one conversion function)
+                      // OK since C++14 (both functions convert to the same type int)
+    switch (i + 0) {} // always okay (implicit conversion)
+}
+```
+
+## Value transformations
+
+{/* source:cpp-language-implicit-conversion:0023 */}
+Value transformations are conversions that change the [`value category`](/docs/cpp/language/expressions/value_category) of an expression. They take place whenever an expression appears as an operand of an operator that expects an expression of a different value category:
+
+{/* source:cpp-language-implicit-conversion:0024 */}
+- Whenever a glvalue appears as an operand of an operator that requires a prvalue for that operand, the lvalue-to-rvalue, array-to-pointer, or function-to-pointer standard conversions are applied to convert the expression to a prvalue.
+
+{/* source:cpp-language-implicit-conversion:0025 */}
+<Revision since="C++17">
+- Unless otherwise specified, whenever a prvalue appears as an operand of an operator that expects a glvalue for that operand, the *temporary materialization conversion* is applied to convert the expression to an xvalue.
+</Revision>
+
+### Lvalue-to-rvalue conversion
+
+{/* source:cpp-language-implicit-conversion:0026 */}
+<InlineRevision until="C++11">An [`lvalue`](/docs/cpp/language/expressions/value_category#lvalue)</InlineRevision><InlineRevision since="C++11">A [`glvalue`](/docs/cpp/language/expressions/value_category#glvalue)</InlineRevision> of any non-function, non-array type `T` can be implicitly converted to <InlineRevision until="C++11">an [`rvalue`](/docs/cpp/language/expressions/value_category#rvalue)</InlineRevision><InlineRevision since="C++11">a [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue)</InlineRevision>:
+
+{/* source:cpp-language-implicit-conversion:0027 */}
+- If `T` is not a class type, the type of the <InlineRevision until="C++11">rvalue</InlineRevision><InlineRevision since="C++11">prvalue</InlineRevision> is the cv-unqualified version of `T`. Otherwise, the type of the <InlineRevision until="C++11">rvalue</InlineRevision><InlineRevision since="C++11">prvalue</InlineRevision> is `T`.
+
+{/* source:cpp-language-implicit-conversion:0028 */}
+If an lvalue-to-rvalue conversion from an [`incomplete type`](/docs/cpp/language/basic_concepts/type-id#Incomplete_type) is required by a program, that program is ill-formed.
+
+{/* source:cpp-language-implicit-conversion:0029 */}
+Given the object to which the <InlineRevision until="C++11">lvalue</InlineRevision><InlineRevision since="C++11">glvalue</InlineRevision> refers as `obj`:
+
+{/* source:cpp-language-implicit-conversion:0030 */}
+<Revision until="C++11">
+- When an lvalue-to-rvalue conversion occurs within the operand of [`sizeof`](/docs/cpp/language/expressions/sizeof), the value contained in `obj` is not accessed, since that operator [`does not evaluate`](/docs/cpp/language/expressions#Potentially-evaluated_expressions) its operand.
+
+- The result of the conversion is the value contained in `obj`. If one of `T` and the type of `obj` is a signed integer type, and the other is the corresponding unsigned integer type, the result is the value of type `T` with the same value representation of `obj`.
+</Revision>
+
+<Revision since="C++11">
+- When an lvalue-to-rvalue conversion is applied to an expression `E`, the value contained in `obj` is not accessed if:
+  - `E` is not [`potentially evaluated`](/docs/cpp/language/expressions#Potentially-evaluated_expressions), or
+  - the evaluation of `E` results in the evaluation of a member `Ex` of the set of [`potential results`](/docs/cpp/language/basic_concepts/definition#ODR-use) of `E`, and `Ex` names a variable `x` that is not [`odr-used`](/docs/cpp/language/basic_concepts/definition#ODR-use) by `Ex`.
+
+- The result of the conversion is determined as follows:
+  - If `T` is (possibly cv-qualified) [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t), the result is a [`null pointer constant`](/docs/cpp/language/declarations/pointer#Null_pointers). `obj` is not accessed by the conversion, so there is no side effect even if `T` is volatile-qualified, and the glvalue can refer to an inactive member of a union.
+  - Otherwise, if `T` is a class type:
+
+<Revision until="C++17">
+    - The conversion [`copy-initializes`](/docs/cpp/language/initialization/copy_initialization) a [`temporary`](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime) of type `T` from the glvalue, and the result of the conversion is a prvalue for the temporary.
+</Revision>
+
+<Revision since="C++17">
+    - The conversion [`copy-initializes`](/docs/cpp/language/initialization/copy_initialization) the [`result object`](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) from the glvalue.
+</Revision>
+
+  - Otherwise, if `obj` contains an invalid pointer value, the behavior is implementation-defined.
+  - Otherwise, if the bits in the [`value representation`](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation) of `obj` are not valid for `obj`'s type, the behavior is undefined.
+  - Otherwise, <InlineRevision since="C++20">`obj` is read, and</InlineRevision> the result is the value contained in `obj`. If one of `T` and the type of `obj` is a signed integer type, and the other is the corresponding unsigned integer type, the result is the value of type `T` with the same value representation of `obj`.
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0031 */}
+This conversion models the act of reading a value from a memory location into a CPU register.
+
+### Array-to-pointer conversion
+
+{/* source:cpp-language-implicit-conversion:0032 */}
+An [`lvalue`](/docs/cpp/language/expressions/value_category#lvalue) or [`rvalue`](/docs/cpp/language/expressions/value_category#rvalue) of type "array of `N` `T`" or "array of unknown bound of `T`" can be implicitly converted to a [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of type "pointer to `T`". <InlineRevision since="C++17">If the array is a prvalue, [`temporary materialization`](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) occurs.</InlineRevision> The resulting pointer refers to the first element of the array (see [`Array-to-pointer decay`](/docs/cpp/language/declarations/array#Array-to-pointer_decay) for details).
+
+### Function-to-pointer conversion
+
+{/* source:cpp-language-implicit-conversion:0033 */}
+An [`lvalue`](/docs/cpp/language/expressions/value_category#lvalue) of function type can be implicitly converted to a [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) [`pointer to that function`](/docs/cpp/language/declarations/pointer#Pointers_to_functions). This does not apply to non-static member functions because lvalues that refer to non-static member functions do not exist.
+
+{/* source:cpp-language-implicit-conversion:0034 */}
+<Revision since="C++17">
+### Temporary materialization
+
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of any complete type `T` can be converted to an xvalue of the same type `T`. This conversion initializes a [`temporary object`](/docs/cpp/language/basic_concepts/lifetime#Temporary_object_lifetime) of type `T` from the prvalue by evaluating the prvalue with the temporary object as its result object, and produces an xvalue denoting the temporary object.
+
+If `T` is a class or array of class type, it must have an accessible and non-deleted destructor.
+
+```cpp
+struct S { int m; };
+int i = S().m; // member access expects glvalue as of C++17;
+               // S() prvalue is converted to xvalue
+```
+
+Temporary materialization occurs in the following situations:
+
+- when [`binding a reference`](/docs/cpp/language/initialization/reference_initialization) to a prvalue;
+- when [`accessing`](/docs/cpp/language/expressions/operator_member_access) a non-static [`data member`](/docs/cpp/language/classes/data_members) of a class prvalue;
+- when [`invoking`](/docs/cpp/language/expressions/operator_other#Built-in_function_call_operator) an [`implicit object member function`](/docs/cpp/language/classes/member_functions) of a class prvalue;
+- when performing an array-to-pointer conversion (see above) or [`subscripting`](/docs/cpp/language/expressions/operator_member_access#Built-in_subscript_operator) on an array prvalue;
+- when initializing an object of type `std::initializer_list<T>` from a [`braced-enclosed initializer list`](/docs/cpp/language/initialization);
+- when a prvalue appears as a [`discarded-value expression`](/docs/cpp/language/expressions#Discarded-value_expressions).
+
+Note that temporary materialization does **not** occur when initializing an object from a prvalue of the same type (by [`direct-initialization`](/docs/cpp/language/initialization/direct_initialization) or [`copy-initialization`](/docs/cpp/language/initialization/copy_initialization)): such object is initialized directly from the initializer. This ensures "guaranteed copy elision".
+</Revision>
+
+## Integral promotion
+
+{/* source:cpp-language-implicit-conversion:0035 */}
+[`prvalues`](/docs/cpp/language/expressions/value_category#prvalue) of small integral types (such as `char`) and unscoped enumeration types may be converted to prvalues of larger integral types (such as `int`). In particular, [`arithmetic operators`](/docs/cpp/language/expressions/operator_arithmetic) do not accept types smaller than `int` as arguments, and integral promotions are automatically applied after lvalue-to-rvalue conversion, if applicable. This conversion always preserves the value.
+
+{/* source:cpp-language-implicit-conversion:0036 */}
+The following implicit conversions in this section are classified as integral promotions.
+
+{/* source:cpp-language-implicit-conversion:0037 */}
+Note that for a given source type, the destination type of integral promotion is unique, And all other conversions are not promotions. For example, [`overload resolution`](/docs/cpp/language/functions/overload_resolution) chooses `char` -> `int` (promotion) over `char` -> `short` (conversion).
+
+### Promotion from integral types
+
+{/* source:cpp-language-implicit-conversion:0038 */}
+A prvalue of type `bool` can be converted to a prvalue of type `int`, with `false` becoming `0` and `true` becoming `1`.
+
+{/* source:cpp-language-implicit-conversion:0039 */}
+For a prvalue `val` of an integral type `T` except `bool`:
+
+{/* source:cpp-language-implicit-conversion:0040 */}
+1. If `val` is the result of an lvalue-to-rvalue conversion applied to a [`bit-field`](/docs/cpp/language/classes/bit_field), `val` can be converted to a prvalue of type `int` if `int` can represent all the values of the bit-field; otherwise, `val` can be converted to `unsigned int` if `unsigned int` can represent all the values of the bit-field; otherwise, `val` can be converted according to the rules specified in item (3).
+
+{/* source:cpp-language-implicit-conversion:0041 */}
+2. Otherwise (`val` is not converted from a bit-field), if `T` is <InlineRevision since="C++20">`char8_t`,</InlineRevision><InlineRevision since="C++11">`char16_t`, `char32_t` or</InlineRevision> `wchar_t`, `val` can be converted according to the rules specified in item (3); otherwise, if the [`integer conversion rank`](/docs/cpp/language/expressions/usual_arithmetic_conversions#Integer_conversion_rank) of `T` is lower than the rank of `int`: `val` can be converted to a prvalue of type `int` if `int` can represent all the values of `T`; otherwise, `val` can be converted to a prvalue of type `unsigned int`.
+
+{/* source:cpp-language-implicit-conversion:0042 */}
+3. In the cases specified by item (1) (a converted bit-field not fitting `unsigned int`) or item (2) (`T` is one of the given character types), `val` can be converted to a prvalue of the first of the following types that can represent all the values of its underlying type:
+
+- `int`
+- `unsigned int`
+- `long`
+- `unsigned long`
+
+<Revision since="C++11">
+- `long long`
+- `unsigned long long`
+- the underlying type of `T`
+</Revision>
+
+### Promotion from enumeration types
+
+{/* source:cpp-language-implicit-conversion:0043 */}
+A prvalue of an unscoped [`enumeration`](/docs/cpp/language/declarations/enum) type whose underlying type is not fixed can be converted to a prvalue of the first type from the following list able to hold their entire value range:
+
+{/* source:cpp-language-implicit-conversion:0044 */}
+- `int`
+- `unsigned int`
+- `long`
+- `unsigned long`
+
+{/* source:cpp-language-implicit-conversion:0045 */}
+<Revision since="C++11">
+- `long long`
+- `unsigned long long`
+- the [`extended integer type`](/docs/cpp/language/basic_concepts/types#Extended_integer_types) such that
+  - its [`integer conversion rank`](/docs/cpp/language/expressions/usual_arithmetic_conversions#Integer_conversion_rank) is greater than the rank of `long long`,
+  - its integer conversion rank is the lowest among all extended integer types, and
+  - it is signed if there are two types with the lowest integer conversion rank among all extended integer types.
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0046 */}
+<Revision since="C++11">
+A prvalue of an unscoped enumeration type whose underlying type is fixed can be converted to its underlying type. Moreover, if the underlying type is also subject to integral promotion, to the promoted underlying type. Conversion to the unpromoted underlying type is better for the purposes of [`overload resolution`](/docs/cpp/language/functions/overload_resolution).
+</Revision>
+
+## Floating-point promotion
+
+{/* source:cpp-language-implicit-conversion:0047 */}
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of type `float` can be converted to a prvalue of type `double`. The value does not change.
+
+{/* source:cpp-language-implicit-conversion:0048 */}
+This conversion is called floating-point promotion.
+
+## Numeric conversions
+
+{/* source:cpp-language-implicit-conversion:0049 */}
+Unlike the promotions, numeric conversions may change the values, with potential loss of precision.
+
+### Integral conversions
+
+{/* source:cpp-language-implicit-conversion:0050 */}
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of an integer type or of an unscoped enumeration type can be converted to any other integer type. If the conversion is listed under integral promotions, it is a promotion and not a conversion.
+
+{/* source:cpp-language-implicit-conversion:0051 */}
+- If the destination type is unsigned, the resulting value is the smallest unsigned value equal to the source value [modulo](https://en.wikipedia.org/wiki/Modular_arithmetic) 2n where n is the number of bits used to represent the destination type.
+
+{/* source:cpp-language-implicit-conversion:0052 */}
+That is, depending on whether the destination type is wider or narrower, signed integers are sign-extended[^1] or truncated and unsigned integers are zero-extended or truncated respectively.
+
+{/* source:cpp-language-implicit-conversion:0053 */}
+- If the destination type is signed, the value does not change if the source integer can be represented in the destination type. Otherwise the result is <InlineRevision until="C++20">implementation-defined</InlineRevision><InlineRevision since="C++20">the unique value of the destination type equal to the source value modulo 2n where n is the number of bits used to represent the destination type</InlineRevision> (note that this is different from [`signed integer arithmetic overflow`](/docs/cpp/language/expressions/operator_arithmetic#Overflows), which is undefined). If the source type is `bool`, the value `false` is converted to zero and the value `true` is converted to the value one of the destination type (note that if the destination type is `int`, this is an integer promotion, not an integer conversion). If the destination type is `bool`, this is a [`boolean conversion`](/docs/cpp/language/expressions/implicit_cast#Boolean_conversions) (see below).
+
+{/* source:cpp-language-implicit-conversion:0054 */}
+[^1]: This only applies if the arithmetic is two's complement which is only required for the [`exact-width integer types`](/docs/cpp/library/utility/types/integer). Note, however, that at the moment all platforms with a C++ compiler use two's complement arithmetic.
+
+### Floating-point conversions
+
+{/* source:cpp-language-implicit-conversion:0055 */}
+<Revision until="C++23">
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of a floating-point type can be converted to a prvalue of any other floating-point type.
+</Revision>
+
+<Revision since="C++23">
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of a floating-point type can be converted to a prvalue of any other floating-point type with a greater or equal [`floating-point conversion rank`](/docs/cpp/language/expressions/usual_arithmetic_conversions#Floating-point_conversion_rank).
+
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of a standard floating-point type can be converted to a prvalue of any other standard floating-point type.
+
+[`static_cast`](/docs/cpp/language/expressions/static_cast) can be used to explicitly convert a prvalue of floating-point type to any other floating-point type.
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0056 */}
+If the conversion is listed under floating-point promotions, it is a promotion and not a conversion.
+
+{/* source:cpp-language-implicit-conversion:0057 */}
+- If the source value can be represented exactly in the destination type, it does not change. If the source value is between two representable values of the destination type, the result is one of those two values (it is implementation-defined which one, although if IEEE arithmetic is supported, rounding defaults to [`to nearest`](/docs/cpp/library/numeric/fenv/FE_round)). Otherwise, the behavior is undefined.
+
+### Floating–integral conversions
+
+{/* source:cpp-language-implicit-conversion:0058 */}
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of floating-point type can be converted to a prvalue of any integer type. The fractional part is truncated, that is, the fractional part is discarded.
+
+{/* source:cpp-language-implicit-conversion:0059 */}
+- If the truncated value cannot fit into the destination type, the behavior is undefined (even when the destination type is unsigned, modulo arithmetic does not apply). If the destination type is `bool`, this is a boolean conversion (see [`below`](/docs/cpp/language/expressions/implicit_cast#Boolean_conversions)).
+
+{/* source:cpp-language-implicit-conversion:0060 */}
+A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type. The result is exact if possible.
+
+{/* source:cpp-language-implicit-conversion:0061 */}
+- If the value can fit into the destination type but cannot be represented exactly, it is implementation defined whether the closest higher or the closest lower representable value will be selected, although if IEEE arithmetic is supported, rounding defaults to [`to nearest`](/docs/cpp/library/numeric/fenv/FE_round). If the value cannot fit into the destination type, the behavior is undefined. If the source type is `bool`, the value `false` is converted to zero, and the value `true` is converted to one.
+
+### Pointer conversions
+
+{/* source:cpp-language-implicit-conversion:0062 */}
+A [`null pointer constant`](/docs/cpp/language/declarations/pointer#Null_pointers) can be converted to any pointer type, and the result is the null pointer value of that type. Such conversion (known as null pointer conversion) is allowed to convert to a cv-qualified type as a single conversion, that is, it is not considered a combination of numeric and qualifying conversions.
+
+{/* source:cpp-language-implicit-conversion:0063 */}
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) pointer to any (optionally cv-qualified) object type `T` can be converted to a prvalue pointer to (identically cv-qualified) `void`. The resulting pointer represents the same location in memory as the original pointer value.
+
+{/* source:cpp-language-implicit-conversion:0064 */}
+- If the original pointer is a null pointer value, the result is a null pointer value of the destination type.
+
+{/* source:cpp-language-implicit-conversion:0065 */}
+A prvalue `ptr` of type "pointer to (possibly cv-qualified) Derived" can be converted to a prvalue of type "pointer to (possibly cv-qualified) Base", where Base is a [`base class`](/docs/cpp/language/classes/derived_class) of Derived, and Derived is a [`complete`](/docs/cpp/language/basic_concepts/type-id#Incomplete_types) class type. If the Base is inaccessible or ambiguous, the program is ill-formed.
+
+{/* source:cpp-language-implicit-conversion:0066 */}
+- If `ptr` is a null pointer value, the result is also a null pointer value. Otherwise, if Base is a [`virtual base class`](/docs/cpp/language/classes/derived_class#Virtual_base_classes) of Derived and `ptr` does not point to an object whose type is [`similar`](/docs/cpp/language/expressions/implicit_cast#Similar_types) to Derived and that is within its [`lifetime`](/docs/cpp/language/basic_concepts/lifetime) or within its period of construction or destruction, the behavior is undefined. Otherwise, the result is a pointer to the base class subobject of the derived class object.
+
+### Pointer-to-member conversions
+
+{/* source:cpp-language-implicit-conversion:0067 */}
+A [`null pointer constant`](/docs/cpp/language/declarations/pointer#Null_pointers) can be converted to any pointer-to-member type, and the result is the null member pointer value of that type. Such conversion (known as null member pointer conversion) is allowed to convert to a cv-qualified type as a single conversion, that is, it is not considered a combination of numeric and qualifying conversions.
+
+{/* source:cpp-language-implicit-conversion:0068 */}
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of type "pointer to member of Base of type (possibly cv-qualified) `T`" can be converted to a prvalue of type "pointer to member of Derived of type (identically cv-qualified) `T`", where Base is a base class of Derived, and Derived is a complete class type. If Base is inaccessible, ambiguous, or virtual base of Derived or is a base of some intermediate virtual base of Derived, the program is ill-formed.
+
+{/* source:cpp-language-implicit-conversion:0069 */}
+- If Derived does not contain the original member and is not a base class of the class containing the original member, the behavior is undefined. Otherwise, the resulting pointer can be dereferenced with a Derived object, and it will access the member within the Base base subobject of that Derived object.
+
+### Boolean conversions
+
+{/* source:cpp-language-implicit-conversion:0070 */}
+A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be converted to a prvalue of type `bool`.
+
+{/* source:cpp-language-implicit-conversion:0071 */}
+The value zero (for integral, floating-point, and unscoped enumeration) and the null pointer and the null pointer-to-member values become `false`. All other values become `true`.
+
+{/* source:cpp-language-implicit-conversion:0072 */}
+<Revision since="C++11">
+In the context of a [`direct-initialization`](/docs/cpp/language/initialization/direct_initialization), a `bool` object may be initialized from a prvalue of type [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t), including `nullptr`. The resulting value is `false`. However, this is not considered to be an implicit conversion.
+</Revision>
+
+## Qualification conversions
+
+{/* source:cpp-language-implicit-conversion:0073 */}
+Generally speaking:
+
+{/* source:cpp-language-implicit-conversion:0074 */}
+- A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of type pointer to [`cv-qualified`](/docs/cpp/language/declarations/cv) type `T` can be converted to a prvalue pointer to a [`more cv-qualified`](/docs/cpp/language/declarations/cv#Conversions) same type `T` (in other words, constness and volatility can be added).
+- A prvalue of type pointer to member of cv-qualified type `T` in class `X` can be converted to a prvalue pointer to member of more cv-qualified type `T` in class `X`.
+
+{/* source:cpp-language-implicit-conversion:0075 */}
+The formal definition of "qualification conversion" is given [`below`](/docs/cpp/language/expressions/implicit_cast#Combining_cv-qualifications).
+
+### Similar types
+
+{/* source:cpp-language-implicit-conversion:0076 */}
+Informally, two types are similar if, ignoring top-level cv-qualification:
+
+{/* source:cpp-language-implicit-conversion:0077 */}
+- they are the same type; or
+- they are both pointers, and the pointed-to types are similar; or
+- they are both pointers to member of the same class, and the types of the pointed-to members are similar; or
+- they are both arrays and the array element types are similar.
+
+{/* source:cpp-language-implicit-conversion:0078 */}
+For example:
+
+{/* source:cpp-language-implicit-conversion:0079 */}
+- `const int* const *` and `int**` are similar;
+- `int (*)(int*)` and `int (*)(const int*)` are not similar;
+- `const int (*)(int*)` and `int (*)(int*)` are not similar;
+- `int (*)(int* const)` and `int (*)(int*)` are similar (they are the same type);
+- `std::pair<int, int>` and `std::pair<const int, int>` are not similar.
+
+{/* source:cpp-language-implicit-conversion:0080 */}
+Formally, type similarity is defined in terms of qualification-decomposition.
+
+{/* source:cpp-language-implicit-conversion:0081 */}
+A qualification-decomposition of a type `T` is a sequence of components `cv_i` and `P_i` such that `T` is "cv_0 P_0 cv_1 P_1 ... cv_n−1 P_n−1 cv_n U" for non-negative `n`, where
+
+{/* source:cpp-language-implicit-conversion:0082 */}
+- each `cv_i` is a set of `const` and `volatile`, and each `P_i` is
+
+{/* source:cpp-language-implicit-conversion:0083 */}
+"pointer to", "pointer to member of class `C_i` of type", "array of `N_i`", or "array of unknown bound of".
+
+{/* source:cpp-language-implicit-conversion:0084 */}
+If `P_i` designates an array, the cv-qualifiers `cv_i+1` on the element type are also taken as the cv-qualifiers `cv_i` of the array.
+
+{/* source:cpp-language-implicit-conversion:0085 */}
+```cpp
+// T is “pointer to pointer to const int”, it has 3 qualification-decompositions:
+// n = 0 -> cv_0 is empty, U is “pointer to pointer to const int”
+// n = 1 -> cv_0 is empty, P_0 is “pointer to”,
+//          cv_1 is empty, U is “pointer to const int”
+// n = 2 -> cv_0 is empty, P_0 is “pointer to”,
+//          cv_1 is empty, P_1 is “pointer to”,
+//          cv_2 is “const", U is “int”
+using T = const int**;
+
+// substitute any of the following type to U gives one of the decompositions:
+// U = U0 -> the decomposition with n = 0: U0
+// U = U1 -> the decomposition with n = 1: pointer to [U1]
+// U = U2 -> the decomposition with n = 2: pointer to [pointer to [const U2]]
+using U2 = int;
+using U1 = const U2*;
+using U0 = U1*;
+```
+
+{/* source:cpp-language-implicit-conversion:0086 */}
+Two types `T1` and `T2` are similar if there exists a qualification-decomposition for each of them, where all following conditions are satisfied for the two qualification-decompositions:
+
+{/* source:cpp-language-implicit-conversion:0087 */}
+- They have the same `n`.
+- The types denoted by `U` are the same.
+- The corresponding `P_i` components are the same <InlineRevision since="C++20">or one is "array of `N_i`" and the other is "array of unknown bound of"</InlineRevision> for all `i`.
+
+{/* source:cpp-language-implicit-conversion:0088 */}
+```cpp
+// the qualification-decomposition with n = 2:
+// pointer to [volatile pointer to [const int]]
+using T1 = const int* volatile *;
+
+// the qualification-decomposition with n = 2:
+// const pointer to [pointer to [int]]
+using T2 = int** const;
+
+// For the two qualification-decompositions above
+// although cv_0, cv_1 and cv_2 are all different,
+// they have the same n, U, P_0 and P_1,
+// therefore types T1 and T2 are similar.
+```
+
+### Combining cv-qualifications
+
+{/* source:cpp-language-implicit-conversion:0089 */}
+In the description below, the longest qualification-decomposition of type `Tn` is denoted as `Dn`, and its components are denoted as `cvn_i` and `Pn_i`.
+
+{/* source:cpp-language-implicit-conversion:0090 */}
+<Revision until="C++20">
+A prvalue expression of type `T1` can be converted to type `T2` if all following conditions are satisfied:
+
+- `T1` and `T2` are similar.
+- For every non-zero `i`, if `const` is in `cv1_i`, then `const` is also in `cv2_i`, and similarly for `volatile`.
+- For every non-zero `i`, if `cv1_i` and `cv2_i` are different, then `const` is in `cv2_k` for every `k` in `[1, i)`.
+
+The *qualification-combined type* of two types `T1` and `T2` is a type `T3` similar to `T1` such that
+
+- `cv3_0` is empty,
+- for every non-zero `i`, `cv3_i` is the union of `cv1_i` and `cv2_i`, and
+- if `cv3_i` is different from `cv1_i` or `c2_i`, then `const` is added to `cv3_k` for every `k` in `[1, i)`.
+</Revision>
+
+<Revision since="C++20">
+The *qualification-combined type* of two types `T1` and `T2` is a type `T3` similar to `T1`, where `D3` satisfies all following conditions:
+
+- `cv3_0` is empty.
+- For every non-zero `i`, `cv3_i` is the union of `cv1_i` and `cv2_i`.
+- If `P1_i` or `P2_i` is "array of unknown bound of", `P3_i` is "array of unknown bound of", otherwise it is `P1_i`.
+- If `cv3_i` is different from `cv1_i` or `cv2_i`, or `P3_i` is different from `P1_i` or `P2_i`, then `const` is added to `cv3_k` for every `k` in `[1, i)`.
+
+A prvalue of type `T1` can be converted to type `T2` if the qualification-combined type of `T1` and `T2` is cv-unqualified `T2`.
+</Revision>
+
+{/* source:cpp-language-implicit-conversion:0091 */}
+```cpp
+// longest qualification-decomposition of T1 (n = 2):
+// pointer to [pointer to [char]]
+using T1 = char**;
+
+// longest qualification-decomposition of T2 (n = 2):
+// pointer to [pointer to [const char]]
+using T2 = const char**;
+
+// Determining the cv3_i and T_i components of D3 (n = 2):
+// cv3_1 = empty (union of empty cv1_1 and empty cv2_1)
+// cv3_2 = “const” (union of empty cv1_2 and “const” cv2_2)
+// P3_0 = “pointer to” (no array of unknown bound, use P1_0)
+// P3_1 = “pointer to” (no array of unknown bound, use P1_1)
+// All components except cv_2 are the same, cv3_2 is different from cv1_2,
+// therefore add “const” to cv3_k for each k in [1, 2): cv3_1 becomes “const”.
+// T3 is “pointer to const pointer to const char”, i.e., const char* const *.
+using T3 = /* the qualification-combined type of T1 and T2 */;
+
+int main()
+{
+    const char c = 'c';
+    char* pc;
+    T1 ppc = &pc;
+    T2 pcc = ppc; // Error: T3 is not the same as cv-unqualified T2,
+                  //        no implicit conversion.
+
+    *pcc = &c;
+    *pc = 'C';    // If the erroneous assignment above is allowed,
+                  // the const object “c” may be modified.
+}
+```
+
+{/* source:cpp-language-implicit-conversion:0092 */}
+Note that in the C programming language, `const`/`volatile` can be added to the first level only:
+
+{/* source:cpp-language-implicit-conversion:0093 */}
+```cpp
+char** p = 0;
+char * const* p1 = p;       // OK in C and C++
+const char* const * p2 = p; // error in C, OK in C++
+```
+
+{/* source:cpp-language-implicit-conversion:0094 */}
+<Revision since="C++17">
+### Function pointer conversions
+
+- A [`prvalue`](/docs/cpp/language/expressions/value_category#prvalue) of type pointer to non-throwing function can be converted to a prvalue pointer to potentially-throwing function.
+- A prvalue of type pointer to non-throwing member function can be converted to a prvalue pointer to potentially-throwing member function.
+
+```cpp
+void (*p)();
+void (**pp)() noexcept = &p; // error: cannot convert to pointer to noexcept function
+
+struct S
+{
+    typedef void (*p)();
+    operator p();
+};
+void (*q)() noexcept = S(); // error: cannot convert to pointer to noexcept function
+```
+</Revision>
+
+## The safe bool problem
+
+{/* source:cpp-language-implicit-conversion:0095 */}
+Until C++11, designing a class that should be usable in boolean contexts (e.g. `if (obj) { ... }`) presented a problem: given a user-defined conversion function, such as `T::operator bool() const;`, the implicit conversion sequence allowed one additional standard conversion sequence after that function call, which means the resultant `bool` could be converted to `int`, allowing such code as `obj << 1;` or `int i = obj;`.
+
+{/* source:cpp-language-implicit-conversion:0096 */}
+One early solution for this can be seen in [`std::basic_ios`](/docs/cpp/library/io/basic_ios), which initially defines `operator void*`, so that the code such as `if (std::cin) {...}` compiles because `void*` is convertible to `bool`, but `int n = std::cout;` does not compile because `void*` is not convertible to `int`. This still allows nonsense code such as `delete std::cout;` to compile.
+
+{/* source:cpp-language-implicit-conversion:0097 */}
+Many pre-C++11 third party libraries were designed with a more elaborate solution, known as the [Safe Bool idiom](https://en.wikibooks.org/wiki/More_C++_Idioms/Safe_bool). [`std::basic_ios`](/docs/cpp/library/io/basic_ios) also allowed this idiom via [LWG issue 468](https://cplusplus.github.io/LWG/issue468), and `operator void*` was replaced (see [`notes`](/docs/cpp/library/io/basic_ios/operator_bool#Notes)).
+
+{/* source:cpp-language-implicit-conversion:0098 */}
+Since C++11, [`explicit bool conversion`](/docs/cpp/language/classes/explicit) can also be used to resolve the safe bool problem.
+
+## Defect reports
+
+{/* source:cpp-language-implicit-conversion:0099 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-implicit-conversion:0100 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={170} standard="C++98">
+    <PublishedBehavior>the behavior of pointer-to-member conversions was unclear if the derived class does not have the original member</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={172} standard="C++98">
+    <PublishedBehavior>enumeration type was promoted based on its underlying type</PublishedBehavior>
+    <CorrectedBehavior>based on its value range instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={330} standard="C++98">
+    <PublishedBehavior>the conversion from `double* const (*p)[3]` to `double const * const (*p)[3]` was invalid</PublishedBehavior>
+    <CorrectedBehavior>made valid</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={519} standard="C++98">
+    <PublishedBehavior>null pointer values were not guaranteed to be preserved when converting to another pointer type</PublishedBehavior>
+    <CorrectedBehavior>always preserved</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={616} standard="C++98">
+    <PublishedBehavior>the behavior of lvalue to rvalue conversion of any uninitialized object and pointer objects of invalid values was always undefined</PublishedBehavior>
+    <CorrectedBehavior>indeterminate `unsigned char` is allowed; use of invalid pointers is implementation-defined</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={685} standard="C++98">
+    <PublishedBehavior>the underlying type of an enumeration type was not prioritized in integral promotion if it is fixed</PublishedBehavior>
+    <CorrectedBehavior>prioritized</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={707} standard="C++98">
+    <PublishedBehavior>integer to floating point conversion had defined behavior in all cases</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined if the value being converted is out of the destination range</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1423} standard="C++11">
+    <PublishedBehavior>[`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) was convertible to `bool` in both direct- and copy-initialization</PublishedBehavior>
+    <CorrectedBehavior>direct-initialization only</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1773} standard="C++11">
+    <PublishedBehavior>a name expression that appears in a potentially-evaluated expression such that the object named is not odr-used might still be evaluated during an lvalue-to-rvalue conversion</PublishedBehavior>
+    <CorrectedBehavior>not evaluated</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1781} standard="C++11">
+    <PublishedBehavior>[`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) to `bool` was considered an implicit conversion even though it is only valid for direct-initialization</PublishedBehavior>
+    <CorrectedBehavior>no longer considered an implicit conversion</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1787} standard="C++98">
+    <PublishedBehavior>the behavior of reading from an indeterminate `unsigned char` cached in a register was undefined</PublishedBehavior>
+    <CorrectedBehavior>made well-defined</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1981} standard="C++11">
+    <PublishedBehavior>contextual conversions considered explicit conversion functions</PublishedBehavior>
+    <CorrectedBehavior>not considered</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2140} standard="C++11">
+    <PublishedBehavior>it was unclear whether lvalue-to-rvalue conversions from [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) lvalues fetch these lvalues from memory</PublishedBehavior>
+    <CorrectedBehavior>not fetched</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2310} standard="C++98">
+    <PublishedBehavior>for derived-to-base pointer conversions and base-to-derived pointer-to-member conversions, the derived class type could be incomplete</PublishedBehavior>
+    <CorrectedBehavior>must be complete</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2484} standard="C++20">
+    <PublishedBehavior>`char8_t` and `char16_t` had different integral promotion strategies, but they can fit both of them</PublishedBehavior>
+    <CorrectedBehavior>`char8_t` should be promoted in the same way as `char16_t`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2485} standard="C++98">
+    <PublishedBehavior>integral promotions involving bit-fields were not specified well</PublishedBehavior>
+    <CorrectedBehavior>improved the specification</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2813} standard="C++23">
+    <PublishedBehavior>temporary materialization would occur when an explicit object member function of a class prvalue is invoked</PublishedBehavior>
+    <CorrectedBehavior>will not occur in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2861} standard="C++98">
+    <PublishedBehavior>a pointer to a type-inaccessible object could be converted a pointer to a base class subobject</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2879} standard="C++17">
+    <PublishedBehavior>temporary materialization conversion was applied on prvalue as an operand of an operator that expects glvalue</PublishedBehavior>
+    <CorrectedBehavior>not applied in some cases</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2899} standard="C++98">
+    <PublishedBehavior>lvalue-to-rvalue conversions could be applied to lvalues designating objects with invalid value representations</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2901} standard="C++98">
+    <PublishedBehavior>the result of lvalue-to-rvalue conversion from an `unsigned int` lvalue referring to an `int` object with value `-1` was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-implicit-conversion:0101 */}
+- [`const_cast`](/docs/cpp/language/expressions/const_cast)
+- [`static_cast`](/docs/cpp/language/expressions/static_cast)
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)
+- [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast)
+- [`explicit cast`](/docs/cpp/language/expressions/explicit_cast)
+- [`user-defined conversion`](/docs/cpp/language/expressions/cast_operator)
+
+{/* source:cpp-language-implicit-conversion:0102 */}
+[C documentation](/docs/c/language/expressions/conversion) for Implicit conversions

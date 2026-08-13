@@ -1,0 +1,84 @@
+---
+title: "RAII"
+description: "Resource Acquisition Is Initialization or RAII, is a C++ programming technique which binds the life cycle of a resource that must be acquired before use (allocated heap memory, thread of execution, open socket, open file, locked mutex, disk space, database connection—anything that exists in limited supply) to the lifetime of an object."
+source_url: "https://en.cppreference.com/w/cpp/language/raii"
+language: "C++"
+---
+
+{/* source:cpp-language-raii:0000 */}
+*Resource Acquisition Is Initialization* or RAII, is a C++ programming technique[^1] [^2] which binds the life cycle of a resource that must be acquired before use (allocated heap memory, thread of execution, open socket, open file, locked mutex, disk space, database connection—anything that exists in limited supply) to the [lifetime](/docs/cpp/language/basic_concepts/lifetime) of an object.
+
+{/* source:cpp-language-raii:0001 */}
+RAII guarantees that the resource is available to any function that may access the object (resource availability is a [class invariant](https://en.wikipedia.org/wiki/Class_invariant), eliminating redundant runtime tests). It also guarantees that all resources are released when the lifetime of their controlling object ends, in reverse order of acquisition. Likewise, if resource acquisition fails (the constructor exits with an exception), all resources acquired by every fully-constructed member and base subobject are released in reverse order of initialization. This leverages the core language features ([object lifetime](/docs/cpp/language/basic_concepts/lifetime), [scope exit](/docs/cpp/language/statements), [order of initialization](/docs/cpp/language/classes/initializer_list#Initialization_order) and [stack unwinding](/docs/cpp/language/exceptions/throw#Stack_unwinding)) to eliminate resource leaks and guarantee exception safety. Another name for this technique is Scope-Bound Resource Management (SBRM), after the basic use case where the lifetime of an RAII object ends due to scope exit.
+
+{/* source:cpp-language-raii:0002 */}
+RAII can be summarized as follows:
+
+{/* source:cpp-language-raii:0003 */}
+- encapsulate each resource into a class, where
+
+{/* source:cpp-language-raii:0004 */}
+  - the constructor acquires the resource and establishes all class invariants or throws an exception if that cannot be done,
+  - the destructor releases the resource and never throws exceptions;
+
+{/* source:cpp-language-raii:0005 */}
+- always use the resource via an instance of a RAII-class that either
+
+{/* source:cpp-language-raii:0006 */}
+  - has automatic storage duration or temporary lifetime itself, or
+  - has lifetime that is bounded by the lifetime of an automatic or temporary object.
+
+{/* source:cpp-language-raii:0007 */}
+<Revision since="C++11">
+Move semantics enable the transfer of resources and ownership between objects, inside and outside containers, and across threads, while ensuring resource safety.
+</Revision>
+
+{/* source:cpp-language-raii:0008 */}
+Classes with `open()`/`close()`, `lock()`/`unlock()`, or `init()`/`copyFrom()`/`destroy()` member functions are typical examples of non-RAII classes:
+
+{/* source:cpp-language-raii:0009 */}
+```cpp
+std::mutex m;
+
+void bad() 
+{
+    m.lock();             // acquire the mutex
+    f();                  // if f() throws an exception, the mutex is never released
+    if (!everything_ok())
+        return;           // early return, the mutex is never released
+    m.unlock();           // if bad() reaches this statement, the mutex is released
+}
+
+void good()
+{
+    std::lock_guard<std::mutex> lk(m); // RAII class: mutex acquisition is initialization
+    f();                               // if f() throws an exception, the mutex is released
+    if (!everything_ok())
+        return;                        // early return, the mutex is released
+}                                      // if good() returns normally, the mutex is released
+```
+
+## The standard library
+
+{/* source:cpp-language-raii:0010 */}
+The C++ library classes that manage their own resources follow RAII: [`std::string`](/docs/cpp/library/string/basic_string), [`std::vector`](/docs/cpp/library/container/vector), <InlineRevision since="C++20">, [`std::jthread`](/docs/cpp/library/atomic/jthread)</InlineRevision>, and many others acquire their resources in constructors (which throw exceptions on errors), release them in their destructors (which never throw), and don't require explicit cleanup.
+
+{/* source:cpp-language-raii:0011 */}
+<Revision since="C++11">
+In addition, the standard library offers several RAII wrappers to manage user-provided resources:
+
+- [`std::unique_ptr`](/docs/cpp/library/memory/unique_ptr) and [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) through [`std::make_unique`](/docs/cpp/library/memory/unique_ptr/make_unique) and [`std::make_shared`](/docs/cpp/library/memory/shared_ptr/make_shared) to manage dynamically-allocated memory;
+- [`std::lock_guard`](/docs/cpp/library/atomic/lock_guard), [`std::unique_lock`](/docs/cpp/library/atomic/unique_lock), [`std::shared_lock`](/docs/cpp/library/atomic/shared_lock) to manage mutexes.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-raii:0012 */}
+RAII does not apply to the management of the resources that are not acquired before use: CPU time, core availability, cache capacity, entropy pool capacity, network bandwidth, electric power consumption, stack memory. For such resources, a C++ class constructor cannot guarantee resource availability for the duration of object lifetime, and other means of resource management have to be used.
+
+## External links
+
+{/* source:cpp-language-raii:0013 */}
+[^1]: ↑ [RAII in Stroustrup's C++ FAQ](https://www.stroustrup.com/bs_faq2.html#finally)
+
+[^2]: ↑ [C++ Core Guidelines E.6 "Use RAII to prevent leaks"](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#e6-use-raii-to-prevent-leaks)

@@ -1,0 +1,124 @@
+---
+title: "C++ attribute: carries_dependency (since C++11)"
+description: "Indicates that dependency chain in release-consume std::memory_order propagates in and out of the function, which allows the compiler to skip unnecessary memory fence instructions."
+source_url: "https://en.cppreference.com/w/cpp/language/attributes/carries_dependency"
+language: "C++"
+---
+
+{/* source:cpp-language-attributes-carries-dependency:0000 */}
+Indicates that dependency chain in release-consume [`std::memory_order`](/docs/cpp/library/atomic/memory_order) propagates in and out of the function, which allows the compiler to skip unnecessary memory fence instructions.
+
+## Syntax
+
+{/* source:cpp-language-attributes-carries-dependency:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="[[carries_dependency]]" />
+</DeclarationDoc>
+
+## Explanation
+
+{/* source:cpp-language-attributes-carries-dependency:0002 */}
+This attribute may appear in two situations:
+
+{/* source:cpp-language-attributes-carries-dependency:0003 */}
+1) it may apply to the parameter declarations of a function or lambda-expressions, in which case it indicates that initialization of the parameter carries dependency into lvalue-to-rvalue conversion of that object.
+
+{/* source:cpp-language-attributes-carries-dependency:0004 */}
+2) It may apply to the function declaration as a whole, in which case it indicates that the return value carries dependency to the evaluation of the function call expression.
+
+{/* source:cpp-language-attributes-carries-dependency:0005 */}
+This attribute must appear on the first declaration of a function or one of its parameters in any translation unit. If it is not used on the first declaration of a function or one of its parameters in another translation unit, the program is ill-formed; no diagnostic required.
+
+## Example
+
+{/* source:cpp-language-attributes-carries-dependency:0006 */}
+Adapted almost without change from [SO](https://stackoverflow.com/a/6411703).
+
+```cpp
+#include <atomic>
+#include <iostream>
+
+void print(int* val)
+{
+    std::cout << *val << std::endl;
+}
+
+void print2(int* val [[carries_dependency]])
+{
+    std::cout << *val << std::endl;
+}
+
+int main()
+{
+    int x{42};
+    std::atomic<int*> p = &x;
+    int* local = p.load(std::memory_order_consume);
+
+    if (local)
+    {
+        // The dependency is explicit, so the compiler knows that local is
+        // dereferenced, and that it must ensure that the dependency chain
+        // is preserved in order to avoid a fence (on some architectures).
+        std::cout << *local << std::endl;
+    }
+
+    if (local)
+    {
+        // The definition of print is opaque (assuming it is not inlined),
+        // so the compiler must issue a fence in order to ensure that
+        // reading *p in print returns the correct value.
+        print(local);
+    }
+
+    if (local)
+    {
+        // The compiler can assume that although print2 is also opaque then
+        // the dependency from the parameter to the dereferenced value is
+        // preserved in the instruction stream, and no fence is necessary (on
+        // some architectures). Obviously, the definition of print2 must actually
+        // preserve this dependency, so the attribute will also impact the
+        // generated code for print2.
+        print2(local);
+    }
+}
+```
+
+Possible output:
+
+```text
+42
+42
+42
+```
+
+## References
+
+{/* source:cpp-language-attributes-carries-dependency:0007 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 9.12.4 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-attributes-carries-dependency:0008 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 9.12.3 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-attributes-carries-dependency:0009 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 10.6.3 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-attributes-carries-dependency:0010 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 7.6.4 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-attributes-carries-dependency:0011 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 7.6.4 Carries dependency attribute [dcl.attr.depend]
+
+## See also
+
+{/* source:cpp-language-attributes-carries-dependency:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`kill_dependency`](/docs/cpp/library/atomic/kill_dependency) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes the specified object from the [`std::memory_order_consume`](/docs/cpp/library/atomic/memory_order) dependency tree (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

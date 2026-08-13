@@ -1,0 +1,307 @@
+---
+title: "Order of evaluation"
+description: "Order of evaluation of any part of any expression, including order of evaluation of function arguments is unspecified (with some exceptions listed below)."
+source_url: "https://en.cppreference.com/w/cpp/language/eval_order"
+language: "C++"
+---
+
+{/* source:cpp-language-eval-order:0000 */}
+Order of evaluation of any part of any expression, including order of evaluation of function arguments is *unspecified* (with some exceptions listed below). The compiler can evaluate operands and other subexpressions in any order, and may choose another order when the same expression is evaluated again.
+
+{/* source:cpp-language-eval-order:0001 */}
+There is no concept of left-to-right or right-to-left evaluation in C++. This is not to be confused with left-to-right and right-to-left associativity of operators: the expression `a() + b() + c()` is parsed as `(a() + b()) + c()` due to left-to-right associativity of operator+, but `c()` may be evaluated first, last, or between `a()` or `b()` at run time:
+
+{/* source:cpp-language-eval-order:0002 */}
+```cpp
+#include <cstdio>
+ 
+int a() { return std::puts("a"); }
+int b() { return std::puts("b"); }
+int c() { return std::puts("c"); }
+ 
+void z(int, int, int) {}
+ 
+int main()
+{
+    z(a(), b(), c());       // all 6 permutations of output are allowed
+    return a() + b() + c(); // all 6 permutations of output are allowed
+}
+```
+
+Possible output:
+
+```text
+b
+c
+a
+c
+a 
+b
+```
+
+## "Sequenced before" rules (since C++11)
+
+### Evaluation of Expressions
+
+{/* source:cpp-language-eval-order:0003 */}
+Evaluation of each expression includes:
+
+{/* source:cpp-language-eval-order:0004 */}
+- *Value computations*: calculation of the value that is returned by the expression. This may involve determination of the identity of the object (glvalue evaluation, e.g. if the expression returns a reference to some object) or reading the value previously assigned to an object (prvalue evaluation, e.g. if the expression returns a number, or some other value).
+- Initiation of *side effects*: access (read or write) to an object designated by a volatile glvalue, modification (writing) to an object, calling a library I/O function, or calling a function that does any of those operations.
+
+### Ordering
+
+{/* source:cpp-language-eval-order:0005 */}
+Sequenced before is an asymmetric, transitive, pair-wise relationship between evaluations within the same thread.
+
+{/* source:cpp-language-eval-order:0006 */}
+- If A is sequenced before B (or, equivalently, B is *sequenced after* A), then evaluation of A will be complete before evaluation of B begins.
+- If A is not sequenced before B and B is sequenced before A, then evaluation of B will be complete before evaluation of A begins.
+- If A is not sequenced before B and B is not sequenced before A, then two possibilities exist:
+  - Evaluations of A and B are *unsequenced*: they may be performed in any order and may overlap (within a single thread of execution, the compiler may interleave the CPU instructions that comprise A and B).
+  - Evaluations of A and B are *indeterminately sequenced*: they may be performed in any order but may not overlap: either A will be complete before B, or B will be complete before A. The order may be the opposite the next time the same expression is evaluated.
+
+### Rules
+
+{/* source:cpp-language-eval-order:0007 */}
+1) Each value computation and side effect of a [full-expression](/docs/cpp/language/expressions#Full-expressions) is sequenced before each value computation and side effect of the next full-expression.
+
+{/* source:cpp-language-eval-order:0008 */}
+2) The value computations (but not the side effects) of the operands to any [operator](/docs/cpp/language/expressions#Operators) are sequenced before the value computation of the result of the operator (but not its side effects).
+
+{/* source:cpp-language-eval-order:0009 */}
+3) When calling a function (whether or not the function is inline, and whether or not explicit function call syntax is used), every value computation and side effect associated with any argument expression, or with the postfix expression designating the called function, is sequenced before execution of every expression or statement in the body of the called function.
+
+{/* source:cpp-language-eval-order:0010 */}
+4) The value computation of the built-in [post-increment and post-decrement](/docs/cpp/language/expressions/operator_incdec#Built-in_postfix_operators) operators is sequenced before its side effect.
+
+{/* source:cpp-language-eval-order:0011 */}
+5) The side effect of the built-in [pre-increment and pre-decrement](/docs/cpp/language/expressions/operator_incdec#Built-in_prefix_operators) operators is sequenced before its value computation (implicit rule due to definition as compound assignment).
+
+{/* source:cpp-language-eval-order:0012 */}
+6) Every value computation and side effect of the first (left) argument of the built-in [logical](/docs/cpp/language/expressions/operator_logical) AND operator `&&`, the built-in logical OR operator `||` and the built-in [comma operator](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) `,` is sequenced before every value computation and side effect of the second (right) argument.
+
+{/* source:cpp-language-eval-order:0013 */}
+7) Every value computation and side effect associated with the first expression in the [conditional operator](/docs/cpp/language/expressions/operator_other#Conditional_operator) `?:` is sequenced before every value computation and side effect associated with the second or third expression.
+
+{/* source:cpp-language-eval-order:0014 */}
+8) The side effect (modification of the left argument) of the built-in [assignment](/docs/cpp/language/expressions/operator_assignment#Builtin_direct_assignment) operator and of all built-in [compound](/docs/cpp/language/expressions/operator_assignment#Builtin_compound_assignment) assignment operators is sequenced after the value computation (but not the side effects) of both left and right arguments, and is sequenced before the value computation of the assignment expression (that is, before returning the reference to the modified object).
+
+{/* source:cpp-language-eval-order:0015 */}
+9) In [list-initialization](/docs/cpp/language/initialization/list_initialization), every value computation and side effect of a given initializer clause is sequenced before every value computation and side effect associated with any initializer clause that follows it in the brace-enclosed comma-separated list of initializers.
+
+{/* source:cpp-language-eval-order:0016 */}
+10) A function call that is not sequenced before or sequenced after another expression evaluation outside of the function (possibly another function call) is indeterminately sequenced with respect to that evaluation (the program must behave [as if](/docs/cpp/language/basic_concepts/as_if) the CPU instructions that constitute a function call were not interleaved with instructions constituting evaluations of other expressions, including other function calls, even if the function was inlined).
+
+<Revision since="C++17">
+The rule 10 has one exception: function calls made by a standard library algorithm executing under [`std::execution::par_unseq`](/docs/cpp/library/algorithm/execution_policy_tag_t) execution policy are unsequenced and may be arbitrarily interleaved with each other.
+</Revision>
+
+{/* source:cpp-language-eval-order:0017 */}
+11) The call to the allocation function ([`operator new`](/docs/cpp/library/memory/new/operator_new)) is <InlineRevision until="C++17">indeterminately sequenced with respect to</InlineRevision><InlineRevision since="C++17">sequenced before</InlineRevision> the evaluation of the constructor arguments in a [`new` expression](/docs/cpp/language/expressions/new).
+
+{/* source:cpp-language-eval-order:0018 */}
+12) When returning from a function, copy-initialization of the temporary that is the result of evaluating the function call is sequenced before the destruction of all temporaries at the end of the operand of the [`return` statement](/docs/cpp/language/statements/return), which, in turn, is sequenced before the destruction of local variables of the block enclosing the `return` statement.
+
+{/* source:cpp-language-eval-order:0019 */}
+<Revision since="C++17">
+13) In a function-call expression, the expression that names the function is sequenced before every argument expression and every default argument.
+
+14) In a function call, value computations and side effects of the initialization of every parameter are indeterminately sequenced with respect to value computations and side effects of any other parameter.
+
+15) Every overloaded operator obeys the sequencing rules of the built-in operator it overloads when called using operator notation.
+
+16) In a subscript expression `E1[E2]`, every value computation and side effect of `E1` is sequenced before every value computation and side effect of `E2`.
+
+17) In a pointer-to-member expression `E1.*E2` or `E1->*E2`, every value computation and side effect of `E1` is sequenced before every value computation and side effect of `E2` (unless the dynamic type of `E1` does not contain the member to which `E2` refers).
+
+18) In a shift operator expression `E1 << E2` and `E1 >> E2`, every value computation and side effect of `E1` is sequenced before every value computation and side effect of `E2`.
+
+19) In every simple assignment expression `E1 = E2` and every compound assignment expression `E1 @= E2`, every value computation and side effect of `E2` is sequenced before every value computation and side effect of `E1`.
+
+20) Every expression in a comma-separated list of expressions in a parenthesized initializer is evaluated as if for a function call (indeterminately-sequenced).
+</Revision>
+
+### Undefined behavior
+
+{/* source:cpp-language-eval-order:0020 */}
+The behavior is [undefined](/docs/cpp/language/basic_concepts/ub) in the following cases:
+
+{/* source:cpp-language-eval-order:0021 */}
+1) A side effect on a [memory location](/docs/cpp/language/basic_concepts/memory_model#Memory_location) is unsequenced relative to another side effect on the same memory location:
+
+```cpp
+i = ++i + 2;       // well-defined
+i = i++ + 2;       // undefined behavior until C++17
+f(i = -2, i = -2); // undefined behavior until C++17
+f(++i, ++i);       // undefined behavior until C++17, unspecified after C++17
+i = ++i + i++;     // undefined behavior
+```
+
+{/* source:cpp-language-eval-order:0022 */}
+2) A side effect on a memory location is unsequenced relative to a value computation using the value of any object in the same memory location:
+
+```cpp
+cout << i << i++; // undefined behavior until C++17
+a[i] = i++;       // undefined behavior until C++17
+n = ++i + i;      // undefined behavior
+```
+
+{/* source:cpp-language-eval-order:0023 */}
+3) Starting or ending the [lifetime](/docs/cpp/language/basic_concepts/lifetime) of an object in a memory location is unsequenced relative to any of the following operations:
+
+- a side effect on the same memory location
+- a value computation using the value of any object in the same memory location
+- starting or ending the lifetime of an object occupying storage that overlaps with the memory location
+
+```cpp
+union U { int x, y; } u;
+(u.x = 1, 0) + (u.y = 2, 0); // undefined behavior
+```
+
+## Sequence point rules (until C++11)
+
+### Pre-C++11 Definitions
+
+{/* source:cpp-language-eval-order:0024 */}
+Evaluation of an expression might produce side effects, which are: accessing an object designated by a volatile lvalue, modifying an object, calling a library I/O function, or calling a function that does any of those operations.
+
+{/* source:cpp-language-eval-order:0025 */}
+A sequence point is a point in the execution sequence where all side effects from the previous evaluations in the sequence are complete, and no side effects of the subsequent evaluations started.
+
+### Pre-C++11 Rules
+
+{/* source:cpp-language-eval-order:0026 */}
+1) There is a sequence point at the end of each [full-expression](/docs/cpp/language/expressions#Full-expressions) (typically, at the semicolon).
+
+{/* source:cpp-language-eval-order:0027 */}
+2) When calling a function (whether or not the function is inline and whether or not function call syntax was used), there is a sequence point after the evaluation of all function arguments (if any) which takes place before execution of any expressions or statements in the function body.
+
+{/* source:cpp-language-eval-order:0028 */}
+3) When returning from a function, there is a sequence point after the copy-initialization of the result of the function call, and before the destruction of all temporary objects at the end of expression in the [`return` statement](/docs/cpp/language/statements/return).
+
+{/* source:cpp-language-eval-order:0029 */}
+4) There is a sequence point after the copying of a returned value of a function and before the execution of any expressions outside the function.
+
+{/* source:cpp-language-eval-order:0030 */}
+5) Once the execution of a function begins, no expressions from the calling function are evaluated until execution of the called function has completed (functions cannot be interleaved).
+
+{/* source:cpp-language-eval-order:0031 */}
+6) In the evaluation of each of the following four expressions, using the built-in (non-overloaded) operators, there is a sequence point after the evaluation of the expression `a`.
+
+{/* source:cpp-language-eval-order:0032 */}
+```cpp
+a && b
+a || b
+a ? b : c
+a , b
+```
+
+### Pre-C++11 Undefined behavior
+
+{/* source:cpp-language-eval-order:0033 */}
+The behavior is [undefined](/docs/cpp/language/basic_concepts/ub) in the following cases:
+
+{/* source:cpp-language-eval-order:0034 */}
+1) Between the previous and next sequence point, the value of any object in a memory location is modified more than once by the evaluation of an expression:
+
+```cpp
+i = ++i + i++;     // undefined behavior
+i = i++ + 1;       // undefined behavior
+i = ++i + 1;       // undefined behavior
+++ ++i;            // undefined behavior
+f(++i, ++i);       // undefined behavior
+f(i = -1, i = -1); // undefined behavior
+```
+
+{/* source:cpp-language-eval-order:0035 */}
+2) Between the previous and next sequence point, for an object whose value is modified by the evaluation of an expression, its prior value is accessed in a way other than to determine the value to be stored:
+
+```cpp
+cout << i << i++; // undefined behavior
+a[i] = i++;       // undefined behavior
+```
+
+## Defect reports
+
+{/* source:cpp-language-eval-order:0036 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-eval-order:0037 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1885} standard="C++11"><PublishedBehavior>sequencing of the destruction of automatic variables on function return was not explicit</PublishedBehavior><CorrectedBehavior>sequencing rules added</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1949} standard="C++11"><PublishedBehavior>“sequenced after” was used but not defined in the C++ standard</PublishedBehavior><CorrectedBehavior>defined as the inverse of “sequenced before”</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1953} standard="C++11"><PublishedBehavior>side effects and value computations involving a memory location could be unsequenced relative to starting or ending the lifetime of an object in the same memory location</PublishedBehavior><CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2146} standard="C++98"><PublishedBehavior>the cases involving undefined behaviors did not consider bit-fields</PublishedBehavior><CorrectedBehavior>considered</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-eval-order:0038 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 6.9.1 Program execution [intro.execution]
+  - 7.6.1.6 Increment and decrement [expr.post.incr]
+  - 7.6.2.8 New [expr.new]
+  - 7.6.14 Logical AND operator [expr.log.and]
+  - 7.6.15 Logical OR operator [expr.log.or]
+  - 7.6.16 Conditional operator [expr.cond]
+  - 7.6.19 Assignment and compound assignment operators [expr.ass]
+  - 7.6.20 Comma operator [expr.comma]
+  - 9.4.5 List-initialization [dcl.init.list]
+
+{/* source:cpp-language-eval-order:0039 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 6.9.1 Program execution [intro.execution]
+  - 7.6.1.5 Increment and decrement [expr.post.incr]
+  - 7.6.2.7 New [expr.new]
+  - 7.6.14 Logical AND operator [expr.log.and]
+  - 7.6.15 Logical OR operator [expr.log.or]
+  - 7.6.16 Conditional operator [expr.cond]
+  - 7.6.19 Assignment and compound assignment operators [expr.ass]
+  - 7.6.20 Comma operator [expr.comma]
+  - 9.4.4 List-initialization [dcl.init.list]
+
+{/* source:cpp-language-eval-order:0040 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 4.6 Program execution [intro.execution]
+  - 8.2.6 Increment and decrement [expr.post.incr]
+  - 8.3.4 New [expr.new]
+  - 8.14 Logical AND operator [expr.log.and]
+  - 8.15 Logical OR operator [expr.log.or]
+  - 8.16 Conditional operator [expr.cond]
+  - 8.18 Assignment and compound assignment operators [expr.ass]
+  - 8.19 Comma operator [expr.comma]
+  - 11.6.4 List-initialization [dcl.init.list]
+
+{/* source:cpp-language-eval-order:0041 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 1.9 Program execution [intro.execution]
+  - 5.2.6 Increment and decrement [expr.post.incr]
+  - 5.3.4 New [expr.new]
+  - 5.14 Logical AND operator [expr.log.and]
+  - 5.15 Logical OR operator [expr.log.or]
+  - 5.16 Conditional operator [expr.cond]
+  - 5.17 Assignment and compound assignment operators [expr.ass]
+  - 5.18 Comma operator [expr.comma]
+  - 8.5.4 List-initialization [dcl.init.list]
+
+{/* source:cpp-language-eval-order:0042 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 1.9 Program execution [intro.execution]
+  - 5.2.6 Increment and decrement [expr.post.incr]
+  - 5.3.4 New [expr.new]
+  - 5.14 Logical AND operator [expr.log.and]
+  - 5.15 Logical OR operator [expr.log.or]
+  - 5.16 Conditional operator [expr.cond]
+  - 5.17 Assignment and compound assignment operators [expr.ass]
+  - 5.18 Comma operator [expr.comma]
+  - 8.5.4 List-initialization [dcl.init.list]
+
+## See also
+
+{/* source:cpp-language-eval-order:0043 */}
+- [Operator precedence](/docs/cpp/language/expressions/operator_precedence) which defines how expressions are built from their source code representation.
+
+{/* source:cpp-language-eval-order:0044 */}
+[C documentation](/docs/c/language/expressions/eval_order) for Order of evaluation

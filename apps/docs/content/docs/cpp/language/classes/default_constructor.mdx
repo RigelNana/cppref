@@ -1,0 +1,258 @@
+---
+title: "Default constructors"
+description: "A default constructor is a constructor which can be called with no arguments."
+source_url: "https://en.cppreference.com/w/cpp/language/default_constructor"
+language: "C++"
+---
+
+{/* source:cpp-language-default-constructor:0000 */}
+A default constructor is a [constructor](/docs/cpp/language/classes/initializer_list) which can be called with no arguments.
+
+## Syntax
+
+{/* source:cpp-language-default-constructor:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="class-name ( parameter-list (optional) );" />
+  <Declaration id="2" language="cpp" grammar code="class-name ( parameter-list (optional) ) function-body" />
+  <Declaration id="3" language="cpp" grammar since="C++11" code="class-name () = default;" />
+  <Declaration id="4" language="cpp" grammar since="C++11" code="class-name ( parameter-list (optional) ) = delete;" />
+  <Declaration id="5" language="cpp" grammar code="class-name :: class-name ( parameter-list (optional) ) function-body" />
+  <Declaration id="6" language="cpp" grammar since="C++11" code="class-name :: class-name () = default;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-default-constructor:0002 */}
+<ParameterList>
+  <Parameter name="class-name">the class whose default constructor is being declared</Parameter>
+  <Parameter name="parameter-list">a [parameter list](/docs/cpp/language/functions/function#Parameter_list) where all parameters <InlineRevision since="C++11">(except [parameter packs](/docs/cpp/language/templates/parameter_pack))</InlineRevision> have [default arguments](/docs/cpp/language/functions/default_arguments)</Parameter>
+  <Parameter name="function-body">the [function body](/docs/cpp/language/classes/initializer_list) of the default constructor</Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-default-constructor:0003 */}
+1. Declaration of a default constructor inside of class definition.
+
+{/* source:cpp-language-default-constructor:0004 */}
+2. Definition of a default constructor inside of class definition.
+
+{/* source:cpp-language-default-constructor:0005 */}
+3. The default constructor is explicitly-defaulted.
+
+{/* source:cpp-language-default-constructor:0006 */}
+4. The default constructor is deleted.
+
+{/* source:cpp-language-default-constructor:0007 */}
+5. Definition of a default constructor outside of class definition (the class must contain a declaration (1)).
+
+{/* source:cpp-language-default-constructor:0008 */}
+6. The default constructor is explicitly-defaulted.
+
+{/* source:cpp-language-default-constructor:0009 */}
+Default constructors are called during [default initializations](/docs/cpp/language/initialization/default_initialization) and [value initializations](/docs/cpp/language/initialization/value_initialization).
+
+## Implicitly-declared default constructor
+
+{/* source:cpp-language-default-constructor:0010 */}
+If there is no user-declared constructor or constructor template for a class type, the compiler will implicitly declare a default constructor as an `inline public` member of its class.
+
+{/* source:cpp-language-default-constructor:0011 */}
+The implicitly-declared (or defaulted on its first declaration) default constructor has an exception specification as described in <InlineRevision until="C++17">[dynamic exception specification](/docs/cpp/language/exceptions/except_spec)</InlineRevision><InlineRevision since="C++17">[noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)</InlineRevision>.
+
+## Implicitly-defined default constructor
+
+{/* source:cpp-language-default-constructor:0012 */}
+If <InlineRevision until="C++11">the constructor is implicitly-declared</InlineRevision><InlineRevision since="C++11">the implicitly-declared or explicitly-defaulted default constructor is not defined as deleted</InlineRevision>, it is defined (that is, a function body is generated and compiled) by the compiler if [`odr-used`](/docs/cpp/language/basic_concepts/definition#ODR-use) <InlineRevision since="C++11">or [needed for constant evaluation](/docs/cpp/language/expressions/constant_expression#Functions_and_variables_needed_for_constant_evaluation)</InlineRevision>, and it has the same effect as a user-defined constructor with empty body and empty initializer list. That is, it calls the default constructors of the bases and of the non-static members of this class. Class types with an empty user-provided constructor may get treated differently than those with an implicitly-defined default constructor during [value initialization](/docs/cpp/language/initialization/value_initialization).
+
+{/* source:cpp-language-default-constructor:0013 */}
+<Revision since="C++11">
+If this satisfies the requirements of a <InlineRevision until="C++23">[constexpr constructor](/docs/cpp/language/declarations/constexpr#constexpr_constructor)</InlineRevision><InlineRevision since="C++23">[constexpr function](/docs/cpp/language/declarations/constexpr#constexpr_funtcion)</InlineRevision>, the generated constructor is `constexpr`. If some user-defined constructors are present, the user may still force the automatic generation of a default constructor by the compiler that would be implicitly-declared otherwise with the keyword `default`.
+</Revision>
+
+## Deleted default constructor
+
+{/* source:cpp-language-default-constructor:0014 */}
+The implicitly-declared <InlineRevision since="C++11">or explicitly-defaulted</InlineRevision> default constructor for class T is <InlineRevision until="C++11">undefined</InlineRevision><InlineRevision since="C++11">defined as deleted</InlineRevision> if any of the following conditions is satisfied:
+
+{/* source:cpp-language-default-constructor:0015 */}
+- `T` is a [union](/docs/cpp/language/classes/union) and all of its [variant members](/docs/cpp/language/classes/union#Union-like_classes) are of const-qualified type (or possibly multi-dimensional array thereof).
+- `T` is a non-union class and all members of any [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions) member are of const-qualified type (or possibly multi-dimensional array thereof).
+- `T` has a non-static data member of reference type <InlineRevision since="C++11">without a default initializer</InlineRevision>.
+- `T` has a non-variant non-static non-[`const-default-constructible`](/docs/cpp/language/initialization/default_initialization#Default-initialization_of_a_const_object) data member of const-qualified type (or possibly multi-dimensional array thereof) <InlineRevision since="C++11">without a default member initializer</InlineRevision>.
+- `T` has a [potentially constructed subobject](/docs/cpp/language/basic_concepts/objects#Potentially_constructed_subobject) of class type `M` (or possibly multi-dimensional array thereof) such that
+
+{/* source:cpp-language-default-constructor:0016 */}
+   M has a destructor that is <InlineRevision since="C++11">deleted or</InlineRevision> inaccessible from the default constructor, or all of the following conditions are satisfied:
+
+{/* source:cpp-language-default-constructor:0017 */}
+   <Revision since="C++11">
+   - The subobject is not a non-static data member with a default initializer.
+   - The subobject is not a variant member of a union where another non-static data member has a default initializer.
+   </Revision>
+
+{/* source:cpp-language-default-constructor:0018 */}
+   The overload resolution as applied to find M's default constructor does not result in a usable candidate, or in the case of the subobject being a variant member, selects a non-trivial function.
+
+{/* source:cpp-language-default-constructor:0019 */}
+<Revision since="C++11">
+If no user-defined constructors are present and the implicitly-declared default constructor is not trivial, the user may still inhibit the automatic generation of an implicitly-defined default constructor by the compiler with the keyword `delete`.
+</Revision>
+
+## Trivial default constructor
+
+{/* source:cpp-language-default-constructor:0020 */}
+The default constructor for class T is trivial (i.e. performs no action) if all of the following is true:
+
+{/* source:cpp-language-default-constructor:0021 */}
+- The constructor is not user-provided (i.e., is implicitly-defined or defaulted on its first declaration).
+- T has no virtual member functions.
+- T has no virtual base classes.
+
+{/* source:cpp-language-default-constructor:0022 */}
+<Revision since="C++11">
+T has no non-static members with [default initializers](/docs/cpp/language/classes/data_members#Member_initialization).
+</Revision>
+
+{/* source:cpp-language-default-constructor:0023 */}
+- Every direct base of T has a trivial default constructor.
+- Every non-static member of class type (or array thereof) has a trivial default constructor.
+
+{/* source:cpp-language-default-constructor:0024 */}
+A trivial default constructor is a constructor that performs no action. All data types compatible with the C language (POD types) are trivially default-constructible.
+
+## Eligible default constructor
+
+{/* source:cpp-language-default-constructor:0025 */}
+<Revision until="C++11">
+A default constructor is eligible if it is either user-declared or both implicitly-declared and definable.
+</Revision>
+
+<Revision since="C++11" until="C++20">
+A default constructor is eligible if it is not deleted.
+</Revision>
+
+<Revision since="C++20">
+A default constructor is eligible if all following conditions are satisfied:
+
+- It is not deleted.
+- Its [associated constraints](/docs/cpp/language/templates/constraints) (if any) are satisfied.
+- No default constructor whose associated constraints are satisfied is [more constrained](/docs/cpp/language/templates/constraints#Partial_ordering_of_constraints).
+</Revision>
+
+{/* source:cpp-language-default-constructor:0026 */}
+Triviality of eligible default constructors determines whether the class is an [implicit-lifetime type](/docs/cpp/language/basic_concepts/lifetime#Implicit-lifetime_types), and whether the class is a [trivial type](/docs/cpp/library/named_req/TrivialType).
+
+## Example
+
+{/* source:cpp-language-default-constructor:0027 */}
+```cpp
+struct A
+{
+    int x;
+    A(int x = 1): x(x) {} // user-defined default constructor
+};
+
+struct B : A
+{
+    // B::B() is implicitly-defined, calls A::A()
+};
+
+struct C
+{
+    A a;
+    // C::C() is implicitly-defined, calls A::A()
+};
+
+struct D : A
+{
+    D(int y) : A(y) {}
+    // D::D() is not declared because another constructor exists
+};
+
+struct E : A
+{
+    E(int y) : A(y) {}
+    E() = default; // explicitly defaulted, calls A::A()
+};
+
+struct F
+{
+    int& ref; // reference member
+    const int c; // const member
+    // F::F() is implicitly defined as deleted
+};
+
+// user declared copy constructor (either user-provided, deleted or defaulted)
+// prevents the implicit generation of a default constructor
+
+struct G
+{
+    G(const G&) {}
+    // G::G() is implicitly defined as deleted
+};
+
+struct H
+{
+    H(const H&) = delete;
+    // H::H() is implicitly defined as deleted
+};
+
+struct I
+{
+    I(const I&) = default;
+    // I::I() is implicitly defined as deleted
+};
+
+int main()
+{
+    A a;
+    B b;
+    C c;
+//  D d; // compile error
+    E e;
+//  F f; // compile error
+//  G g; // compile error
+//  H h; // compile error
+//  I i; // compile error
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-default-constructor:0028 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-default-constructor:0029 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1353} standard="C++98">
+    <PublishedBehavior>the conditions where implicitly-declared default constructors are undefined did not consider multi-dimensional array types</PublishedBehavior>
+    <CorrectedBehavior>consider these types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2084} standard="C++11">
+    <PublishedBehavior>default member initializers had no effect on whether a defaulted default constructor of a union is deleted</PublishedBehavior>
+    <CorrectedBehavior>they prevent the defaulted default constructor from being deleted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2595} standard="C++20">
+    <PublishedBehavior>a default constructor was not eligible if there is another default constructor which is more constrained but does not satisfy its associated constraints</PublishedBehavior>
+    <CorrectedBehavior>it can be eligible in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2871} standard="C++98">
+    <PublishedBehavior>a default constructor would be implicitly declared even if there is a user-declared constructor template</PublishedBehavior>
+    <CorrectedBehavior>no implicit declaration in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-default-constructor:0030 */}
+- [constructor](/docs/cpp/language/classes/initializer_list)
+- [initialization](/docs/cpp/language/initialization)
+  - [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+  - [constant initialization](/docs/cpp/language/initialization/constant_initialization)
+  - [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+  - [default initialization](/docs/cpp/language/initialization/default_initialization)
+  - [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+  - [list initialization](/docs/cpp/language/initialization/list_initialization)
+  - [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+  - [value initialization](/docs/cpp/language/initialization/value_initialization)
+  - [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [`new`](/docs/cpp/language/expressions/new)

@@ -1,0 +1,344 @@
+---
+title: "Union declaration"
+description: "A union is a special class type that can hold only one of its non-static data members at a time."
+source_url: "https://en.cppreference.com/w/cpp/language/union"
+language: "C++"
+---
+
+{/* source:cpp-language-union:0000 */}
+A union is a special class type that can hold only one of its non-static [data members](/docs/cpp/language/classes/data_members) at a time.
+
+## Syntax
+
+{/* source:cpp-language-union:0001 */}
+The class specifier for a union declaration is similar to [class or struct](/docs/cpp/language/classes/class) declaration:
+
+{/* source:cpp-language-union:0002 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="union attr class-head-name { member-specification }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-union:0003 */}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> optional sequence of any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="class-head-name">
+    the name of the union that's being defined. Optionally prepended by `nested-name-specifier` (sequence of names and scope-resolution operators, ending with scope-resolution operator). The name may be omitted, in which case the union is *unnamed*
+  </Parameter>
+  <Parameter name="member-specification">
+    list of access specifiers, member object and member function declarations and definitions.
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-union:0004 */}
+A union can have member functions (including constructors and destructors), but not virtual functions.
+
+{/* source:cpp-language-union:0005 */}
+A union cannot have base classes and cannot be used as a base class.
+
+{/* source:cpp-language-union:0006 */}
+A union cannot have non-static data members of reference types.
+
+{/* source:cpp-language-union:0007 */}
+<Revision until="C++11">
+Unions cannot contain a non-static data member with a non-trivial special member function ([copy constructor](/docs/cpp/language/classes/copy_constructor), [copy-assignment](/docs/cpp/language/classes/as_operator) operator, or [destructor](/docs/cpp/language/classes/destructor)).
+</Revision>
+
+<Revision since="C++11">
+If a union contains a non-static data member with a non-trivial special member function ([copy](/docs/cpp/language/classes/copy_constructor)/[move](/docs/cpp/language/classes/move_constructor) constructor, [copy](/docs/cpp/language/classes/as_operator)/[move](/docs/cpp/language/classes/move_operator) assignment, or [destructor](/docs/cpp/language/classes/destructor)), that function is deleted by default in the union and needs to be defined explicitly by the programmer.
+
+If a union contains a non-static data member with a non-trivial [default constructor](/docs/cpp/language/classes/default_constructor), the default constructor of the union is deleted by default unless a [variant member](/docs/cpp/language/classes/union#Union-like_classes) of the union has a [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization). At most one [variant member](/docs/cpp/language/classes/union#Union-like_classes) can have a default member initializer.
+</Revision>
+
+{/* source:cpp-language-union:0008 */}
+Just like in [struct](/docs/cpp/language/classes) declaration, the default member access in a union is [public](/docs/cpp/language/classes/access).
+
+## Explanation
+
+{/* source:cpp-language-union:0009 */}
+The union is at least as big as necessary to hold its largest data member, but is usually not larger. The other data members are intended to be allocated in the same bytes as part of that largest member. The details of that allocation are implementation-defined, except that all non-static data members have the same address. It is undefined behavior to read from the member of the union that wasn't most recently written. Many compilers implement, as a non-standard language extension, the ability to read inactive members of a union.
+
+{/* source:cpp-language-union:0010 */}
+```cpp
+#include <cstdint>
+#include <iostream>
+
+union S
+{
+    std::int32_t n;     // occupies 4 bytes
+    std::uint16_t s[2]; // occupies 4 bytes
+    std::uint8_t c;     // occupies 1 byte
+};                      // the whole union occupies 4 bytes
+
+int main()
+{
+    S s = {0x12345678}; // initializes the first member, s.n is now the active member
+    // At this point, reading from s.s or s.c is undefined behavior,
+    // but most compilers define it.
+    std::cout << std::hex << "s.n = " << s.n << '\n';
+
+    s.s[0] = 0x0011; // s.s is now the active member
+    // At this point, reading from s.n or s.c is undefined behavior,
+    // but most compilers define it.
+    std::cout << "s.c is now " << +s.c << '\n' // 11 or 00, depending on platform
+              << "s.n is now " << s.n << '\n'; // 12340011 or 00115678
+}
+```
+
+Possible output:
+
+```text
+s.n = 12345678
+s.c is now 0
+s.n is now 115678
+```
+
+{/* source:cpp-language-union:0011 */}
+Each member is allocated as if it is the only member of the class.
+
+{/* source:cpp-language-union:0012 */}
+<Revision since="C++11">
+If members of a union are classes with user-defined constructors and destructors, to switch the active member, explicit destructor and placement new are generally needed:
+
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+
+union S
+{
+    std::string str;
+    std::vector<int> vec;
+    ~S() {} // needs to know which member is active, only possible in union-like class 
+};          // the whole union occupies max(sizeof(string), sizeof(vector<int>))
+
+int main()
+{
+    S s = {"Hello, world"};
+    // at this point, reading from s.vec is undefined behavior
+    std::cout << "s.str = " << s.str << '\n';
+    s.str.~basic_string();
+    new (&s.vec) std::vector<int>;
+    // now, s.vec is the active member of the union
+    s.vec.push_back(10);
+    std::cout << s.vec.size() << '\n';
+    s.vec.~vector();
+}
+```
+
+Output:
+
+```text
+s.str = Hello, world
+1
+```
+</Revision>
+
+{/* source:cpp-language-union:0013 */}
+If two union members are [standard-layout](/docs/cpp/library/named_req/StandardLayoutType) types, it's well-defined to examine their common subsequence on any compiler.
+
+### Member lifetime
+
+{/* source:cpp-language-union:0014 */}
+The [lifetime](/docs/cpp/language/basic_concepts/lifetime) of a union member begins when the member is made active. If another member was active previously, its lifetime ends.
+
+{/* source:cpp-language-union:0015 */}
+When active member of a union is switched by an assignment expression of the form `E1 = E2` that uses either the built-in assignment operator or a trivial assignment operator, for each union member `X` that appears in the member access and array subscript subexpressions of `E1` that is not a class with non-trivial or deleted default constructors, if modification of `X` would have undefined behavior under type aliasing rules, an object of the type of `X` is implicitly created in the nominated storage; no initialization is performed and the beginning of its lifetime is sequenced after the value computation of the left and right operands and before the assignment.
+
+{/* source:cpp-language-union:0016 */}
+```cpp
+union A { int x; int y[4]; };
+struct B { A a; };
+union C { B b; int k; };
+
+int f()
+{
+    C c;               // does not start lifetime of any union member
+    c.b.a.y[3] = 4;    // OK: "c.b.a.y[3]", names union members c.b and c.b.a.y;
+                       // This creates objects to hold union members c.b and c.b.a.y
+    return c.b.a.y[3]; // OK: c.b.a.y refers to newly created object
+}
+
+struct X { const int a; int b; };
+union Y { X x; int k; };
+
+void g()
+{
+    Y y = {{1, 2}}; // OK, y.x is active union member
+    int n = y.x.a;
+    y.k = 4;   // OK: ends lifetime of y.x, y.k is active member of union
+    y.x.b = n; // undefined behavior: y.x.b modified outside its lifetime,
+               // "y.x.b" names y.x, but X's default constructor is deleted,
+               // so union member y.x's lifetime does not implicitly start
+}
+```
+
+{/* source:cpp-language-union:0017 */}
+Trivial <InlineRevision since="C++11">move constructor, move assignment operator, </InlineRevision>copy constructor and copy assignment operator of union types copy object representations. If the source and the destination are not the same object, these special member functions start lifetime of every object (except for objects that are neither subobjects of the destination nor of [implicit-lifetime type](/docs/cpp/language/basic_concepts/lifetime#Implicit-lifetime_types)) nested in the destination corresponding to the one nested in the source before the copy is performed. Otherwise, they do nothing. Two union objects have the same corresponding active member (if any) after construction or assignment via trivial special functions.
+
+### Anonymous unions
+
+{/* source:cpp-language-union:0018 */}
+An anonymous union is an unnamed union definition that does not simultaneously define any variables (including objects of the union type, references, or pointers to the union).
+
+{/* source:cpp-language-union:0019 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="union { member-specification } ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-union:0020 */}
+Anonymous unions have further restrictions: they cannot have member functions, cannot have static data members, and all their data members must be public. The only declarations allowed are non-static data members <InlineRevision since="C++11"> and [`static_assert`](/docs/cpp/language/declarations/static_assert) declarations</InlineRevision>.
+
+{/* source:cpp-language-union:0021 */}
+Members of an anonymous union are injected in the enclosing scope (and must not conflict with other names declared there).
+
+{/* source:cpp-language-union:0022 */}
+```cpp
+int main()
+{
+    union
+    {
+        int a;
+        const char* p;
+    };
+    a = 1;
+    p = "Jennifer";
+}
+```
+
+{/* source:cpp-language-union:0023 */}
+Namespace-scope anonymous unions must be declared `static` unless they appear in an unnamed namespace.
+
+### Union-like classes
+
+{/* source:cpp-language-union:0024 */}
+A union-like class is either a union, or a (non-union) class that has at least one anonymous union as a member. A union-like class has a set of variant members:
+
+{/* source:cpp-language-union:0025 */}
+- the non-static data members of its member anonymous unions;
+- in addition, if the union-like class is a union, its non-static data members that are not anonymous unions.
+
+{/* source:cpp-language-union:0026 */}
+Union-like classes can be used to implement [tagged union](https://en.wikipedia.org/wiki/tagged_union).
+
+{/* source:cpp-language-union:0027 */}
+```cpp
+#include <iostream>
+
+// S has one non-static data member (tag), three enumerator members (CHAR, INT, DOUBLE), 
+// and three variant members (c, i, d)
+struct S
+{
+    enum{CHAR, INT, DOUBLE} tag;
+    union
+    {
+        char c;
+        int i;
+        double d;
+    };
+};
+
+void print_s(const S& s)
+{
+    switch(s.tag)
+    {
+        case S::CHAR: std::cout << s.c << '\n'; break;
+        case S::INT: std::cout << s.i << '\n'; break;
+        case S::DOUBLE: std::cout << s.d << '\n'; break;
+    }
+}
+
+int main()
+{
+    S s = {S::CHAR, 'a'};
+    print_s(s);
+    s.tag = S::INT;
+    s.i = 123;
+    print_s(s);
+}
+```
+
+Output:
+
+```text
+a
+123
+```
+
+{/* source:cpp-language-union:0028 */}
+<Revision since="C++17">
+The C++ standard library includes [`std::variant`](/docs/cpp/library/utility/variant), which can replace many uses of unions and union-like classes. The example above can be re-written as
+
+```cpp
+#include <iostream>
+#include <variant>
+
+int main()
+{
+    std::variant<char, int, double> s = 'a';
+    std::visit([](auto x){ std::cout << x << '\n';}, s);
+    s = 123;
+    std::visit([](auto x){ std::cout << x << '\n';}, s);
+}
+```
+
+Output:
+
+```text
+a
+123
+```
+</Revision>
+
+## Keywords
+
+{/* source:cpp-language-union:0029 */}
+[`union`](/docs/cpp/language/keywords/union)
+
+## Defect reports
+
+{/* source:cpp-language-union:0030 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-union:0031 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1940} standard="C++11"><PublishedBehavior>anonymous unions only allowed non-static data members</PublishedBehavior><CorrectedBehavior>`static_assert` also allowed</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-union:0032 */}
+C++23 standard (ISO/IEC 14882:2024): 11.5 Unions [class.union]
+
+{/* source:cpp-language-union:0033 */}
+C++20 standard (ISO/IEC 14882:2020): 11.5 Unions [class.union]
+
+{/* source:cpp-language-union:0034 */}
+C++17 standard (ISO/IEC 14882:2017): 12.3 Unions [class.union]
+
+{/* source:cpp-language-union:0035 */}
+C++14 standard (ISO/IEC 14882:2014): 9.5 Unions [class.union]
+
+{/* source:cpp-language-union:0036 */}
+C++11 standard (ISO/IEC 14882:2011): 9.5 Unions [class.union]
+
+{/* source:cpp-language-union:0037 */}
+C++03 standard (ISO/IEC 14882:2003): 9.5 Unions [class.union]
+
+{/* source:cpp-language-union:0038 */}
+C++98 standard (ISO/IEC 14882:1998): 9.5 Unions [class.union]
+
+## See also
+
+{/* source:cpp-language-union:0039 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`variant`](/docs/cpp/library/utility/variant) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>a type-safe discriminated union (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/declarations/union)</DescriptionTerm>
+    <DescriptionBody>for Union declaration</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,289 @@
+---
+title: "Pack indexing (since C++26)"
+description: "Accesses the element of a pack at a specified index."
+source_url: "https://en.cppreference.com/w/cpp/language/pack_indexing"
+language: "C++"
+---
+
+{/* source:cpp-language-pack-indexing:0000 */}
+Accesses the element of a [pack](/docs/cpp/language/templates/parameter_pack) at a specified index.
+
+## Syntax
+
+{/* source:cpp-language-pack-indexing:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="id-expression ...[ expression ]" />
+  <Declaration id="2" language="cpp" grammar code="typedef-name ...[ expression ]" />
+</DeclarationDoc>
+
+{/* source:cpp-language-pack-indexing:0002 */}
+1. Pack indexing expression
+
+{/* source:cpp-language-pack-indexing:0003 */}
+2. Pack indexing specifier
+
+{/* source:cpp-language-pack-indexing:0004 */}
+<ParameterList>
+  <Parameter name="typedef-name">
+    an [identifier](/docs/cpp/language/basic_concepts/name) or a [simple-template-id](/docs/cpp/language/templates#template-id) that names a pack
+  </Parameter>
+  <Parameter name="id-expression">
+    an [id-expression](/docs/cpp/language/expressions#Primary_expressions) that names a pack
+  </Parameter>
+  <Parameter name="expression">
+    a [converted constant expression](/docs/cpp/language/expressions/constant_expression) `I` of type [`std::size_t`](/docs/cpp/library/utility/types/size_t) designated as index where `I` is within the range `[0, sizeof...(P))` for some pack `P` in pack indexing
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-pack-indexing:0005 */}
+Pack indexing is a *pack expansion* of the unexpanded pack followed by an ellipsis and index inside the subscript. There are two kinds of pack indexing: pack indexing expression and pack indexing specifier.
+
+{/* source:cpp-language-pack-indexing:0006 */}
+Let `P` be a non-empty pack containing `P0`, `P1`, ..., `Pn-1` and `I` be a valid index, the instantiation of the expansion `P...[I]` yields the pack element `PI` of `P`.
+
+{/* source:cpp-language-pack-indexing:0007 */}
+Indexing a pack with non-constant expression index `I` is not allowed.
+
+{/* source:cpp-language-pack-indexing:0008 */}
+```cpp
+int runtime_idx();
+
+void bar(auto... args)
+{
+    auto a = args...[0];
+    const int n = 1;
+    auto b = args...[n];
+    int m = 2;
+    auto c = args...[m]; // error: 'm' is not a constant expression
+    auto d = args...[runtime_idx()]; // error: 'runtime_idx()' is not a constant expression
+}
+```
+
+{/* source:cpp-language-pack-indexing:0009 */}
+Indexing a pack of template template parameters is not possible.
+
+{/* source:cpp-language-pack-indexing:0010 */}
+```cpp
+template <template <typename...> typename... Temps>
+using A = Temps...[0]<>; // error: 'Temps' is a pack of template template parameters
+
+template <template <typename...> typename... Temps>
+using B = Temps<>...[0]; // error: 'Temps<>' doesn't denote pack name 
+                         // although it is a simple-template-id
+```
+
+## Pack indexing expression
+
+{/* source:cpp-language-pack-indexing:0011 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="id-expression ...[ expression ]" />
+</DeclarationDoc>
+
+{/* source:cpp-language-pack-indexing:0012 */}
+Pack indexing expression denotes the *id-expression*, the expression of pack element `PI`. The *id-expression* shall be introduced by the declaration of:
+
+{/* source:cpp-language-pack-indexing:0013 */}
+- [non-type template parameter pack](/docs/cpp/language/templates/parameter_pack),
+- [function parameter pack](/docs/cpp/language/templates/parameter_pack),
+- [lambda init-capture pack](/docs/cpp/language/functions/lambda#Lambda_capture), or
+- [structured binding pack](/docs/cpp/language/declarations/structured_binding).
+
+{/* source:cpp-language-pack-indexing:0014 */}
+```cpp
+template <std::size_t I, typename... Ts>
+constexpr auto element_at(Ts... args)
+{
+    // 'args' introduced in function parameter pack declaration
+    return args...[I];
+}
+
+static_assert(element_at<0>(3, 5, 9) == 3);
+static_assert(element_at<2>(3, 5, 9) == 9);
+static_assert(element_at<3>(3, 5, 9) == 4); // error:  out of bounds
+static_assert(element_at<0>() == 1); // error: out of bounds, empty pack
+
+template <std::size_t I, typename Tup>
+constexpr auto structured_binding_element_at(Tup tup)
+{
+    auto [...elems] = tup;
+    // 'elems' introduced in structured binding pack declaration
+    return elems...[I];
+}
+
+struct A { bool a; int b; };
+
+static_assert(structured_binding_element_at<0>(A {true, 4}) == true);
+static_assert(structured_binding_element_at<1>(A {true, 4}) == 4);
+
+// 'Vals' introduced in non-type template parameter pack declaration
+template <std::size_t I, std::size_t... Vals>
+constexpr std::size_t double_at = Vals...[I] * 2; // OK
+
+template <std::size_t I, typename... Args>
+constexpr auto foo(Args... args)
+{
+    return [...members = args](Args...[I] op)
+    {
+        // 'members' introduced in lambda init-capture pack
+        return members...[I] + op;
+    };
+}
+
+static_assert(foo<0>(4, "Hello", true)(5) == 9);
+static_assert(foo<1>(3, std::string("C++"))("26") == "C++26");
+```
+
+{/* source:cpp-language-pack-indexing:0015 */}
+Indexing pack of complex expressions other than id-expression is not allowed.
+
+{/* source:cpp-language-pack-indexing:0016 */}
+```cpp
+template <std::size_t I, auto... Vals>
+constexpr auto identity_at = (Vals)...[I]; // error
+// use 'Vals...[I]' instead
+
+template <std::size_t I, std::size_t... Vals>
+constexpr std::size_t triple_at = (Vals * 3)...[I]; // error
+// use 'Vals...[I] * 3' instead
+
+template <std::size_t I, typename... Args>
+constexpr decltype(auto) get(Args&&... args) noexcept
+{
+    return std::forward<Args>(args)...[I]; // error
+    // use 'std::forward<Args...[I]>(args...[I])' instead
+}
+```
+
+{/* source:cpp-language-pack-indexing:0017 */}
+Applying [`decltype`](/docs/cpp/language/declarations/decltype) to pack indexing expression is the same as applying [`decltype`](/docs/cpp/language/declarations/decltype) to id-expression.
+
+{/* source:cpp-language-pack-indexing:0018 */}
+```cpp
+void f() 
+{
+    [](auto... args)
+    {
+        using T0 = decltype(args...[0]);   // 'T0' is 'double'
+        using T1 = decltype((args...[0])); // 'T1' is 'double&'
+    }(3.14);
+}
+```
+
+## Pack indexing specifier
+
+{/* source:cpp-language-pack-indexing:0019 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="typedef-name ...[ expression ]" />
+</DeclarationDoc>
+
+{/* source:cpp-language-pack-indexing:0020 */}
+Pack indexing specifier denotes the *computed-type-specifier*, the type of pack element `PI`. The *typedef-name* shall be introduced by the declaration of [type template parameter pack](/docs/cpp/language/templates/parameter_pack).
+
+{/* source:cpp-language-pack-indexing:0021 */}
+```cpp
+template <typename... Ts>
+using last_type_t = Ts...[sizeof...(Ts) - 1];
+
+static_assert(std::is_same_v<last_type_t<>, int>); // error: out of bounds
+static_assert(std::is_same_v<last_type_t<int>, int>);
+static_assert(std::is_same_v<last_type_t<bool, char>, char>);
+static_assert(std::is_same_v<last_type_t<float, int, bool*>, bool*>);
+```
+
+{/* source:cpp-language-pack-indexing:0022 */}
+Pack indexing specifier can appear as:
+
+{/* source:cpp-language-pack-indexing:0023 */}
+- a [simple type specifier](/docs/cpp/language/declarations#Specifiers),
+- a [base class specifier](/docs/cpp/language/classes/derived_class),
+- a [nested name specifier](/docs/cpp/language/basic_concepts/name#Qualified_identifiers), or
+- the [type of an explicit destructor call](/docs/cpp/language/basic_concepts/name#Unqualified_identifiers).
+
+{/* source:cpp-language-pack-indexing:0024 */}
+Pack indexing specifier can be used in function or constructor parameter list to establish [non-deduced contexts](/docs/cpp/language/templates/template_argument_deduction#Non-deduced_contexts) in template argument deduction.
+
+{/* source:cpp-language-pack-indexing:0025 */}
+```cpp
+template <typename...>
+struct type_seq {};
+
+template <typename... Ts>
+auto f(Ts...[0] arg, type_seq<Ts...>)
+{
+    return arg;
+}
+
+// OK: "Hello" is implicitly converted to 'std::string_view'
+std::same_as<std::string_view> auto a = f("Hello", type_seq<std::string_view>{});
+
+// Error: "Ok" is not convertible to 'int'
+std::same_as<int> auto b = f("Ok", type_seq<int, const char*>{});
+```
+
+## Notes
+
+{/* source:cpp-language-pack-indexing:0026 */}
+Before C++26, `Ts...[N]` was a valid syntax for declaring function parameter pack of unnamed arrays of size `N`, where the parameter types were further adjusted to pointers. Since C++26, `Ts...[1]` is interpreted as a pack indexing specifier which would change the behavior below to #2. To preserve the first behavior, the function parameter pack must be named, or manually adjusted to a pack of pointer types.
+
+{/* source:cpp-language-pack-indexing:0027 */}
+```cpp
+template <typename... Ts>
+void f(Ts... [1]);
+
+template <typename... Ts>
+void g(Ts... args[1]);
+
+template <typename... Ts>
+void h(Ts*...); // clearer but more permissive: Ts... can contain cv void or function types
+
+void foo() 
+{
+    f<char, bool>(nullptr, nullptr);
+    // behavior #1 (before C++26):
+    //  calls void 'f<char, bool>(char*, bool*)' (aka 'f<char, bool>(char[1], bool[1])')
+    // behavior #2 (since C++26): 
+    //  error: supposedly called 'void f<char, bool>(bool)'
+    //  but provided with 2 arguments instead of 1
+
+    g<char, bool>(nullptr, nullptr);
+    // calls 'g<char, bool>(char*, bool*)' (aka 'g<char, bool>(char[1], bool[1])')
+
+    h<char, bool>(nullptr, nullptr);
+    // calls 'h<char, bool>(char*, bool*)'
+}
+```
+
+{/* source:cpp-language-pack-indexing:0028 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_pack_indexing`](/docs/cpp/library/feature_test#cpp_pack_indexing) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_pack_indexing_202311L) | (C++26) | [Pack indexing](/docs/cpp/language/templates/pack_indexing#top) |
+
+## Example
+
+{/* source:cpp-language-pack-indexing:0029 */}
+```cpp
+#include <tuple>
+
+template <std::size_t... Indices, typename Decomposable>
+constexpr auto splice(Decomposable d)
+{
+    auto [...elems] = d;
+    return std::make_tuple(elems...[Indices]...);
+}
+
+struct Point
+{
+    int x;
+    int y;
+    int z;
+};
+
+int main() 
+{
+    constexpr Point p { .x = 1, .y = 4, .z = 3 };
+    static_assert(splice<2, 1, 0>(p) == std::make_tuple(3, 4, 1));
+    static_assert(splice<1, 1, 0, 0>(p) == std::make_tuple(4, 4, 1, 1));
+}
+```

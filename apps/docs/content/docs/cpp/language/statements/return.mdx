@@ -1,0 +1,232 @@
+---
+title: "return statement"
+description: "Terminates the current function and returns the specified value (if any) to the caller."
+source_url: "https://en.cppreference.com/w/cpp/language/return"
+language: "C++"
+---
+
+{/* source:cpp-language-return:0000 */}
+Terminates the current function and returns the specified value (if any) to the caller.
+
+## Syntax
+
+{/* source:cpp-language-return:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="attr (optional) return expression (optional) ;" />
+  <Declaration id="2" language="cpp" grammar since="C++11" code="attr (optional) return braced-init-list ;" />
+  <Declaration id="3" language="cpp" grammar since="C++20" code="attr (optional) co_return expression (optional) ;" />
+  <Declaration id="4" language="cpp" grammar since="C++20" code="attr (optional) co_return braced-init-list ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-return:0002 */}
+<ParameterList>
+  <Parameter name="attr"><InlineRevision since="C++11" /> sequence of any number of [attributes](/docs/cpp/language/declarations/attributes)</Parameter>
+  <Parameter name="expression">[expression](/docs/cpp/language/expressions), convertible to the function return type</Parameter>
+  <Parameter name="braced-init-list">[brace-enclosed initializer list](/docs/cpp/language/initialization)</Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-return:0003 */}
+1. Evaluates the *expression*, terminates the current function and returns the result of the *expression* to the caller, after [implicit conversion](/docs/cpp/language/expressions/implicit_cast) to the function return type. The *expression* is optional in functions whose return type is (possibly cv-qualified) `void`, and disallowed in constructors and in destructors.
+
+{/* source:cpp-language-return:0004 */}
+2. Uses [copy-list-initialization](/docs/cpp/language/initialization/list_initialization) to construct the return value of the function.
+
+{/* source:cpp-language-return:0005 */}
+3,4. In a coroutine, the keyword `co_return` must be used instead of `return` for the final suspension point (see [coroutines](/docs/cpp/language/functions/coroutines) for details).
+
+{/* source:cpp-language-return:0006 */}
+<Revision until="C++11">
+There is a [sequence point](/docs/cpp/language/expressions/eval_order#Sequence_point_rules_.28until_C.2B.2B11.29) between the copy-initialization of the result of the function call and the destruction of all temporaries at the end of *expression*.
+</Revision>
+
+<Revision since="C++11">
+The copy-initialization of the result of the function call is [sequenced-before](/docs/cpp/language/expressions/eval_order) the destruction of all temporaries at the end of *expression*, which, in turn, is *sequenced-before* the destruction of local variables of the block enclosing the return statement.
+</Revision>
+
+{/* source:cpp-language-return:0007 */}
+<Revision since="C++26">
+If the return type of the function is a reference type and a `return` statement (1,2) binds the returned reference to the result of a [temporary expression](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary), the program is ill-formed.
+</Revision>
+
+{/* source:cpp-language-return:0008 */}
+If control reaches the end of
+
+{/* source:cpp-language-return:0009 */}
+- a function with the return type (possibly cv-qualified) `void`, a constructor, a destructor, or a [function `try` block](/docs/cpp/language/exceptions/try#Function_try_block) for a function with the return type (possibly cv-qualified) `void`
+
+{/* source:cpp-language-return:0010 */}
+without encountering a return statement, `return;` is executed.
+
+{/* source:cpp-language-return:0011 */}
+If control reaches the end of the [`main` function](/docs/cpp/language/basic_concepts/main_function), `return 0;` is executed.
+
+{/* source:cpp-language-return:0012 */}
+Flowing off the end of a value-returning function, except the `main` function<InlineRevision since="C++20"> and specific [coroutines](/docs/cpp/language/functions/coroutines)</InlineRevision>, without a return statement is undefined behavior.
+
+{/* source:cpp-language-return:0013 */}
+In a function returning (possibly cv-qualified) `void`, the return statement with *expression* can be used, if the expression type is (possibly cv-qualified) `void`.
+
+{/* source:cpp-language-return:0014 */}
+<Revision since="C++14">
+If the return type of a function is specified as a [placeholder type](/docs/cpp/language/declarations/auto), it will be [deduced](/docs/cpp/language/functions/function#Return_type_deduction) from the return value.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-return:0015 */}
+Returning by value may involve construction and copy/move of a temporary object, unless [copy elision](/docs/cpp/language/initialization/copy_elision) is used. Specifically, the conditions for copy/move are as follows:
+
+{/* source:cpp-language-return:0016 */}
+<Revision since="C++11">
+### Automatic move from local variables and parameters
+
+The *expression* is *move-eligible* if it is a (possibly parenthesized) [identifier expression](/docs/cpp/language/basic_concepts/name) that names a variable of automatic storage duration whose type is
+
+- a non-volatile object type
+- <Revision since="C++20">or a non-volatile rvalue reference to object type</Revision>
+
+and that variable is declared
+
+- in the body or
+- as a parameter
+
+of the innermost enclosing function or lambda expression.
+
+<Revision until="C++23">
+If the *expression* is move-eligible, [overload resolution](/docs/cpp/language/functions/overload_resolution) to select the constructor to use for initialization of the returned value<InlineRevision since="C++20"> or, for `co_return`, to select the overload of `promise.return_value()`</InlineRevision> is performed *twice*:
+
+- first as if *expression* were an rvalue expression (thus it may select the [move constructor](/docs/cpp/language/classes/move_constructor)), and
+  - if the first overload resolution failed or
+
+    <Revision until="C++20">
+    it succeeded, but did not select the [move constructor](/docs/cpp/language/classes/move_constructor) (formally, the first parameter of the selected constructor was not an rvalue reference to the (possibly cv-qualified) type of *expression*)
+    </Revision>
+- then overload resolution is performed as usual, with *expression* considered as an lvalue (so it may select the [copy constructor](/docs/cpp/language/classes/copy_constructor)).
+</Revision>
+
+<Revision since="C++23">
+If the *expression* is move-eligible, it is treated as an xvalue (thus overload resolution may select the [move constructor](/docs/cpp/language/classes/move_constructor)).
+</Revision>
+</Revision>
+
+{/* source:cpp-language-return:0017 */}
+<Revision since="C++17">
+### Guaranteed copy elision
+
+If *expression* is a prvalue, the result object is initialized directly by that expression. This does not involve a copy or move constructor when the types match (see [copy elision](/docs/cpp/language/initialization/copy_elision)).
+</Revision>
+
+{/* source:cpp-language-return:0018 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_implicit_move`](/docs/cpp/library/feature_test#cpp_implicit_move) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_implicit_move_202207L) | (C++23) | Simpler [implicit move](/docs/cpp/language/statements/return#Automatic_move_from_local_variables_and_parameters) |
+
+## Keywords
+
+{/* source:cpp-language-return:0019 */}
+[`return`](/docs/cpp/language/keywords/return), [`co_return`](/docs/cpp/language/keywords/co_return)
+
+## Example
+
+{/* source:cpp-language-return:0020 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <utility>
+
+void fa(int i)
+{
+    if (i == 2)
+        return;
+    std::cout << "fa("<< i << ")\n";
+} // implied return;
+
+int fb(int i)
+{
+    if (i > 4)
+        return 4;
+    std::cout << "fb(" << i << ")\n";
+    return 2;
+}
+
+std::pair<std::string, int> fc(const char* p, int x)
+{
+    return {p, x};
+}
+
+void fd()
+{
+    return fa(10); // fa(10) is a void expression
+}
+
+int main()
+{
+    fa(1); // prints its argument, then returns
+    fa(2); // does nothing when i == 2, just returns
+
+    int i = fb(5); // returns 4
+    i = fb(i);     // prints its argument, returns 2
+    std::cout << "i = " << i << '\n'
+              << "fc(~).second = " << fc("Hello", 7).second << '\n';
+
+    fd();
+}
+
+struct MoveOnly
+{
+    MoveOnly() = default;
+    MoveOnly(MoveOnly&&) = default;
+};
+
+MoveOnly move_11(MoveOnly arg)
+{
+    return arg; // OK. implicit move
+}
+
+MoveOnly move_11(MoveOnly&& arg)
+{
+    return arg; // OK since C++20. implicit move
+}
+
+MoveOnly&& move_23(MoveOnly&& arg)
+{
+    return arg; // OK since C++23. implicit move
+}
+```
+
+Output:
+
+```text
+fa(1)
+fb(4)
+i = 2
+fc(~).second = 7
+fa(10)
+```
+
+## Defect reports
+
+{/* source:cpp-language-return:0021 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-return:0022 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1541} standard="C++98"><PublishedBehavior>*expression* could not be omitted if the return type is cv-qualified `void`</PublishedBehavior><CorrectedBehavior>it can be omitted</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1579} standard="C++11"><PublishedBehavior>return by converting move constructor was not allowed</PublishedBehavior><CorrectedBehavior>converting move constructor lookup enabled</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1885} standard="C++98"><PublishedBehavior>sequencing of the destruction of automatic variables was not explicit</PublishedBehavior><CorrectedBehavior>sequencing rules added</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-return:0023 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+
+{/* source:cpp-language-return:0024 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/statements/return)</DescriptionTerm>
+    <DescriptionBody>for `return` statement</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,135 @@
+---
+title: "Variadic arguments"
+description: "Allows a function to accept any number of extra arguments."
+source_url: "https://en.cppreference.com/w/cpp/language/variadic_arguments"
+language: "C++"
+---
+
+{/* source:cpp-language-variadic-arguments:0000 */}
+Allows a function to accept any number of extra arguments.
+
+{/* source:cpp-language-variadic-arguments:0001 */}
+A function is a variadic if the last parameter of its [parameter list](/docs/cpp/language/functions/function#Parameter_list) is an ellipsis (`...`).
+
+{/* source:cpp-language-variadic-arguments:0002 */}
+The comma preceding the ellipsis can be omitted. (deprecated in C++26)
+
+{/* source:cpp-language-variadic-arguments:0003 */}
+```cpp
+// the function declared as follows
+int printx(const char* fmt, ...);
+int printx(const char* fmt...); // same as above, but deprecated since C++26
+
+// may be called with one or more arguments:
+printx("hello world");
+printx("a=%d b=%d", a, b);
+
+int printy(..., const char* fmt); // error: ... can only be the last parameter
+int printz(...); // valid, but the arguments cannot be accessed portably
+```
+
+{/* source:cpp-language-variadic-arguments:0004 */}
+<Revision since="C++11">
+This is different from a function [parameter pack](/docs/cpp/language/templates/parameter_pack) expansion, which is indicated by an ellipsis that is a part of a parameter declarator, rather than an ellipsis being a parameter alone. Both parameter pack expansion and the "variadic" ellipsis may appear in the declaration of a function template, as in the case of [`std::is_function`](/docs/cpp/library/meta/is_function).
+</Revision>
+
+## Default argument promotions
+
+{/* source:cpp-language-variadic-arguments:0005 */}
+When a variadic function is called, after lvalue-to-rvalue, array-to-pointer, and function-to-pointer [conversions](/docs/cpp/language/expressions/implicit_cast#Value_transformations), each argument that is a part of the variable argument list undergoes additional conversions known as default argument promotions:
+
+{/* source:cpp-language-variadic-arguments:0006 */}
+<Revision since="C++11">
+- [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) is converted to `void*`.
+</Revision>
+
+{/* source:cpp-language-variadic-arguments:0007 */}
+- `float` arguments are converted to `double` as in [floating-point promotion](/docs/cpp/language/expressions/implicit_cast#Floating-point_promotion).
+- `bool`, `char`, `short`, and unscoped enumerations are converted to `int` or wider integer types as in [integral promotion](/docs/cpp/language/expressions/implicit_cast#Integral_promotion).
+
+{/* source:cpp-language-variadic-arguments:0008 */}
+Non-POD class types <InlineRevision until="C++11" /> Scoped enumerations and class types with an eligible non-trivial copy constructor, an eligible non-trivial move constructor, or a non-trivial destructor <InlineRevision since="C++11" /> are conditionally-supported in potentially-evaluated calls with implementation-defined semantics (these types are always supported in [unevaluated calls](/docs/cpp/language/expressions#Potentially-evaluated_expressions)).
+
+{/* source:cpp-language-variadic-arguments:0009 */}
+Because variadic parameters have the lowest rank for the purpose of [overload resolution](/docs/cpp/language/functions/overload_resolution), they are commonly used as the catch-all fallbacks in [SFINAE](/docs/cpp/language/templates/sfinae).
+
+{/* source:cpp-language-variadic-arguments:0010 */}
+Within the body of a function that uses variadic arguments, the values of these arguments may be accessed using the [\<cstdarg\> library facilities](/docs/cpp/library/utility/variadic):
+
+{/* source:cpp-language-variadic-arguments:0011 */}
+Defined in header [`<cstdarg>`](/docs/cpp/library/headers/cstdarg)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`va_start`](/docs/cpp/library/utility/variadic/va_start)</DescriptionTerm>
+    <DescriptionBody>enables access to variadic function arguments (function macro)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`va_arg`](/docs/cpp/library/utility/variadic/va_arg)</DescriptionTerm>
+    <DescriptionBody>accesses the next variadic function argument (function macro)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`va_copy`](/docs/cpp/library/utility/variadic/va_copy) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>makes a copy of the variadic function arguments (function macro)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`va_end`](/docs/cpp/library/utility/variadic/va_end)</DescriptionTerm>
+    <DescriptionBody>ends traversal of the variadic function arguments (function macro)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`va_list`](/docs/cpp/library/utility/variadic/va_list)</DescriptionTerm>
+    <DescriptionBody>holds the information needed by [`va_start`](/docs/cpp/library/utility/variadic/va_start), [`va_arg`](/docs/cpp/library/utility/variadic/va_arg), [`va_end`](/docs/cpp/library/utility/variadic/va_end), and [`va_copy`](/docs/cpp/library/utility/variadic/va_copy) (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-language-variadic-arguments:0012 */}
+The behavior of the [`va_start`](/docs/cpp/library/utility/variadic/va_start) macro is undefined if the last parameter before the ellipsis has reference type, or has type that is not [compatible](/docs/c/language/basic_concepts/compatible_type#Compatible_types) with the type that results from default argument promotions.
+
+{/* source:cpp-language-variadic-arguments:0013 */}
+<Revision since="C++11">
+If the a [pack expansion](/docs/cpp/language/templates/parameter_pack#Pack_expansion) or an entity resulting from a [lambda capture](/docs/cpp/language/functions/lambda#Lambda_capture) is used as the last parameter in [`va_start`](/docs/cpp/library/utility/variadic/va_start), the program is ill-formed, no diagnostic required.
+</Revision>
+
+## Alternatives
+
+{/* source:cpp-language-variadic-arguments:0014 */}
+<Revision since="C++11">
+- [Variadic templates](/docs/cpp/language/templates/parameter_pack) can also be used to create functions that take variable number of arguments. They are often the better choice because they do not impose restrictions on the types of the arguments, do not perform integral and floating-point promotions, and are type safe.
+- If all variable arguments share a common type, a [`std::initializer_list`](/docs/cpp/library/utility/initializer_list) provides a convenient mechanism (albeit with a different syntax) for accessing variable arguments. In this case however the arguments cannot be modified since [`std::initializer_list`](/docs/cpp/library/utility/initializer_list) can only provide a const pointer to its elements.
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-variadic-arguments:0015 */}
+In the C programming language until C23, at least one named parameter must appear before the ellipsis parameter, so `R printz(...);` is not valid until C23. In C++, this form is allowed even though the arguments passed to such function are not accessible, and is commonly used as the fallback overload in [SFINAE](/docs/cpp/language/templates/sfinae), exploiting the lowest priority of the ellipsis conversion in [overload resolution](/docs/cpp/language/functions/overload_resolution).
+
+{/* source:cpp-language-variadic-arguments:0016 */}
+This syntax for variadic arguments was introduced in 1983 C++ without the comma before the ellipsis. When C89 adopted function prototypes from C++, it replaced the syntax with one requiring the comma. For compatibility, C++98 accepts both C++-style `f(int n...)` and C-style `f(int n, ...)`. The original C++-style grammar is deprecated since C++26.
+
+{/* source:cpp-language-variadic-arguments:0017 */}
+<Revision since="C++20">
+The comma can be used in abbreviated function templates to make the ellipsis signify a variadic function instead of a variadic template:
+
+`void f1(auto...);   // same as template<class... Ts> void f3(Ts...)`
+`void f2(auto, ...); // same as template<class T> void f3(T, ...)`
+</Revision>
+
+## Defect reports
+
+{/* source:cpp-language-variadic-arguments:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-variadic-arguments:0019 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={506} standard="C++98"><PublishedBehavior>passing non-POD class arguments to an ellipsis resulted in undefined behavior</PublishedBehavior><CorrectedBehavior>passing such arguments is conditionally-supported with implementation-defined semantics</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={634} standard="C++98"><PublishedBehavior>conditionally-supported class types made some SFINAE idioms not work</PublishedBehavior><CorrectedBehavior>always supported if unevaluated</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2247} standard="C++11"><PublishedBehavior>no restriction on passing parameter pack or lambda capture to `va_start`</PublishedBehavior><CorrectedBehavior>made ill-formed, no diagnostic required</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2347} standard="C++11"><PublishedBehavior>it was unclear whether scoped enumerations passed to an ellipsis are subject to default argument promotions</PublishedBehavior><CorrectedBehavior>passing scoped enumerations is conditionally-supported with implementation-defined semantics</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-variadic-arguments:0020 */}
+[C documentation](/docs/c/language/functions/variadic) for Variadic arguments
+
+[C documentation](/docs/c/language/expressions/conversion) for Implicit conversions

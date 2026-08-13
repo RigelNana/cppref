@@ -1,0 +1,427 @@
+---
+title: "Explicit type conversion"
+description: "Converts between types using a combination of explicit and implicit conversions."
+source_url: "https://en.cppreference.com/w/cpp/language/explicit_cast"
+language: "C++"
+---
+
+{/* source:cpp-language-explicit-cast:0000 */}
+Converts between types using a combination of explicit and implicit conversions.
+
+## Syntax
+
+{/* source:cpp-language-explicit-cast:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="( type-id ) unary-expression" />
+  <Declaration id="2" language="cpp" grammar until="C++11" code="simple-type-specifier ( expression-list (optional) )" />
+  <Declaration id="2" language="cpp" grammar since="C++11" code="simple-type-specifier ( initializer-list (optional) )" />
+  <Declaration id="3" language="cpp" grammar since="C++11" code="simple-type-specifier { initializer-list (optional) }" />
+  <Declaration id="4" language="cpp" grammar since="C++20" code="simple-type-specifier { designated-initializer-list }" />
+  <Declaration id="5" language="cpp" grammar since="C++11" code="typename identifier ( initializer-list (optional) )" />
+  <Declaration id="6" language="cpp" grammar since="C++11" code="typename identifier { initializer-list (optional) }" />
+  <Declaration id="7" language="cpp" grammar since="C++20" code="typename identifier { designated-initializer-list }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-explicit-cast:0002 */}
+Explicitly converts any number of values to a value of the target type.
+
+{/* source:cpp-language-explicit-cast:0003 */}
+1. Explicit type conversion (cast notation), also called C-style cast.
+
+{/* source:cpp-language-explicit-cast:0004 */}
+2-7. Explicit type conversion (functional notation), also called function-style cast.
+
+{/* source:cpp-language-explicit-cast:0005 */}
+<ParameterList>
+  <Parameter name="type-id">
+    a [`type-id`](/docs/cpp/language/basic_concepts/type-id#Type_naming)
+  </Parameter>
+  <Parameter name="unary-expression">
+    an unary expression (whose top-level operator does not have a [`precedence`](/docs/cpp/language/expressions/operator_precedence) higher than that of C-style cast)
+  </Parameter>
+  <Parameter name="simple-type-specifier">
+    a [`simple type specifier`](/docs/cpp/language/declarations#Specifiers)
+  </Parameter>
+  <Parameter name="expression-list">
+    a comma-separated list of expressions (except unparenthesized [`comma expressions`](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator))
+  </Parameter>
+  <Parameter name="initializer-list">
+    a comma-separated list of [`initializer clauses`](/docs/cpp/language/initialization)
+  </Parameter>
+  <Parameter name="designated-initializer-list">
+    a comma-separated list of [`designated initializer clauses`](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers)
+  </Parameter>
+  <Parameter name="identifier">
+    a (possibly qualified) identifier (including [`template identifiers`](/docs/cpp/language/templates#Template_identifiers))
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{/* source:cpp-language-explicit-cast:0006 */}
+1. When the C-style cast is encountered, the compiler attempts to interpret it as the following cast expressions, in this order:
+
+{/* source:cpp-language-explicit-cast:0007 */}
+- a) [`const_cast`](/docs/cpp/language/expressions/const_cast) `<` type-id `>(` unary-expression `)`;
+
+{/* source:cpp-language-explicit-cast:0008 */}
+- b) [`static_cast`](/docs/cpp/language/expressions/static_cast) `<` type-id `>(` unary-expression `)`, with extensions: pointer or reference to a [`derived class`](/docs/cpp/language/classes/derived_class) is additionally allowed to be cast to pointer or reference to unambiguous base class (and vice versa) even if the base class is [`inaccessible`](/docs/cpp/language/classes/access) (that is, this cast ignores the private inheritance specifier). Same applies to casting [`pointer to member`](/docs/cpp/language/declarations/pointer) to pointer to member of unambiguous non-virtual base;
+
+{/* source:cpp-language-explicit-cast:0009 */}
+- c) a `static_cast` (with extensions) followed by `const_cast`;
+
+{/* source:cpp-language-explicit-cast:0010 */}
+- d) [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) `<` type-id `>(` unary-expression `)`;
+
+{/* source:cpp-language-explicit-cast:0011 */}
+- e) a `reinterpret_cast` followed by `const_cast`.
+
+{/* source:cpp-language-explicit-cast:0012 */}
+The first choice that satisfies the requirements of the respective cast operator is selected, even if it is ill-formed (see example). If a `static_cast` followed by a `const_cast` is used and the conversion can be interpreted in more than one way as such, the conversion is ill-formed.
+
+{/* source:cpp-language-explicit-cast:0013 */}
+In addition, C-style casts can cast from, to, and between pointers to incomplete class type. If both type-id and the type of unary-expression are pointers to incomplete class types, it is unspecified whether `static_cast` or `reinterpret_cast` gets selected.
+
+{/* source:cpp-language-explicit-cast:0014 */}
+2-7. A function-style cast specifies a *type* (*simple-type-specifier*<InlineRevision since="C++11"> or *identifier*</InlineRevision>) and an *initializer* (the remaining parts), it constructs a value of the target type `T`, which is determined from the specified type<InlineRevision since="C++17"> and initializer</InlineRevision>:
+
+<Revision until="C++17">
+`T` is the specified type.
+</Revision>
+
+<Revision since="C++17">
+`T` is determined as follows:
+
+- If the specified type is a placeholder for a deduced class type, `T` is the return type of the function selected by overload resolution for [`class template deduction`](/docs/cpp/language/templates/ctad).
+
+<Revision since="C++23">
+- Otherwise, if the specified type contains a [`placeholder type`](/docs/cpp/language/declarations/auto), `T` is the deduced type.
+</Revision>
+
+- Otherwise, `T` is the specified type.
+</Revision>
+
+{/* source:cpp-language-explicit-cast:0015 */}
+The conversion result is determined as follows:
+
+- If the function-style cast is of syntax `(2)`, and there is exactly one expression in parentheses, this cast is equivalent to the corresponding C-style cast.
+- Otherwise, if `T` is (possibly cv-qualified) `void`, the result is <InlineRevision until="C++11">an rvalue</InlineRevision><InlineRevision since="C++11">a prvalue</InlineRevision> of type `void` that performs no initialization.
+
+<Revision until="C++11">
+- If the initializer is not `()`, the program is ill-formed.
+</Revision>
+
+<Revision since="C++11">
+- If the initializer is not `()` or `{}` after [`pack expansion`](/docs/cpp/language/templates/parameter_pack) (if any), the program is ill-formed.
+</Revision>
+
+- Otherwise, if `T` is a reference type, the function-style cast has the same effect as [`direct-initializing`](/docs/cpp/language/initialization/direct_initialization) an invented variable `t` of type `T` from the specified initializer, and the result is the initialized `t`.
+
+<Revision until="C++11">
+The result is an lvalue.
+</Revision>
+
+<Revision since="C++11">
+If `T` is an lvalue reference type or an rvalue reference to function type, the result is an lvalue. Otherwise, the result is an xvalue.
+</Revision>
+
+Otherwise, the result is <InlineRevision until="C++11">an rvalue</InlineRevision><InlineRevision since="C++11">a prvalue</InlineRevision> of of type `T` <InlineRevision until="C++17">designating a temporary</InlineRevision><InlineRevision since="C++17">whose result object is</InlineRevision> direct-initialized with the specified initializer.
+
+## Ambiguity Resolution
+
+### Ambiguous declaration statement
+
+{/* source:cpp-language-explicit-cast:0016 */}
+In the case of an ambiguity between an expression statement with a function-style cast expression as its leftmost subexpression and a declaration statement, the ambiguity is resolved by treating it as a declaration. This disambiguation is purely syntactic: it does not consider the meaning of names occurring in the statement other than whether they are type names:
+
+{/* source:cpp-language-explicit-cast:0017 */}
+```cpp
+struct M {};
+struct L { L(M&); };
+
+M n;
+void f()
+{
+    M(m);    // declaration, equivalent to M m;
+    L(n);    // ill-formed declaration, equivalent to L n;
+    L(l)(m); // still a declaration, equivalent to L l((m));
+}
+```
+
+{/* source:cpp-language-explicit-cast:0018 */}
+<Revision since="C++11">
+However, if the outermost declarator in the ambiguous declaration statement has a [`trailing return type`](/docs/cpp/language/functions/function), the statement will only be treated as a declaration statement if the trailing return type starts with `auto`:
+
+```cpp
+struct M;
+
+struct S
+{
+    S* operator()();
+    int N;
+    int M;
+
+    void mem(S s)
+    {
+        auto(s)()->M; // expression (S::M hides ::M), invalid before C++23
+    }
+};
+
+void f(S s)
+{
+    {
+        auto(s)()->N; // expression, invalid before C++23
+        auto(s)()->M; // function declaration, equivalent to M s();
+    }
+    {
+        S(s)()->N;    // expression
+        S(s)()->M;    // expression
+    }
+}
+```
+</Revision>
+
+### Ambiguous function parameter
+
+{/* source:cpp-language-explicit-cast:0019 */}
+The ambiguity above can also occur in the context of a declaration. In that context, the choice is between an object declaration with a function-style cast as the initializer and a declaration involving a function declarator with a redundant set of parentheses around a parameter name. The resolution is also to consider any construct, such as the potential parameter declaration, that could possibly be a declaration to be a declaration:
+
+{/* source:cpp-language-explicit-cast:0020 */}
+```cpp
+struct S
+{
+    S(int);
+};
+
+void foo(double a)
+{
+    S w(int(a)); // function declaration: has a parameter `a` of type int
+    S x(int());  // function declaration: has an unnamed parameter of type int(*)() 
+                 // that is adjusted from int()
+
+    // Ways to avoid ambiguity:
+    S y((int(a))); // object declaration: extra pair of parentheses
+    S y((int)a);   // object declaration: C-style cast
+    S z = int(a);  // object declaration: no ambiguity for this syntax
+}
+```
+
+{/* source:cpp-language-explicit-cast:0021 */}
+<Revision since="C++11">
+However, if the outermost declarator in the ambiguous parameter declaration has a [`trailing return type`](/docs/cpp/language/functions/function), the ambiguity will only be resolved by treating it as a declaration if it starts with `auto`:
+
+```cpp
+typedef struct BB { int C[2]; } *B, C;
+
+void foo()
+{
+    S a(B()->C);    // object declaration: B()->C cannot declare a parameter
+    S b(auto()->C); // function declaration: has an unnamed parameter of type C(*)()
+                    // that is adjusted from C()
+}
+```
+</Revision>
+
+### Ambiguous type-id
+
+{/* source:cpp-language-explicit-cast:0022 */}
+An ambiguity can arise from the similarity between a function-style cast and a [`type-id`](/docs/cpp/language/basic_concepts/type-id#Type_naming). The resolution is that any construct that could possibly be a type-id in its syntactic context shall be considered a type-id:
+
+{/* source:cpp-language-explicit-cast:0023 */}
+```cpp
+// `int()` and `int(unsigned(a))` can both be parsed as type-id:
+// `int()`            represents a function returning int
+//                    and taking no argument
+// `int(unsigned(a))` represents a function returning int
+//                    and taking an argument of type unsigned
+void foo(signed char a)
+{
+    sizeof(int());            // type-id (ill-formed)
+    sizeof(int(a));           // expression
+    sizeof(int(unsigned(a))); // type-id (ill-formed)
+
+    (int()) + 1;            // type-id (ill-formed)
+    (int(a)) + 1;           // expression
+    (int(unsigned(a))) + 1; // type-id (ill-formed)
+}
+```
+
+{/* source:cpp-language-explicit-cast:0024 */}
+<Revision since="C++11">
+However, if the outermost *abstract-declarator* in the ambiguous [`type-id`](/docs/cpp/language/basic_concepts/type-id#Type_naming) has a [`trailing return type`](/docs/cpp/language/functions/function), the ambiguity will only be resolved by treating it as a type-id if it starts with `auto`:
+
+```cpp
+typedef struct BB { int C[2]; } *B, C;
+
+void foo()
+{
+    sizeof(B()->C[1]);    // OK, sizeof(expression)
+    sizeof(auto()->C[1]); // error: sizeof of a function returning an array
+}
+```
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-explicit-cast:0025 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_auto_cast`](/docs/cpp/library/feature_test#cpp_auto_cast) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_auto_cast_202110L) | (C++23) | `auto(x)` and `auto{x}` |
+
+## Example
+
+{/* source:cpp-language-explicit-cast:0026 */}
+```cpp
+#include <cassert>
+#include <iostream>
+
+double f = 3.14;
+unsigned int n1 = (unsigned int)f; // C-style cast
+unsigned int n2 = unsigned(f);     // function-style cast
+
+class C1;
+class C2;
+C2* foo(C1* p)
+{
+    return (C2*)p; // casts incomplete type to incomplete type
+}
+
+void cpp23_decay_copy_demo()
+{
+    auto inc_print = [](int& x, const int& y)
+    {
+        ++x;
+        std::cout << "x:" << x << ", y:" << y << '\n';
+    };
+
+    int p{1};
+    inc_print(p, p); // prints x:2 y:2, because param y here is an alias of p
+    int q{1};
+    inc_print(q, auto{q}); // prints x:2 y:1, auto{q} (C++23) casts to prvalue,
+                           // so the param y is a copy of q (not an alias of q)
+}
+
+// In this example, C-style cast is interpreted as static_cast
+// even though it would work as reinterpret_cast
+struct A {};
+struct I1 : A {};
+struct I2 : A {};
+struct D : I1, I2 {};
+
+int main()
+{
+    D* d = nullptr;
+//  A* a = (A*)d;                   // compile-time error
+    A* a = reinterpret_cast<A*>(d); // this compiles
+    assert(a == nullptr);
+
+    cpp23_decay_copy_demo();
+}
+```
+
+Output:
+
+```text
+x:2 y:2
+x:2 y:1
+```
+
+## Defect reports
+
+{/* source:cpp-language-explicit-cast:0027 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-explicit-cast:0028 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1223} standard="C++11">
+    <PublishedBehavior>the addition of trailing return type introduced more ambiguities</PublishedBehavior>
+    <CorrectedBehavior>resolves them</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1893} standard="C++11">
+    <PublishedBehavior>function-style cast did not consider pack expansions</PublishedBehavior>
+    <CorrectedBehavior>considers them</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2351} standard="C++11">
+    <PublishedBehavior>`void{}` was ill-formed</PublishedBehavior>
+    <CorrectedBehavior>made well-formed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2620} standard="C++98">
+    <PublishedBehavior>the resolution of ambiguous function parameters might be misinterpreted</PublishedBehavior>
+    <CorrectedBehavior>improved the wording</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2828} standard="C++98">
+    <PublishedBehavior>a C-style cast was ill-formed if multiple interpretations of a `static_cast` followed by a `const_cast` exist, regardless of whether these conversions are actually used</PublishedBehavior>
+    <CorrectedBehavior>only considers the conversions possibly being used</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2894} standard="C++98">
+    <PublishedBehavior>function-style casts could create reference rvalues</PublishedBehavior>
+    <CorrectedBehavior>can only create reference lvalues</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-explicit-cast:0029 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 7.6.1.4 Explicit type conversion (functional notation) [expr.type.conv]
+  - 7.6.3 Explicit type conversion (cast notation) [expr.cast]
+
+{/* source:cpp-language-explicit-cast:0030 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 7.6.1.4 Explicit type conversion (functional notation) [expr.type.conv]
+  - 7.6.3 Explicit type conversion (cast notation) [expr.cast]
+
+{/* source:cpp-language-explicit-cast:0031 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 8.2.3 Explicit type conversion (functional notation) [expr.type.conv]
+  - 8.4 Explicit type conversion (cast notation) [expr.cast]
+
+{/* source:cpp-language-explicit-cast:0032 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 5.2.3 Explicit type conversion (functional notation) [expr.type.conv]
+  - 5.4 Explicit type conversion (cast notation) [expr.cast]
+
+{/* source:cpp-language-explicit-cast:0033 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 5.2.3 Explicit type conversion (functional notation) [expr.type.conv]
+  - 5.4 Explicit type conversion (cast notation) [expr.cast]
+
+{/* source:cpp-language-explicit-cast:0034 */}
+- C++03 standard (ISO/IEC 14882:2003):
+  - 5.2.3 Explicit type conversion (functional notation) [expr.type.conv]
+  - 5.4 Explicit type conversion (cast notation) [expr.cast]
+
+{/* source:cpp-language-explicit-cast:0035 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 5.2.3 Explicit type conversion (functional notation) [expr.type.conv]
+  - 5.4 Explicit type conversion (cast notation) [expr.cast]
+
+## See also
+
+{/* source:cpp-language-explicit-cast:0036 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`const_cast` conversion](/docs/cpp/language/expressions/const_cast)</DescriptionTerm>
+    <DescriptionBody>adds or removes const</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`static_cast` conversion](/docs/cpp/language/expressions/static_cast)</DescriptionTerm>
+    <DescriptionBody>performs basic conversions</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`dynamic_cast` conversion](/docs/cpp/language/expressions/dynamic_cast)</DescriptionTerm>
+    <DescriptionBody>performs checked polymorphic conversions</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reinterpret_cast` conversion](/docs/cpp/language/expressions/reinterpret_cast)</DescriptionTerm>
+    <DescriptionBody>performs general low-level conversions</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`standard conversions`](/docs/cpp/language/expressions/implicit_cast)</DescriptionTerm>
+    <DescriptionBody>implicit conversions from one type to another</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/expressions/cast)</DescriptionTerm>
+    <DescriptionBody>for cast operator</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,289 @@
+---
+title: "Initialization"
+description: "Initialization of a variable provides its initial value at the time of construction."
+source_url: "https://en.cppreference.com/w/cpp/language/initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-initialization:0000 */}
+Initialization of a variable provides its initial value at the time of construction.
+
+{/* source:cpp-language-initialization:0001 */}
+The initial value may be provided in the initializer section of a [declarator](/docs/cpp/language/declarations) or a [new expression](/docs/cpp/language/expressions/new). It also takes place during function calls: function parameters and the function return values are also initialized.
+
+## Initializers
+
+{/* source:cpp-language-initialization:0002 */}
+For each declarator, the initializer (if exists) may be one of the following:
+
+{/* source:cpp-language-initialization:0003 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="= expression" />
+  <Declaration id="2" language="cpp" grammar code="= {}" />
+  <Declaration language="cpp" grammar code="= { initializer-list }" />
+  <Declaration language="cpp" grammar since="C++20" code="= { designated-initializer-list }" />
+  <Declaration id="3" language="cpp" grammar until="C++11" code="( expression-list )" />
+  <Declaration language="cpp" grammar since="C++11" code="( initializer-list )" />
+  <Declaration id="4" language="cpp" grammar since="C++11" code="{}" />
+  <Declaration language="cpp" grammar since="C++11" code="{ initializer-list }" />
+  <Declaration language="cpp" grammar since="C++20" code="{ designated-initializer-list }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-initialization:0004 */}
+1. Copy-initialization syntax.
+
+{/* source:cpp-language-initialization:0005 */}
+2. <InlineRevision until="C++11">Aggregate initialization syntax.</InlineRevision><InlineRevision since="C++11">List-initialization syntax.</InlineRevision>
+
+{/* source:cpp-language-initialization:0006 */}
+3. Direct-initialization syntax.
+
+{/* source:cpp-language-initialization:0007 */}
+4. List-initialization syntax.
+
+{/* source:cpp-language-initialization:0008 */}
+<ParameterList>
+  <Parameter name="expression">any expression (except unparenthesized [comma expressions](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator))</Parameter>
+  <Parameter name="expression-list">a comma-separated list of expressions (except unparenthesized comma expressions)</Parameter>
+  <Parameter name="initializer-list">a comma-separated list of initializer clauses (see below)</Parameter>
+  <Parameter name="designated-initializer-list">a comma-separated list of [designated initializer clauses](/docs/cpp/language/initialization/aggregate_initialization#Designated_initializers)</Parameter>
+</ParameterList>
+
+{/* source:cpp-language-initialization:0009 */}
+An initializer clause may be one of the following:
+
+{/* source:cpp-language-initialization:0010 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="expression" />
+  <Declaration id="2" language="cpp" grammar code="{}" />
+  <Declaration id="3" language="cpp" grammar code="{ initializer-list }" />
+  <Declaration id="4" language="cpp" grammar since="C++20" code="{ designated-initializer-list }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-initialization:0011 */}
+Syntaxes (2-4) are collectively called brace-enclosed initializer list.
+
+### Initializer semantics
+
+{/* source:cpp-language-initialization:0012 */}
+If no initializer is specified for an object, the object is [default-initialized](/docs/cpp/language/initialization/default_initialization). If no initializer is specified for a [reference](/docs/cpp/language/declarations/reference), the program is ill-formed.
+
+{/* source:cpp-language-initialization:0013 */}
+If the initializer specified for an object is `()` (cannot appear in declarators due to the syntax restriction), the object is [value-initialized](/docs/cpp/language/initialization/value_initialization). If the initializer specified for a reference is `()`, the program is ill-formed.
+
+{/* source:cpp-language-initialization:0014 */}
+The semantics of initializers are as follows:
+
+{/* source:cpp-language-initialization:0015 */}
+- If the entity being initialized is a reference, see [reference initialization](/docs/cpp/language/initialization/reference_initialization). Otherwise, the entity being initialized is an object. Given the type of the object as T:
+
+{/* source:cpp-language-initialization:0016 */}
+- If the initializer is of syntax (1), the object is [copy-initialized](/docs/cpp/language/initialization/copy_initialization).
+
+{/* source:cpp-language-initialization:0017 */}
+<Revision until="C++11">
+- If the initializer is of syntax (2):
+  - If `T` is an [aggregate](/docs/cpp/language/initialization/aggregate_initialization#Definitions), [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization) applies.
+  - If `T` is a [scalar type](/docs/cpp/library/named_req/ScalarType), `T x = { a };` is equivalent to `T x = a;`.
+  - Otherwise, the program is ill-formed.
+</Revision>
+
+<Revision since="C++11">
+- If the initializer is of syntax (2) or (4), the object is [list-initialized](/docs/cpp/language/initialization/list_initialization).
+</Revision>
+
+{/* source:cpp-language-initialization:0018 */}
+- If the initializer is of syntax (3), the object is [direct-initialized](/docs/cpp/language/initialization/direct_initialization).
+
+{/* source:cpp-language-initialization:0019 */}
+```cpp
+#include <string>
+
+std::string s1;           // default-initialization
+std::string s2();         // NOT an initialization!
+                          // actually declares a function “s2”
+                          // with no parameter and returns std::string
+std::string s3 = "hello"; // copy-initialization
+std::string s4("hello");  // direct-initialization
+std::string s5{'a'};      // list-initialization (since C++11)
+
+char a[3] = {'a', 'b'}; // aggregate initialization
+                        // (part of list initialization since C++11)
+char& c = a[0];         // reference initialization
+```
+
+## Non-local variables
+
+{/* source:cpp-language-initialization:0020 */}
+All non-local variables with static [storage duration](/docs/cpp/language/declarations/storage_duration) are initialized as part of program startup, before the execution of the [main function](/docs/cpp/language/basic_concepts/main_function) begins (unless deferred, see below). All non-local variables with thread-local storage duration are initialized as part of thread launch, sequenced-before the execution of the thread function begins. For both of these classes of variables, initialization occurs in two distinct stages:
+
+### Static initialization
+
+{/* source:cpp-language-initialization:0021 */}
+There are two forms of static initialization:
+
+{/* source:cpp-language-initialization:0022 */}
+1. If possible, [constant initialization](/docs/cpp/language/initialization/constant_initialization) is applied.
+
+{/* source:cpp-language-initialization:0023 */}
+2. Otherwise, non-local static and thread-local variables are [zero-initialized](/docs/cpp/language/initialization/zero_initialization).
+
+{/* source:cpp-language-initialization:0024 */}
+In practice:
+
+{/* source:cpp-language-initialization:0025 */}
+- Constant initialization is usually applied at compile time. Pre-calculated object representations are stored as part of the program image. If the compiler doesn't do that, it must still guarantee that the initialization happens before any dynamic initialization.
+- Variables to be zero-initialized are placed in the .bss segment of the program image, which occupies no space on disk and is zeroed out by the OS when loading the program.
+
+### Dynamic initialization
+
+{/* source:cpp-language-initialization:0026 */}
+After all static initialization is completed, dynamic initialization of non-local variables occurs in the following situations:
+
+{/* source:cpp-language-initialization:0027 */}
+1. *Unordered dynamic initialization*, which applies only to (static/thread-local) class template [static data members](/docs/cpp/language/classes/static) <InlineRevision since="C++14">and [variable templates](/docs/cpp/language/templates/variable_template)</InlineRevision> that aren't [explicitly specialized](/docs/cpp/language/templates/template_specialization). Initialization of such static variables is indeterminately sequenced with respect to all other dynamic initialization <InlineRevision since="C++17">except if the program starts a thread before a variable is initialized, in which case its initialization is unsequenced</InlineRevision>. Initialization of such thread-local variables is unsequenced with respect to all other dynamic initialization.
+
+{/* source:cpp-language-initialization:0028 */}
+<Revision since="C++17">
+2. *Partially-ordered dynamic initialization*, which applies to all inline variables that are not an implicitly or explicitly instantiated specialization. If a partially-ordered V is defined before ordered or partially-ordered W in every translation unit, the initialization of V is sequenced before the initialization of W (or happens-before, if the program starts a thread).
+</Revision>
+
+{/* source:cpp-language-initialization:0029 */}
+3. *Ordered dynamic initialization*, which applies to all other non-local variables: within a single translation unit, initialization of these variables is always [sequenced](/docs/cpp/language/expressions/eval_order) in exact order their definitions appear in the source code. Initialization of static variables in different translation units is indeterminately sequenced. Initialization of thread-local variables in different translation units is unsequenced.
+
+{/* source:cpp-language-initialization:0030 */}
+If the initialization of a non-local variable with static or thread storage duration exits via an exception, [`std::terminate`](/docs/cpp/library/error/terminate) is called.
+
+### Early dynamic initialization
+
+{/* source:cpp-language-initialization:0031 */}
+The compilers are allowed to initialize dynamically-initialized variables as part of static initialization (essentially, at compile time), if the following conditions are both true:
+
+{/* source:cpp-language-initialization:0032 */}
+1. the dynamic version of the initialization does not change the value of any other object of namespace scope prior to its initialization
+
+{/* source:cpp-language-initialization:0033 */}
+2. the static version of the initialization produces the same value in the initialized variable as would be produced by the dynamic initialization if all variables not required to be initialized statically were initialized dynamically.
+
+{/* source:cpp-language-initialization:0034 */}
+Because of the rule above, if initialization of some object `o1` refers to a namespace-scope object `o2`, which potentially requires dynamic initialization, but is defined later in the same translation unit, it is unspecified whether the value of `o2` used will be the value of the fully initialized `o2` (because the compiler promoted initialization of `o2` to compile time) or will be the value of `o2` merely zero-initialized.
+
+{/* source:cpp-language-initialization:0035 */}
+```cpp
+inline double fd() { return 1.0; }
+
+extern double d1;
+
+double d2 = d1;   // unspecified:
+                  // dynamically initialized to 0.0 if d1 is dynamically initialized, or
+                  // dynamically initialized to 1.0 if d1 is statically initialized, or
+                  // statically initialized to 0.0 (because that would be its value
+                  // if both variables were dynamically initialized)
+
+double d1 = fd(); // may be initialized statically or dynamically to 1.0
+```
+
+### Deferred dynamic initialization
+
+{/* source:cpp-language-initialization:0036 */}
+It is implementation-defined whether dynamic initialization happens-before the first statement of the main function (for statics) or the initial function of the thread (for thread-locals), or deferred to happen after.
+
+{/* source:cpp-language-initialization:0037 */}
+If the initialization <InlineRevision since="C++17">of a non-inline variable</InlineRevision> is deferred to happen after the first statement of main/thread function, it happens before the first [ODR-use](/docs/cpp/language/basic_concepts/definition#ODR-use) of any variable with static/thread storage duration defined in the same translation unit as the variable to be initialized. If no variable or function is ODR-used from a given translation unit, the non-local variables defined in that translation unit may never be initialized (this models the behavior of an on-demand dynamic library). However, as long as anything from a translation unit is ODR-used, all non-local variables whose initialization or destruction has side effects will be initialized even if they are not used in the program.
+
+{/* source:cpp-language-initialization:0038 */}
+<Revision since="C++17">
+If the initialization of an inline variable is deferred, it happens before the first [ODR-use](/docs/cpp/language/basic_concepts/definition#ODR-use) of that specific variable.
+</Revision>
+
+{/* source:cpp-language-initialization:0039 */}
+```cpp
+// ============
+// == File 1 ==
+
+#include "a.h"
+#include "b.h"
+
+B b;
+A::A() { b.Use(); }
+
+// ============
+// == File 2 ==
+
+#include "a.h"
+
+A a;
+
+// ============
+// == File 3 ==
+
+#include "a.h"
+#include "b.h"
+
+extern A a;
+extern B b;
+
+int main()
+{
+    a.Use();
+    b.Use();
+}
+
+// If a is initialized before main is entered, b may still be uninitialized
+// at the point where A::A() uses it (because dynamic initialization is
+// indeterminately sequenced across translation units)
+
+// If a is initialized at some point after the first statement of main (which odr-uses
+// a function defined in File 1, forcing its dynamic initialization to run),
+// then b will be initialized prior to its use in A::A
+```
+
+## Static local variables
+
+{/* source:cpp-language-initialization:0040 */}
+For initialization of local (that is, block scope) static and thread-local variables, see [static block variables](/docs/cpp/language/declarations/storage_duration#Static_block_variables).
+
+{/* source:cpp-language-initialization:0041 */}
+Initializer is not allowed in a block-scope declaration of a variable with [external or internal linkage](/docs/cpp/language/declarations/storage_duration#Linkage). Such a declaration must appear with `extern` and cannot be a definition.
+
+## Class members
+
+{/* source:cpp-language-initialization:0042 */}
+Non-static data members can be initialized with [member initializer list](/docs/cpp/language/classes/initializer_list) or with a [default member initializer](/docs/cpp/language/classes/data_members#Member_initialization).
+
+## Notes
+
+{/* source:cpp-language-initialization:0043 */}
+The order of destruction of non-local variables is described in [`std::exit`](/docs/cpp/library/utility/program/exit).
+
+## Defect reports
+
+{/* source:cpp-language-initialization:0044 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-initialization:0045 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={270} standard="C++98"><PublishedBehavior>the order of initializing static data members of class templates was unspecified</PublishedBehavior><CorrectedBehavior>specified as unordered except for explicit specializations and definitions</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={441} standard="C++98"><PublishedBehavior>non-local references with static storage duration were not always initialized before dynamic initializations</PublishedBehavior><CorrectedBehavior>considered as static initialization, always initialized before dynamic initializations</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1415} standard="C++98"><PublishedBehavior>a block-scope `extern` variable declaration could be a definition</PublishedBehavior><CorrectedBehavior>prohibited (no initializer allowed in such declarations)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2599} standard="C++98"><PublishedBehavior>it was unclear whether evaluating function arguments in the initializer is part of initialization</PublishedBehavior><CorrectedBehavior>it is part of initialization</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-initialization:0046 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [explicit](/docs/cpp/language/classes/explicit)
+- [move constructor](/docs/cpp/language/classes/move_constructor)
+- [new](/docs/cpp/language/expressions/new)
+
+{/* source:cpp-language-initialization:0047 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/initialization)</DescriptionTerm>
+    <DescriptionBody>for Initialization</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

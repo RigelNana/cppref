@@ -1,0 +1,167 @@
+---
+title: "Empty base optimization"
+description: "Allows the size of an empty base subobject to be zero."
+source_url: "https://en.cppreference.com/w/cpp/language/ebo"
+language: "C++"
+---
+
+{/* source:cpp-language-ebo:0000 */}
+Allows the size of an empty base subobject to be zero.
+
+## Explanation
+
+{/* source:cpp-language-ebo:0001 */}
+The size of any [object](/docs/cpp/language/basic_concepts/objects) or member subobject is required to be at least 1 even if the type is an empty [class type](/docs/cpp/language/classes/class) (that is, a class or struct that has no non-static data members), <InlineRevision since="C++20">(unless with [`no_unique_address`](/docs/cpp/language/declarations/attributes/no_unique_address), see below)</InlineRevision> in order to be able to guarantee that the addresses of distinct objects of the same type are always distinct.
+
+{/* source:cpp-language-ebo:0002 */}
+However, base class subobjects are not so constrained, and can be completely optimized out from the object layout:
+
+{/* source:cpp-language-ebo:0003 */}
+```cpp
+struct Base {}; // empty class
+
+struct Derived1 : Base
+{
+    int i;
+};
+
+int main()
+{
+    // the size of any object of empty class type is at least 1
+    static_assert(sizeof(Base) >= 1);
+
+    // empty base optimization applies
+    static_assert(sizeof(Derived1) == sizeof(int));
+}
+```
+
+{/* source:cpp-language-ebo:0004 */}
+Empty base optimization is prohibited if one of the empty base classes is also the type or the base of the type of the first non-static data member, since the two base subobjects of the same type are required to have different addresses within the object representation of the most derived type.
+
+{/* source:cpp-language-ebo:0005 */}
+A typical example of such situation is the naive implementation of [`std::reverse_iterator`](/docs/cpp/library/iterator/reverse_iterator) (derived from the empty base [`std::iterator`](/docs/cpp/library/iterator/iterator)), which holds the underlying iterator (also derived from [`std::iterator`](/docs/cpp/library/iterator/iterator)) as its first non-static data member.
+
+{/* source:cpp-language-ebo:0006 */}
+```cpp
+struct Base {}; // empty class
+
+struct Derived1 : Base
+{
+    int i;
+};
+
+struct Derived2 : Base
+{
+    Base c; // Base, occupies 1 byte, followed by padding for i
+    int i;
+};
+
+struct Derived3 : Base
+{
+    Derived1 c; // derived from Base, occupies sizeof(int) bytes
+    int i;
+};
+
+int main()
+{
+    // empty base optimization does not apply,
+    // base occupies 1 byte, Base member occupies 1 byte
+    // followed by 2 bytes of padding to satisfy int alignment requirements
+    static_assert(sizeof(Derived2) == 2*sizeof(int));
+
+    // empty base optimization does not apply,
+    // base takes up at least 1 byte plus the padding
+    // to satisfy alignment requirement of the first member (whose
+    // alignment is the same as int)
+    static_assert(sizeof(Derived3) == 3*sizeof(int));
+}
+```
+
+{/* source:cpp-language-ebo:0007 */}
+If multiple inheritance occurs, then the specific optimizations are compiler specific.
+
+{/* source:cpp-language-ebo:0008 */}
+- In MSVC, the null base class optimization is applied with and only with the last null base class, the rest of the null base classes are not applied with the null base optimization and one byte is allocated.
+- In GCC, no matter how many empty base classes exist, the empty base class applies the empty base class optimization without allocating any space and the empty base class address is the same as the first address of the derived class object.
+
+{/* source:cpp-language-ebo:0009 */}
+<Revision since="C++11">
+Empty base optimization is *required* for [StandardLayoutTypes](/docs/cpp/library/named_req/StandardLayoutType) in order to maintain the requirement that the pointer to a standard-layout object, converted using [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast), points to its initial member, which is why the requirements for a standard layout type include "has all non-static data members declared in the same class (either all in the derived or all in some base)" and "has no base classes of the same type as the first non-static data member".
+</Revision>
+
+{/* source:cpp-language-ebo:0010 */}
+<Revision since="C++20">
+The empty member subobjects are permitted to be optimized out just like the empty bases if they use the attribute [`no_unique_address`](/docs/cpp/language/declarations/attributes/no_unique_address). Taking the address of such member results in an address that may equal the address of some other member of the same object.
+
+```cpp
+struct Empty {}; // empty class
+
+struct X
+{
+    int i;
+    [[no_unique_address]] Empty e;
+};
+
+int main()
+{
+    // the size of any object of empty class type is at least 1
+    static_assert(sizeof(Empty) >= 1);
+
+    // empty member optimized out:
+    static_assert(sizeof(X) == sizeof(int));
+}
+```
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-ebo:0011 */}
+Empty base optimization is commonly used by allocator-aware standard library classes ([`std::vector`](/docs/cpp/library/container/vector), [`std::function`](/docs/cpp/library/utility/functional/function), [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr), etc) to avoid occupying any additional storage for its allocator member if the allocator is stateless. This is achieved by storing one of the required data members (e.g., `begin`, `end`, or `capacity` pointer for the `vector`) in an equivalent of [boost::compressed_pair](https://www.boost.org/doc/libs/release/libs/utility/doc/html/utility/utilities/compressed_pair.html) with the allocator.
+
+## References
+
+{/* source:cpp-language-ebo:0012 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 7.6.10 Equality operators [expr.eq]
+  - 7.6.2.5 Sizeof [expr.sizeof]
+  - 11 Classes [class]
+  - 11.4 Class members [class.mem]
+
+{/* source:cpp-language-ebo:0013 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 7.6.10 Equality operators [expr.eq]
+  - 7.6.2.4 Sizeof [expr.sizeof]
+  - 11 Classes [class]
+  - 11.4 Class members [class.mem]
+
+{/* source:cpp-language-ebo:0014 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 8.10 Equality operators [expr.eq]
+  - 8.3.3 Sizeof [expr.sizeof]
+  - 12 Classes [class]
+  - 12.2 Class members [class.mem]
+
+{/* source:cpp-language-ebo:0015 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 5.10 Equality operators [expr.eq]
+  - 5.3.3 Sizeof [expr.sizeof]
+  - 9 Classes [class]
+  - 9.2 Class members [class.mem]
+
+{/* source:cpp-language-ebo:0016 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 5.10 Equality operators [expr.eq] (p: 2)
+  - 5.3.3 Sizeof [expr.sizeof] (p: 2)
+  - 9 Classes [class] (p: 4,7)
+  - 9.2 Class members [class.mem] (p: 20)
+
+{/* source:cpp-language-ebo:0017 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 5.10 Equality operators [expr.eq] (p: 2)
+  - 5.3.3 Sizeof [expr.sizeof] (p: 2)
+  - 9 Classes [class] (p: 3)
+
+## External links
+
+{/* source:cpp-language-ebo:0018 */}
+- [More C++ Idioms/Empty Base Optimization](https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Empty_Base_Optimization) — A wikibook

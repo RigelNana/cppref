@@ -1,0 +1,143 @@
+---
+title: "typedef specifier"
+description: "typedef - creates an alias that can be used anywhere in place of a (possibly complex) type name."
+source_url: "https://en.cppreference.com/w/cpp/language/typedef"
+language: "C++"
+---
+
+{/* source:cpp-language-typedef:0000 */}
+**`typedef`** - creates an alias that can be used anywhere in place of a (possibly complex) type name.
+
+## Explanation
+
+{/* source:cpp-language-typedef:0001 */}
+The `typedef` specifier, when used in a [declaration](/docs/cpp/language/declarations), specifies that the declaration is a typedef declaration rather than a variable or function declaration.
+
+{/* source:cpp-language-typedef:0002 */}
+Typically, the `typedef` specifier appears at the start of the declaration, though it is permitted to appear after the [type specifiers](/docs/cpp/language/declarations#Specifiers), or between two type specifiers. The `typedef` specifier cannot be combined with any other specifier except for type specifiers.
+
+{/* source:cpp-language-typedef:0003 */}
+A typedef declaration may declare one or many identifiers on the same line (e.g. `int` and a pointer to int), it may declare array and function types, pointers and references, class types, etc. Every identifier introduced in this declaration becomes a typedef name, which is a synonym for the type of the object or function that it would become if the keyword `typedef` were removed.
+
+{/* source:cpp-language-typedef:0004 */}
+The typedef names are aliases for existing types, and are not declarations of new types. `typedef` cannot be used to change the meaning of an existing type name (including a typedef name). Once declared, a typedef name may only be redeclared to refer to the same type again. Typedef names are only in effect in the scope where they are visible: different functions or class declarations may define identically-named types with different meaning.
+
+{/* source:cpp-language-typedef:0005 */}
+The `typedef` specifier may not appear in the declaration of a function parameter nor in the decl-specifier-seq of a [function definition](/docs/cpp/language/functions/function#Function_definition):
+
+{/* source:cpp-language-typedef:0006 */}
+```cpp
+void f1(typedef int param); // ill-formed
+typedef int f2() {}         // ill-formed
+```
+
+{/* source:cpp-language-typedef:0007 */}
+The `typedef` specifier may not appear in a declaration that does not contain a declarator:
+
+{/* source:cpp-language-typedef:0008 */}
+```cpp
+typedef struct X {}; // ill-formed
+```
+
+## typedef name for linkage purposes
+
+{/* source:cpp-language-typedef:0009 */}
+If a typedef declaration defines an unnamed [class](/docs/cpp/language/classes) or [enumeration](/docs/cpp/language/declarations/enum), the first typedef name of the class type or enumeration type declared by the declaration is the typedef name for linkage purposes of that type.
+
+{/* source:cpp-language-typedef:0010 */}
+For example, in `typedef struct { /* ... */ } S;`, S is a typedef name for linkage purposes. The class or enumeration type defined in this way has [external linkage](/docs/cpp/language/declarations/storage_duration#Linkage) (unless it is in an unnamed namespace).
+
+{/* source:cpp-language-typedef:0011 */}
+<Revision since="C++20">
+An unnamed class defined in this way should only contain C-compatible constructs. In particular, it must not
+
+- declare any members other than non-static data members, member enumerations, or member classes,
+- have any [base classes](/docs/cpp/language/classes/derived_class) or [default member initializers](/docs/cpp/language/classes/data_members#Member_initialization), or
+- contain a [lambda expression](/docs/cpp/language/functions/lambda),
+
+and all member classes must also satisfy these requirements (recursively).
+</Revision>
+
+## Notes
+
+{/* source:cpp-language-typedef:0012 */}
+<Revision since="C++11">
+[Type aliases](/docs/cpp/language/declarations/type_alias) provide the same functionality as typedef declarations using a different syntax, and are also applicable to template names.
+</Revision>
+
+## Keywords
+
+{/* source:cpp-language-typedef:0013 */}
+[`typedef`](/docs/cpp/language/keywords/typedef)
+
+## Example
+
+{/* source:cpp-language-typedef:0014 */}
+```cpp
+// simple typedef
+typedef unsigned long ulong;
+
+// the following two objects have the same type
+unsigned long l1;
+ulong l2;
+
+// more complicated typedef
+typedef int int_t, *intp_t, (&fp)(int, ulong), arr_t[10];
+
+// the following two objects have the same type
+int a1[10];
+arr_t a2;
+
+// beware: the following two objects do not have the same type
+const intp_t p1 = 0; // int *const p1 = 0
+const int *p2;
+
+// common C idiom to avoid having to write "struct S"
+typedef struct { int a; int b; } S, *pS;
+
+// the following two objects have the same type
+pS ps1;
+S* ps2;
+
+// error: storage-class-specifier cannot appear in a typedef declaration
+// typedef static unsigned int uint;
+
+// typedef can be used anywhere in the decl-specifier-seq
+long unsigned typedef int long ullong;
+// more conventionally spelled "typedef unsigned long long int ullong;"
+
+// std::add_const, like many other metafunctions, use member typedefs
+template<class T>
+struct add_const
+{
+    typedef const T type;
+};
+
+typedef struct Node
+{
+    struct listNode* next; // declares a new (incomplete) struct type named listNode
+} listNode; // error: conflicts with the previously declared struct name
+
+// C++20 error: "struct with typedef name for linkage" has member functions
+typedef struct { void f() {} } C_Incompatible;
+```
+
+## Defect reports
+
+{/* source:cpp-language-typedef:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-typedef:0016 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={576} standard="C++98"><PublishedBehavior>`typedef` was not allowed in the entire function definition</PublishedBehavior><CorrectedBehavior>allowed in function body</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2071} standard="C++98"><PublishedBehavior>`typedef` could appear in a declaration that does not contain a declarator</PublishedBehavior><CorrectedBehavior>now disallowed</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-typedef:0017 */}
+- [Type alias](/docs/cpp/language/declarations/type_alias)
+- [Alias template](/docs/cpp/language/declarations/type_alias)
+
+{/* source:cpp-language-typedef:0018 */}
+[C documentation](/docs/c/language/declarations/typedef) for Typedef declaration

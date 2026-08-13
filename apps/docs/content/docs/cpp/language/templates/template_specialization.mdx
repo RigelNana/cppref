@@ -1,0 +1,365 @@
+---
+title: "Explicit (full) template specialization"
+description: "Allows customizing the template code for a given set of template arguments."
+source_url: "https://en.cppreference.com/w/cpp/language/template_specialization"
+language: "C++"
+---
+
+{/* source:cpp-language-template-specialization:0000 */}
+Allows customizing the template code for a given set of template arguments.
+
+## Syntax
+
+{/* source:cpp-language-template-specialization:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="template <> declaration" />
+</DeclarationDoc>
+
+{/* source:cpp-language-template-specialization:0002 */}
+Any of the following can be fully specialized:
+
+{/* source:cpp-language-template-specialization:0003 */}
+1. [function template](/docs/cpp/language/templates/function_template)
+2. [class template](/docs/cpp/language/templates/class_template)
+3. <InlineRevision since="C++14">[variable template](/docs/cpp/language/templates/variable_template)</InlineRevision>
+4. [member function](/docs/cpp/language/classes/member_functions) of a class template
+5. [static data member](/docs/cpp/language/classes/static) of a class template
+6. [member class](/docs/cpp/language/classes/nested_classes) of a class template
+7. member [enumeration](/docs/cpp/language/declarations/enum) of a class template
+8. [member class template](/docs/cpp/language/templates/member_template) of a class or class template
+9. [member function template](/docs/cpp/language/templates/member_template#Member_function_templates) of a class or class template
+10. <InlineRevision since="C++14">[member variable template](/docs/cpp/language/templates/member_template#Member_variable_templates) of a class or class template</InlineRevision>
+
+{/* source:cpp-language-template-specialization:0004 */}
+For example,
+
+```cpp
+#include <type_traits>
+
+template<typename T> // primary template
+struct is_void : std::false_type {};
+template<>           // explicit specialization for T = void
+struct is_void<void> : std::true_type {};
+
+int main()
+{
+    static_assert(is_void<char>::value == false,
+        "for any type T other than void, the class is derived from false_type");
+    static_assert(is_void<void>::value == true,
+        "but when T is void, the class is derived from true_type");
+}
+```
+
+## In detail
+
+{/* source:cpp-language-template-specialization:0005 */}
+Explicit specialization may be declared in any scope where its primary template may be defined (which may be different from the scope where the primary template is defined; such as with out-of-class specialization of a [member template](/docs/cpp/language/templates/member_template)). Explicit specialization has to appear after the non-specialized template declaration.
+
+{/* source:cpp-language-template-specialization:0006 */}
+```cpp
+namespace N
+{
+    template<class T> // primary template
+    class X { /*...*/ };
+    template<>        // specialization in same namespace
+    class X<int> { /*...*/ };
+
+    template<class T> // primary template
+    class Y { /*...*/ };
+    template<>        // forward declare specialization for double
+    class Y<double>;
+}
+
+template<> // OK: specialization in same namespace
+class N::Y<double> { /*...*/ };
+```
+
+{/* source:cpp-language-template-specialization:0007 */}
+Specialization must be declared before the first use that would cause implicit instantiation, in every translation unit where such use occurs:
+
+{/* source:cpp-language-template-specialization:0008 */}
+```cpp
+class String {};
+
+template<class T>
+class Array { /*...*/ };
+
+template<class T> // primary template
+void sort(Array<T>& v) { /*...*/ }
+
+void f(Array<String>& v)
+{
+    sort(v); // implicitly instantiates sort(Array<String>&), 
+}            // using the primary template for sort()
+
+template<> // ERROR: explicit specialization of sort(Array<String>)
+void sort<String>(Array<String>& v); // after implicit instantiation
+```
+
+{/* source:cpp-language-template-specialization:0009 */}
+A template specialization that was declared but not defined can be used just like any other [incomplete type](/docs/cpp/language/basic_concepts/incomplete_type) (e.g. pointers and references to it may be used):
+
+{/* source:cpp-language-template-specialization:0010 */}
+```cpp
+template<class T> // primary template
+class X;
+template<>        // specialization (declared, not defined)
+class X<int>;
+
+X<int>* p; // OK: pointer to incomplete type
+X<int> x;  // error: object of incomplete type
+```
+
+{/* source:cpp-language-template-specialization:0011 */}
+Whether an explicit specialization of a function<InlineRevision since="C++14"> or variable</InlineRevision> template is [`inline`](/docs/cpp/language/declarations/inline)<InlineRevision since="C++11">/[`constexpr`](/docs/cpp/language/declarations/constexpr)</InlineRevision><InlineRevision since="C++20">/[`constinit`](/docs/cpp/language/declarations/constinit)/[`consteval`](/docs/cpp/language/declarations/consteval)</InlineRevision> is determined by the explicit specialization itself, regardless of whether the primary template is declared with that specifier.<InlineRevision since="C++11"> Similarly, [attributes](/docs/cpp/language/declarations/attributes) appearing in the declaration of a template have no effect on an explicit specialization of that template:</InlineRevision>
+
+{/* source:cpp-language-template-specialization:0012 */}
+```cpp
+template<class T>
+void f(T) { /* ... */ }
+template<>
+inline void f<>(int) { /* ... */ } // OK, inline
+
+template<class T>
+inline T g(T) { /* ... */ }
+template<>
+int g<>(int) { /* ... */ }         // OK, not inline
+
+template<typename>
+[[noreturn]] void h([[maybe_unused]] int i);
+template<> void h<int>(int i)
+{
+    // [[noreturn]] has no effect, but [[maybe_unused]] has
+}
+```
+
+## Explicit specializations of function templates
+
+{/* source:cpp-language-template-specialization:0013 */}
+When specializing a function template, its template arguments can be omitted if [template argument deduction](/docs/cpp/language/templates/template_argument_deduction) can provide them from the function arguments:
+
+{/* source:cpp-language-template-specialization:0014 */}
+```cpp
+template<class T>
+class Array { /*...*/ };
+
+template<class T> // primary template
+void sort(Array<T>& v);
+template<>        // specialization for T = int
+void sort(Array<int>&);
+
+// no need to write
+// template<> void sort<int>(Array<int>&);
+```
+
+{/* source:cpp-language-template-specialization:0015 */}
+A function with the same name and the same argument list as a specialization is not a specialization (see template overloading in [function template](/docs/cpp/language/templates/function_template)).
+
+{/* source:cpp-language-template-specialization:0016 */}
+[Default function arguments](/docs/cpp/language/functions/default_arguments) cannot be specified in explicit specializations of function templates, member function templates, and member functions of class templates when the class is implicitly instantiated.
+
+{/* source:cpp-language-template-specialization:0017 */}
+An explicit specialization cannot be a [friend declaration](/docs/cpp/language/classes/friend).
+
+{/* source:cpp-language-template-specialization:0018 */}
+This section is incomplete
+
+Reason: review the exception specification requirement across different C++ versions
+
+## Members of specializations
+
+{/* source:cpp-language-template-specialization:0019 */}
+When defining a member of an explicitly specialized class template outside the body of the class, the syntax `template<>` is not used, except if it's a member of an explicitly specialized member class template, which is specialized as a class template, because otherwise, the syntax would require such definition to begin with `template<parameters>` required by the nested template
+
+{/* source:cpp-language-template-specialization:0020 */}
+```cpp
+template<typename T>
+struct A
+{
+    struct B {};      // member class 
+
+    template<class U> // member class template
+    struct C {};
+};
+
+template<> // specialization
+struct A<int> 
+{
+    void f(int); // member function of a specialization
+};
+// template<> not used for a member of a specialization
+void A<int>::f(int) { /* ... */ }
+
+template<> // specialization of a member class
+struct A<char>::B
+{
+    void f();
+};
+// template<> not used for a member of a specialized member class either
+void A<char>::B::f() { /* ... */ }
+
+template<> // specialization of a member class template
+template<class U>
+struct A<char>::C
+{
+    void f();
+};
+
+// template<> is used when defining a member of an explicitly
+// specialized member class template specialized as a class template
+template<>
+template<class U>
+void A<char>::C<U>::f() { /* ... */ }
+```
+
+{/* source:cpp-language-template-specialization:0021 */}
+An explicit specialization of a static data member of a template is a definition if the declaration includes an initializer; otherwise, it is a declaration. These definitions must use braces for default initialization:
+
+{/* source:cpp-language-template-specialization:0022 */}
+```cpp
+template<>
+X Q<int>::x;    // declaration of a static member
+template<>
+X Q<int>::x (); // error: function declaration
+template<>
+X Q<int>::x {}; // definition of a default-initialized static member
+```
+
+{/* source:cpp-language-template-specialization:0023 */}
+A member or a member template of a class template may be explicitly specialized for a given implicit instantiation of the class template, even if the member or member template is defined in the class template definition.
+
+{/* source:cpp-language-template-specialization:0024 */}
+```cpp
+template<typename T>
+struct A
+{
+    void f(T);         // member, declared in the primary template
+
+    void h(T) {}       // member, defined in the primary template
+
+    template<class X1> // member template
+    void g1(T, X1);
+
+    template<class X2> // member template
+    void g2(T, X2);
+};
+
+// specialization of a member
+template<>
+void A<int>::f(int);
+
+// member specialization OK even if defined in-class
+template<>
+void A<int>::h(int) {}
+
+// out of class member template definition
+template<class T>
+template<class X1>
+void A<T>::g1(T, X1) {}
+
+// member template specialization
+template<>
+template<class X1>
+void A<int>::g1(int, X1);
+
+// member template specialization
+template<>
+template<>
+void A<int>::g2<char>(int, char); // for X2 = char
+
+// same, using template argument deduction (X1 = char)
+template<> 
+template<>
+void A<int>::g1(int, char);
+```
+
+{/* source:cpp-language-template-specialization:0025 */}
+A member or a member template may be nested within many enclosing class templates. In an explicit specialization for such a member, there's a `template<>` for every enclosing class template that is explicitly specialized.
+
+{/* source:cpp-language-template-specialization:0026 */}
+```cpp
+template<class T1>
+struct A
+{
+    template<class T2>
+    struct B
+    {
+        template<class T3>
+        void mf();
+    };
+};
+
+template<>
+struct A<int>;
+
+template<>
+template<>
+struct A<char>::B<double>;
+
+template<>
+template<>
+template<>
+void A<char>::B<char>::mf<double>();
+```
+
+{/* source:cpp-language-template-specialization:0027 */}
+In such a nested declaration, some of the levels may remain unspecialized (except that it can't specialize a class member template in namespace scope if its enclosing class is unspecialized). For each of those levels, the declaration needs `template<arguments>`, because such specializations are themselves templates:
+
+{/* source:cpp-language-template-specialization:0028 */}
+```cpp
+template<class T1>
+class A
+{
+    template<class T2>
+    class B
+    {
+        template<class T3> // member template
+        void mf1(T3);
+
+        void mf2();        // non-template member
+    };
+};
+
+// specialization
+template<>        // for the specialized A
+template<class X> // for the unspecialized B
+class A<int>::B
+{
+    template<class T>
+    void mf1(T);
+};
+
+// specialization
+template<>        // for the specialized A
+template<>        // for the specialized B
+template<class T> // for the unspecialized mf1
+void A<int>::B<double>::mf1(T t) {}
+
+// ERROR: B<double> is specialized and is a member template, so its enclosing A
+// must be specialized also
+template<class Y>
+template<>
+void A<Y>::B<double>::mf2() {}
+```
+
+## Defect reports
+
+{/* source:cpp-language-template-specialization:0029 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-template-specialization:0030 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={531} standard="C++98"><PublishedBehavior>the syntax of defining members of explicit specializations in namespace scope was not specified</PublishedBehavior><CorrectedBehavior>specified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={727} standard="C++98"><PublishedBehavior>partial and full specializations not allowed in class scope</PublishedBehavior><CorrectedBehavior>allowed in any scope</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={730} standard="C++98"><PublishedBehavior>member templates of non-template classes could not be fully specialized</PublishedBehavior><CorrectedBehavior>allowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2478} standard="C++20"><PublishedBehavior>it was unclear whether the `constinit` and `consteval` of the primary template are carried over into its explicit specializations</PublishedBehavior><CorrectedBehavior>not carried over</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2604} standard="C++11"><PublishedBehavior>it was unclear whether the attributes of the primary template are carried over into its explicit specializations</PublishedBehavior><CorrectedBehavior>not carried over</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-template-specialization:0031 */}
+- [templates](/docs/cpp/language/templates)
+- [class template](/docs/cpp/language/templates/class_template)
+- [function template](/docs/cpp/language/templates/function_template)
+- [partial specialization](/docs/cpp/language/templates/partial_specialization)

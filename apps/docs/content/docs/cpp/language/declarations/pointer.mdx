@@ -1,0 +1,696 @@
+---
+title: "Pointer declaration"
+description: "Declares a variable of a pointer or pointer-to-member type."
+source_url: "https://en.cppreference.com/w/cpp/language/pointer"
+language: "C++"
+---
+
+{/* source:cpp-language-pointer:0000 */}
+Declares a variable of a pointer or pointer-to-member type.
+
+## Syntax
+
+{/* source:cpp-language-pointer:0001 */}
+A pointer declaration is any simple declaration whose [declarator](/docs/cpp/language/declarations) has the form
+
+{/* source:cpp-language-pointer:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="* attr (optional) cv (optional) declarator" />
+  <Declaration id="2" language="cpp" grammar code="nested-name-specifier * attr (optional) cv (optional) declarator" />
+</DeclarationDoc>
+
+{/* source:cpp-language-pointer:0003 */}
+1. Pointer declarator: the declaration `S* D;` declares `D` as a pointer to the type determined by the [declaration specifier sequence](/docs/cpp/language/declarations#Specifiers) `S`.
+
+{/* source:cpp-language-pointer:0004 */}
+2. Pointer to member declarator: the declaration `S C::* D;` declares `D` as a pointer to non-static member of `C` of type determined by the declaration specifier sequence `S`.
+
+{/* source:cpp-language-pointer:0005 */}
+<ParameterList>
+  <Parameter name="nested-name-specifier">
+    a [sequence of names and scope resolution operators `::`](/docs/cpp/language/basic_concepts/name#Qualified_identifiers)
+  </Parameter>
+  <Parameter name="attr">
+    <Revision since="C++11">
+    a list of [attributes](/docs/cpp/language/declarations/attributes)
+    </Revision>
+  </Parameter>
+  <Parameter name="cv">
+    const/volatile qualification which apply to the pointer that is being declared (not to the pointed-to type, whose qualifications are part of declaration specifier sequence)
+  </Parameter>
+  <Parameter name="declarator">
+    any [declarator](/docs/cpp/language/declarations) other than a reference declarator (there are no pointers to references). It can be another pointer declarator (pointer to pointers are allowed)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-pointer:0006 */}
+There are no pointers to [references](/docs/cpp/language/declarations/reference) and there are no pointers to [bit-fields](/docs/cpp/language/classes/bit_field). Typically, mentions of "pointers" without elaboration do not include pointers to (non-static) members.
+
+## Pointers
+
+{/* source:cpp-language-pointer:0007 */}
+Every value of pointer type is one of the following:
+
+{/* source:cpp-language-pointer:0008 */}
+- a pointer to an object or function (in which case the pointer is said to point to the object or function), or
+- a pointer past the end of an object, or
+- the [null pointer value](/docs/cpp/language/declarations/pointer#Null_pointers) for that type, or
+- an [invalid pointer value](/docs/cpp/language/declarations/pointer#Invalid_pointers).
+
+{/* source:cpp-language-pointer:0009 */}
+A pointer that points to an object represents the address of the first byte in memory occupied by the object. A pointer past the end of an object represents the address of the first byte in memory after the end of the storage occupied by the object.
+
+{/* source:cpp-language-pointer:0010 */}
+Note that two pointers that represent the same address may nonetheless have different values.
+
+{/* source:cpp-language-pointer:0011 */}
+```cpp
+struct C
+{
+    int x, y;
+} c;
+
+int* px = &c.x;   // value of px is "pointer to c.x"
+int* pxe= px + 1; // value of pxe is "pointer past the end of c.x"
+int* py = &c.y;   // value of py is "pointer to c.y"
+
+assert(pxe == py); // == tests if two pointers represent the same address
+                   // may or may not fire
+
+*pxe = 1; // undefined behavior even if the assertion does not fire
+```
+
+{/* source:cpp-language-pointer:0012 */}
+Indirection through an invalid pointer value and passing an invalid pointer value to a deallocation function have undefined behavior. Any other use of an invalid pointer value has implementation-defined behavior. Some implementations might define that copying an invalid pointer value causes a system-generated runtime fault.
+
+### Pointers to objects
+
+{/* source:cpp-language-pointer:0013 */}
+A pointer to object can be initialized with the return value of the [address-of operator](/docs/cpp/language/expressions/operator_member_access) applied to any expression of object type, including another pointer type:
+
+{/* source:cpp-language-pointer:0014 */}
+```cpp
+int n;
+int* np = &n;          // pointer to int
+int* const* npp = &np; // non-const pointer to const pointer to non-const int
+
+int a[2];
+int (*ap)[2] = &a;     // pointer to array of int
+
+struct S { int n; };
+
+S s = {1};
+int* sp = &s.n;        // pointer to the int that is a member of s
+```
+
+{/* source:cpp-language-pointer:0015 */}
+Pointers may appear as operands to the built-in indirection operator (unary `operator*`), which returns the [lvalue expression](/docs/cpp/language/expressions/value_category#lvalue) identifying the pointed-to object:
+
+{/* source:cpp-language-pointer:0016 */}
+```cpp
+int n;
+int* p = &n;     // pointer to n
+int& r = *p;     // reference is bound to the lvalue expression that identifies n
+r = 7;           // stores the int 7 in n
+std::cout << *p; // lvalue-to-rvalue implicit conversion reads the value from n
+```
+
+{/* source:cpp-language-pointer:0017 */}
+Pointers to class objects may also appear as the left-hand operands of the member access operators [`operator->`](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators) and [`operator->*`](/docs/cpp/language/expressions/operator_member_access#Built-in_pointer-to-member_access_operators).
+
+{/* source:cpp-language-pointer:0018 */}
+Because of the [array-to-pointer](/docs/cpp/language/expressions/implicit_cast) implicit conversion, pointer to the first element of an array can be initialized with an expression of array type:
+
+{/* source:cpp-language-pointer:0019 */}
+```cpp
+int a[2];
+int* p1 = a; // pointer to the first element a[0] (an int) of the array a
+
+int b[6][3][8];
+int (*p2)[3][8] = b; // pointer to the first element b[0] of the array b,
+                     // which is an array of 3 arrays of 8 ints
+```
+
+{/* source:cpp-language-pointer:0020 */}
+Because of the [derived-to-base](/docs/cpp/language/expressions/implicit_cast) implicit conversion for pointers, pointer to a base class can be initialized with the address of a derived class:
+
+{/* source:cpp-language-pointer:0021 */}
+```cpp
+struct Base {};
+struct Derived : Base {};
+
+Derived d;
+Base* p = &d;
+```
+
+{/* source:cpp-language-pointer:0022 */}
+If `Derived` is [polymorphic](/docs/cpp/language/basic_concepts/objects#Polymorphic_objects), such a pointer may be used to make [virtual function calls](/docs/cpp/language/classes/virtual).
+
+{/* source:cpp-language-pointer:0023 */}
+Certain [addition, subtraction](/docs/cpp/language/expressions/operator_arithmetic#Additive_operators), [increment, and decrement](/docs/cpp/language/expressions/operator_incdec) operators are defined for pointers to elements of arrays: such pointers satisfy the [LegacyRandomAccessIterator](/docs/cpp/library/named_req/RandomAccessIterator) requirements and allow the C++ library [algorithms](/docs/cpp/library/algorithm) to work with raw arrays.
+
+{/* source:cpp-language-pointer:0024 */}
+[Comparison operators](/docs/cpp/language/expressions/operator_comparison#Pointer_comparison_operators) are defined for pointers to objects in some situations: two pointers that represent the same address compare equal, two null pointer values compare equal, pointers to elements of the same array compare the same as the array indices of those elements, and pointers to non-static data members with the same [member access](/docs/cpp/language/classes/access) compare in order of declaration of those members.
+
+{/* source:cpp-language-pointer:0025 */}
+Many implementations also provide [strict total ordering](https://en.wikipedia.org/wiki/Total_order#Strict_total_order) of pointers of random origin, e.g. if they are implemented as addresses within continuous virtual address space. Those implementations that do not (e.g. where not all bits of the pointer are part of a memory address and have to be ignored for comparison, or an additional calculation is required or otherwise pointer and integer is not a 1 to 1 relationship), provide a specialization of [`std::less`](/docs/cpp/library/utility/functional/less) for pointers that has that guarantee. This makes it possible to use all pointers of random origin as keys in standard associative containers such as [`std::set`](/docs/cpp/library/container/set) or [`std::map`](/docs/cpp/library/container/map).
+
+### Pointers to void
+
+{/* source:cpp-language-pointer:0026 */}
+Pointer to object of any type can be [implicitly converted](/docs/cpp/language/expressions/implicit_cast) to pointer to (possibly [cv-qualified](/docs/cpp/language/declarations/cv)) `void`; the pointer value is unchanged. The reverse conversion, which requires [`static_cast`](/docs/cpp/language/expressions/static_cast) or [explicit cast](/docs/cpp/language/expressions/explicit_cast), yields the original pointer value, if the original pointer value was pointing to an object whose type is not `std::nullptr_t` (since C++11).
+
+{/* source:cpp-language-pointer:0027 */}
+```cpp
+int n = 1;
+int* p1 = &n;
+void* pv = p1;
+int* p2 = static_cast<int*>(pv);
+std::cout << *p2 << '\n'; // prints 1
+```
+
+{/* source:cpp-language-pointer:0028 */}
+If the original pointer is pointing to a base class subobject within an object of some polymorphic type, [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) may be used to obtain a `void*` that is pointing at the complete object of the most derived type.
+
+{/* source:cpp-language-pointer:0029 */}
+Pointers to `void` have the same size, representation and alignment as pointers to `char`.
+
+{/* source:cpp-language-pointer:0030 */}
+Pointers to `void` are used to pass objects of unknown type, which is common in C interfaces: [`std::malloc`](/docs/cpp/library/memory/c/malloc) returns `void*`, [`std::qsort`](/docs/cpp/library/algorithm/qsort) expects a user-provided callback that accepts two `const void*` arguments. [`pthread_create`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_create.html) expects a user-provided callback that accepts and returns `void*`. In all cases, it is the caller's responsibility to cast the pointer to the correct type before use.
+
+### Pointers to functions
+
+{/* source:cpp-language-pointer:0031 */}
+A pointer to function can be initialized with an address of a non-member function or a static member function. Because of the [function-to-pointer](/docs/cpp/language/expressions/implicit_cast) implicit conversion, the address-of operator is optional:
+
+{/* source:cpp-language-pointer:0032 */}
+```cpp
+void f(int);
+void (*p1)(int) = &f;
+void (*p2)(int) = f; // same as &f
+```
+
+{/* source:cpp-language-pointer:0033 */}
+Unlike functions or references to functions, pointers to functions are objects and thus can be stored in arrays, copied, assigned, etc.
+
+{/* source:cpp-language-pointer:0034 */}
+```cpp
+void (a[10])(int);  // Error: array of functions
+void (&a[10])(int); // Error: array of references
+void (*a[10])(int); // OK: array of pointers to functions
+```
+
+{/* source:cpp-language-pointer:0035 */}
+Note: declarations involving pointers to functions can often be simplified with type aliases:
+
+{/* source:cpp-language-pointer:0036 */}
+```cpp
+using F = void(int); // named type alias to simplify declarations
+F a[10];  // Error: array of functions
+F& a[10]; // Error: array of references
+F* a[10]; // OK: array of pointers to functions
+```
+
+{/* source:cpp-language-pointer:0037 */}
+A pointer to function can be used as the left-hand operand of the [function call operator](/docs/cpp/language/expressions/operator_other), this invokes the pointed-to function:
+
+{/* source:cpp-language-pointer:0038 */}
+```cpp
+int f(int n)
+{
+    std::cout << n << '\n';
+    return n * n;
+}
+
+int main()
+{
+    int (*p)(int) = f;
+    int x = p(7);
+}
+```
+
+{/* source:cpp-language-pointer:0039 */}
+Dereferencing a function pointer yields the lvalue identifying the pointed-to function:
+
+{/* source:cpp-language-pointer:0040 */}
+```cpp
+int f();
+int (*p)() = f;  // pointer p is pointing to f
+int (&r)() = *p; // the lvalue that identifies f is bound to a reference
+r();             // function f invoked through lvalue reference
+(*p)();          // function f invoked through the function lvalue
+p();             // function f invoked directly through the pointer
+```
+
+{/* source:cpp-language-pointer:0041 */}
+A pointer to function may be initialized from an overload set which may include functions, function template specializations, and function templates, if only one overload matches the type of the pointer (see [address of an overloaded function](/docs/cpp/language/functions/overloaded_address) for more detail):
+
+{/* source:cpp-language-pointer:0042 */}
+```cpp
+template<typename T>
+T f(T n) { return n; }
+
+double f(double n) { return n; }
+
+int main()
+{
+    int (*p)(int) = f; // instantiates and selects f<int>
+}
+```
+
+{/* source:cpp-language-pointer:0043 */}
+[Equality comparison operators](/docs/cpp/language/expressions/operator_comparison#Pointer_comparison_operators) are defined for pointers to functions (they compare equal if pointing to the same function).
+
+## Pointers to members
+
+### Pointers to data members
+
+{/* source:cpp-language-pointer:0044 */}
+A pointer to non-static member object `m` which is a member of class `C` can be initialized with the expression `&C::m` exactly. Expressions such as `&(C::m)` or `&m` inside `C`'s member function do not form pointers to members.
+
+{/* source:cpp-language-pointer:0045 */}
+Such a pointer may be used as the right-hand operand of the [pointer-to-member access operators](/docs/cpp/language/expressions/operator_member_access) `operator.*` and `operator->*`:
+
+{/* source:cpp-language-pointer:0046 */}
+```cpp
+struct C { int m; };
+
+int main()
+{
+    int C::* p = &C::m;          // pointer to data member m of class C
+    C c = {7};
+    std::cout << c.*p << '\n';   // prints 7
+    C* cp = &c;
+    cp->m = 10;
+    std::cout << cp->*p << '\n'; // prints 10
+}
+```
+
+{/* source:cpp-language-pointer:0047 */}
+Pointer to data member of an accessible unambiguous non-virtual base class can be [implicitly converted](/docs/cpp/language/expressions/implicit_cast) to pointer to the same data member of a derived class:
+
+{/* source:cpp-language-pointer:0048 */}
+```cpp
+struct Base { int m; };
+struct Derived : Base {};
+
+int main()
+{
+    int Base::* bp = &Base::m;
+    int Derived::* dp = bp;
+    Derived d;
+    d.m = 1;
+    std::cout << d.*dp << ' ' << d.*bp << '\n'; // prints 1 1
+}
+```
+
+{/* source:cpp-language-pointer:0049 */}
+Conversion in the opposite direction, from a pointer to data member of a derived class to a pointer to data member of an unambiguous non-virtual base class, is allowed with [`static_cast`](/docs/cpp/language/expressions/static_cast) and [explicit cast](/docs/cpp/language/expressions/explicit_cast), even if the base class does not have that member (but the most-derived class does, when the pointer is used for access):
+
+{/* source:cpp-language-pointer:0050 */}
+```cpp
+struct Base {};
+struct Derived : Base { int m; };
+
+int main()
+{
+    int Derived::* dp = &Derived::m;
+    int Base::* bp = static_cast<int Base::*>(dp);
+
+    Derived d;
+    d.m = 7;
+    std::cout << d.*bp << '\n'; // okay: prints 7
+
+    Base b;
+    std::cout << b.*bp << '\n'; // undefined behavior
+}
+```
+
+{/* source:cpp-language-pointer:0051 */}
+The pointed-to type of a pointer-to-member may be a pointer-to-member itself: pointers to members can be multilevel, and can be cv-qualified differently at every level. Mixed multi-level combinations of pointers and pointers-to-members are also allowed:
+
+{/* source:cpp-language-pointer:0052 */}
+```cpp
+struct A
+{
+    int m;
+    // const pointer to non-const member
+    int A::* const p;
+};
+
+int main()
+{
+    // non-const pointer to data member which is a const pointer to non-const member
+    int A::* const A::* p1 = &A::p;
+
+    const A a = {1, &A::m};
+    std::cout << a.*(a.*p1) << '\n'; // prints 1
+
+    // regular non-const pointer to a const pointer-to-member
+    int A::* const* p2 = &a.p;
+    std::cout << a.**p2 << '\n'; // prints 1
+}
+```
+
+### Pointers to member functions
+
+{/* source:cpp-language-pointer:0053 */}
+A pointer to non-static member function `f` which is a member of class `C` can be initialized with the expression `&C::f` exactly. Expressions such as `&(C::f)` or `&f` inside `C`'s member function do not form pointers to member functions.
+
+{/* source:cpp-language-pointer:0054 */}
+Such a pointer may be used as the right-hand operand of the [pointer-to-member access operators](/docs/cpp/language/expressions/operator_member_access) `operator.*` and `operator->*`. The [resulting expression](/docs/cpp/language/expressions/value_category#Pending_member_function_call) can be used only as the left-hand operand of a function-call operator:
+
+{/* source:cpp-language-pointer:0055 */}
+```cpp
+struct C
+{
+    void f(int n) { std::cout << n << '\n'; }
+};
+
+int main()
+{
+    void (C::* p)(int) = &C::f; // pointer to member function f of class C
+    C c;
+    (c.*p)(1);                  // prints 1
+    C* cp = &c;
+    (cp->*p)(2);                // prints 2
+}
+```
+
+{/* source:cpp-language-pointer:0056 */}
+Pointer to member function of a base class can be [implicitly converted](/docs/cpp/language/expressions/implicit_cast) to pointer to the same member function of a derived class:
+
+{/* source:cpp-language-pointer:0057 */}
+```cpp
+struct Base
+{
+    void f(int n) { std::cout << n << '\n'; }
+};
+struct Derived : Base {};
+
+int main()
+{
+    void (Base::* bp)(int) = &Base::f;
+    void (Derived::* dp)(int) = bp;
+    Derived d;
+    (d.*dp)(1);
+    (d.*bp)(2);
+}
+```
+
+{/* source:cpp-language-pointer:0058 */}
+Conversion in the opposite direction, from a pointer to member function of a derived class to a pointer to member function of an unambiguous non-virtual base class, is allowed with [`static_cast`](/docs/cpp/language/expressions/static_cast) and [explicit cast](/docs/cpp/language/expressions/explicit_cast), even if the base class does not have that member function (but the most-derived class does, when the pointer is used for access):
+
+{/* source:cpp-language-pointer:0059 */}
+```cpp
+struct Base {};
+struct Derived : Base
+{
+    void f(int n) { std::cout << n << '\n'; }
+};
+
+int main()
+{
+    void (Derived::* dp)(int) = &Derived::f;
+    void (Base::* bp)(int) = static_cast<void (Base::*)(int)>(dp);
+
+    Derived d;
+    (d.*bp)(1); // okay: prints 1
+
+    Base b;
+    (b.*bp)(2); // undefined behavior
+}
+```
+
+{/* source:cpp-language-pointer:0060 */}
+Pointers to member functions may be used as callbacks or as function objects, often after applying [`std::mem_fn`](/docs/cpp/library/utility/functional/mem_fn) or [`std::bind`](/docs/cpp/library/utility/functional/bind):
+
+{/* source:cpp-language-pointer:0061 */}
+```cpp
+#include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <string>
+
+int main()
+{
+    std::vector<std::string> v = {"a", "ab", "abc"};
+    std::vector<std::size_t> l;
+    transform(v.begin(), v.end(), std::back_inserter(l),
+              std::mem_fn(&std::string::size));
+    for (std::size_t n : l)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1 2 3
+```
+
+## Null pointers
+
+{/* source:cpp-language-pointer:0062 */}
+Pointers of every type have a special value known as null pointer value of that type. A pointer whose value is null does not point to an object or a function (the behavior of dereferencing a null pointer is undefined), and compares equal to all pointers of the same type whose value is also null.
+
+{/* source:cpp-language-pointer:0063 */}
+A *null pointer constant* can be used to initialize a pointer to null or to assign the null value to an existing pointer, it is one of the following values:
+
+{/* source:cpp-language-pointer:0064 */}
+- An integer literal with value zero.
+
+{/* source:cpp-language-pointer:0065 */}
+- <Revision since="C++11">A prvalue of type [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) (usually `nullptr`).</Revision>
+
+{/* source:cpp-language-pointer:0066 */}
+The macro [NULL](/docs/cpp/library/utility/types/NULL) can also be used, it expands to an implementation-defined null pointer constant.
+
+{/* source:cpp-language-pointer:0067 */}
+[Zero-initialization](/docs/cpp/language/initialization/zero_initialization) and [value-initialization](/docs/cpp/language/initialization/value_initialization) also initialize pointers to their null values.
+
+{/* source:cpp-language-pointer:0068 */}
+Null pointers can be used to indicate the absence of an object (e.g. [`std::function::target()`](/docs/cpp/library/utility/functional/function/target)), or as other error condition indicators (e.g. [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast)). In general, a function that receives a pointer argument almost always needs to check if the value is null and handle that case differently (for example, the [delete expression](/docs/cpp/language/expressions/delete) does nothing when a null pointer is passed).
+
+## Invalid pointers
+
+{/* source:cpp-language-pointer:0069 */}
+A pointer value `p` is valid in the context of an evaluation `e` if one of the following condition is satisfied:
+
+{/* source:cpp-language-pointer:0070 */}
+- `p` is a null pointer value.
+- `p` is a pointer to function.
+- `p` it is a pointer to or past the end of an object `o`, and `e` is in the duration of the region of storage for `o`.
+
+{/* source:cpp-language-pointer:0071 */}
+If a pointer value `p` is used in an evaluation `e`, and `p` is not valid in the context of `e`, then:
+
+{/* source:cpp-language-pointer:0072 */}
+- If `e` is an [indirection](/docs/cpp/language/expressions/operator_member_access#Built-in_indirection_operator) or an invocation of a [deallocation function](/docs/cpp/library/memory/new/operator_delete), the behavior is undefined.
+- Otherwise, the behavior is implementation-defined.
+
+{/* source:cpp-language-pointer:0073 */}
+```cpp
+int* f()
+{
+    int obj;
+    int* local_ptr = new (&obj) int;
+
+    *local_ptr = 1; // OK, the evaluation “*local_ptr” is
+                    // in the storage duration of “obj”
+
+    return local_ptr;
+}
+
+int* ptr = f();  // the storage duration of “obj” is expired,
+                 // therefore “ptr” is an invalid pointer in the following contexts
+
+int* copy = ptr; // implementation-defined behavior
+*ptr = 2;        // undefined behavior: indirection of an invalid pointer
+delete ptr;      // undefined behavior: deallocating storage from an invalid pointer
+```
+
+## Constness
+
+{/* source:cpp-language-pointer:0074 */}
+- If *cv* appears before `*` in the pointer declaration, it is part of the declaration specifier sequence and applies to the pointed-to object.
+- If *cv* appears after `*` in the pointer declaration, it is part of the [declarator](/docs/cpp/language/declarations#Declarators) and applies to the pointer that's being declared.
+
+{/* source:cpp-language-pointer:0075 */}
+| Syntax | meaning |
+| --- | --- |
+| `const T*` | pointer to constant object |
+| `T const*` | pointer to constant object |
+| `T* const` | constant pointer to object |
+| `const T* const` | constant pointer to constant object |
+| `T const* const` | constant pointer to constant object |
+
+{/* source:cpp-language-pointer:0076 */}
+```cpp
+// pc is a non-const pointer to const int
+// cpc is a const pointer to const int
+// ppc is a non-const pointer to non-const pointer to const int
+const int ci = 10, *pc = &ci, *const cpc = pc, **ppc;
+// p is a non-const pointer to non-const int
+// cp is a const pointer to non-const int
+int i, *p, *const cp = &i;
+
+i = ci;    // okay: value of const int copied into non-const int
+*cp = ci;  // okay: non-const int (pointed-to by const pointer) can be changed
+pc++;      // okay: non-const pointer (to const int) can be changed
+pc = cpc;  // okay: non-const pointer (to const int) can be changed
+pc = p;    // okay: non-const pointer (to const int) can be changed
+ppc = &pc; // okay: address of pointer to const int is pointer to pointer to const int
+
+ci = 1;    // error: const int cannot be changed
+ci++;      // error: const int cannot be changed
+*pc = 2;   // error: pointed-to const int cannot be changed
+cp = &ci;  // error: const pointer (to non-const int) cannot be changed
+cpc++;     // error: const pointer (to const int) cannot be changed
+p = pc;    // error: pointer to non-const int cannot point to const int
+ppc = &p;  // error: pointer to pointer to const int cannot point to
+           // pointer to non-const int
+```
+
+{/* source:cpp-language-pointer:0077 */}
+In general, implicit conversion from one multi-level pointer to another follows the rules described in [qualification conversions](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions).
+
+## Composite pointer type
+
+{/* source:cpp-language-pointer:0078 */}
+When an operand of a [comparison operator](/docs/cpp/language/expressions/operator_comparison) or any of the second and third operands of a [conditional operator](/docs/cpp/language/expressions/operator_other#Conditional_operator) is a pointer or pointer-to-member, a composite pointer type is determined to be the common type of these operands.
+
+{/* source:cpp-language-pointer:0079 */}
+Given two operands `p1` and `p2` having types `T1` and `T2`, respectively, `p1` and `p2` can only have a composite pointer type if any of the following conditions are satisfied:
+
+{/* source:cpp-language-pointer:0080 */}
+<Revision until="C++14">
+- `p1` and `p2` are both pointers.
+- One of `p1` and `p2` is a pointer and the other operand is a null pointer constant.
+
+<Revision since="C++11">
+- `p1` and `p2` are both null pointer constants, and at least one of `T1` and `T2` is a non-integral type.
+</Revision>
+</Revision>
+
+<Revision since="C++14">
+- At least one of `T1` and `T2` is a pointer type, pointer-to-member type or [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t).
+</Revision>
+
+{/* source:cpp-language-pointer:0081 */}
+The composite pointer type `C` of `p1` and `p2` is determined as follows:
+
+{/* source:cpp-language-pointer:0082 */}
+<Revision until="C++11">
+- If `p1` is a [null pointer constant](/docs/cpp/language/declarations/pointer#Null_pointers), `C` is `T2`.
+- Otherwise, if `p2` is a null pointer constant, `C` is `T1`.
+</Revision>
+
+<Revision since="C++11">
+- If `p1` and `p2` are both [null pointer constants](/docs/cpp/language/declarations/pointer#Null_pointers), `C` is [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t).
+- Otherwise, if `p1` is a null pointer constant, `C` is `T2`.
+- Otherwise, if `p2` is a null pointer constant, `C` is `T1`.
+</Revision>
+
+{/* source:cpp-language-pointer:0083 */}
+- Otherwise, if all following conditions are satisfied:
+
+{/* source:cpp-language-pointer:0084 */}
+  - `T1` or `T2` is "pointer to cv1 void".
+  - The other type is "pointer to cv2 T", where `T` is an [object type](/docs/cpp/language/basic_concepts/type-id) or `void`.
+  - `C` is "pointer to cv12 void", where cv12 is the union of cv1 and cv2.
+
+{/* source:cpp-language-pointer:0085 */}
+<Revision since="C++17">
+- Otherwise, if all following conditions are satisfied:
+  - `T1` or `T2` is "pointer to function type `F1`".
+  - The other type is "pointer to noexcept function type `F2`".
+  - `F1` and `F2` are the same except noexcept.
+
+  `C` is "pointer to `F1`".
+</Revision>
+
+{/* source:cpp-language-pointer:0086 */}
+- Otherwise, if all following conditions are satisfied:
+
+{/* source:cpp-language-pointer:0087 */}
+  - `T1` is "pointer to `C1`".
+  - `T2` is "pointer to `C2`".
+  - One of `C1` and `C2` is [reference-related](/docs/cpp/language/initialization/reference_initialization#Definitions) to the other.
+  - `C` is the [qualification-combined type](/docs/cpp/language/expressions/implicit_cast#Combining_cv-qualifications) of `T1` and `T2`, if `C1` is reference-related to `C2`, or the qualification-combined type of `T2` and `T1`, if `C2` is reference-related to `C1`.
+
+{/* source:cpp-language-pointer:0088 */}
+<Revision since="C++17">
+- Otherwise, if all following conditions are satisfied:
+  - `T1` or `T2` is "pointer to member of `C1` of function type `F1`".
+  - The other type is "pointer to member of `C2` of noexcept function type `F2`".
+  - One of `C1` and `C2` is reference-related to the other.
+  - `F1` and `F2` are the same except noexcept.
+
+  `C` is
+  - "pointer to member of `C2` of type `F1`", if `C1` is reference-related to `C2`, or
+  - "pointer to member of `C1` of type `F1`", if `C2` is reference-related to `C1`.
+</Revision>
+
+{/* source:cpp-language-pointer:0089 */}
+- Otherwise, if all following conditions are satisfied:
+
+{/* source:cpp-language-pointer:0090 */}
+  - `T1` is "pointer to member of `C1` of non-function type `M1`".
+  - `T2` is "pointer to member of `C2` of non-function type `M2`".
+  - `M1` and `M2` are the same except top-level cv-qualifications.
+  - One of `C1` and `C2` is reference-related to the other.
+  - `C` is the qualification-combined type of `T2` and `T1`, if `C1` is reference-related to `C2`, or the qualification-combined type of `T1` and `T2`, if `C2` is reference-related to `C1`.
+
+{/* source:cpp-language-pointer:0091 */}
+- Otherwise, if `T1` and `T2` are [similar types](/docs/cpp/language/expressions/implicit_cast#Similar_types), `C` is the qualification-combined type of `T1` and `T2`.
+- Otherwise, `p1` and `p2` do not have a composite pointer type, a program that necessitates the determination of `C` such a type is ill-formed.
+
+{/* source:cpp-language-pointer:0092 */}
+```cpp
+using p = void*;
+using q = const int*;
+// The determination of the composite pointer type of “p” and “q”
+// falls into the [“pointer to cv1 void” and “pointer to cv2 T”] case:
+// cv1 = empty, cv2 = const, cv12 = const
+// substitute “cv12 = const” into “pointer to cv12 void”:
+// the composite pointer type is “const void*”
+
+using pi = int**;
+using pci = const int**;
+// The determination of the composite pointer type of “pi” and “pci”
+// falls into the [pointers to similar types “C1” and “C2”] case:
+// C1 = int*, C2 = const int*
+// they are reference-related types (in both direction) because they are similar
+// the composite pointer type is the qualification-combined type
+// of “p1” and “pc1” (or that of “pci” and “pi”): “const void* const *”
+```
+
+## Defect reports
+
+{/* source:cpp-language-pointer:0093 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-pointer:0094 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={73} standard="C++98"><PublishedBehavior>a pointer to an object never compares equal to a pointer to one past the end of an array</PublishedBehavior><CorrectedBehavior>for non-null and non-function pointers, compare the addresses they represent</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={903} standard="C++98"><PublishedBehavior>any integral constant expression that evaluates to 0 was a null pointer constant</PublishedBehavior><CorrectedBehavior>limited to integer literals with value 0</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1438} standard="C++98"><PublishedBehavior>the behavior of using an invalid pointer value in any way was undefined</PublishedBehavior><CorrectedBehavior>behaviors other than indirection and passing to deallocation functions are implementation-defined</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1512} standard="C++98"><PublishedBehavior>the rule of composite pointer type was incomplete, and thus did not allow comparison between `int**` and `const int**`</PublishedBehavior><CorrectedBehavior>made complete</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2206} standard="C++98"><PublishedBehavior>a pointer to `void` and a pointer to function had a composite pointer type</PublishedBehavior><CorrectedBehavior>they do not have such a type</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2381} standard="C++17"><PublishedBehavior>function pointer conversions were not allowed when determining the composite pointer type</PublishedBehavior><CorrectedBehavior>allowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2822} standard="C++98"><PublishedBehavior>reaching the end of the duration of a region of storage could invalidate pointer values</PublishedBehavior><CorrectedBehavior>pointer validity is based on the evaluation context</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2933} standard="C++98"><PublishedBehavior>pointers to functions were always invalid</PublishedBehavior><CorrectedBehavior>they are always valid</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-pointer:0095 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/declarations/pointer)</DescriptionTerm>
+    <DescriptionBody>for Pointer declaration</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

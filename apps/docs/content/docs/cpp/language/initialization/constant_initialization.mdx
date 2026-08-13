@@ -1,0 +1,122 @@
+---
+title: "Constant initialization"
+description: "Sets the initial values of the static variables to a compile-time constant."
+source_url: "https://en.cppreference.com/w/cpp/language/constant_initialization"
+language: "C++"
+---
+
+{/* source:cpp-language-constant-initialization:0000 */}
+Sets the initial values of the [static](/docs/cpp/language/declarations/storage_duration) variables to a compile-time constant.
+
+## Explanation
+
+{/* source:cpp-language-constant-initialization:0001 */}
+*Constant initialization* is performed in the following cases:
+
+{/* source:cpp-language-constant-initialization:0002 */}
+<Revision until="C++11">
+- Initializing a reference with [static storage duration](/docs/cpp/language/declarations/storage_duration#Static_storage_duration) with a [constant expression](/docs/cpp/language/expressions/constant_expression).
+- Initializing an object of [POD type](/docs/cpp/language/basic_concepts/type-id#POD_type) with static storage duration with a constant expression.
+</Revision>
+
+<Revision since="C++11" until="C++17">
+- Initializing a reference with [static](/docs/cpp/language/declarations/storage_duration#Static_storage_duration) or [thread](/docs/cpp/language/declarations/storage_duration#Thread_storage_duration) storage duration, where all following conditions are satisfied:
+
+  - Each [full-expression](/docs/cpp/language/expressions#Full-expressions) (including implicit conversions) that appears in the initializer is a [constant expression](/docs/cpp/language/expressions/constant_expression).
+
+  - The reference is bound to one of the following entities:
+
+    - an lvalue designating an object with static storage duration
+    - a temporary object
+    - a [subobject](/docs/cpp/language/basic_concepts/objects#Subobjects) of a temporary object
+    - a function
+
+- Initializing an object with static or thread storage duration, and one of the following conditions is satisfied:
+
+  - If the object is initialized by a constructor call, where the initialization full-expression is a constant expression, except that it may also invoke [`constexpr` constructors](/docs/cpp/language/declarations/constexpr#constexpr_constructor) for the object and its subobjects (even if those objects are of non-[literal](/docs/cpp/language/expressions/constant_expression#Literal_types) class types).
+
+  - Otherwise, either the object is [value-initialized](/docs/cpp/language/initialization/value_initialization) or every full-expression that appears in its initializer is a constant expression.
+</Revision>
+
+<Revision since="C++17" until="C++20">
+- Initializing a variable or temporary object with [static](/docs/cpp/language/declarations/storage_duration#Static_storage_duration) or [thread](/docs/cpp/language/declarations/storage_duration#Thread_storage_duration) storage duration by an initializer whose [full-expression](/docs/cpp/language/expressions#Full-expressions) is a [constant expression](/docs/cpp/language/expressions/constant_expression), except that if the entity being intialized is an object, such an initializer may also invoke [`constexpr` constructors](/docs/cpp/language/declarations/constexpr#constexpr_constructor) for the object and its [subobjects](/docs/cpp/language/basic_concepts/objects#Subobjects) (even if those objects are of non-[literal](/docs/cpp/language/expressions/constant_expression#Literal_types) class types).
+</Revision>
+
+<Revision since="C++20">
+- A variable<InlineRevision until="C++26"> or temporary object</InlineRevision> with [static](/docs/cpp/language/declarations/storage_duration#Static_storage_duration) or [thread](/docs/cpp/language/declarations/storage_duration#Thread_storage_duration) storage duration is [constant-initialized](/docs/cpp/language/expressions/constant_expression#Constant-initialized_entities).
+</Revision>
+
+{/* source:cpp-language-constant-initialization:0003 */}
+The effects of constant initialization are the same as the effects of the corresponding initialization, except that it is guaranteed that it is complete before any other initialization of a static<InlineRevision since="C++11"> or thread-local</InlineRevision> object begins.
+
+## Notes
+
+{/* source:cpp-language-constant-initialization:0004 */}
+The compiler is permitted to initialize other static<InlineRevision since="C++11"> and thread-local</InlineRevision> objects using constant initialization, if it can guarantee that the value would be the same as if the standard order of initialization was followed.
+
+{/* source:cpp-language-constant-initialization:0005 */}
+Constant initialization usually happens when the program loads into memory, as part of initializing the program's runtime environment.
+
+## Example
+
+{/* source:cpp-language-constant-initialization:0006 */}
+```cpp
+#include <iostream>
+#include <array>
+
+struct S
+{
+    static const int c;
+};
+
+const int d = 10 * S::c; // not a constant expression: S::c has no preceding
+                         // initializer, this initialization happens after const
+const int S::c = 5;      // constant initialization, guaranteed to happen first
+
+int main()
+{
+    std::cout << "d = " << d << '\n';
+    std::array<int, S::c> a1; // OK: S::c is a constant expression
+//  std::array<int, d> a2;    // error: d is not a constant expression
+}
+```
+
+Output:
+
+```text
+d = 50
+```
+
+## Defect reports
+
+{/* source:cpp-language-constant-initialization:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-constant-initialization:0008 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={441} standard="C++98"><PublishedBehavior>references could not be constant initialized</PublishedBehavior><CorrectedBehavior>made constant initializable</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1489} standard="C++11"><PublishedBehavior>it was unclear whether value-initializing an object can be a constant initialization</PublishedBehavior><CorrectedBehavior>it can</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1747} standard="C++11"><PublishedBehavior>binding a reference to a function could not be constant initialization</PublishedBehavior><CorrectedBehavior>it can</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1834} standard="C++11"><PublishedBehavior>binding a reference to an xvalue could not be constant initialization</PublishedBehavior><CorrectedBehavior>it can</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-constant-initialization:0009 */}
+- [`constinit`](/docs/cpp/language/declarations/constinit)
+- [`constexpr`](/docs/cpp/language/declarations/constexpr)
+- [constructor](/docs/cpp/language/classes/initializer_list)
+- [converting constructor](/docs/cpp/language/classes/converting_constructor)
+- [copy constructor](/docs/cpp/language/classes/copy_constructor)
+- [default constructor](/docs/cpp/language/classes/default_constructor)
+- [`explicit`](/docs/cpp/language/classes/explicit)
+- [initialization](/docs/cpp/language/initialization)
+- [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization)
+- [copy initialization](/docs/cpp/language/initialization/copy_initialization)
+- [default initialization](/docs/cpp/language/initialization/default_initialization)
+- [direct initialization](/docs/cpp/language/initialization/direct_initialization)
+- [list initialization](/docs/cpp/language/initialization/list_initialization)
+- [reference initialization](/docs/cpp/language/initialization/reference_initialization)
+- [value initialization](/docs/cpp/language/initialization/value_initialization)
+- [zero initialization](/docs/cpp/language/initialization/zero_initialization)
+- [move constructor](/docs/cpp/language/classes/move_constructor)

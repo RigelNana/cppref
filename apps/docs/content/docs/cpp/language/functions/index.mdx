@@ -1,0 +1,69 @@
+---
+title: "Functions"
+description: "Functions are C++ entities that associate a sequence of statements (a function body) with a name and a list of zero or more function parameters."
+source_url: "https://en.cppreference.com/w/cpp/language/functions"
+language: "C++"
+---
+
+{/* source:cpp-language-functions:0000 */}
+Functions are C++ entities that associate a sequence of [`statements`](/docs/cpp/language/statements) (a function body) with a name and a list of zero or more function parameters.
+
+{/* source:cpp-language-functions:0001 */}
+```cpp
+// function name: "isodd"
+// parameter list has one parameter, with name "n" and type int
+// the return type is bool
+bool isodd(int n)
+{                 // the body of the function begins
+    return n % 2;
+}                 // the body of the function ends
+```
+
+{/* source:cpp-language-functions:0002 */}
+When a function is invoked, e.g. in a [`function-call expression`](/docs/cpp/language/expressions/operator_other#Built-in_function_call_operator), the parameters are initialized from the arguments (either provided at the place of call or [`defaulted`](/docs/cpp/language/functions/default_arguments)) and the statements in the function body are executed. If the [`parameter list`](/docs/cpp/language/functions/function#Parameter_list) ends with `...`, extra arguments can be supplied to the function, such a function is called [`variadic function`](/docs/cpp/language/functions/variadic_arguments).
+
+{/* source:cpp-language-functions:0003 */}
+```cpp
+int main()
+{
+    for (int arg : {-3, -2, -1, 0, 1, 2, 3})
+        std::cout << isodd(arg) << ' '; // isodd called 7 times, each
+                                        // time n is copy-initialized from arg
+}
+```
+
+{/* source:cpp-language-functions:0004 */}
+[`Unqualified`](/docs/cpp/language/basic_concepts/unqualified_lookup) function names in function-call expressions are looked up with an extra set of rules called ["argument-dependent lookup" (ADL)](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-language-functions:0005 */}
+A function can terminate by [`returning`](/docs/cpp/language/statements/return) or by [`throwing`](/docs/cpp/language/exceptions/throw) an [`exception`](/docs/cpp/language/exceptions).
+
+{/* source:cpp-language-functions:0006 */}
+<Revision since="C++20">
+A function may be a [`coroutine`](/docs/cpp/language/functions/coroutines), in which case it can suspend execution to be resumed later.
+</Revision>
+
+{/* source:cpp-language-functions:0007 */}
+A [`function declaration`](/docs/cpp/language/functions/function) may appear in any scope, but a [`function definition`](/docs/cpp/language/functions/function) may only appear in namespace scope or, for [`member`](/docs/cpp/language/classes/member_functions) and [`friend`](/docs/cpp/language/classes/friend) functions, in class scope. A function that is declared in a class body without a friend specifier is a class member function. Such functions have many additional properties, see [`member functions`](/docs/cpp/language/classes/member_functions) for details.
+
+{/* source:cpp-language-functions:0008 */}
+Functions are not objects: there are no arrays of functions and functions cannot be passed by value or returned from other functions. Pointers and references to functions (except for [`the main function`](/docs/cpp/language/basic_concepts/main_function) <InlineRevision since="C++20">and [`most standard library functions`](/docs/cpp/language/extending_std#Addressing_restriction)</InlineRevision>) are allowed, and may be used where these functions themselves cannot. Therefore we say these functions are "addressable".
+
+{/* source:cpp-language-functions:0009 */}
+Each function has a type, which consists of the function's return type, the types of all parameters (after array-to-pointer and function-to-pointer transformations, see [`parameter list`](/docs/cpp/language/functions/function#Parameter_list)) <InlineRevision since="C++17">, whether the function is [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) or not</InlineRevision>, and, for non-static member functions, cv-qualification<InlineRevision since="C++11"> and ref-qualification</InlineRevision>. Function types also have [`language linkage`](/docs/cpp/language/declarations/language_linkage). There are no cv-qualified function types (not to be confused with the types of [`cv-qualified functions`](/docs/cpp/language/classes/member_functions) such as `int f() const;` or functions returning [`cv-qualified types`](/docs/cpp/language/declarations/cv), such as `std::string const f();`). Any cv-qualifier is ignored if it is added to an alias for a function type.
+
+{/* source:cpp-language-functions:0010 */}
+Multiple functions in the same scope may have the same name, as long as their parameter lists and, for non-static member functions, cv<InlineRevision since="C++11">/ref</InlineRevision>-qualifications are different. This is known as [`function overloading`](/docs/cpp/language/functions/overload_resolution). Function declarations that differ only in the return type <InlineRevision since="C++17">and the noexcept specification</InlineRevision> cannot be overloaded. The [`address of an overloaded function`](/docs/cpp/language/functions/overloaded_address) is determined differently.
+
+{/* source:cpp-language-functions:0011 */}
+<Revision since="C++11">
+C++ implements [anonymous functions](https://en.wikipedia.org/wiki/anonymous_function) using [`lambda-expressions`](/docs/cpp/language/functions/lambda).
+</Revision>
+
+## Function objects
+
+{/* source:cpp-language-functions:0012 */}
+Besides function lvalues, the function call expression supports pointers to functions, and any value of class type that overloads the function-call operator or is convertible to function pointer<InlineRevision since="C++11"> (including [`lambda-expressions`](/docs/cpp/language/functions/lambda))</InlineRevision>. Together, these types are known as [`FunctionObjects`](/docs/cpp/library/named_req/FunctionObject), and they are used ubiquitously through the C++ standard library, see for example, usages of [`BinaryPredicate`](/docs/cpp/library/named_req/BinaryPredicate) and [`Compare`](/docs/cpp/library/named_req/Compare).
+
+{/* source:cpp-language-functions:0013 */}
+The standard library also provides a number of predefined [`function object templates`](/docs/cpp/library/utility/functional) as well as the methods to compose new ones (including [`std::less`](/docs/cpp/library/utility/functional/less)<InlineRevision since="C++11">, [`std::mem_fn`](/docs/cpp/library/utility/functional/mem_fn), [`std::bind`](/docs/cpp/library/utility/functional/bind), [`std::function`](/docs/cpp/library/utility/functional/function)</InlineRevision><InlineRevision since="C++17">, [`std::not_fn`](/docs/cpp/library/utility/functional/not_fn)</InlineRevision><InlineRevision since="C++20">, [`std::bind_front`](/docs/cpp/library/utility/functional/bind_front)</InlineRevision><InlineRevision since="C++23">, `std::bind_back`, `std::move_only_function`</InlineRevision><InlineRevision since="C++26">, `std::copyable_function`, and `std::function_ref`</InlineRevision>).

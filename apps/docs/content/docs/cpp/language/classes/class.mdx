@@ -1,0 +1,395 @@
+---
+title: "Class declaration"
+description: "Classes are user-defined types, defined by class-specifier, which appears in decl-specifier-seq of the declaration syntax."
+source_url: "https://en.cppreference.com/w/cpp/language/class"
+language: "C++"
+---
+
+{/* source:cpp-language-class:0000 */}
+Classes are user-defined types, defined by class-specifier, which appears in *decl-specifier-seq* of the [declaration](/docs/cpp/language/declarations) syntax.
+
+## Syntax
+
+{/* source:cpp-language-class:0001 */}
+The class specifier has the following syntax:
+
+{/* source:cpp-language-class:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="class-key attr (optional) class-head-name final (optional) base-clause (optional) { member-specification }" />
+  <Declaration id="2" language="cpp" grammar code="class-key attr (optional) base-clause (optional) { member-specification }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-class:0003 */}
+1. Named class definition
+
+{/* source:cpp-language-class:0004 */}
+2. Unnamed class definition
+
+{/* source:cpp-language-class:0005 */}
+<ParameterList>
+  <Parameter name="class-key">
+    one of [`class`](/docs/cpp/language/keywords/class), [`struct`](/docs/cpp/language/keywords/struct) and [`union`](/docs/cpp/language/keywords/union). The keywords `class` and `struct` are identical except for the default [member access](/docs/cpp/language/classes/access) and the default [base class access](/docs/cpp/language/classes/derived_class). If it is `union`, the declaration introduces a [union type](/docs/cpp/language/classes/union).
+  </Parameter>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes), may include [`alignas`](/docs/cpp/language/declarations/alignas) specifier
+  </Parameter>
+  <Parameter name="class-head-name">
+    the name of the class that's being defined, optionally [qualified](/docs/cpp/language/basic_concepts/name#Qualified_identifiers)
+  </Parameter>
+  <Parameter name="final">
+    <InlineRevision since="C++11" /> if present, the class [cannot be derived](/docs/cpp/language/classes/final)
+  </Parameter>
+  <Parameter name="base-clause">
+    list of one or more base classes and the model of inheritance used for each (see [derived class](/docs/cpp/language/classes/derived_class))
+  </Parameter>
+  <Parameter name="member-specification">
+    list of access specifiers, member object and member function declarations and definitions ([see below](/docs/cpp/language/classes/class#Member_specification))
+  </Parameter>
+</ParameterList>
+
+## Forward declaration
+
+{/* source:cpp-language-class:0006 */}
+A declaration of the following form
+
+{/* source:cpp-language-class:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="class-key attr identifier ;" />
+</DeclarationDoc>
+
+{/* source:cpp-language-class:0008 */}
+Declares a class type which will be defined later in this scope. Until the definition appears, this class name has [incomplete type](/docs/cpp/language/basic_concepts/incomplete_type). This allows classes that refer to each other:
+
+{/* source:cpp-language-class:0009 */}
+```cpp
+class Vector; // forward declaration
+
+class Matrix
+{
+    // ...
+    friend Vector operator*(const Matrix&, const Vector&);
+};
+
+class Vector
+{
+    // ...
+    friend Vector operator*(const Matrix&, const Vector&);
+};
+```
+
+{/* source:cpp-language-class:0010 */}
+and if a particular source file only uses pointers and references to the class, this makes it possible to reduce `#include` dependencies:
+
+{/* source:cpp-language-class:0011 */}
+```cpp
+// In MyStruct.h
+#include <iosfwd> // contains forward declaration of std::ostream
+
+struct MyStruct
+{
+    int value;
+    friend std::ostream& operator<<(std::ostream& os, const S& s);
+    // definition provided in MyStruct.cpp file which uses #include <ostream>
+};
+```
+
+{/* source:cpp-language-class:0012 */}
+If forward declaration appears in local scope, it *hides* previously declared class, variable, function, and all other declarations of the same name that may appear in enclosing scopes:
+
+{/* source:cpp-language-class:0013 */}
+```cpp
+struct s { int a; };
+struct s; // does nothing (s already defined in this scope)
+
+void g()
+{
+    struct s; // forward declaration of a new, local struct "s"
+              // this hides global struct s until the end of this block
+
+    s* p; // pointer to local struct s
+
+    struct s { char* p; }; // definitions of the local struct s
+}
+```
+
+{/* source:cpp-language-class:0014 */}
+Note that a new class name may also be introduced by an [elaborated type specifier](/docs/cpp/language/declarations/elaborated_type_specifier) which appears as part of another declaration, but only if [name lookup](/docs/cpp/language/basic_concepts/lookup) can't find a previously declared class with the same name.
+
+{/* source:cpp-language-class:0015 */}
+```cpp
+class U;
+
+namespace ns
+{
+    class Y f(class T p); // declares function ns::f and declares ns::T and ns::Y
+
+    class U f(); // U refers to ::U
+
+    // can use pointers and references to T and Y
+    Y* p;
+    T* q;
+}
+```
+
+## Member specification
+
+{/* source:cpp-language-class:0016 */}
+The member specification, or the *body* of a class definition, is a brace-enclosed sequence of any number of the following:
+
+{/* source:cpp-language-class:0017 */}
+1. Member declarations of the form
+
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="attr (optional) decl-specifier-seq (optional) member-declarator-list (optional) ;" />
+</DeclarationDoc>
+
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="decl-specifier-seq">
+    sequence of [specifiers](/docs/cpp/language/declarations#Specifiers). It is only optional in the declarations of constructors, destructors, and user-defined type [conversion functions](/docs/cpp/language/expressions/cast_operator)
+  </Parameter>
+  <Parameter name="member-declarator-list">
+    similar to an [init-declarator-list](/docs/cpp/language/declarations), but additionally allows [bit-field declaration](/docs/cpp/language/classes/bit_field), [pure-specifier](/docs/cpp/language/classes/abstract_class)<InlineRevision since="C++11">, and virt-specifier ([`override`](/docs/cpp/language/classes/override) or [`final`](/docs/cpp/language/classes/final))</InlineRevision>, and does not allow [direct-non-list-initialization syntax](/docs/cpp/language/initialization/direct_initialization).
+  </Parameter>
+</ParameterList>
+
+This declaration may declare [static](/docs/cpp/language/classes/static) and non-static [data members](/docs/cpp/language/classes/data_members) and [member functions](/docs/cpp/language/classes/member_functions), member [typedefs](/docs/cpp/language/declarations/typedef), member [enumerations](/docs/cpp/language/declarations/enum), and [nested classes](/docs/cpp/language/classes/nested_classes). It may also be a [friend declaration](/docs/cpp/language/classes/friend).
+
+```cpp
+class S
+{
+    int d1;             // non-static data member
+    int a[10] = {1, 2}; // non-static data member with initializer (C++11)
+
+    static const int d2 = 1; // static data member with initializer
+
+    virtual void f1(int) = 0; // pure virtual member function
+
+    std::string d3, *d4, f2(int); // two data members and a member function
+
+    enum { NORTH, SOUTH, EAST, WEST };
+
+    struct NestedS
+    {
+        std::string s;
+    } d5, *d6;
+
+    typedef NestedS value_type, *pointer_type;
+};
+```
+
+{/* source:cpp-language-class:0018 */}
+2. Function definitions, which both declare and define [member functions](/docs/cpp/language/classes/member_functions) or [friend functions](/docs/cpp/language/classes/friend). A semicolon after a member function definition is optional. All functions that are defined inside a class body are automatically [inline](/docs/cpp/language/declarations/inline)<InlineRevision since="C++20">, unless they are attached to a [named module](/docs/cpp/language/basic_concepts/modules)</InlineRevision>.
+
+```cpp
+class M
+{
+    std::size_t C;
+    std::vector<int> data;
+public:
+    M(std::size_t R, std::size_t C) : C(C), data(R*C) {} // constructor definition
+
+    int operator()(std::size_t r, std::size_t c) const // member function definition
+    {
+        return data[r * C + c];
+    }
+
+    int& operator()(std::size_t r, std::size_t c) // another member function definition
+    {
+        return data[r * C + c];
+    }
+};
+```
+
+{/* source:cpp-language-class:0019 */}
+3. [Access specifiers](/docs/cpp/language/classes/access) `public:`, `protected:`, and `private:`
+
+```cpp
+class S
+{
+public:
+    S();          // public constructor
+    S(const S&);  // public copy constructor
+    virtual ~S(); // public virtual destructor
+private:
+    int* ptr; // private data member
+};
+```
+
+{/* source:cpp-language-class:0020 */}
+4. [Using-declarations](/docs/cpp/language/classes/using_declaration):
+
+```cpp
+class Base
+{
+protected:
+    int d;
+};
+
+class Derived : public Base
+{
+public:
+    using Base::d;    // make Base's protected member d a public member of Derived
+    using Base::Base; // inherit all bases' constructors (C++11)
+};
+```
+
+{/* source:cpp-language-class:0021 */}
+5. [`static_assert`](/docs/cpp/language/declarations/static_assert) declarations:
+
+```cpp
+template<typename T>
+struct Foo
+{
+    static_assert(std::is_floating_point<T>::value, "Foo<T>: T must be floating point");
+};
+```
+
+{/* source:cpp-language-class:0022 */}
+6. [member template declarations](/docs/cpp/language/templates/member_template):
+
+```cpp
+struct S
+{
+    template<typename T>
+    void f(T&& n);
+
+    template<class CharT>
+    struct NestedS
+    {
+        std::basic_string<CharT> s;
+    };
+};
+```
+
+{/* source:cpp-language-class:0023 */}
+<Revision since="C++11">
+7. [alias declarations](/docs/cpp/language/declarations/type_alias):
+
+```cpp
+template<typename T>
+struct identity
+{
+    using type = T;
+};
+```
+</Revision>
+
+{/* source:cpp-language-class:0024 */}
+<Revision since="C++17">
+8. [deduction guides](/docs/cpp/language/templates/deduction_guide) of member class templates:
+
+```cpp
+struct S
+{
+    template<class CharT>
+    struct NestedS
+    {
+        std::basic_string<CharT> s;
+    };
+
+    template<class CharT>
+    NestedS(std::basic_string<CharT>) -> NestedS<CharT>;
+};
+```
+</Revision>
+
+{/* source:cpp-language-class:0025 */}
+<Revision since="C++20">
+9. [Using-enum-declarations](/docs/cpp/language/declarations/enum#Using-enum-declaration):
+
+```cpp
+enum class color { red, orange, yellow };
+
+struct highlight
+{
+    using enum color;
+};
+```
+</Revision>
+
+## Local classes
+
+{/* source:cpp-language-class:0026 */}
+A class declaration can appear inside the body of a function, in which case it defines a *local class*. The name of such a class only exists within the function scope, and is not accessible outside.
+
+{/* source:cpp-language-class:0027 */}
+- Members of a local class can only be declared in the definition of that class, except that members that are [nested classes](/docs/cpp/language/classes/nested_classes) can also be declared in the nearest enclosing [block scope](/docs/cpp/language/basic_concepts/scope#Block_scope) of that class.
+- A class nested within a local class is also a local class.
+- A local class cannot have static data members.
+- Member functions of a local class have no linkage.
+- Member functions of a local class have to be defined entirely inside the class body.
+- Local classes<InlineRevision since="C++14"> other than [closure types](/docs/cpp/language/functions/lambda)</InlineRevision> cannot have member templates.
+- Local classes cannot have [friend templates](/docs/cpp/language/classes/friend#Template_friends).
+- Local classes cannot define [friend functions](/docs/cpp/language/classes/friend) inside the class definition.
+- A local class inside a function (including member function) can access the same names that the enclosing function can access.
+
+{/* source:cpp-language-class:0028 */}
+<Revision until="C++11">
+Local classes could not be used as template arguments.
+</Revision>
+
+{/* source:cpp-language-class:0029 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+int main()
+{
+    std::vector<int> v{1, 2, 3};
+
+    struct Local
+    {
+        bool operator()(int n, int m)
+        {
+            return n > m;
+        }
+    };
+
+    std::sort(v.begin(), v.end(), Local()); // since C++11
+
+    for (int n : v)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+3 2 1
+```
+
+## Keywords
+
+{/* source:cpp-language-class:0030 */}
+[`class`](/docs/cpp/language/keywords/class), [`struct`](/docs/cpp/language/keywords/struct), [`union`](/docs/cpp/language/keywords/union)
+
+## Defect reports
+
+{/* source:cpp-language-class:0031 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-class:0032 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1693} standard="C++98">
+    <PublishedBehavior>member declarations could not be empty</PublishedBehavior>
+    <CorrectedBehavior>empty declaration allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1930} standard="C++98">
+    <PublishedBehavior>*member-declarator-list* could be empty when *decl-specifier-seq* contains a storage class specifier or cv qualifier</PublishedBehavior>
+    <CorrectedBehavior>the list must not be empty</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2890} standard="C++98">
+    <PublishedBehavior>it was unclear where the members of nested classes can be declared</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-class:0033 */}
+[C documentation](/docs/c/language/declarations/struct) for Struct declaration

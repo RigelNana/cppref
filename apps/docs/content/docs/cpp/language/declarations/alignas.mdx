@@ -1,0 +1,180 @@
+---
+title: "alignas specifier (since C++11)"
+description: "Specifies the alignment requirement of a type or an object."
+source_url: "https://en.cppreference.com/w/cpp/language/alignas"
+language: "C++"
+---
+
+{/* source:cpp-language-alignas:0000 */}
+Specifies the [alignment requirement](/docs/cpp/language/basic_concepts/objects#Alignment) of a type or an object.
+
+## Syntax
+
+{/* source:cpp-language-alignas:0001 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="alignas( expression )" />
+  <Declaration id="2" language="cpp" grammar code="alignas( type-id )" />
+  <Declaration id="3" language="cpp" grammar code="alignas( pack ... )" />
+</DeclarationDoc>
+
+{/* source:cpp-language-alignas:0002 */}
+1. *expression* must be an [integral constant expression](/docs/cpp/language/expressions/constant_expression#Integral_constant_expression) that evaluates to zero, or to a valid value for an [alignment](/docs/cpp/language/basic_concepts/objects#Alignment) or extended alignment.
+
+{/* source:cpp-language-alignas:0003 */}
+2. Equivalent to `alignas(alignof(`*type-id*`))`.
+
+{/* source:cpp-language-alignas:0004 */}
+3. Equivalent to multiple `alignas` specifiers applied to the same declaration, one for each member of the [parameter pack](/docs/cpp/language/templates/parameter_pack), which can be either type or non-type parameter pack.
+
+## Explanation
+
+{/* source:cpp-language-alignas:0005 */}
+The `alignas` specifier may be applied to:
+
+{/* source:cpp-language-alignas:0006 */}
+- the declaration or definition of a [class](/docs/cpp/language/classes);
+- the declaration of a non-bitfield class data member;
+- the declaration of a variable, except that it cannot be applied to the following:
+  - a function parameter;
+  - the exception parameter of a catch clause.
+
+{/* source:cpp-language-alignas:0007 */}
+The object or the type declared by such a declaration will have its [alignment requirement](/docs/cpp/language/basic_concepts/objects#Alignment) equal to the strictest (largest) non-zero *expression* of all `alignas` specifiers used in the declaration, unless it would weaken the natural alignment of the type.
+
+{/* source:cpp-language-alignas:0008 */}
+If the strictest (largest) `alignas` on a declaration is weaker than the alignment it would have without any `alignas` specifiers (that is, weaker than its natural alignment or weaker than `alignas` on another declaration of the same object or type), the program is ill-formed:
+
+{/* source:cpp-language-alignas:0009 */}
+```cpp
+struct alignas(8) S {};
+struct alignas(1) U { S s; }; // error: alignment of U would have been 8 without alignas(1)
+```
+
+{/* source:cpp-language-alignas:0010 */}
+Invalid non-zero alignments, such as `alignas(3)` are ill-formed.
+
+{/* source:cpp-language-alignas:0011 */}
+Valid non-zero alignments that are weaker than another `alignas` on the same declaration are ignored.
+
+{/* source:cpp-language-alignas:0012 */}
+`alignas(0)` is always ignored.
+
+## Notes
+
+{/* source:cpp-language-alignas:0013 */}
+As of the ISO C11 standard, the C language has the `_Alignas` keyword and defines `alignas` as a preprocessor macro expanding to the keyword in the header [`<stdalign.h>`](/docs/c/library/types).
+
+{/* source:cpp-language-alignas:0014 */}
+In C++, this is a keyword, and
+
+{/* source:cpp-language-alignas:0015 */}
+<Revision until="C++20">
+the headers [`<stdalign.h>`](/docs/cpp/library/headers/cstdalign) and [`<cstdalign>`](/docs/cpp/library/headers/cstdalign) do not define such macro. They do, however, define the macro constant `__alignas_is_defined`.
+</Revision>
+
+<Revision since="C++20">
+the header [`<stdalign.h>`](/docs/cpp/library/headers/cstdalign) does not define such macro. It does, however, define the macro constant `__alignas_is_defined`.
+</Revision>
+
+## Keywords
+
+{/* source:cpp-language-alignas:0016 */}
+[`alignas`](/docs/cpp/language/keywords/alignas)
+
+## Example
+
+{/* source:cpp-language-alignas:0017 */}
+```cpp
+#include <iostream>
+
+// Every object of type struct_float will be aligned
+// to alignof(float) boundary (usually 4):
+struct alignas(float) struct_float
+{
+    // your definition here
+};
+
+// Every object of type sse_t will be aligned to 32-byte boundary:
+struct alignas(32) sse_t
+{
+    float sse_data[4];
+};
+
+int main()
+{
+    struct default_aligned
+    {
+        float data[4];
+    } a, b, c;
+    sse_t x, y, z;
+
+    std::cout
+        << "alignof(struct_float) = " << alignof(struct_float) << '\n'
+        << "sizeof(sse_t) = " << sizeof(sse_t) << '\n'
+        << "alignof(sse_t) = " << alignof(sse_t) << '\n'
+        << std::hex << std::showbase
+        << "&a: " << &a << "\n"
+           "&b: " << &b << "\n"
+           "&c: " << &c << "\n"
+           "&x: " << &x << "\n"
+           "&y: " << &y << "\n"
+           "&z: " << &z << '\n';
+}
+```
+
+Possible output:
+
+```text
+alignof(struct_float) = 4
+sizeof(sse_t) = 32
+alignof(sse_t) = 32
+&a: 0x7fffcec89930
+&b: 0x7fffcec89940
+&c: 0x7fffcec89950
+&x: 0x7fffcec89960
+&y: 0x7fffcec89980
+&z: 0x7fffcec899a0
+```
+
+## Defect reports
+
+{/* source:cpp-language-alignas:0018 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-alignas:0019 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1437} standard="C++11">
+    <PublishedBehavior>alignas could be used in alias declarations</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2354} standard="C++11">
+    <PublishedBehavior>alignas could be applied to the declaration of an enumeration</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-alignas:0020 */}
+- C++23 standard (ISO/IEC 14882:2024): 9.12.4 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-alignas:0021 */}
+- C++20 standard (ISO/IEC 14882:2020): 9.12.3 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-alignas:0022 */}
+- C++17 standard (ISO/IEC 14882:2017): 10.6.3 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-alignas:0023 */}
+- C++14 standard (ISO/IEC 14882:2014): 7.6.4 Carries dependency attribute [dcl.attr.depend]
+
+{/* source:cpp-language-alignas:0024 */}
+- C++11 standard (ISO/IEC 14882:2011): 7.6.4 Carries dependency attribute [dcl.attr.depend]
+
+## See also
+
+{/* source:cpp-language-alignas:0025 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`alignof`](/docs/cpp/language/expressions/alignof) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>queries alignment requirements of a type (operator)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`alignment_of`](/docs/cpp/library/meta/alignment_of) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>obtains the type's alignment requirements (class template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[C documentation](/docs/c/language/declarations/alignas) for `_Alignas, alignas`</DescriptionTerm><DescriptionBody /></DescriptionItem>
+</DescriptionList>

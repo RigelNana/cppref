@@ -1,0 +1,129 @@
+---
+title: "C++ attribute: assume (since C++23)"
+description: "Specifies that the given expression is assumed to always evaluate to true at a given point in order to allow compiler optimizations based on the information given."
+source_url: "https://en.cppreference.com/w/cpp/language/attributes/assume"
+language: "C++"
+---
+
+{{/* source:cpp-language-attributes-assume:0000 */}}
+Specifies that the given expression is assumed to always evaluate to `true` at a given point in order to allow compiler optimizations based on the information given.
+
+## Syntax
+
+{{/* source:cpp-language-attributes-assume:0001 */}}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code={`[[assume( expression )]]`} />
+</DeclarationDoc>
+
+{{/* source:cpp-language-attributes-assume:0002 */}}
+<ParameterList>
+  <Parameter name="expression">
+    any expression (except unparenthesized [comma expressions](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator))
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{{/* source:cpp-language-attributes-assume:0003 */}}
+`[[assume]]` an only be applied to a [null statement](/docs/cpp/language/statements#Expression_statements), as in `[[assume(x > 0)]];`. This statement is called an *assumption*.
+
+{{/* source:cpp-language-attributes-assume:0004 */}}
+*expression* is [contextually converted to `bool`](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions), but it is not evaluated (it is still [potentially evaluated](/docs/cpp/language/expressions#Potentially-evaluated_expressions)).
+
+{{/* source:cpp-language-attributes-assume:0005 */}}
+- If the converted *expression* would evaluate to `true` at the point where the assumption appears, the assumption has no effect.
+- Otherwise, evaluation of the assumption has [runtime-undefined behavior](/docs/cpp/language/basic_concepts/ub).
+
+## Notes
+
+{{/* source:cpp-language-attributes-assume:0006 */}}
+Since assumptions cause runtime-undefined behavior if they do not hold, they should be used sparingly.
+
+{{/* source:cpp-language-attributes-assume:0007 */}}
+One correct way to use them is to follow assertions with assumptions:
+
+{{/* source:cpp-language-attributes-assume:0008 */}}
+```cpp
+assert(x > 0);     // trigger an assertion when NDEBUG is not defined and x > 0 is false
+[[assume(x > 0)]]; // provide optimization opportunities when NDEBUG is defined
+```
+
+## Example
+
+{{/* source:cpp-language-attributes-assume:0009 */}}
+```cpp
+#include <cmath>
+ 
+void f(int& x, int y)
+{
+    void g(int);
+    void h();
+ 
+    [[assume(x > 0)]]; // Compiler may assume x is positive
+ 
+    g(x / 2); // More efficient code possibly generated
+ 
+    x = 3;
+    int z = x;
+ 
+    [[assume((h(), x == z))]]; // Compiler may assume x would have the same value after
+                               // calling h
+                               // The assumption does not cause a call to h
+ 
+    h();
+    g(x); // Compiler may replace this with g(3);
+ 
+    h();
+    g(x); // Compiler may NOT replace this with g(3);
+          // An assumption applies only at the point where it appears
+ 
+    z = std::abs(y);
+ 
+    [[assume((g(z), true))]]; // Compiler may assume g(z) will return
+ 
+    g(z); // Due to above and below assumptions, compiler may replace this with g(10);
+ 
+    [[assume(y == -10)]]; // Undefined behavior if y != -10 at this point
+ 
+    [[assume((x - 1) * 3 == 12)]];
+ 
+    g(x); // Compiler may replace this with g(5);
+}
+```
+
+## Defect reports
+
+{{/* source:cpp-language-attributes-assume:0010 */}}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{{/* source:cpp-language-attributes-assume:0011 */}}
+<DefectReportList>
+  <DefectReport kind="cwg" id={2924} standard="C++23">
+    <PublishedBehavior>violating an assumption would result in undefined behavior</PublishedBehavior>
+    <CorrectedBehavior>results in runtime-undefined behavior</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{{/* source:cpp-language-attributes-assume:0012 */}}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 9.12.3 Assumption attribute [dcl.attr.assume]
+
+## See also
+
+{{/* source:cpp-language-attributes-assume:0013 */}}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unreachable`](/docs/cpp/library/utility/program/unreachable) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>marks unreachable point of execution (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## External links
+
+{{/* source:cpp-language-attributes-assume:0014 */}}
+1. Clang language extensions doc: [`__builtin_assume`](https://clang.llvm.org/docs/LanguageExtensions.html#langext-builtin-assume).
+2. Clang attribute reference doc: [`assume`](https://clang.llvm.org/docs/AttributeReference.html#assume).
+3. MSVC doc: [`__assume`](https://learn.microsoft.com/en-us/cpp/intrinsics/assume) built-in.
+4. GCC doc: [`__attribute__((assume(...)))`](https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html#index-assume-statement-attribute).

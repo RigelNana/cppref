@@ -291,6 +291,27 @@ function revisionTokens(element: Element): string[] {
   return [...values];
 }
 
+/**
+ * Text of an inline revision scope with every `t-mark-rev` marker stripped.
+ * A scope can carry several markers (e.g. "(since C++11)" and "(constexpr
+ * since C++17)"), so all of them are removed, not just the first.
+ */
+function revisionScopeText(root: Node): string {
+  if ("value" in root) return root.value.replace(/\s+/gu, " ");
+  if (isElement(root) && root.tagName === "br") return " ";
+  if (!hasChildNodes(root) || (isElement(root) && (hasIgnoredIdentity(root) || classNames(root).includes("t-mark-rev")))) return "";
+  const texts = root.childNodes.map(revisionScopeText);
+  return texts
+    .map((text, index) => {
+      if (index === 0) return text;
+      const previous = root.childNodes[index - 1];
+      const current = root.childNodes[index];
+      return isElement(previous) && isElement(current) ? ` ${text}` : text;
+    })
+    .join("")
+    .replace(/\s+/gu, " ");
+}
+
 function inlineRevisions(element: Element): Array<{ text: string; html: string; marker: string; revisions: string[] }> {
   const values: Array<{ text: string; html: string; marker: string; revisions: string[] }> = [];
   const visit = (node: Node): void => {
@@ -301,9 +322,7 @@ function inlineRevisions(element: Element): Array<{ text: string; html: string; 
         (candidate) => candidate !== node && classNames(candidate).includes("t-mark-rev"),
       );
       const marker = normalizedText(markerElement ?? node).trim();
-      const text = (markerElement
-        ? normalizedText(node).replace(normalizedText(markerElement), "").trim()
-        : normalizedText(node).trim()).replace(/[\u200b-\u200d\ufeff]/gu, "");
+      const text = revisionScopeText(node).trim().replace(/[\u200b-\u200d\ufeff]/gu, "");
       values.push({
         text,
         html: serializeOuter(node),

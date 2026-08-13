@@ -1,0 +1,839 @@
+---
+title: "Arithmetic operators"
+description: "Returns the result of specific arithmetic operation."
+source_url: "https://en.cppreference.com/w/cpp/language/operator_arithmetic"
+language: "C++"
+---
+
+{/* source:cpp-language-operator-arithmetic:0000 */}
+Returns the result of specific arithmetic operation.
+
+{/* source:cpp-language-operator-arithmetic:0001 */}
+Operator name — Syntax — Prototype examples (for `class T`) — Inside class definition — Outside class definition
+
+- **Unary plus** — `+a` — `T T::operator+() const;` — `T operator+(const T& a);`
+- **Unary minus** — `-a` — `T T::operator-() const;` — `T operator-(const T& a);`
+- **Addition** — `a + b` — `T T::operator+(const T2& b) const;` — `T operator+(const T& a, const T2& b);`
+- **Subtraction** — `a - b` — `T T::operator-(const T2& b) const;` — `T operator-(const T& a, const T2& b);`
+- **Multiplication** — `a * b` — `T T::operator*(const T2& b) const;` — `T operator*(const T& a, const T2& b);`
+- **Division** — `a / b` — `T T::operator/(const T2& b) const;` — `T operator/(const T& a, const T2& b);`
+- **Remainder** — `a % b` — `T T::operator%(const T2& b) const;` — `T operator%(const T& a, const T2& b);`
+- **Bitwise NOT** — `~a` — `T T::operator~() const;` — `T operator~(const T& a);`
+- **Bitwise AND** — `a & b` — `T T::operator&(const T2& b) const;` — `T operator&(const T& a, const T2& b);`
+- **Bitwise OR** — `a | b` — `T T::operator|(const T2& b) const;` — `T operator|(const T& a, const T2& b);`
+- **Bitwise XOR** — `a ^ b` — `T T::operator^(const T2& b) const;` — `T operator^(const T& a, const T2& b);`
+- **Bitwise left shift** — `a << b` — `T T::operator<<(const T2& b) const;` — `T operator<<(const T& a, const T2& b);`
+- **Bitwise right shift** — `a >> b` — `T T::operator>>(const T2& b) const;` — `T operator>>(const T& a, const T2& b);`
+
+**Notes**
+
+- All operators in this table are [overloadable](/docs/cpp/language/expressions/operators).
+- All built-in operators return values, and most [user-defined overloads](/docs/cpp/language/expressions/operators) also return values so that the user-defined operators can be used in the same manner as the built-ins. However, in a user-defined operator overload, any type can be used as return type (including `void`). In particular, stream insertion and stream extraction overloads of `operator<<` and `operator>>` return `T&`.
+- `T2` can be any type including `T`.
+
+## General explanation
+
+{/* source:cpp-language-operator-arithmetic:0002 */}
+All built-in arithmetic operators compute the result of specific arithmetic operation and returns its result. The arguments are not modified.
+
+### Conversions
+
+{/* source:cpp-language-operator-arithmetic:0003 */}
+If the operand passed to a built-in arithmetic operator is integral or unscoped enumeration type, then before any other action (but after lvalue-to-rvalue conversion, if applicable), the operand undergoes [integral promotion](/docs/cpp/language/expressions/implicit_cast#Integral_promotion). If an operand has array or function type, [array-to-pointer](/docs/cpp/language/expressions/implicit_cast#Array-to-pointer_conversion) and [function-to-pointer](/docs/cpp/language/expressions/implicit_cast#Function-to-pointer) conversions are applied.
+
+{/* source:cpp-language-operator-arithmetic:0004 */}
+For the binary operators (except shifts), if the promoted operands have different types, [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) are applied.
+
+### Overflows
+
+{/* source:cpp-language-operator-arithmetic:0005 */}
+Unsigned integer arithmetic is always performed modulo 2n where n is the number of bits in that particular integer. E.g. for `unsigned int`, adding one to [UINT_MAX](/docs/cpp/library/utility/types/climits) gives `0`, and subtracting one from `0` gives [UINT_MAX](/docs/cpp/library/utility/types/climits).
+
+{/* source:cpp-language-operator-arithmetic:0006 */}
+When signed integer arithmetic operation overflows (the result does not fit in the result type), the behavior is undefined, — the possible manifestations of such an operation include:
+
+{/* source:cpp-language-operator-arithmetic:0007 */}
+- it wraps around according to the rules of the representation (typically [two's complement](/docs/cpp/language/basic_concepts/types#Range_of_values)),
+- it traps — on some platforms or due to compiler options (e.g. -ftrapv in GCC and Clang),
+- it saturates to minimal or maximal value (on many DSPs),
+- it is completely [optimized out by the compiler](https://blog.llvm.org/2011/05/what-every-c-programmer-should-know_14.html).
+
+### Floating-point environment
+
+{/* source:cpp-language-operator-arithmetic:0008 */}
+If [#pragma STDC FENV_ACCESS](/docs/cpp/language/preprocessor/impl) is supported and set to ON, all floating-point arithmetic operators obey the current floating-point [rounding direction](/docs/cpp/library/numeric/fenv/FE_round) and report floating-point arithmetic errors as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling) unless part of a [static initializer](/docs/cpp/language/initialization#Non-local_variables) (in which case floating-point exceptions are not raised and the rounding mode is to nearest).
+
+### Floating-point contraction
+
+{/* source:cpp-language-operator-arithmetic:0009 */}
+Unless [#pragma STDC FP_CONTRACT](/docs/cpp/language/preprocessor/impl) is supported and set to OFF, all floating-point arithmetic may be performed as if the intermediate results have infinite range and precision, that is, optimizations that omit rounding errors and floating-point exceptions are allowed. For example, C++ allows the implementation of `(x * y) + z` with a single fused multiply-add CPU instruction or optimization of `a = x * x * x * x;` as `tmp = x * x; a = tmp * tmp`.
+
+{/* source:cpp-language-operator-arithmetic:0010 */}
+Unrelated to contracting, intermediate results of floating-point arithmetic may have range and precision that is different from the one indicated by its type, see [FLT_EVAL_METHOD](/docs/cpp/library/utility/types/climits/FLT_EVAL_METHOD).
+
+{/* source:cpp-language-operator-arithmetic:0011 */}
+Formally, the C++ standard makes no guarantee on the accuracy of floating-point operations.
+
+## Unary arithmetic operators
+
+{/* source:cpp-language-operator-arithmetic:0012 */}
+The unary arithmetic operator expressions have the form
+
+{/* source:cpp-language-operator-arithmetic:0013 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="+ expression" />
+  <Declaration id="2" language="cpp" grammar code="- expression" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0014 */}
+1. Unary plus (promotion).
+
+{/* source:cpp-language-operator-arithmetic:0015 */}
+2. Unary minus (negation).
+
+{/* source:cpp-language-operator-arithmetic:0016 */}
+Unary + and - operators have higher [precedence](/docs/cpp/language/expressions/operator_precedence) than all binary arithmetic operators, so *expression* cannot contain top-level binary arithmetic operators. These operators associate from right to left:
+
+{/* source:cpp-language-operator-arithmetic:0017 */}
+```cpp
++a - b; // equivalent to (+a) - b, NOT +(a - b)
+-c + d; // equivalent to (-c) + d, NOT -(c + d)
+
++-e; // equivalent to +(-e), the unary + is a no-op if “e” is a built-in type
+     // because any possible promotion is performed during negation already
+```
+
+### Built-in unary arithmetic operators
+
+{/* source:cpp-language-operator-arithmetic:0018 */}
+1. For the built-in unary plus operator, *expression* must be a prvalue of arithmetic, unscoped enumeration, or pointer type. Integral promotion is performed on *expression* if it has integral or unscoped enumeration type. The type of the result is the (possibly promoted) type of *expression*.
+
+{/* source:cpp-language-operator-arithmetic:0019 */}
+The result of the built-in promotion is the value of *expression*. The built-in unary operation is no-op if the operand is a prvalue of a promoted integral type or a pointer type. Otherwise, the type or value category of the operand is changed by integral promotion or lvalue-to-rvalue, array-to-pointer, function-to-pointer, or user-defined conversion. For example, `char` is converted to `int`<InlineRevision since="C++11">, and non-generic captureless [lambda expression](/docs/cpp/language/functions/lambda) is converted to function pointer</InlineRevision> in unary plus expressions.
+
+{/* source:cpp-language-operator-arithmetic:0020 */}
+2. For the built-in unary minus operator, *expression* must be a prvalue of arithmetic or unscoped enumeration type. Integral promotion is performed on *expression*. The type of the result is the type of the promoted type of *expression*.
+
+{/* source:cpp-language-operator-arithmetic:0021 */}
+The result of the built-in negation is the negative of the promoted *expression*. For unsigned `a`, the value of `-a` is 2N-a, where `N` is the number of bits after promotion.
+
+- In other words, the result is the two's complement of the operand (where operand and result are considered as unsigned).
+
+### Overloads
+
+{/* source:cpp-language-operator-arithmetic:0022 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every cv-unqualified promoted arithmetic type A and for every type T, the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-arithmetic:0023 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`A operator+(A)`} />
+  <Declaration language="cpp" code={`T* operator+(T*)`} />
+  <Declaration language="cpp" code={`A operator-(A)`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0024 */}
+```cpp
+#include <iostream>
+
+int main()
+{
+    char c = 0x6a;
+    int n1 = 1;
+    unsigned char n2 = 1;
+    unsigned int n3 = 1;
+    std::cout << "char: " << c << " int: " << +c << "\n"
+                 "-1, where 1 is signed: " << -n1 << "\n"
+                 "-1, where 1 is unsigned char: " << -n2 << "\n"
+                 "-1, where 1 is unsigned int: " << -n3 << '\n';
+    char a[3];
+    std::cout << "size of array: " << sizeof a << "\n"
+                 "size of pointer: " << sizeof +a << '\n';
+}
+```
+
+Possible output:
+
+```text
+char: j int: 106
+-1, where 1 is signed: -1
+-1, where 1 is unsigned char: -1
+-1, where 1 is unsigned int: 4294967295
+size of array: 3
+size of pointer: 8
+```
+
+## Additive operators
+
+{/* source:cpp-language-operator-arithmetic:0025 */}
+The additive operator expressions have the form
+
+{/* source:cpp-language-operator-arithmetic:0026 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="lhs + rhs" />
+  <Declaration id="2" language="cpp" grammar code="lhs - rhs" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0027 */}
+1. Binary plus (addition).
+
+{/* source:cpp-language-operator-arithmetic:0028 */}
+2. Binary minus (subtraction).
+
+{/* source:cpp-language-operator-arithmetic:0029 */}
+Binary + and - operators have higher [precedence](/docs/cpp/language/expressions/operator_precedence) than all other binary arithmetic operators except *, / and %. These operators associate from left to right:
+
+{/* source:cpp-language-operator-arithmetic:0030 */}
+```cpp
+a + b * c;  // equivalent to a + (b * c),  NOT (a + b) * c
+d / e - f;  // equivalent to (d / e) - f,  NOT d / (e - f)
+g + h >> i; // equivalent to (g + h) >> i, NOT g + (h >> i)
+
+j - k + l - m; // equivalent to ((j - k) + l) - m
+```
+
+### Built-in additive operators
+
+{/* source:cpp-language-operator-arithmetic:0031 */}
+For built-in binary plus and binary minus operators, both of *lhs* and *rhs* must be prvalues, and one of the following conditions must be satisfied:
+
+{/* source:cpp-language-operator-arithmetic:0032 */}
+- Both operands have arithmetic or unscoped enumeration type. In this case, [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) are performed on both operands.
+- Exactly one operand has integral or unscoped enumeration type. In this case, integral promotion is applied to that operand.
+
+{/* source:cpp-language-operator-arithmetic:0033 */}
+In the remaining description in this section, "operand(s)", *lhs* and *rhs* refer to the converted or promoted operand(s).
+
+{/* source:cpp-language-operator-arithmetic:0034 */}
+1. For built-in addition, one of the following conditions must be satisfied:
+
+- Both operands have arithmetic type. In this case, the result is the sum of the operands.
+- One operand is a pointer to a completely-defined object type, and the other operand has integral type. In this case, the integral value is added to the pointer (see [pointer arithmetic](/docs/cpp/language/expressions/operator_arithmetic#Pointer_arithmetic)).
+
+{/* source:cpp-language-operator-arithmetic:0035 */}
+2. For built-in subtraction, one of the following conditions must be satisfied:
+
+- Both operands have arithmetic type. In this case, the result is the difference resulting from the subtraction of *rhs* from *lhs*.
+- *lhs* is a pointer to a completely-defined object type, and *rhs* has integral type. In this case, the integral value is subtracted from the pointer (see [pointer arithmetic](/docs/cpp/language/expressions/operator_arithmetic#Pointer_arithmetic)).
+- Both operands are pointers to cv-qualified or cv-unqualified versions of the same completely-defined object type. In this case *rhs* is subtracted from *lhs* (see [pointer arithmetic](/docs/cpp/language/expressions/operator_arithmetic#Pointer_arithmetic)).
+
+{/* source:cpp-language-operator-arithmetic:0036 */}
+If both operands have a floating-point type, and the type supports IEEE floating-point arithmetic (see [std::numeric_limits::is_iec559](/docs/cpp/library/utility/types/numeric_limits/is_iec559)):
+
+{/* source:cpp-language-operator-arithmetic:0037 */}
+- If one operand is NaN, the result is NaN.
+- Infinity minus infinity is NaN, and [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+- Infinity plus the negative infinity is NaN, and [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+
+### Pointer arithmetic
+
+{/* source:cpp-language-operator-arithmetic:0038 */}
+When an expression `J` that has integral type is added to or subtracted from an expression `P` of pointer type, the result has the type of `P`.
+
+{/* source:cpp-language-operator-arithmetic:0039 */}
+- If `P` evaluates to a [null pointer value](/docs/cpp/language/declarations/pointer#Null_pointers) and `J` evaluates to `0`, the result is a null pointer value.
+- Otherwise, if `P` points to the ith element of an array object `x` with `n` elements, given the value of `J` as `j`, `P` is added or subtracted as follows:
+
+{/* source:cpp-language-operator-arithmetic:0040 */}
+  - The expressions `P + J` and `J + P`
+    - point to the i+jth element of `x` if `i + j` is in [`0`, `n`), and
+    - are pointers past the end of the last element of `x` if `i + j` is `n`.
+  - The expression `P - J`
+    - points to the i-jth element of `x` if `i - j` is in [`0`, `n`), and
+    - is a pointer past the end of the last element of `x` if `i - j` is `n`.
+  - Other `j` values result in undefined behavior.
+
+{/* source:cpp-language-operator-arithmetic:0041 */}
+- Otherwise, if `P` points to a complete object, a base class subobject or a member subobject `y`, given the value of `J` as `j`, `P` is added or subtracted as follows:
+
+{/* source:cpp-language-operator-arithmetic:0042 */}
+  - The expressions `P + J` and `J + P` point to `y` if `j` is `0`, and are pointers past the end of `y` if `j` is `1`.
+  - The expression `P - J` points to `y` if `j` is `0`, and is a pointer past the end of `y` if `j` is `-1`.
+  - Other `j` values result in undefined behavior.
+
+{/* source:cpp-language-operator-arithmetic:0043 */}
+- Otherwise, if `P` is a pointer past the end of an object `z`, given the value of `J` as `j`:
+
+{/* source:cpp-language-operator-arithmetic:0044 */}
+  - If `z` is an array object with `n` elements, `P` is added or subtracted as follows:
+    - The expressions `P + J` and `J + P` point to the n+jth element of `z` if `n + j` is in [`0`, `n`), and are pointers past the end of the last element of `z` if `j` is `0`.
+    - The expression `P - J` points to the n-jth element of `z` if `n - j` is in [`0`, `n`), and is a pointer past the end of the last element of `z` if `j` is `0`.
+    - Other `j` values result in undefined behavior.
+  - Otherwise, `P` is added or subtracted as follows:
+    - The expressions `P + J` and `J + P` point to `z` if `j` is `-1`, and are pointers past the end of `z` if `j` is `0`.
+    - The expression `P - J` points to `z` if `j` is `1`, and is a pointer past the end of `z` if `j` is `0`.
+    - Other `j` values result in undefined behavior.
+
+{/* source:cpp-language-operator-arithmetic:0045 */}
+- Otherwise, the behavior is undefined.
+
+{/* source:cpp-language-operator-arithmetic:0046 */}
+When two pointer expressions `P` and `Q` are subtracted, the type of the result is [std::ptrdiff_t](/docs/cpp/library/utility/types/ptrdiff_t).
+
+{/* source:cpp-language-operator-arithmetic:0047 */}
+- If `P` and `Q` both evaluate to [null pointer values](/docs/cpp/language/declarations/pointer#Null_pointers), the result is `0`.
+- Otherwise, if `P` and `Q` point to, respectively, the ith and jth array elements of the same array object `x`, the expression `P - Q` has the value `i − j`.
+
+{/* source:cpp-language-operator-arithmetic:0048 */}
+  - If `i − j` is not representable by [std::ptrdiff_t](/docs/cpp/library/utility/types/ptrdiff_t), the behavior is undefined.
+
+{/* source:cpp-language-operator-arithmetic:0049 */}
+- Otherwise, if `P` and `Q` point to the same complete object, base class subobject or member subobject, the result is `0`.
+- Otherwise, the behavior is undefined.
+
+{/* source:cpp-language-operator-arithmetic:0050 */}
+These pointer arithmetic operators allow pointers to satisfy the [LegacyRandomAccessIterator](/docs/cpp/library/named_req/RandomAccessIterator) requirements.
+
+{/* source:cpp-language-operator-arithmetic:0051 */}
+For addition and subtraction, if `P` or `Q` have type "pointer to (possibly cv-qualified) `T`", where `T` and the array element type are not [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types), the behavior is undefined:
+
+{/* source:cpp-language-operator-arithmetic:0052 */}
+```cpp
+int arr[5] = {1, 2, 3, 4, 5};
+unsigned int *p = reinterpret_cast<unsigned int*>(arr + 1);
+unsigned int k = *p; // OK, the value of “k” is 2
+unsigned int *q = p + 1; // undefined behavior: “p” points to int, not unsigned int
+```
+
+### Overloads
+
+{/* source:cpp-language-operator-arithmetic:0053 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every pair of promoted arithmetic types L and R and for every object type T, the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-arithmetic:0054 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`LR operator+(L, R)`} />
+  <Declaration language="cpp" code={`LR operator-(L, R)`} />
+  <Declaration language="cpp" code={`T* operator+(T*, std::ptrdiff_t)`} />
+  <Declaration language="cpp" code={`T* operator+(std::ptrdiff_t, T*)`} />
+  <Declaration language="cpp" code={`T* operator-(T*, std::ptrdiff_t)`} />
+  <Declaration language="cpp" code={`std::ptrdiff_t operator-(T*, T*)`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0055 */}
+where LR is the result of [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) on L and R.
+
+{/* source:cpp-language-operator-arithmetic:0056 */}
+```cpp
+#include <iostream>
+
+int main()
+{
+    char c = 2;
+    unsigned int un = 2;
+    int n = -10;
+    std::cout << " 2 + (-10), where 2 is a char    = " << c + n << "\n"
+                 " 2 + (-10), where 2 is unsigned  = " << un + n << "\n"
+                 " -10 - 2.12  = " << n - 2.12 << '\n';
+
+    char a[4] = {'a', 'b', 'c', 'd'};
+    char* p = &a[1];
+    std::cout << "Pointer addition examples: " << *p << *(p + 2)
+              << *(2 + p) << *(p - 1) << '\n';
+    char* p2 = &a[4];
+    std::cout << "Pointer difference: " << p2 - p << '\n';
+}
+```
+
+Output:
+
+```text
+ 2 + (-10), where 2 is a char    = -8
+ 2 + (-10), where 2 is unsigned  = 4294967288
+ -10 - 2.12  = -12.12
+Pointer addition examples: bdda
+Pointer difference: 3
+```
+
+### Multiplicative operators
+
+{/* source:cpp-language-operator-arithmetic:0057 */}
+The multiplicative operator expressions have the form
+
+{/* source:cpp-language-operator-arithmetic:0058 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="lhs * rhs" />
+  <Declaration id="2" language="cpp" grammar code="lhs / rhs" />
+  <Declaration id="3" language="cpp" grammar code="lhs % rhs" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0059 */}
+1. Multiplication.
+
+{/* source:cpp-language-operator-arithmetic:0060 */}
+2. Division.
+
+{/* source:cpp-language-operator-arithmetic:0061 */}
+3. Remainder.
+
+{/* source:cpp-language-operator-arithmetic:0062 */}
+Multiplicative operators have higher [precedence](/docs/cpp/language/expressions/operator_precedence) than all other binary arithmetic operators. These operators associate from left to right:
+
+{/* source:cpp-language-operator-arithmetic:0063 */}
+```cpp
+a + b * c;  // equivalent to a + (b * c),  NOT (a + b) * c
+d / e - f;  // equivalent to (d / e) - f,  NOT d / (e - f)
+g % h >> i; // equivalent to (g % h) >> i, NOT g % (h >> i)
+
+j * k / l % m; // equivalent to ((j * k) / l) % m
+```
+
+### Built-in multiplicative operators
+
+{/* source:cpp-language-operator-arithmetic:0064 */}
+For built-in multiplication and division operators, both operands must have arithmetic or unscoped enumeration type. For the built-in remainder operator, both operands must have integral or unscoped enumeration type. [Usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) are performed on both operands.
+
+{/* source:cpp-language-operator-arithmetic:0065 */}
+In the remaining description in this section, "operand(s)", *lhs* and *rhs* refer to the converted operand(s).
+
+{/* source:cpp-language-operator-arithmetic:0066 */}
+1. The result of built-in multiplication is the product of the operands.
+
+{/* source:cpp-language-operator-arithmetic:0067 */}
+If both operands have a floating-point type, and the type supports IEEE floating-point arithmetic (see [std::numeric_limits::is_iec559](/docs/cpp/library/utility/types/numeric_limits/is_iec559)):
+
+- Multiplication of a NaN by any number gives NaN.
+- Multiplication of infinity by zero gives NaN and [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+
+{/* source:cpp-language-operator-arithmetic:0068 */}
+2. The result of built-in division is *lhs* divided by *rhs*. If *rhs* is zero, the behavior is undefined.
+
+{/* source:cpp-language-operator-arithmetic:0069 */}
+If both operands have an integral type, the result is the algebraic quotient (performs integer division): the quotient is truncated towards zero (fractional part is discarded).
+
+{/* source:cpp-language-operator-arithmetic:0070 */}
+If both operands have a floating-point type, and the type supports IEEE floating-point arithmetic (see [std::numeric_limits::is_iec559](/docs/cpp/library/utility/types/numeric_limits/is_iec559)):
+
+- If one operand is NaN, the result is NaN.
+- Dividing a non-zero number by ±0.0 gives the correctly-signed infinity and [FE_DIVBYZERO](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+- Dividing 0.0 by 0.0 gives NaN and [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+
+{/* source:cpp-language-operator-arithmetic:0071 */}
+3. The result of built-in remainder is the remainder of the integer division of *lhs* by *rhs*. If *rhs* is zero, the behavior is undefined.
+
+{/* source:cpp-language-operator-arithmetic:0072 */}
+If `a / b` is representable in the result type, `(a / b) * b + a % b == a`.
+
+{/* source:cpp-language-operator-arithmetic:0073 */}
+If `a / b` is not representable in the result type, the behavior of both `a / b` and `a % b` is undefined (that means `INT_MIN % -1` is undefined on two's complement systems).
+
+{/* source:cpp-language-operator-arithmetic:0074 */}
+Note: Until [CWG issue 614](https://cplusplus.github.io/CWG/issues/614.html) was resolved ([N2757](https://wg21.link/n2757)), if one or both operands to binary operator % were negative, the sign of the remainder was implementation-defined, as it depends on the rounding direction of integer division. The function [std::div](/docs/cpp/library/numeric/math/div) provided well-defined behavior in that case.
+
+{/* source:cpp-language-operator-arithmetic:0075 */}
+Note: for floating-point remainder, see [std::remainder](/docs/cpp/library/numeric/math/remainder) and [std::fmod](/docs/cpp/library/numeric/math/fmod).
+
+### Overloads
+
+{/* source:cpp-language-operator-arithmetic:0076 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every pair of promoted arithmetic types LA and RA and for every pair of promoted integral types LI and RI the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-arithmetic:0077 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`LRA operator*(LA, RA)`} />
+  <Declaration language="cpp" code={`LRA operator/(LA, RA)`} />
+  <Declaration language="cpp" code={`LRI operator%(LI, RI)`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0078 */}
+where LRx is the result of [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) on Lx and Rx.
+
+{/* source:cpp-language-operator-arithmetic:0079 */}
+```cpp
+#include <iostream>
+
+int main()
+{
+    char c = 2;
+    unsigned int un = 2;
+    int  n = -10;
+    std::cout << "2 * (-10), where 2 is a char    = " << c * n << "\n"
+                 "2 * (-10), where 2 is unsigned  = " << un * n << "\n"
+                 "-10 / 2.12  = " << n / 2.12 << "\n"
+                 "-10 / 21  = " << n / 21 << "\n"
+                 "-10 % 21  = " << n % 21 << '\n';
+}
+```
+
+Output:
+
+```text
+2 * (-10), where 2 is a char    = -20
+2 * (-10), where 2 is unsigned  = 4294967276
+-10 / 2.12  = -4.71698
+-10 / 21  = 0
+-10 % 21  = -10
+```
+
+## Bitwise logic operators
+
+{/* source:cpp-language-operator-arithmetic:0080 */}
+The bitwise logic operator expressions have the form
+
+{/* source:cpp-language-operator-arithmetic:0081 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="~ rhs" />
+  <Declaration id="2" language="cpp" grammar code="lhs & rhs" />
+  <Declaration id="3" language="cpp" grammar code="lhs | rhs" />
+  <Declaration id="4" language="cpp" grammar code="lhs ^ rhs" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0082 */}
+1. Bitwise NOT.
+
+{/* source:cpp-language-operator-arithmetic:0083 */}
+2. Bitwise AND.
+
+{/* source:cpp-language-operator-arithmetic:0084 */}
+3. Bitwise OR.
+
+{/* source:cpp-language-operator-arithmetic:0085 */}
+4. Bitwise XOR.
+
+{/* source:cpp-language-operator-arithmetic:0086 */}
+The bitwise NOT operator has higher [precedence](/docs/cpp/language/expressions/operator_precedence) than all binary arithmetic operators. It associates from right to left:
+
+{/* source:cpp-language-operator-arithmetic:0087 */}
+```cpp
+~a - b; // equivalent to (~a) - b, NOT ~(a - b)
+~c * d; // equivalent to (~c) * d, NOT ~(c * d)
+
+~-e; // equivalent to ~(-e)
+```
+
+{/* source:cpp-language-operator-arithmetic:0088 */}
+There is an ambiguity in the grammar when `~` is followed by a [type name](/docs/cpp/language/basic_concepts/type-id#type_naming)<InlineRevision since="C++11"> or [decltype](/docs/cpp/language/declarations/decltype) specifier</InlineRevision>: it can either be operator~ or start a [destructor](/docs/cpp/language/classes/destructor) identifier). The ambiguity is resolved by treating `~` as operator~. `~` can start a destructor identifier only in places where forming an operator~ is syntactically invalid.
+
+{/* source:cpp-language-operator-arithmetic:0089 */}
+All other bitwise logic operators have lower [precedence](/docs/cpp/language/expressions/operator_precedence) than all other binary arithmetic operators. Bitwise AND has higher precedence than bitwise XOR, which has higher precedence than bitwise OR. They associate from left to right:
+
+{/* source:cpp-language-operator-arithmetic:0090 */}
+```cpp
+a & b * c;  // equivalent to a & (b * c),  NOT (a & b) * c
+d / e ^ f;  // equivalent to (d / e) ^ f,  NOT d / (e ^ f)
+g << h | i; // equivalent to (g << h) | i, NOT g << (h | i)
+
+j & k & l; // equivalent to (j & k) & l
+m | n ^ o  // equivalent to m | (n ^ o)
+```
+
+### Built-in bitwise logic operators
+
+{/* source:cpp-language-operator-arithmetic:0091 */}
+For the built-in bitwise NOT operator, *rhs* must be a prvalue of integral or unscoped enumeration type, and integral promotion is performed on *rhs*. For other built-in bitwise logic operators, both operands must have integral or unscoped enumeration type, and [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) are performed on both operands.
+
+{/* source:cpp-language-operator-arithmetic:0092 */}
+In the remaining description in this section, "operand(s)", *lhs* and *rhs* refer to the converted or promoted operand(s).
+
+{/* source:cpp-language-operator-arithmetic:0093 */}
+1. Given the operand as `x` and the result of the built-in bitwise NOT operation as `r`. For each coefficient `x_i` of the base-2 representation of `x`, the corresponding coefficient `r_i` of the base-2 representation of `r` is `1` if `x_i` is `0`, and `0` otherwise. In other words, the result is the one's complement of the operand (where operand and result are considered as unsigned).
+
+{/* source:cpp-language-operator-arithmetic:0094 */}
+The type of the result `r` is the type of the operand `x`.
+
+{/* source:cpp-language-operator-arithmetic:0095 */}
+2-4) Given the operands as `x` and `y` respectively and the result of the built-in binary bitwise logic operations as `r`. For each pair of coefficients `x_i` and `y_i` of the base-2 representations of `x` and `y` respectively, the corresponding coefficient `r_i` of the base-2 representation of `r` is
+
+{/* source:cpp-language-operator-arithmetic:0096 */}
+- 2) `1` if both `x_i` and `y_i` are `1`, and `0` otherwise.
+
+{/* source:cpp-language-operator-arithmetic:0097 */}
+- 3) `1` if at least one of `x_i` and `y_i` is `1`, and `0` otherwise.
+
+{/* source:cpp-language-operator-arithmetic:0098 */}
+- 4) `1` if either (but not both) of `x_i` and `y_i` is `1`, and `0` otherwise.
+
+{/* source:cpp-language-operator-arithmetic:0099 */}
+The type of the result `r` is the type of the operands `x` and `y`.
+
+### Overloads
+
+{/* source:cpp-language-operator-arithmetic:0100 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every pair of promoted integral types L and R the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-arithmetic:0101 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`R operator~(R)`} />
+  <Declaration language="cpp" code={`LR operator&(L, R)`} />
+  <Declaration language="cpp" code={`LR operator^(L, R)`} />
+  <Declaration language="cpp" code={`LR operator|(L, R)`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0102 */}
+where LR is the result of [usual arithmetic conversions](/docs/cpp/language/expressions/usual_arithmetic_conversions) on L and R.
+
+{/* source:cpp-language-operator-arithmetic:0103 */}
+```cpp
+#include <bitset>
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
+
+int main()
+{
+    std::uint16_t mask = 0x00f0;
+    std::uint32_t x0 = 0x12345678;
+    std::uint32_t x1 = x0 | mask;
+    std::uint32_t x2 = x0 & ~mask;
+    std::uint32_t x3 = x0 & mask;
+    std::uint32_t x4 = x0 ^ mask;
+    std::uint32_t x5 = ~x0;
+    using bin16 = std::bitset<16>;
+    using bin32 = std::bitset<32>;
+    std::cout << std::hex << std::showbase
+              << "Mask: " << mask << std::setw(49) << bin16(mask) << "\n"
+                 "Value: " << x0 << std::setw(42) << bin32(x0) << "\n"
+                 "Setting bits: " << x1 << std::setw(35) << bin32(x1) << "\n"
+                 "Clearing bits: " << x2 << std::setw(34) << bin32(x2) << "\n"
+                 "Selecting bits: " << x3 << std::setw(39) << bin32(x3) << "\n"
+                 "XOR-ing bits: " << x4 << std::setw(35) << bin32(x4) << "\n"
+                 "Inverting bits: " << x5 << std::setw(33) << bin32(x5) << '\n';
+}
+```
+
+Output:
+
+```text
+Mask: 0xf0                                 0000000011110000
+Value: 0x12345678          00010010001101000101011001111000
+Setting bits: 0x123456f8   00010010001101000101011011111000
+Clearing bits: 0x12345608  00010010001101000101011000001000
+Selecting bits: 0x70       00000000000000000000000001110000
+XOR-ing bits: 0x12345688   00010010001101000101011010001000
+Inverting bits: 0xedcba987 11101101110010111010100110000111
+```
+
+## Bitwise shift operators
+
+{/* source:cpp-language-operator-arithmetic:0104 */}
+The bitwise shift operator expressions have the form
+
+{/* source:cpp-language-operator-arithmetic:0105 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="lhs << rhs" />
+  <Declaration id="2" language="cpp" grammar code="lhs >> rhs" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0106 */}
+1. Bitwise left-shift.
+
+{/* source:cpp-language-operator-arithmetic:0107 */}
+2. Bitwise right-shift.
+
+{/* source:cpp-language-operator-arithmetic:0108 */}
+Bitwise shift operators have higher [precedence](/docs/cpp/language/expressions/operator_precedence) than bitwise logic operators, but have lower precedence than additive and multiplicative operators. These operators associate from left to right:
+
+{/* source:cpp-language-operator-arithmetic:0109 */}
+```cpp
+a >> b * c;  // equivalent to a >> (b * c),  NOT (a >> b) * c
+d << e & f;  // equivalent to (d << e) & f,  NOT d << (e & f)
+
+g << h >> i; // equivalent to (g << h) >> i, NOT g << (h >> i)
+```
+
+### Built-in bitwise shift operators
+
+{/* source:cpp-language-operator-arithmetic:0110 */}
+For the built-in bitwise shift operators, both operands must be prvalues of integral or unscoped enumeration type. Integral promotions are performed on both operands.
+
+{/* source:cpp-language-operator-arithmetic:0111 */}
+In the remaining description in this section, "operand(s)", `a`, `b`, *lhs* and *rhs* refer to the converted or promoted operand(s).
+
+{/* source:cpp-language-operator-arithmetic:0112 */}
+If the value of *rhs* is negative or is not less than the number of bits in *lhs*, the behavior is undefined.
+
+{/* source:cpp-language-operator-arithmetic:0113 */}
+<Revision until="C++20">
+For unsigned `a`, the value of `a << b` is the value of a * 2b, reduced modulo 2N where N is the number of bits in the return type (that is, bitwise left shift is performed and the bits that get shifted out of the destination type are discarded).
+
+For signed and non-negative `a`, if a * 2b is representable in the unsigned version of the return type, then that value, [converted](/docs/cpp/language/expressions/implicit_cast#Integral_conversions) to signed, is the value of `a << b` (this makes it legal to create [INT_MIN](/docs/cpp/library/utility/types/climits) as `1 << 31`); otherwise the behavior is undefined.
+
+For negative `a`, the behavior of `a << b` is undefined.
+
+For unsigned `a` and for signed and non-negative `a`, the value of `a >> b` is the integer part of a/2b.
+
+For negative `a`, the value of `a >> b` is implementation-defined (in most implementations, this performs arithmetic right shift, so that the result remains negative).
+</Revision>
+
+<Revision since="C++20">
+The value of `a << b` is the unique value congruent to a * 2b modulo 2N where N is the number of bits in the return type (that is, bitwise left shift is performed and the bits that get shifted out of the destination type are discarded).
+
+The value of `a >> b` is a/2b, rounded towards negative infinity (in other words, right shift on signed `a` is arithmetic right shift).
+</Revision>
+
+{/* source:cpp-language-operator-arithmetic:0114 */}
+The type of the result is that of *lhs*.
+
+### Overloads
+
+{/* source:cpp-language-operator-arithmetic:0115 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every pair of promoted integral types L and R, the following function signatures participate in overload resolution:
+
+{/* source:cpp-language-operator-arithmetic:0116 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`L operator<<(L, R)`} />
+  <Declaration language="cpp" code={`L operator>>(L, R)`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-arithmetic:0117 */}
+```cpp
+#include <iostream>
+
+enum { ONE = 1, TWO = 2 };
+
+int main()
+{
+    std::cout << std::hex << std::showbase;
+    char c = 0x10;
+    unsigned long long ull = 0x123;
+    std::cout << "0x123 << 1 = " << (ull << 1) << "\n"
+                 "0x123 << 63 = " << (ull << 63) << "\n" // overflow in unsigned
+                 "0x10 << 10 = " << (c << 10) << '\n';   // char is promoted to int
+    long long ll = -1000;
+    std::cout << std::dec << "-1000 >> 1 = " << (ll >> ONE) << '\n';
+}
+```
+
+Output:
+
+```text
+0x123 << 1 = 0x246
+0x123 << 63 = 0x8000000000000000
+0x10 << 10 = 0x4000
+-1000 >> 1 = -500
+```
+
+## Standard library
+
+{/* source:cpp-language-operator-arithmetic:0118 */}
+Arithmetic operators are overloaded for many standard library types.
+
+### Unary arithmetic operators
+
+{/* source:cpp-language-operator-arithmetic:0119 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-`](/docs/cpp/library/chrono/duration/operator_arith)</DescriptionTerm><DescriptionBody>implements unary + and unary - (public member function of `std::chrono::duration<Rep,Period>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-`](/docs/cpp/library/numeric/complex/operator_arith2)</DescriptionTerm><DescriptionBody>applies unary operators to complex numbers (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator~` `operator!`](/docs/cpp/library/numeric/valarray/operator_arith)</DescriptionTerm><DescriptionBody>applies a unary arithmetic operator to each element of the valarray (public member function of `std::valarray<T>`)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+### Additive operators
+
+{/* source:cpp-language-operator-arithmetic:0120 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-`](/docs/cpp/library/chrono/time_point/operator_arith2) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>performs add and subtract operations involving a time point (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator*` `operator/` `operator%`](/docs/cpp/library/chrono/duration/operator_arith4) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>implements arithmetic operations with durations as arguments (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-`](/docs/cpp/library/chrono/year_month_day/operator_arith_2) <InlineRevision since="C++20" /></DescriptionTerm><DescriptionBody>adds or subtracts a `year_month_day` and some number of years or months (function)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+`](/docs/cpp/string/basic-string/operator%2B)</DescriptionTerm><DescriptionBody>concatenates two strings, a string and a `char`, or a string and [string_view](/docs/cpp/library/string/basic_string_view) (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-`](/docs/cpp/library/iterator/reverse_iterator/operator_arith)</DescriptionTerm><DescriptionBody>advances or decrements the iterator (public member function of `std::reverse_iterator<Iter>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-`](/docs/cpp/library/iterator/move_iterator/operator_arith)</DescriptionTerm><DescriptionBody>advances or decrements the iterator (public member function of `std::move_iterator<Iter>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator*` `operator/`](/docs/cpp/library/numeric/complex/operator_arith3)</DescriptionTerm><DescriptionBody>performs complex number arithmetic on two complex values or a complex and a scalar (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator*` `operator/` `operator%` `operator&` `operator|` `operator^` `operator<<` `operator>>` `operator&&` `operator||`](/docs/cpp/library/numeric/valarray/operator_arith3)</DescriptionTerm><DescriptionBody>applies binary operators to each element of two valarrays, or a valarray and a value (function template)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+### Multiplicative operators
+
+{/* source:cpp-language-operator-arithmetic:0121 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator*` `operator/` `operator%`](/docs/cpp/library/chrono/duration/operator_arith4) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>implements arithmetic operations with durations as arguments (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator*` `operator/`](/docs/cpp/library/numeric/complex/operator_arith3)</DescriptionTerm><DescriptionBody>performs complex number arithmetic on two complex values or a complex and a scalar (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator+` `operator-` `operator*` `operator/` `operator%` `operator&` `operator|` `operator^` `operator<<` `operator>>` `operator&&` `operator||`](/docs/cpp/library/numeric/valarray/operator_arith3)</DescriptionTerm><DescriptionBody>applies binary operators to each element of two valarrays, or a valarray and a value (function template)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+### Bitwise logic operators
+
+{/* source:cpp-language-operator-arithmetic:0122 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator&=` `operator|=` `operator^=` `operator~`](/docs/cpp/library/utility/bitset/operator_logic)</DescriptionTerm><DescriptionBody>performs binary AND, OR, XOR and NOT (public member function of `std::bitset<N>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator&` `operator|` `operator^`](/docs/cpp/library/utility/bitset/operator_logic2)</DescriptionTerm><DescriptionBody>performs binary logic operations on bitsets (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator~`](/docs/cpp/library/numeric/valarray/operator_arith)</DescriptionTerm><DescriptionBody>applies a unary arithmetic operator to each element of the valarray (public member function of `std::valarray<T>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator^` `operator&` `operator|`](/docs/cpp/library/numeric/valarray/operator_arith3)</DescriptionTerm><DescriptionBody>applies binary operators to each element of two valarrays, or a valarray and a value (function template)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+### Bitwise shift operators
+
+{/* source:cpp-language-operator-arithmetic:0123 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/numeric/valarray/operator_arith3)</DescriptionTerm><DescriptionBody>applies binary operators to each element of two valarrays, or a valarray and a value (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/utility/bitset/operator_ltltgtgt)</DescriptionTerm><DescriptionBody>performs binary shift left and shift right (public member function of `std::bitset<N>`)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+### Stream insertion/extraction operators
+
+{/* source:cpp-language-operator-arithmetic:0124 */}
+Throughout the standard library, bitwise shift operators are commonly overloaded with I/O stream (`std::ios_base&` or one of the classes derived from it) as both the left operand and return type. Such operators are known as *stream insertion* and *stream extraction* operators:
+
+{/* source:cpp-language-operator-arithmetic:0125 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator>>`](/docs/cpp/library/io/basic_istream/operator_gtgt)</DescriptionTerm><DescriptionBody>extracts formatted data (public member function of `std::basic_istream<CharT,Traits>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator>>(std::basic_istream)`](/docs/cpp/library/io/basic_istream/operator_gtgt2)</DescriptionTerm><DescriptionBody>extracts characters and character arrays (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<`](/docs/cpp/library/io/basic_ostream/operator_ltlt)</DescriptionTerm><DescriptionBody>inserts formatted data (public member function of `std::basic_ostream<CharT,Traits>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<(std::basic_ostream)`](/docs/cpp/library/io/basic_ostream/operator_ltlt2)</DescriptionTerm><DescriptionBody>inserts character data or insert into rvalue stream (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/numeric/complex/operator_ltltgtgt)</DescriptionTerm><DescriptionBody>serializes and deserializes a complex number (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/utility/bitset/operator_ltltgtgt2)</DescriptionTerm><DescriptionBody>performs stream input and output of bitsets (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/string/basic_string/operator_ltltgtgt)</DescriptionTerm><DescriptionBody>performs stream input and output on strings (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/numeric/random/linear_congruential_engine/operator_ltltgtgt) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>performs stream input and output on pseudo-random number engine (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`operator<<` `operator>>`](/docs/cpp/library/numeric/random/uniform_int_distribution/operator_ltltgtgt) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>performs stream input and output on pseudo-random number distribution (function template)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+## Defect reports
+
+{/* source:cpp-language-operator-arithmetic:0126 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-operator-arithmetic:0127 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={614} standard="C++98"><PublishedBehavior>the algebraic quotient of integer division was rounded in implementation-defined direction</PublishedBehavior><CorrectedBehavior>the algebraic quotient of integer division is truncated towards zero (fractional part is discarded)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1450} standard="C++98"><PublishedBehavior>the result of `a / b` was unspecified if it is not representable in the result type</PublishedBehavior><CorrectedBehavior>the behavior of both `a / b` and `a % b` is undefined in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1457} standard="C++98"><PublishedBehavior>the behavior of shifting the leftmost `1` bit of a positive signed value into the sign bit was undefined</PublishedBehavior><CorrectedBehavior>made well-defined</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1504} standard="C++98"><PublishedBehavior>a pointer to a base class subobject of an array element could be used in pointer arithmetic</PublishedBehavior><CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1515} standard="C++98"><PublishedBehavior>only unsigned integers which declared `unsigned` should obey the laws of arithmetic modulo 2n</PublishedBehavior><CorrectedBehavior>applies to all unsigned integers</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1642} standard="C++98"><PublishedBehavior>arithmetic operators allow their operands to be lvalues</PublishedBehavior><CorrectedBehavior>some operands must be rvalues</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1865} standard="C++98"><PublishedBehavior>the resolution of [CWG issue 1504](https://cplusplus.github.io/CWG/issues/1504.html) made the behaviors of pointer arithmetic involving pointers to array element undefined if the pointed-to type and the array element type have different cv-qualifications in non-top levels</PublishedBehavior><CorrectedBehavior>made well-defined</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1971} standard="C++98"><PublishedBehavior>it was unclear whether the rule resolving the ambiguity of `~` applies to cases such as `~X(0)`</PublishedBehavior><CorrectedBehavior>the rule applies to such cases</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2419} standard="C++98"><PublishedBehavior>a pointer to non-array object was only treated as a pointer to the first element of an array with size 1 in pointer arithmetic if the pointer is obtained by `&`</PublishedBehavior><CorrectedBehavior>applies to all pointers to non-array objects</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2626} standard="C++98"><PublishedBehavior>the result of built-in `operator~` was simply 'one's complement' without proper definition</PublishedBehavior><CorrectedBehavior>the result is phrased in terms of the base-2 representation</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2724} standard="C++20"><PublishedBehavior>the rounding direction of arithmetic right shift was unclear</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2853} standard="C++98"><PublishedBehavior>a pointer past the end of an object could not be added or subtracted with an integer</PublishedBehavior><CorrectedBehavior>it can</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-operator-arithmetic:0128 */}
+[Operator precedence](/docs/cpp/language/expressions/operator_precedence)
+
+{/* source:cpp-language-operator-arithmetic:0129 */}
+[Operator overloading](/docs/cpp/language/expressions/operators)
+
+{/* source:cpp-language-operator-arithmetic:0130 */}
+**Common operators**
+
+- [assignment](/docs/cpp/language/expressions/operator_assignment): `a = b`, `a += b`, `a -= b`, `a *= b`, `a /= b`, `a %= b`, `a &= b`, `a |= b`, `a ^= b`, `a <<= b`, `a >>= b`
+- [increment decrement](/docs/cpp/language/expressions/operator_incdec): `++a`, `--a`, `a++`, `a--`
+- arithmetic: `+a`, `-a`, `a + b`, `a - b`, `a * b`, `a / b`, `a % b`, `~a`, `a & b`, `a | b`, `a ^ b`, `a << b`, `a >> b`
+- [logical](/docs/cpp/language/expressions/operator_logical): `!a`, `a && b`, `a || b`
+- [comparison](/docs/cpp/language/expressions/operator_comparison): `a == b`, `a != b`, `a < b`, `a > b`, `a <= b`, `a >= b`, `a <=> b`
+- [member access](/docs/cpp/language/expressions/operator_member_access): `a[...]`, `*a`, `&a`, `a->b`, `a.b`, `a->*b`, `a.*b`
+- [other](/docs/cpp/language/expressions/operator_other): function call `a(...)`, comma `a, b`, conditional `a ? b : c`
+
+**Special operators**
+
+- [`static_cast`](/docs/cpp/language/expressions/static_cast) converts one type to another related type
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) converts within inheritance hierarchies
+- [`const_cast`](/docs/cpp/language/expressions/const_cast) adds or removes [cv](/docs/cpp/language/declarations/cv)-qualifiers
+- [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) converts type to unrelated type
+- [C-style cast](/docs/cpp/language/expressions/explicit_cast) converts one type to another by a mix of `static_cast`, `const_cast`, and `reinterpret_cast`
+- [`new`](/docs/cpp/language/expressions/new) creates objects with dynamic storage duration
+- [`delete`](/docs/cpp/language/expressions/delete) destructs objects previously created by the new expression and releases obtained memory area
+- [`sizeof`](/docs/cpp/language/expressions/sizeof) queries the size of a type
+- [`sizeof...`](/docs/cpp/language/templates/sizeof...) queries the size of a [pack](/docs/cpp/language/templates/parameter_pack) <InlineRevision since="C++11" />
+- [`typeid`](/docs/cpp/language/expressions/typeid) queries the type information of a type
+- [`noexcept`](/docs/cpp/language/exceptions/noexcept) checks if an expression can throw an exception <InlineRevision since="C++11" />
+- [`alignof`](/docs/cpp/language/expressions/alignof) queries alignment requirements of a type <InlineRevision since="C++11" />
+
+{/* source:cpp-language-operator-arithmetic:0131 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/expressions/operator_arithmetic)</DescriptionTerm>
+    <DescriptionBody>for Arithmetic operators</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

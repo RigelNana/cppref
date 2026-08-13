@@ -1,0 +1,329 @@
+---
+title: "Destructors"
+description: "A destructor is a special member function that is called when the lifetime of an object ends. The purpose of the destructor is to free the resources that the object may have acquired during its lifetime."
+source_url: "https://en.cppreference.com/w/cpp/language/destructor"
+language: "C++"
+---
+
+{/* source:cpp-language-destructor:0000 */}
+A destructor is a special [member function](/docs/cpp/language/classes/member_functions) that is called when the [lifetime of an object](/docs/cpp/language/basic_concepts/lifetime) ends. The purpose of the destructor is to free the resources that the object may have acquired during its lifetime.
+
+{/* source:cpp-language-destructor:0001 */}
+<Revision since="C++20">
+A destructor cannot be a [coroutine](/docs/cpp/language/functions/coroutines).
+</Revision>
+
+## Syntax
+
+{/* source:cpp-language-destructor:0002 */}
+<InlineRevision until="C++20">Destructors</InlineRevision><InlineRevision since="C++20">[Prospective destructors](/docs/cpp/language/classes/destructor#Prospective_destructor)</InlineRevision> are declared using member [function declarators](/docs/cpp/language/functions/function) of the following form:
+
+{/* source:cpp-language-destructor:0003 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="class-name-with-tilde ( parameter-list (optional) ) except (optional) attr (optional)" />
+</DeclarationDoc>
+
+{/* source:cpp-language-destructor:0004 */}
+<ParameterList>
+  <Parameter name="class-name-with-tilde">
+    an [identifier expression](/docs/cpp/language/expressions#Primary_expressions),<InlineRevision since="C++11"> possibly followed by a list of attributes, and</InlineRevision> possibly enclosed by a pair parentheses
+  </Parameter>
+  <Parameter name="parameter-list">
+    [parameter list](/docs/cpp/language/functions/function#Parameter_list)
+  </Parameter>
+  <Parameter name="except">
+    <InlineRevision until="C++11" /> [dynamic exception specification](/docs/cpp/language/exceptions/except_spec)
+
+    <InlineRevision since="C++11" until="C++17" /> either [dynamic exception specification](/docs/cpp/language/exceptions/except_spec) or [noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)
+
+    <InlineRevision since="C++17" /> [noexcept specification](/docs/cpp/language/exceptions/noexcept_spec)
+  </Parameter>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> a list of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+</ParameterList>
+
+{/* source:cpp-language-destructor:0005 */}
+The only specifiers allowed in the [declaration specifiers](/docs/cpp/language/declarations#Specifiers) of a<InlineRevision since="C++20"> prospective</InlineRevision> destructor declaration [areconstexpr,](/docs/cpp/language/declarations/constexpr)<InlineRevision since="C++11" /> [`friend`](/docs/cpp/language/classes/friend), [`inline`](/docs/cpp/language/declarations/inline) and [`virtual`](/docs/cpp/language/classes/virtual) (in particular, no return type is allowed).
+
+{/* source:cpp-language-destructor:0006 */}
+The identifier expression of class-name-with-tilde must have one of the following forms:
+
+{/* source:cpp-language-destructor:0007 */}
+- In a member declaration that belongs to the [member specification](/docs/cpp/language/classes/class#Member_specification) of a class or class template, but is not a [friend declaration](/docs/cpp/language/classes/friend):
+
+{/* source:cpp-language-destructor:0008 */}
+- For classes, the identifier expression is `~` followed by the [injected-class-name](/docs/cpp/language/classes/injected-class-name) of the immediately-enclosing class.
+- For class templates, the identifier expression is `~` followed by <InlineRevision until="C++20">a class name that names the [current instantiation](/docs/cpp/language/templates/dependent_name#Current_instantiation)</InlineRevision><InlineRevision since="C++20">the injected-class-name</InlineRevision> of the immediately-enclosing class template.
+
+{/* source:cpp-language-destructor:0009 */}
+- Otherwise, the identifier expression is a qualified identifier whose terminal unqualified identifier is `~` followed by the injected-class name of the class nominated by the non-terminal parts of the qualified identifier.
+
+## Explanation
+
+{/* source:cpp-language-destructor:0010 */}
+The destructor is implicitly invoked whenever an object's [lifetime](/docs/cpp/language/basic_concepts/lifetime) ends, which includes
+
+{/* source:cpp-language-destructor:0011 */}
+- [program termination](/docs/cpp/library/utility/program/exit), for objects with static [storage duration](/docs/cpp/language/declarations/storage_duration)
+
+{/* source:cpp-language-destructor:0012 */}
+<Revision since="C++11">
+- thread exit, for objects with thread-local storage duration
+</Revision>
+
+{/* source:cpp-language-destructor:0013 */}
+- end of scope, for objects with automatic storage duration and for temporaries whose life was extended by binding to a reference
+- [delete-expression](/docs/cpp/language/expressions/delete), for objects with dynamic storage duration
+- end of the full [expression](/docs/cpp/language/expressions), for nameless temporaries
+- [stack unwinding](/docs/cpp/language/exceptions/throw#Stack_unwinding), for objects with automatic storage duration when an exception escapes their block, uncaught.
+
+{/* source:cpp-language-destructor:0014 */}
+The destructor can also be invoked explicitly.
+
+## Potentially-invoked destructor
+
+{/* source:cpp-language-destructor:0015 */}
+A destructor of a class `C` is *potentially invoked* in the following situations:
+
+{/* source:cpp-language-destructor:0016 */}
+- It is invoked explicitly or implicitly.
+- A [`new` expression](/docs/cpp/language/expressions/new) creates an array of objects of type `C`.
+- The result object of a [`return` statement](/docs/cpp/language/statements/return) is of type `C`.
+- An array is under [aggregate initialization](/docs/cpp/language/initialization/aggregate_initialization), and its element type is `C`.
+- A class object is under aggregate initialization, and it has a member of type `C` where `C` is not an [anonymous union](/docs/cpp/language/classes/union#Anonymous_unions) type.
+- A [potentially constructed subobject](/docs/cpp/language/basic_concepts/objects#Potentially_constructed_subobjects) is of type `C` in a non-<InlineRevision since="C++11">[delegating](/docs/cpp/language/classes/initializer_list#Delegating_constructor)</InlineRevision> constructor.
+- An [exception object](/docs/cpp/language/exceptions/throw#Exception_object) of type `C` is constructed.
+
+{/* source:cpp-language-destructor:0017 */}
+If a potentially-invoked destructor is<InlineRevision since="C++11"> deleted or</InlineRevision> not accessible from the context of the invocation, the program is ill-formed.
+
+{/* source:cpp-language-destructor:0018 */}
+<Revision since="C++20">
+### Prospective destructor
+
+A class may have one or more prospective destructors, one of which is selected as the destructor for the class.
+
+In order to determine which prospective destructor is the destructor, at the end of the definition of the class, [overload resolution](/docs/cpp/language/functions/overload_resolution) is performed among prospective destructors declared in the class with an empty argument list. If the overload resolution fails, the program is ill-formed. Destructor selection does not [odr-use](/docs/cpp/language/basic_concepts/definition#One_Definition_Rule) the selected destructor, and the selected destructor may be deleted.
+
+All prospective destructors are special member functions. If no user-declared prospective destructor is provided for class T, the compiler will always declare one (see below), and the implicitly declared prospective destructor is also the destructor for T.
+</Revision>
+
+## Implicitly-declared destructor
+
+{/* source:cpp-language-destructor:0019 */}
+If no user-declared<InlineRevision since="C++20"> prospective</InlineRevision> destructor is provided for a [class type](/docs/cpp/language/classes/class), the compiler will always declare a destructor as an `inline public` member of its class.
+
+{/* source:cpp-language-destructor:0020 */}
+As with any implicitly-declared special member function, the exception specification of the implicitly-declared destructor is non-throwing unless <InlineRevision since="C++17">the destructor of any potentially-constructed base or member is [potentially-throwing](/docs/cpp/language/exceptions/noexcept_spec)</InlineRevision><InlineRevision until="C++17">implicit definition would directly invoke a function with a different exception specification</InlineRevision>. In practice, implicit destructors are `noexcept` unless the class is "poisoned" by a base or member whose destructor is `noexcept(false)`.
+
+## Implicitly-defined destructor
+
+{/* source:cpp-language-destructor:0021 */}
+If an implicitly-declared destructor is not deleted, it is implicitly defined (that is, a function body is generated and compiled) by the compiler when it is [odr-used](/docs/cpp/language/basic_concepts/definition#ODR-use). This implicitly-defined destructor has an empty body.
+
+{/* source:cpp-language-destructor:0022 */}
+<Revision since="C++20">
+If this satisfies the requirements of a <InlineRevision until="C++23">[constexpr destructor](/docs/cpp/language/declarations/constexpr#constexpr_destructor)</InlineRevision><InlineRevision since="C++23">[constexpr function](/docs/cpp/language/declarations/constexpr#constexpr_function)</InlineRevision>, the generated destructor is `constexpr`.
+</Revision>
+
+## Deleted destructor
+
+{/* source:cpp-language-destructor:0023 */}
+The implicitly-declared or explicitly-defaulted destructor for class `T` is <InlineRevision until="C++11">undefined</InlineRevision><InlineRevision since="C++11">defined as deleted</InlineRevision> if any of the following conditions is satisfied:
+
+{/* source:cpp-language-destructor:0024 */}
+- `T` has a [potentially constructed subobject](/docs/cpp/language/basic_concepts/objects#Subobjects) of class type `M` (or possibly multi-dimensional array thereof) such that `M` has a destructor that
+
+{/* source:cpp-language-destructor:0025 */}
+- is deleted or inaccessible from the destructor of `T`, or
+- in the case of the subobject being a [variant member](/docs/cpp/language/classes/union#Union-like_classes), is non-trivial.
+
+{/* source:cpp-language-destructor:0026 */}
+- The destructor is virtual and the lookup for the [deallocation function](/docs/cpp/library/memory/new/operator_delete) results in
+
+{/* source:cpp-language-destructor:0027 */}
+- an ambiguity, or
+- a function that is deleted or inaccessible from the destructor.
+
+{/* source:cpp-language-destructor:0028 */}
+<Revision since="C++20">
+An explicitly-defaulted prospective destructor for `T` is defined as deleted if it is not the destructor for `T`.
+</Revision>
+
+## Trivial destructor
+
+{/* source:cpp-language-destructor:0029 */}
+The destructor for class `T` is trivial if all of the following is true:
+
+{/* source:cpp-language-destructor:0030 */}
+- The destructor is not user-provided (meaning, it is either implicitly declared, or explicitly defined as defaulted on its first declaration).
+- The destructor is not virtual (that is, the base class destructor is not virtual).
+- All direct base classes have trivial destructors.
+- All non-static data members of class type (or array of class type) have trivial destructors.
+
+{/* source:cpp-language-destructor:0031 */}
+A trivial destructor is a destructor that performs no action. Objects with trivial destructors don't require a delete-expression and may be disposed of by simply deallocating their storage. All data types compatible with the C language (POD types) are trivially destructible.
+
+## Destruction sequence
+
+{/* source:cpp-language-destructor:0032 */}
+For both user-defined or implicitly-defined destructors, after executing the body of the destructor and destroying any automatic objects allocated within the body, the compiler calls the destructors for all non-static non-variant data members of the class, in reverse order of declaration, then it calls the destructors of all direct non-virtual base classes in [reverse order of construction](/docs/cpp/language/classes/initializer_list#Initialization_order) (which in turn call the destructors of their members and their base classes, etc), and then, if this object is of most-derived class, it calls the destructors of all virtual bases.
+
+{/* source:cpp-language-destructor:0033 */}
+Even when the destructor is called directly (e.g. `obj.~Foo();`), the return statement in `~Foo()` does not return control to the caller immediately: it calls all those member and base destructors first.
+
+## Virtual destructors
+
+{/* source:cpp-language-destructor:0034 */}
+Deleting an object through pointer to base invokes undefined behavior unless the destructor in the base class is [virtual](/docs/cpp/language/classes/virtual):
+
+{/* source:cpp-language-destructor:0035 */}
+```cpp
+class Base
+{
+public:
+    virtual ~Base() {}
+};
+
+class Derived : public Base {};
+
+Base* b = new Derived;
+delete b; // safe
+```
+
+{/* source:cpp-language-destructor:0036 */}
+A common guideline is that a destructor for a base class must be [either public and virtual or protected and nonvirtual](http://www.gotw.ca/publications/mill18.htm).
+
+## Pure virtual destructors
+
+{/* source:cpp-language-destructor:0037 */}
+A <InlineRevision since="C++20">prospective</InlineRevision> destructor may be declared [pure virtual](/docs/cpp/language/classes/abstract_class), for example in a base class which needs to be made abstract, but has no other suitable functions that could be declared pure virtual. A pure virtual destructor must have a definition, since all base class destructors are always called when the derived class is destroyed:
+
+{/* source:cpp-language-destructor:0038 */}
+```cpp
+class AbstractBase
+{
+public:
+    virtual ~AbstractBase() = 0;
+};
+AbstractBase::~AbstractBase() {}
+
+class Derived : public AbstractBase {};
+
+// AbstractBase obj; // compiler error
+Derived obj;         // OK
+```
+
+## Exceptions
+
+{/* source:cpp-language-destructor:0039 */}
+As any other function, a destructor may terminate by throwing an [exception](/docs/cpp/language/exceptions) <InlineRevision since="C++11">(this usually requires it to be explicitly declared `noexcept(false)`)</InlineRevision>, however if this destructor happens to be called during [stack unwinding](/docs/cpp/language/exceptions/throw#Stack_unwinding), [`std::terminate`](/docs/cpp/library/error/terminate) is called instead.
+
+{/* source:cpp-language-destructor:0040 */}
+Although [`std::uncaught_exceptions`](/docs/cpp/library/error/exception/uncaught_exception) may sometimes be used to detect stack unwinding in progress, it is generally considered bad practice to allow any destructor to terminate by throwing an exception. This functionality is nevertheless used by some libraries, such as [SOCI](https://github.com/SOCI/soci) and [Galera 3](https://galeracluster.com/downloads/), which rely on the ability of the destructors of nameless temporaries to throw exceptions at the end of the full expression that constructs the temporary.
+
+{/* source:cpp-language-destructor:0041 */}
+[`std::experimental::scope_success`](/docs/cpp/library/experimental/lib_extensions_3/scope_success) in Library fundamental TS v3 may have [a potentially-throwing destructor](/docs/cpp/library/experimental/lib_extensions_3/scope_success/~scope_success), which throws an exception when the scope is exited normally and the exit function throws an exception.
+
+## Notes
+
+{/* source:cpp-language-destructor:0042 */}
+Calling a destructor directly for an ordinary object, such as a local variable, invokes undefined behavior when the destructor is called again, at the end of scope.
+
+{/* source:cpp-language-destructor:0043 */}
+In generic contexts, the destructor call syntax can be used with an object of non-class type; this is known as pseudo-destructor call: see [member access operator](/docs/cpp/language/expressions/operator_member_access#Built-in_member_access_operators).
+
+## Example
+
+{/* source:cpp-language-destructor:0044 */}
+```cpp
+#include <iostream>
+
+struct A
+{
+    int i;
+
+    A(int num) : i(num)
+    {
+        std::cout << "ctor a" << i << '\n';
+    }
+
+    ~A()
+    {
+        std::cout << "dtor a" << i << '\n';
+    }
+};
+
+A a0(0);
+
+int main()
+{
+    A a1(1);
+    A* p;
+
+    { // nested scope
+        A a2(2);
+        p = new A(3);
+    } // a2 out of scope
+
+    delete p; // calls the destructor of a3
+}
+```
+
+Output:
+
+```text
+ctor a0
+ctor a1
+ctor a2
+ctor a3
+dtor a2
+dtor a3
+dtor a1
+dtor a0
+```
+
+## Defect reports
+
+{/* source:cpp-language-destructor:0045 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-destructor:0046 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={193} standard="C++98">
+    <PublishedBehavior>whether automatic objects in a destructor are destroyed before or after the destruction of the class's base and member subobjects was unspecified</PublishedBehavior>
+    <CorrectedBehavior>they are destroyed before destroying those subobjects</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={344} standard="C++98">
+    <PublishedBehavior>the declarator syntax of destructor was defective (had the same problem as [CWG issue 194](https://cplusplus.github.io/CWG/issues/194.html) and [CWG issue 263](https://cplusplus.github.io/CWG/issues/263.html)</PublishedBehavior>
+    <CorrectedBehavior>changed the syntax to a specialized function declarator syntax</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1241} standard="C++98">
+    <PublishedBehavior>static members might be destroyed right after destructor execution</PublishedBehavior>
+    <CorrectedBehavior>only destroy non-static members</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1353} standard="C++98">
+    <PublishedBehavior>the conditions where implicitly-declared destructors are undefined did not consider multi-dimensional array types</PublishedBehavior>
+    <CorrectedBehavior>consider these types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1435} standard="C++98">
+    <PublishedBehavior>the meaning of “class name” in the declarator syntax of destructor was unclear</PublishedBehavior>
+    <CorrectedBehavior>changed the syntax to a specialized function declarator syntax</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2180} standard="C++98">
+    <PublishedBehavior>the destructor of class X called the destructors for X's virtual direct base classes</PublishedBehavior>
+    <CorrectedBehavior>those destructors are not called</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2807} standard="C++20">
+    <PublishedBehavior>the declaration specifiers could contain `consteval`</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-destructor:0047 */}
+- [copy elision](/docs/cpp/language/initialization/copy_elision)
+- [`new`](/docs/cpp/language/expressions/new)
+- [`delete`](/docs/cpp/language/expressions/delete)

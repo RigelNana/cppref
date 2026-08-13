@@ -1,0 +1,262 @@
+---
+title: "for loop"
+description: "Conditionally executes a statement repeatedly, where the statement does not need to manage the loop condition."
+source_url: "https://en.cppreference.com/w/cpp/language/for"
+language: "C++"
+---
+
+{/* source:cpp-language-for:0000 */}
+Conditionally executes a statement repeatedly, where the statement does not need to manage the loop condition.
+
+## Syntax
+
+{/* source:cpp-language-for:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="attr (optional) for ( init-statement condition (optional) ; expression (optional) ) statement" />
+</DeclarationDoc>
+
+{/* source:cpp-language-for:0002 */}
+<ParameterList>
+  <Parameter name="attr">
+    <InlineRevision since="C++11" /> any number of [attributes](/docs/cpp/language/declarations/attributes)
+  </Parameter>
+  <Parameter name="init-statement">
+    one of
+
+    - an [expression statement](/docs/cpp/language/statements#Expression_statements) (which may be a null statement `;`)
+    - a [simple declaration](/docs/cpp/language/declarations#Simple_declaration) (typically a declaration of a loop counter variable with initializer), it may declare arbitrary many variables<InlineRevision since="C++17"> or [structured bindings](/docs/cpp/language/declarations/structured_binding)</InlineRevision>
+
+    <Revision since="C++23">
+    - an [alias declaration](/docs/cpp/language/declarations/type_alias)
+    </Revision>
+
+    Note that any *init-statement* must end with a semicolon. This is why it is often described informally as an expression or a declaration followed by a semicolon.
+  </Parameter>
+  <Parameter name="condition">
+    a [condition](/docs/cpp/language/statements/for#Condition)
+  </Parameter>
+  <Parameter name="expression">
+    an [expression](/docs/cpp/language/expressions) (typically an expression that increments the loop counter)
+  </Parameter>
+  <Parameter name="statement">
+    a [statement](/docs/cpp/language/statements) (typically a compound statement)
+  </Parameter>
+</ParameterList>
+
+## Condition
+
+{/* source:cpp-language-for:0003 */}
+A condition can either be an [expression](/docs/cpp/language/expressions) or a [simple declaration](/docs/cpp/language/declarations#Simple_declaration).
+
+{/* source:cpp-language-for:0004 */}
+<Revision since="C++26">
+- If it can be syntactically resolved as a [structured binding](/docs/cpp/language/declarations/structured_binding) declaration, it is interpreted as a structured binding declaration.
+</Revision>
+
+{/* source:cpp-language-for:0005 */}
+- If it can be syntactically resolved as an expression, it is treated as an expression. Otherwise, it is treated as a declaration<InlineRevision since="C++26"> that is not a structured binding declaration</InlineRevision>.
+
+{/* source:cpp-language-for:0006 */}
+When control reaches *condition*, the condition will yield a value, which is used to determine whether *statement* will be executed.
+
+### Expression
+
+{/* source:cpp-language-for:0007 */}
+If *condition* is an expression, the value it yields is the the value of the expression contextually converted to `bool`. If that conversion is ill-formed, the program is ill-formed.
+
+### Declaration
+
+{/* source:cpp-language-for:0008 */}
+If *condition* is a simple declaration, the value it yields is the value of the decision variable (see below) contextually converted to `bool`. If that conversion is ill-formed, the program is ill-formed.
+
+#### Non-structured binding declaration
+
+{/* source:cpp-language-for:0009 */}
+The declaration has the following restrictions:
+
+{/* source:cpp-language-for:0010 */}
+- Syntactically conforms to the following form:
+
+{/* source:cpp-language-for:0011 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar until="C++11" code="type-specifier-seq declarator = assignment-expression" />
+  <Declaration id="2" language="cpp" grammar since="C++11" code="attribute-specifier-seq (optional) decl-specifier-seq declarator brace-or-equal-initializer" />
+</DeclarationDoc>
+
+{/* source:cpp-language-for:0012 */}
+- The declarator cannot specify a [function](/docs/cpp/language/functions/function) or an [array](/docs/cpp/language/declarations/array). The <InlineRevision until="C++11">type specifier sequence</InlineRevision><InlineRevision since="C++11"> declaration specifier sequence can only contain type specifiers and `constexpr`, and it</InlineRevision> cannot define a [class](/docs/cpp/language/classes/class) or [enumeration](/docs/cpp/language/declarations/enum).
+
+{/* source:cpp-language-for:0013 */}
+The decision variable of the declaration is the declared variable.
+
+{/* source:cpp-language-for:0014 */}
+<Revision since="C++26">
+#### Structured binding declaration
+
+The declaration has the following restrictions:
+
+- The *expression* in its [initializer](/docs/cpp/language/initialization) cannot be of an array type.
+- The [declaration specifier sequence](/docs/cpp/language/declarations#Specifiers) can only contain type specifiers and `constexpr`.
+
+The decision variable of the declaration is the invented variable `e` [introduced by the declaration](/docs/cpp/language/declarations/structured_binding).
+</Revision>
+
+## Explanation
+
+{/* source:cpp-language-for:0015 */}
+A `for` statement equivalent to:
+
+{/* source:cpp-language-for:0016 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="{ init-statement while ( condition ) { statement expression ; } }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-for:0017 */}
+Except that
+
+{/* source:cpp-language-for:0018 */}
+- The scope of *init-statement* and the scope of *condition* are the same.
+- The scope of *statement* and the scope of *expression* are disjoint and nested within the scope of *init-statement* and *condition*.
+- Executing a [`continue` statement](/docs/cpp/language/statements/continue) in *statement* will evaluate *expression*.
+- Empty *condition* is equivalent to `true`.
+
+{/* source:cpp-language-for:0019 */}
+If the loop needs to be terminated within *statement*, a [`break` statement](/docs/cpp/language/statements/break) can be used as terminating statement.
+
+{/* source:cpp-language-for:0020 */}
+If the current iteration needs to be terminated within *statement*, a [`continue` statement](/docs/cpp/language/statements/continue) can be used as shortcut.
+
+## Notes
+
+{/* source:cpp-language-for:0021 */}
+As is the case with [`while`](/docs/cpp/language/statements/while) loop, if *statement* is not a compound statement, the scope of variables declared in it is limited to the loop body as if it was a compound statement.
+
+{/* source:cpp-language-for:0022 */}
+```cpp
+for (;;)
+    int n;
+// n goes out of scope
+```
+
+{/* source:cpp-language-for:0023 */}
+As part of the C++ [forward progress guarantee](/docs/cpp/language/basic_concepts/multithread#Progress_guarantee), the behavior is [undefined](/docs/cpp/language/basic_concepts/ub) if a loop<InlineRevision since="C++26"> that is not a [trivial infinite loop](/docs/cpp/language/basic_concepts/multithread#Trivial_infinite_loops)</InlineRevision> without [observable behavior](/docs/cpp/language/basic_concepts/as_if) does not terminate. Compilers are permitted to remove such loops.
+
+{/* source:cpp-language-for:0024 */}
+While in C names declared in the scope of *init-statement* and *condition* can be shadowed in the scope of *statement*, it is forbidden in C++:
+
+{/* source:cpp-language-for:0025 */}
+```cpp
+for (int i = 0;;)
+{
+    long i = 1;   // valid C, invalid C++
+    // ...
+}
+```
+
+## Keywords
+
+{/* source:cpp-language-for:0026 */}
+[`for`](/docs/cpp/language/keywords/for)
+
+## Example
+
+{/* source:cpp-language-for:0027 */}
+```cpp
+#include <iostream>
+#include <vector>
+
+int main()
+{
+    std::cout << "1) typical loop with a single statement as the body:\n";
+    for (int i = 0; i < 10; ++i)
+        std::cout << i << ' ';
+
+    std::cout << "\n\n" "2) init-statement can declare multiple names, as\n"
+                 "long as they can use the same decl-specifier-seq:\n";
+    for (int i = 0, *p = &i; i < 9; i += 2)
+        std::cout << i << ':' << *p << ' ';
+
+    std::cout << "\n\n" "3) condition may be a declaration:\n";
+    char cstr[] = "Hello";
+    for (int n = 0; char c = cstr[n]; ++n)
+        std::cout << c;
+
+    std::cout << "\n\n" "4) init-statement can use the auto type specifier:\n";
+    std::vector<int> v = {3, 1, 4, 1, 5, 9};
+    for (auto iter = v.begin(); iter != v.end(); ++iter)
+        std::cout << *iter << ' ';
+
+    std::cout << "\n\n" "5) init-statement can be an expression:\n";
+    int n = 0;
+    for (std::cout << "Loop start\n";
+         std::cout << "Loop test\n";
+         std::cout << "Iteration " << ++n << '\n')
+    {
+        if (n > 1)
+            break;
+    }
+
+    std::cout << "\n" "6) constructors and destructors of objects created\n"
+                 "in the loop's body are called per each iteration:\n";
+    struct S
+    {
+        S(int x, int y) { std::cout << "S::S(" << x << ", " << y << "); "; }
+        ~S() { std::cout << "S::~S()\n"; }
+    };
+    for (int i{0}, j{5}; i < j; ++i, --j)
+        S s{i, j};
+
+    std::cout << "\n" "7) init-statement can use structured bindings:\n";
+    long arr[]{1, 3, 7};
+    for (auto [i, j, k] = arr; i + j < k; ++i)
+        std::cout << i + j << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1) typical loop with a single statement as the body:
+0 1 2 3 4 5 6 7 8 9
+
+2) init-statement can declare multiple names, as
+long as they can use the same decl-specifier-seq:
+0:0 2:2 4:4 6:6 8:8
+
+3) condition may be a declaration:
+Hello
+
+4) init-statement can use the auto type specifier:
+3 1 4 1 5 9
+
+5) init-statement can be an expression:
+Loop start
+Loop test
+Iteration 1
+Loop test
+Iteration 2
+Loop test
+
+6) constructors and destructors of objects created
+in the loop's body are called per each iteration:
+S::S(0, 5); S::~S()
+S::S(1, 4); S::~S()
+S::S(2, 3); S::~S()
+
+7) init-statement can use structured bindings:
+4 5 6
+```
+
+## See also
+
+{/* source:cpp-language-for:0028 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[range-`for` loop](/docs/cpp/language/statements/range-for) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>executes loop over range</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/statements/for) for `for`</DescriptionTerm>
+  </DescriptionItem>
+</DescriptionList>

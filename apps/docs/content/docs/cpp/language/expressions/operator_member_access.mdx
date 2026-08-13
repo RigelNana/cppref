@@ -1,0 +1,730 @@
+---
+title: "Member access operators"
+description: "Accesses a member of its operand."
+source_url: "https://en.cppreference.com/w/cpp/language/operator_member_access"
+language: "C++"
+---
+
+{/* source:cpp-language-operator-member-access:0000 */}
+Accesses a member of its operand.
+
+{/* source:cpp-language-operator-member-access:0001 */}
+| Operator name | Syntax | Overloadable | Prototype examples (for `class T`): Inside class definition | Prototype examples (for `class T`): Outside class definition |
+| --- | --- | --- | --- | --- |
+| subscript | `a[b]` | Yes | `R& T::operator[](S b);` | N/A |
+| subscript | `a[...]` (since C++23) | Yes | `R& T::operator[](...);` | N/A |
+| indirection | `*a` | Yes | `R& T::operator*();` | `R& operator*(T a);` |
+| address-of | `&a` | Yes | `R* T::operator&();` | `R* operator&(T a);` |
+| member of object | `a.b` | No | N/A | N/A |
+| member of pointer | `a->b` | Yes | `R* T::operator->();` | N/A |
+| pointer to member of object | `a.*b` | No | N/A | N/A |
+| pointer to member of pointer | `a->*b` | Yes | `R& T::operator->*(S b);` | `R& operator->*(T a, S b);` |
+
+**Notes**
+
+- As with most user-defined overloads, return types should match return types provided by the built-in operators so that [the user-defined operators](/docs/cpp/language/expressions/operators) can be used in the same manner as the built-ins. However, in a user-defined operator overload, any type can be used as return type (including `void`). One exception is `operator->`, which must return a pointer or another class with overloaded `operator->` to be realistically usable.
+
+## Explanation
+
+{/* source:cpp-language-operator-member-access:0002 */}
+Built-in subscript operator provides access to an object pointed-to by the [pointer](/docs/cpp/language/declarations/pointer) or [array](/docs/cpp/language/declarations/array) operand.
+
+{/* source:cpp-language-operator-member-access:0003 */}
+Built-in indirection operator provides access to an object or function pointed-to by the pointer operand.
+
+{/* source:cpp-language-operator-member-access:0004 */}
+Built-in address-of operator creates a pointer pointing to the object or function operand.
+
+{/* source:cpp-language-operator-member-access:0005 */}
+Member of object and pointer to member of object operators provide access to a data member or member function of the object operand.
+
+{/* source:cpp-language-operator-member-access:0006 */}
+Built-in member of pointer and pointer to member of pointer operators provide access to a data member or member function of the class pointed-to by the pointer operand.
+
+### Built-in subscript operator
+
+{/* source:cpp-language-operator-member-access:0007 */}
+The subscript operator expressions have the form
+
+{/* source:cpp-language-operator-member-access:0008 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="expr1 [ expr2 ]" />
+  <Declaration id="2" language="cpp" since="C++11" grammar code="expr1 [{ expr , ... }]" />
+  <Declaration id="3" language="cpp" since="C++23" grammar code="expr1 [ expr2 , expr , ... ]" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0009 */}
+1. For the built-in operator, one of the expressions (either *expr1* or *expr2*) must be a glvalue of type “array of `T`” or a prvalue of type “pointer to `T`”, while the other expression (*expr2* or *expr1*, respectively) must be a prvalue of unscoped enumeration or integral type. The result of this expression has the type `T`. <InlineRevision since="C++23">*expr2* cannot be an unparenthesized [comma expression](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator).</InlineRevision>
+{/* source:cpp-language-operator-member-access:0010 */}
+2. The form with brace-enclosed list inside the square brackets is only used to call an overloaded `operator[]`.
+{/* source:cpp-language-operator-member-access:0011 */}
+3. The form with comma-separated expression list inside the square brackets is only used to call an overloaded `operator[]`.
+
+{/* source:cpp-language-operator-member-access:0012 */}
+The built-in subscript expression `E1[E2]` is exactly identical to the expression `*(E1 + E2)` except for its value category (see below) and <InlineRevision since="C++17">[evaluation order](/docs/cpp/language/expressions/eval_order)</InlineRevision>: the pointer operand (which may be a result of array-to-pointer conversion, and which must point to an element of some array or one past the end) is adjusted to point to another element of the same array, following the rules of [pointer arithmetic](/docs/cpp/language/expressions/operator_arithmetic), and is then dereferenced.
+
+{/* source:cpp-language-operator-member-access:0013 */}
+When applied to an array, the subscript expression is an [lvalue](/docs/cpp/language/expressions/value_category)<InlineRevision since="C++11"> if the array is an lvalue, and an [xvalue](/docs/cpp/language/expressions/value_category) if it isn't</InlineRevision>.
+
+{/* source:cpp-language-operator-member-access:0014 */}
+When applied to a pointer, the subscript expression is always an lvalue.
+
+{/* source:cpp-language-operator-member-access:0015 */}
+The type `T` is not allowed to be an [incomplete type](/docs/cpp/language/basic_concepts/incomplete_type), even if the size or internal structure of `T` is never used, as in `&x[0]`.
+
+{/* source:cpp-language-operator-member-access:0016 */}
+<Revision since="C++20" until="C++23">
+Using an unparenthesized [comma expression](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) as second (right) argument of a subscript operator is deprecated.
+
+For example, `a[b, c]` is deprecated and `a[(b, c)]` is not.
+</Revision>
+
+<Revision since="C++23">
+An unparenthesized [comma expression](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) cannot be second (right) argument of a subscript operator. For example, `a[b, c]` is either ill-formed or equivalent to `a.operator[](b, c)`.
+
+Parentheses are needed to for using a comma expression as the subscript, e.g., `a[(b, c)]`.
+</Revision>
+
+{/* source:cpp-language-operator-member-access:0017 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every object type `T` (possibly cv-qualified), the following function signature participates in overload resolution:
+
+{/* source:cpp-language-operator-member-access:0018 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`T& operator[](T*, std::ptrdiff_t);`} />
+  <Declaration id="2" language="cpp" code={`T& operator[](std::ptrdiff_t, T*);`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0019 */}
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+
+int main()
+{
+    int a[4] = {1, 2, 3, 4};
+    int* p = &a[2];
+    std::cout << p[1] << p[-1] << 1[p] << (-1)[p] << '\n';
+
+    std::map<std::pair<int, int>, std::string> m;
+    m[{1, 2}] = "abc"; // uses the [{...}] version
+}
+```
+
+Output:
+
+```text
+4242
+```
+
+### Built-in indirection operator
+
+{/* source:cpp-language-operator-member-access:0020 */}
+The indirection operator expressions have the form
+
+{/* source:cpp-language-operator-member-access:0021 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="* expr" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0022 */}
+The operand of the built-in indirection operator must be pointer to object or a pointer to function, and the result is the lvalue referring to the object or function to which *expr* points. If *expr* does not actually points to an object or function, the behavior is undefined (except for the case specified by [typeid](/docs/cpp/language/expressions/typeid)).
+
+{/* source:cpp-language-operator-member-access:0023 */}
+A pointer to (possibly [cv](/docs/cpp/language/declarations/cv)-qualified) `void` cannot be dereferenced. Pointers to other incomplete types can be dereferenced, but the resulting lvalue can only be used in contexts that allow an lvalue of incomplete type, e.g. when initializing a reference.
+
+{/* source:cpp-language-operator-member-access:0024 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every type `T` that is either object type (possibly cv-qualified) or function type (not const- or ref-qualified), the following function signature participates in overload resolution:
+
+{/* source:cpp-language-operator-member-access:0025 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`T& operator*(T*);`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0026 */}
+```cpp
+#include <iostream>
+
+int f() { return 42; }
+
+int main()
+{
+    int n = 1;
+    int* pn = &n;
+
+    int& r = *pn; // lvalue can be bound to a reference
+    int m = *pn;  // indirection + lvalue-to-rvalue conversion
+
+    int (*fp)() = &f;
+    int (&fr)() = *fp; // function lvalue can be bound to a reference
+
+    [](...){}(r, m, fr); // removes possible "unused variable" warnings
+}
+```
+
+### Built-in address-of operator
+
+{/* source:cpp-language-operator-member-access:0027 */}
+The address-of operator expressions have the form
+
+{/* source:cpp-language-operator-member-access:0028 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="& expr" />
+  <Declaration id="2" language="cpp" grammar code="& class :: member" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0029 */}
+1. If the operand is an lvalue expression of some object or function type `T`, `operator&` creates and returns a prvalue of type `T*`, with the same cv qualification, that is pointing to the object or function designated by the operand. If the operand has incomplete type, the pointer can be formed, but if that incomplete type happens to be a class that defines its own `operator&`, it is unspecified whether the built-in or the overload is used. For the operands of type with user-defined `operator&`, [`std::addressof`](/docs/cpp/library/memory/addressof) may be used to obtain the true pointer. Note that, unlike C99 and later C versions, there's no special case for the unary `operator&` applied to the result of the unary `operator*`.
+
+{/* source:cpp-language-operator-member-access:0030 */}
+   If the operand is the name of an overloaded function, the address may be taken only if the overload can be resolved due to context. See [Address of an overloaded function](/docs/cpp/language/functions/overloaded_address) for details.
+
+   <Revision since="C++23">
+   If *expr* names an [explicit object member function](/docs/cpp/language/classes/member_functions), *expr* must be a [qualified identifier](/docs/cpp/language/basic_concepts/name#Qualified_identifiers). Applying `&` to an unqualified identifier naming an explicit object member function is ill-formed.
+   </Revision>
+
+{/* source:cpp-language-operator-member-access:0031 */}
+2. If the operand is a qualified name of a non-static or [variant](/docs/cpp/language/classes/union#Union-like_classes) member<InlineRevision since="C++23"> other than an [explicit object member function](/docs/cpp/language/classes/member_functions)</InlineRevision>, e.g. `&C::member`, the result is a prvalue [pointer to member function](/docs/cpp/language/declarations/pointer#Pointers_to_member_functions) or [pointer to data member](/docs/cpp/language/declarations/pointer#Pointers_to_data_members) of type `T` in class `C`. Note that neither `&member` nor `C::member` nor even `&(C::member)` may be used to initialize a pointer to member.
+
+{/* source:cpp-language-operator-member-access:0032 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), this operator does not introduce any additional function signatures: built-in address-of operator does not apply if there exists an overloaded `operator&` that is a [viable function](/docs/cpp/language/functions/overload_resolution#Viable_functions).
+
+{/* source:cpp-language-operator-member-access:0033 */}
+```cpp
+void f(int) {}
+void f(double) {}
+
+struct A { int i; };
+struct B { void f(); };
+
+int main()
+{
+    int n = 1;
+    int* pn = &n;    // pointer
+    int* pn2 = &*pn; // pn2 == pn
+
+    int A::* mp = &A::i;      // pointer to data member
+    void (B::*mpf)() = &B::f; // pointer to member function
+
+    void (*pf)(int) = &f; // overload resolution due to initialization context
+//  auto pf2 = &f; // error: ambiguous overloaded function type
+    auto pf2 = static_cast<void (*)(int)>(&f); // overload resolution due to cast
+}
+```
+
+### Built-in member access operators
+
+{/* source:cpp-language-operator-member-access:0034 */}
+The member access operator expressions have the form
+
+{/* source:cpp-language-operator-member-access:0035 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="expr .template (optional) id-expr" />
+  <Declaration id="2" language="cpp" grammar code="expr ->template (optional) id-expr" />
+  <Declaration id="3" language="cpp" grammar code="expr . pseudo-destructor" />
+  <Declaration id="4" language="cpp" grammar code="expr -> pseudo-destructor" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0036 */}
+1. The *expr* must be an expression of [complete](/docs/cpp/language/basic_concepts/incomplete_type) class type `T`.
+
+{/* source:cpp-language-operator-member-access:0037 */}
+   If *id-expr* names a [static member](/docs/cpp/language/classes/static) or [enumerator](/docs/cpp/language/declarations/enum), *expr* is a [discarded-value expression](/docs/cpp/language/expressions#Discarded-value_expressions).
+
+{/* source:cpp-language-operator-member-access:0038 */}
+2. The *expr* must be an expression of pointer to complete class type `T*`.
+
+{/* source:cpp-language-operator-member-access:0039 */}
+3,4) The *expr* must be an expression of scalar type (see below).
+
+{/* source:cpp-language-operator-member-access:0040 */}
+*id-expr* is a name of (formally, an [identifier expression](/docs/cpp/language/basic_concepts/name#In_expressions) that names) a data member or member function of `T` or of an unambiguous and accessible base class `B` of `T` (e.g. `E1.E2` or `E1->E2`), optionally [qualified](/docs/cpp/language/basic_concepts/name#Qualified_identifiers) (e.g. `E1.B::E2` or `E1->B::E2`), optionally using [template disambiguator](/docs/cpp/language/templates/dependent_name#template_disambiguator) (e.g. `E1.template E2` or `E1->template E2`).
+
+{/* source:cpp-language-operator-member-access:0041 */}
+If a user-defined `operator->` is called, `operator->` is called again on the resulting value, recursively, until an `operator->` is reached that returns a plain pointer. After that, built-in semantics are applied to that pointer.
+
+{/* source:cpp-language-operator-member-access:0042 */}
+The expression `E1->E2` is exactly equivalent to `(*E1).E2` for built-in types; that is why the following rules address only `E1.E2`.
+
+{/* source:cpp-language-operator-member-access:0043 */}
+In the expression `E1.E2`:
+
+{/* source:cpp-language-operator-member-access:0044 */}
+1. If `E2` is a [static data member](/docs/cpp/language/classes/static):
+
+   - If `E2` is of reference type `T&`<InlineRevision since="C++11"> or `T&&`</InlineRevision>, the result is an lvalue of type `T` designating the object or function to which the reference is bound.
+   - Otherwise, given the type of `E2` as `T`, the result is an lvalue of type `T` designating that static data member.
+
+{/* source:cpp-language-operator-member-access:0045 */}
+   Essentially, `E1` is evaluated and discarded in both cases.
+
+{/* source:cpp-language-operator-member-access:0046 */}
+2. If `E2` is a [non-static data member](/docs/cpp/language/classes/data_members):
+
+   - If `E2` is of reference type `T&`<InlineRevision since="C++11"> or `T&&`</InlineRevision>, the result is an lvalue of type `T` designating the object or function to which the corresponding reference member of `E1` is bound.
+   - Otherwise, if `E1` is an lvalue, the result is an lvalue designating that non-static data member of `E1`.
+   - Otherwise (if `E1` is an <InlineRevision until="C++17">rvalue</InlineRevision><InlineRevision since="C++17">xvalue (which may be [materialized](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) from prvalue)</InlineRevision>), the result is an <InlineRevision until="C++11">rvalue</InlineRevision><InlineRevision since="C++11">xvalue</InlineRevision> designating that non-static data member of `E1`.
+
+{/* source:cpp-language-operator-member-access:0047 */}
+   If `E2` is not a [mutable](/docs/cpp/language/declarations/cv#mutable_specifier) member, the [cv-qualification](/docs/cpp/language/declarations/cv) of the result is the union of the cv-qualifications of `E1` and `E2`, otherwise (if `E2` is a mutable member), it is the union of the volatile-qualifications of `E1` and `E2`.
+
+{/* source:cpp-language-operator-member-access:0048 */}
+3. If `E2` is an overload set (of one or more [static member functions](/docs/cpp/language/classes/static) and [non-static member functions](/docs/cpp/language/classes/member_functions)), `E1.E2` must be the (possibly-parenthesized) left-hand operand of a [member function call operator](/docs/cpp/language/expressions/operator_other#Built-in_function_call_operator), and [function overload resolution](/docs/cpp/language/functions/overload_resolution#Call_to_a_named_function) is used to select the function to which `E2` refers, after that:
+
+   - If `E2` is a [static member function](/docs/cpp/language/classes/static), the result is an lvalue designating that static member function. Essentially, `E1` is evaluated and discarded in this case.
+   - Otherwise (`E2` is a [non-static member function](/docs/cpp/language/classes/member_functions)), the result is a prvalue designating that non-static member function of `E1`.
+
+{/* source:cpp-language-operator-member-access:0049 */}
+4. If `E2` is a member enumerator, given the type of `E2` as `T`, the result is <InlineRevision until="C++11">an rvalue</InlineRevision><InlineRevision since="C++11">a prvalue</InlineRevision> of type `T` whose value is the value of the enumerator.
+
+{/* source:cpp-language-operator-member-access:0050 */}
+5. If `E2` is a [nested type](/docs/cpp/language/classes/nested_classes), the program is ill-formed.
+
+{/* source:cpp-language-operator-member-access:0051 */}
+6. If `E1` has a [ScalarType](/docs/cpp/library/named_req/ScalarType) and `E2` is a `~` followed by the [type name](/docs/cpp/language/basic_concepts/type-id#Type_naming) or [decltype specifier](/docs/cpp/language/declarations/decltype) designating the same type (minus cv-qualifications), optionally [qualified](/docs/cpp/language/basic_concepts/name#Qualified_identifiers), the result is a special kind of prvalue that can only be used as the left-hand operand of a function call operator, and for no other purpose
+
+{/* source:cpp-language-operator-member-access:0052 */}
+   The resulting function call expression is called *pseudo destructor call*. It takes no arguments, returns `void`, evaluates `E1`, and ends the lifetime of its result object. This is the only case where the left-hand operand of `operator.` has non-class type. Allowing pseudo destructor call makes it possible to write code without having to know if a destructor exists for a given type.
+
+{/* source:cpp-language-operator-member-access:0053 */}
+`operator.` cannot be overloaded, and for `operator->`, in [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), the built-in operator does not introduce any additional function signatures: built-in `operator->` does not apply if there exists an overloaded `operator->` that is a [viable function](/docs/cpp/language/functions/overload_resolution#Viable_functions).
+
+{/* source:cpp-language-operator-member-access:0054 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <memory>
+
+struct P
+{
+    template<typename T>
+    static T* ptr() { return new T; }
+};
+
+template<typename T>
+struct A
+{
+    A(int n): n(n) {}
+
+    int n;
+    static int sn;
+
+    int f() { return 10 + n; }
+    static int sf() { return 4; }
+
+    class B {};
+    enum E {RED = 1, BLUE = 2};
+
+    void g()
+    {
+        typedef int U;
+
+        // keyword template needed for a dependent template member
+        int* p = T().template ptr<U>();
+        p->~U(); // U is int, calls int's pseudo destructor
+        delete p;
+    }
+};
+
+template<>
+int A<P>::sn = 2;
+
+struct UPtrWrapper
+{
+    std::unique_ptr<std::string> uPtr;
+    std::unique_ptr<std::string>& operator->() { return uPtr; }
+};
+
+int main()
+{
+    A<P> a(1);
+    std::cout << a.n << ' '
+              << a.sn << ' '   // A::sn also works
+              << a.f() << ' ' 
+              << a.sf() << ' ' // A::sf() also works
+//            << &a.f << ' '   // error: ill-formed if a.f is not the
+                               // left-hand operand of operator()
+//            << a.B << ' '    // error: nested type not allowed
+              << a.RED << ' '; // enumerator
+
+    UPtrWrapper uPtrWrap{std::make_unique<std::string>("wrapped")};
+    assert(uPtrWrap->data() == uPtrWrap.operator->().operator->()->data());
+}
+```
+
+Output:
+
+```text
+1 2 11 4 1
+```
+
+{/* source:cpp-language-operator-member-access:0055 */}
+If `E2` is a non-static member and the result of `E1` is an object whose type is not [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types) to the type of `E1`, the behavior is undefined:
+
+{/* source:cpp-language-operator-member-access:0056 */}
+```cpp
+struct A { int i; };
+struct B { int j; };
+struct D : A, B {};
+
+void f()
+{
+    D d;
+    static_cast<B&>(d).j;      // OK, object expression designates the B subobject of d
+    reinterpret_cast<B&>(d).j; // undefined behavior
+}
+```
+
+### Built-in pointer-to-member access operators
+
+{/* source:cpp-language-operator-member-access:0057 */}
+The member access operator expressions through pointers to members have the form
+
+{/* source:cpp-language-operator-member-access:0058 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="lhs .* rhs" />
+  <Declaration id="2" language="cpp" grammar code="lhs ->* rhs" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0059 */}
+1. *lhs* must be an expression of class type `T`.
+
+{/* source:cpp-language-operator-member-access:0060 */}
+2. *lhs* must be an expression of type pointer to class type `T*`.
+
+{/* source:cpp-language-operator-member-access:0061 */}
+*rhs* must be an rvalue of type pointer to member ([data](/docs/cpp/language/declarations/pointer#Pointers_to_data_members) or [function](/docs/cpp/language/declarations/pointer#Pointers_to_member_functions)) of `T` or pointer to member of an unambiguous and accessible base class `B` of `T`.
+
+{/* source:cpp-language-operator-member-access:0062 */}
+The expression `E1->*E2` is exactly equivalent to `(*E1).*E2` for built-in types; that is why the following rules address only `E1.*E2`.
+
+{/* source:cpp-language-operator-member-access:0063 */}
+In the expression `E1.*E2`:
+
+{/* source:cpp-language-operator-member-access:0064 */}
+1. if `E2` is a pointer to data member, if `E1` is an lvalue, the result is an lvalue designating that data member, otherwise (if `E1` is an <InlineRevision until="C++17">rvalue</InlineRevision><InlineRevision since="C++17">xvalue (which may be [materialized](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization) from prvalue)</InlineRevision>), the result is an <InlineRevision until="C++11">rvalue</InlineRevision><InlineRevision since="C++11">xvalue</InlineRevision> designating that data member;
+
+{/* source:cpp-language-operator-member-access:0065 */}
+2. if `E2` is a pointer to member function, the result is a special kind of prvalue designating that member function that can only be used as the left-hand operand of a member function call operator, and for no other purpose;
+
+{/* source:cpp-language-operator-member-access:0066 */}
+3. cv-qualification rules are the same as for member of object operator, with one additional rule: a pointer to member that refers to a mutable member cannot be used to modify that member in a const object;
+
+{/* source:cpp-language-operator-member-access:0067 */}
+4. if `E2` is a null pointer-to-member value, the behavior is undefined;
+
+{/* source:cpp-language-operator-member-access:0068 */}
+5. if the result `E1` is an object such that its type is not [similar](/docs/cpp/language/expressions/implicit_cast#Similar_types) to the type of `E1`, or its [most derived object](/docs/cpp/language/basic_concepts/objects#Subobjects) does not contain the member to which `E2` refers, the behavior is undefined;
+
+{/* source:cpp-language-operator-member-access:0069 */}
+6. if `E1` is an rvalue and `E2` points to a member function with ref-qualifier `&`, the program is ill-formed <InlineRevision since="C++20">unless the member function has the cv-qualifier `const` but not `volatile`</InlineRevision>;
+
+{/* source:cpp-language-operator-member-access:0070 */}
+<Revision since="C++11">
+7) if `E1` is an lvalue and `E2` points to a member function with ref-qualifier `&&`, the program is ill-formed.
+</Revision>
+
+{/* source:cpp-language-operator-member-access:0071 */}
+In [overload resolution against user-defined operators](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator), for every combination of types `D`, `B`, `R`, where class type `B` is either the same class as `D` or an unambiguous and accessible base class of `D`, and `R` is either an object or function type, the following function signature participates in overload resolution:
+
+{/* source:cpp-language-operator-member-access:0072 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`R& operator->*(D*, R B::*);`} />
+</DeclarationDoc>
+
+{/* source:cpp-language-operator-member-access:0073 */}
+where both operands may be cv-qualified, in which case the return type's cv-qualification is the union of the cv-qualification of the operands.
+
+{/* source:cpp-language-operator-member-access:0074 */}
+```cpp
+#include <iostream>
+
+struct S
+{
+    S(int n) : mi(n) {}
+    mutable int mi;
+    int f(int n) { return mi + n; }
+};
+
+struct D : public S
+{
+    D(int n) : S(n) {}
+};
+
+int main()
+{
+    int S::* pmi = &S::mi;
+    int (S::* pf)(int) = &S::f;
+
+    const S s(7);
+//  s.*pmi = 10; // error: cannot modify through mutable
+    std::cout << s.*pmi << '\n';
+
+    D d(7); // base pointers work with derived object
+    D* pd = &d;
+    std::cout << (d.*pf)(7) << ' '
+              << (pd->*pf)(8) << '\n';
+}
+```
+
+Output:
+
+```text
+7
+14 15
+```
+
+## Standard library
+
+{/* source:cpp-language-operator-member-access:0075 */}
+Subscript operator is overloaded by many standard container classes:
+
+{/* source:cpp-language-operator-member-access:0076 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/utility/bitset/operator_at)</DescriptionTerm>
+    <DescriptionBody>accesses specific bit (public member function of `std::bitset<N>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/memory/unique_ptr/operator_at)</DescriptionTerm>
+    <DescriptionBody>provides indexed access to the managed array (public member function of `std::unique_ptr<T,Deleter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/string/basic_string/operator_at)</DescriptionTerm>
+    <DescriptionBody>accesses the specified character (public member function of `std::basic_string<CharT,Traits,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/array/operator_at)</DescriptionTerm>
+    <DescriptionBody>access specified element (public member function of `std::array<T,N>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/deque/operator_at)</DescriptionTerm>
+    <DescriptionBody>access specified element (public member function of `std::deque<T,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/vector/operator_at)</DescriptionTerm>
+    <DescriptionBody>access specified element (public member function of `std::vector<T,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function of `std::map<Key,T,Compare,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/container/unordered_map/operator_at)</DescriptionTerm>
+    <DescriptionBody>access or insert specified element (public member function of `std::unordered_map<Key,T,Hash,KeyEqual,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/iterator/reverse_iterator/operator_at)</DescriptionTerm>
+    <DescriptionBody>accesses an element by index (public member function of `std::reverse_iterator<Iter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/iterator/move_iterator/operator_at) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element by index (public member function of `std::move_iterator<Iter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/numeric/valarray/operator_at)</DescriptionTerm>
+    <DescriptionBody>get/set valarray element, slice, or mask (public member function of `std::valarray<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/text/regex/match_results/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns specified sub-match (public member function of `std::match_results<BidirIt,Alloc>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-language-operator-member-access:0077 */}
+The indirection and member operators are overloaded by many iterators and smart pointer classes:
+
+{/* source:cpp-language-operator-member-access:0078 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/memory/unique_ptr/operator_star_)</DescriptionTerm>
+    <DescriptionBody>dereferences pointer to the managed object (public member function of `std::unique_ptr<T,Deleter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/memory/shared_ptr/operator_star_)</DescriptionTerm>
+    <DescriptionBody>dereferences the stored pointer (public member function of `std::shared_ptr<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/memory/auto_ptr/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the managed object (public member function of `std::auto_ptr<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/memory/raw_storage_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>dereferences the iterator (public member function of `std::raw_storage_iterator<OutputIt,T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/iterator/reverse_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>dereferences the decremented underlying iterator (public member function of `std::reverse_iterator<Iter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/back_insert_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::back_insert_iterator<Container>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/front_insert_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::front_insert_iterator<Container>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/insert_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::insert_iterator<Container>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/iterator/move_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the pointed-to element (public member function of `std::move_iterator<Iter>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/iterator/istream_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>returns the current element (public member function of `std::istream_iterator<T,CharT,Traits,Distance>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/ostream_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::ostream_iterator<T,CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/istreambuf_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>obtains a copy of the current character (public member function of `std::istreambuf_iterator<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/ostreambuf_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function of `std::ostreambuf_iterator<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/text/regex/regex_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the current match (public member function of `std::regex_iterator<BidirIt,CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/text/regex/regex_token_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses current submatch (public member function of `std::regex_token_iterator<BidirIt,CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-language-operator-member-access:0079 */}
+No standard library classes overload `operator&`. The best known example of overloaded `operator&` is the Microsoft COM class [CComPtr](https://msdn.microsoft.com/en-us/library/31k6d0k7(v=vs.100).aspx), although it can also appear in EDSLs such as [boost.spirit](https://www.boost.org/doc/libs/release/libs/spirit/doc/html/spirit/qi/reference/operator/and_predicate.html).
+
+{/* source:cpp-language-operator-member-access:0080 */}
+No standard library classes overload `operator->*`. It was suggested that it could be part of [smart pointer interface](https://www.aristeia.com/Papers/DDJ_Oct_1999.pdf), and in fact is used in that capacity by actors in [boost.phoenix](https://www.boost.org/doc/libs/release/libs/phoenix/doc/html/phoenix/modules/operator.html#phoenix.modules.operator.member_pointer_operator), but is more common in EDSLs such as [cpp.react](https://github.com/schlangster/cpp.react/blob/master/include/react/Signal.h#L557).
+
+## Notes
+
+{/* source:cpp-language-operator-member-access:0081 */}
+| Feature-test macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_multidimensional_subscript`](/docs/cpp/library/feature_test#cpp_multidimensional_subscript) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_multidimensional_subscript_202110L) | (C++23) | [Multidimensional subscript operator](/docs/cpp/language/expressions/operators#Array_subscript_operator) |
+
+## Defect reports
+
+{/* source:cpp-language-operator-member-access:0082 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-operator-member-access:0083 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1213} standard="C++11"><PublishedBehavior>subscripting an array rvalue resulted in lvalue</PublishedBehavior><CorrectedBehavior>reclassified as xvalue</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1458} standard="C++98"><PublishedBehavior>applying `&` to an lvalue of incomplete class type which declares `operator&` resulted in undefined behavior</PublishedBehavior><CorrectedBehavior>it is unspecified which `&` is used</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1642} standard="C++98"><PublishedBehavior>the *rhs* in built-in pointer-to-member access operators could be an lvalue</PublishedBehavior><CorrectedBehavior>can only be an rvalue</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1800} standard="C++98"><PublishedBehavior>when applying `&` to a non-static data member of a member anonymous union, it was unclear whether the anonymous union take a part in the result type</PublishedBehavior><CorrectedBehavior>the anonymous union is not included in the result type</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2614} standard="C++98"><PublishedBehavior>the result of `E1.E2` was unclear if `E2` is a reference member or enumerator</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2725} standard="C++98"><PublishedBehavior>if `E2` is a static member function, `E1.E2` is well-formed even if it is not the left hand opreand of `operator()`</PublishedBehavior><CorrectedBehavior>`E1.E2` is ill-formed in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2748} standard="C++98"><PublishedBehavior>the behavior of `E1->E2` was unclear if `E1` is a null pointer and `E2` refers to a static member</PublishedBehavior><CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2813} standard="C++98"><PublishedBehavior>`E1` was not a discarded-value expression if `E1.E2` names a static member or enumeration</PublishedBehavior><CorrectedBehavior>it is</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2823} standard="C++98"><PublishedBehavior>the behavior of `*expr` was unclear if `expr` does not point to an object or function</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-operator-member-access:0084 */}
+[Operator precedence](/docs/cpp/language/expressions/operator_precedence)
+
+{/* source:cpp-language-operator-member-access:0085 */}
+[Operator overloading](/docs/cpp/language/expressions/operators)
+
+{/* source:cpp-language-operator-member-access:0086 */}
+<table>
+<thead><tr><th colSpan={7}>Common operators</th></tr></thead>
+<tbody>
+<tr>
+<td>[assignment](/docs/cpp/language/expressions/operator_assignment)</td>
+<td>[increment decrement](/docs/cpp/language/expressions/operator_incdec)</td>
+<td>[arithmetic](/docs/cpp/language/expressions/operator_arithmetic)</td>
+<td>[logical](/docs/cpp/language/expressions/operator_logical)</td>
+<td>[comparison](/docs/cpp/language/expressions/operator_comparison)</td>
+<td>member access</td>
+<td>[other](/docs/cpp/language/expressions/operator_other)</td>
+</tr>
+<tr>
+<td rowSpan={3}>`a = b
+a += b
+a -= b
+a *= b
+a /= b
+a %= b
+a &= b
+a |= b
+a ^= b
+a <<= b
+a >>= b`</td>
+<td rowSpan={3}>`++a
+--a
+a++
+a--`</td>
+<td rowSpan={3}>`+a
+-a
+a + b
+a - b
+a * b
+a / b
+a % b
+~a
+a & b
+a | b
+a ^ b
+a << b
+a >> b`</td>
+<td rowSpan={3}>`!a
+a && b
+a || b`</td>
+<td rowSpan={3}>`a == b
+a != b
+a < b
+a > b
+a <= b
+a >= b
+a <=> b`</td>
+<td rowSpan={3}>`a[...]
+*a
+&a
+a->b
+a.b
+a->*b
+a.*b`</td>
+<td>function call `a(...)`</td>
+</tr>
+<tr>
+<td>comma `a, b`</td>
+</tr>
+<tr>
+<td>conditional `a ? b : c`</td>
+</tr>
+<tr>
+<th colSpan={7}>Special operators</th>
+</tr>
+<tr>
+<td colSpan={7}>
+[`static_cast`](/docs/cpp/language/expressions/static_cast) converts one type to another related type<br />
+[`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) converts within inheritance hierarchies<br />
+[`const_cast`](/docs/cpp/language/expressions/const_cast) adds or removes [cv](/docs/cpp/language/declarations/cv)-qualifiers<br />
+[`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) converts type to unrelated type<br />
+[C-style cast](/docs/cpp/language/expressions/explicit_cast) converts one type to another by a mix of `static_cast`, `const_cast`, and `reinterpret_cast`<br />
+[`new`](/docs/cpp/language/expressions/new) creates objects with dynamic storage duration<br />
+[`delete`](/docs/cpp/language/expressions/delete) destructs objects previously created by the new expression and releases obtained memory area<br />
+[`sizeof`](/docs/cpp/language/expressions/sizeof) queries the size of a type<br />
+[`sizeof...`](/docs/cpp/language/templates/sizeof...) queries the size of a [pack](/docs/cpp/language/templates/parameter_pack) (since C++11)<br />
+[`typeid`](/docs/cpp/language/expressions/typeid) queries the type information of a type<br />
+[`noexcept`](/docs/cpp/language/exceptions/noexcept) checks if an expression can throw an exception (since C++11)<br />
+[`alignof`](/docs/cpp/language/expressions/alignof) queries alignment requirements of a type (since C++11)
+</td>
+</tr>
+</tbody>
+</table>
+
+{/* source:cpp-language-operator-member-access:0087 */}
+[C documentation](/docs/c/language/expressions/operator_member_access) for Member access operators

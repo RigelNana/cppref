@@ -1,0 +1,658 @@
+---
+title: "operator overloading"
+description: "Customizes the C++ operators for operands of user-defined types."
+source_url: "https://en.cppreference.com/w/cpp/language/operators"
+language: "C++"
+---
+
+{/* source:cpp-language-operators:0000 */}
+Customizes the C++ operators for operands of user-defined types.
+
+## Syntax
+
+{/* source:cpp-language-operators:0001 */}
+*Operator functions* are [functions](/docs/cpp/language/functions/function) with special function names:
+
+{/* source:cpp-language-operators:0002 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="operator op" />
+  <Declaration id="2" language="cpp" grammar code={`operator new
+operator new []`} />
+  <Declaration id="3" language="cpp" grammar code={`operator delete
+operator delete []`} />
+  <Declaration id="4" language="cpp" since="C++20" grammar code="operator co_await" />
+</DeclarationDoc>
+
+{/* source:cpp-language-operators:0003 */}
+`op` - any of the following operators: `+` `-` `*` `/` `%` `^` `&` `|` `~` `!` `=` `<` `>` `+=` `-=` `*=` `/=` `%=` `^=` `&=` `|=` `<<` `>>` `>>=` `<<=` `==` `!=` `<=` `>=` <InlineRevision since="C++20">`<=>`</InlineRevision> `&&` `||` `++` `--` `,` `->*` `->` `()` `[]`
+
+{/* source:cpp-language-operators:0004 */}
+1) An overloaded punctuation operator.
+
+{/* source:cpp-language-operators:0005 */}
+2) An [allocation function](/docs/cpp/library/memory/new/operator_new).
+
+{/* source:cpp-language-operators:0006 */}
+3) A [deallocation function](/docs/cpp/library/memory/new/operator_delete).
+
+{/* source:cpp-language-operators:0007 */}
+4) An overloaded `co_await` operator for use in [`co_await` expressions](/docs/cpp/language/functions/coroutines#co_await).
+
+{/* source:cpp-language-operators:0008 */}
+The behaviors of non-punctuation operators are described in their own respective pages. Unless otherwise specified, the remaining description in this page does not apply to these functions.
+
+## Explanation
+
+{/* source:cpp-language-operators:0009 */}
+When an operator appears in an [expression](/docs/cpp/language/expressions), and at least one of its operands has a [class type](/docs/cpp/language/classes/class) or an [enumeration type](/docs/cpp/language/declarations/enum), then [overload resolution](/docs/cpp/language/functions/overload_resolution) is used to determine the user-defined function to be called among all the functions whose signatures match the following:
+
+{/* source:cpp-language-operators:0010 */}
+| Expression | As member function | As non-member function | Example |
+| --- | --- | --- | --- |
+| `@a` | `(a).operator@ ( )` | `operator@ (a)` | `!std::cin` calls `std::cin.operator!()` |
+| `a@b` | `(a).operator@ (b)` | `operator@ (a, b)` | `std::cout << 42` calls `std::cout.operator<<(42)` |
+| `a=b` | `(a).operator= (b)` | cannot be non-member | Given `std::string s;`, `s = "abc";` calls `s.operator=("abc")` |
+| `a(b...)` | `(a).operator()(b...)` | cannot be non-member | Given `std::random_device r;`, `auto n = r();` calls `r.operator()()` |
+| `a[b...]` | `(a).operator[](b...)` | cannot be non-member | Given `std::map<int, int> m;`, `m[1] = 2;` calls `m.operator[](1)` |
+| `a->` | `(a).operator->( )` | cannot be non-member | Given `std::unique_ptr<S> p;`, `p->bar()` calls `p.operator->()` |
+| `a@` | `(a).operator@ (0)` | `operator@ (a, 0)` | Given `std::vector<int>::iterator i;`, `i++` calls `i.operator++(0)` |
+
+In this table, `@` is a placeholder representing all matching operators: all prefix operators in `@a`, all postfix operators other than `->` in `a@`, all infix operators other than `=` in `a@b`.
+
+{/* source:cpp-language-operators:0011 */}
+<Revision since="C++20">
+In addition, for comparison operators `==`, `!=`, `<`, `>`, `<=`, `>=`, `<=>`, overload resolution also considers the [rewritten candidates](/docs/cpp/language/functions/overload_resolution#Call_to_an_overloaded_operator) `operator==` or `operator<=>`.
+</Revision>
+
+{/* source:cpp-language-operators:0012 */}
+Overloaded operators (but not the built-in operators) can be called using function notation:
+
+{/* source:cpp-language-operators:0013 */}
+```cpp
+std::string str = "Hello, ";
+str.operator+=("world");                      // same as str += "world";
+operator<<(operator<<(std::cout, str), '\n'); // same as std::cout << str << '\n';
+                                              // (since C++17) except for sequencing
+```
+
+{/* source:cpp-language-operators:0014 */}
+<Revision since="C++23">
+### Static overloaded operators
+
+Overloaded operators that are member functions can be declared [static](/docs/cpp/language/classes/static#Static_member_functions). However, this is only allowed for `operator()` and `operator[]`.
+
+Such operators can be called using function notation. However, when these operators appear in expressions, they still require an object of class type.
+
+```cpp
+struct SwapThem
+{
+    template<typename T>
+    static void operator()(T& lhs, T& rhs) 
+    {
+        std::ranges::swap(lhs, rhs);
+    }
+
+    template<typename T>
+    static void operator[](T& lhs, T& rhs)
+    {
+        std::ranges::swap(lhs, rhs);
+    } 
+};
+inline constexpr SwapThem swap_them{};
+
+void foo()
+{
+    int a = 1, b = 2;
+
+    swap_them(a, b); // OK
+    swap_them[a, b]; // OK
+
+    SwapThem{}(a, b); // OK
+    SwapThem{}[a, b]; // OK
+
+    SwapThem::operator()(a, b); // OK
+    SwapThem::operator[](a, b); // OK
+
+    SwapThem(a, b); // error, invalid construction
+    SwapThem[a, b]; // error
+}
+```
+</Revision>
+
+## Restrictions
+
+{/* source:cpp-language-operators:0015 */}
+- An operator function must have at least one function parameter or implicit object parameter whose type is a class, a reference to a class, an enumeration, or a reference to an enumeration.
+- The operators `::` (scope resolution), `.` (member access), `.*` (member access through pointer to member), and `?:` (ternary conditional) cannot be overloaded.
+- New operators such as `**`, `<>`, or `&|` cannot be created.
+- It is not possible to change the precedence, grouping, or number of operands of operators.
+- The overload of operator `->` must either return a raw pointer, or return an object (by reference or by value) for which operator `->` is in turn overloaded.
+- The overloads of operators `&&` and `||` lose short-circuit evaluation.
+
+{/* source:cpp-language-operators:0016 */}
+<Revision until="C++17">
+- `&&`, `||`, and `,` lose their special [sequencing properties](/docs/cpp/language/expressions/eval_order) when overloaded and behave like regular function calls even when they are used without function-call notation.
+</Revision>
+
+## Canonical implementations
+
+{/* source:cpp-language-operators:0017 */}
+Besides the restrictions above, the language puts no other constraints on what the overloaded operators do, or on the return type (it does not participate in overload resolution), but in general, overloaded operators are expected to behave as similar as possible to the built-in operators: `operator+` is expected to add, rather than multiply its arguments, `operator=` is expected to assign, etc. The related operators are expected to behave similarly (`operator+` and `operator+=` do the same addition-like operation). The return types are limited by the expressions in which the operator is expected to be used: for example, assignment operators return by reference to make it possible to write `a = b = c = d`, because the built-in operators allow that.
+
+{/* source:cpp-language-operators:0018 */}
+Commonly overloaded operators have the following typical, canonical forms:[^1]
+
+### Assignment operator
+
+{/* source:cpp-language-operators:0019 */}
+The assignment operator `operator=` has special properties: see [copy assignment](/docs/cpp/language/classes/as_operator) and [move assignment](/docs/cpp/language/classes/move_operator) for details.
+
+{/* source:cpp-language-operators:0020 */}
+The canonical copy-assignment operator is expected to [be safe on self-assignment](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c62-make-copy-assignment-safe-for-self-assignment), and to return the lhs by reference:
+
+{/* source:cpp-language-operators:0021 */}
+```cpp
+// copy assignment
+T& operator=(const T& other)
+{
+    // Guard self assignment
+    if (this == &other)
+        return *this;
+
+    // assume *this manages a reusable resource, such as a heap-allocated buffer mArray
+    if (size != other.size)           // resource in *this cannot be reused
+    {
+        temp = new int[other.size];   // allocate resource, if throws, do nothing
+        delete[] mArray;              // release resource in *this
+        mArray = temp;
+        size = other.size;
+    }
+
+    std::copy(other.mArray, other.mArray + other.size, mArray);
+    return *this;
+}
+```
+
+{/* source:cpp-language-operators:0022 */}
+<Revision since="C++11">
+The canonical move assignment is expected to [leave the moved-from object in valid state](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c64-a-move-operation-should-move-and-leave-its-source-in-a-valid-state) (that is, a state with class invariants intact), and either [do nothing](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c65-make-move-assignment-safe-for-self-assignment) or at least leave the object in a valid state on self-assignment, and return the lhs by reference to non-const, and be noexcept:
+
+```cpp
+// move assignment
+T& operator=(T&& other) noexcept
+{
+    // Guard self assignment
+    if (this == &other)
+        return *this; // delete[]/size=0 would also be ok
+
+    delete[] mArray;                               // release resource in *this
+    mArray = std::exchange(other.mArray, nullptr); // leave other in valid state
+    size = std::exchange(other.size, 0);
+    return *this;
+}
+```
+</Revision>
+
+{/* source:cpp-language-operators:0023 */}
+In those situations where copy assignment cannot benefit from resource reuse (it does not manage a heap-allocated array and does not have a (possibly transitive) member that does, such as a member [`std::vector`](/docs/cpp/library/container/vector) or [`std::string`](/docs/cpp/library/string/basic_string)), there is a popular convenient shorthand: the copy-and-swap assignment operator, which takes its parameter by value (thus working as both copy- and move-assignment depending on the value category of the argument), swaps with the parameter, and lets the destructor clean it up.
+
+{/* source:cpp-language-operators:0024 */}
+```cpp
+// copy assignment (copy-and-swap idiom)
+T& T::operator=(T other) noexcept // call copy or move constructor to construct other
+{
+    std::swap(size, other.size); // exchange resources between *this and other
+    std::swap(mArray, other.mArray);
+    return *this;
+} // destructor of other is called to release the resources formerly managed by *this
+```
+
+{/* source:cpp-language-operators:0025 */}
+This form automatically provides [strong exception guarantee](/docs/cpp/language/exceptions#Exception_safety), but prohibits resource reuse.
+
+### Stream extraction and insertion
+
+{/* source:cpp-language-operators:0026 */}
+The overloads of `operator>>` and `operator<<` that take a [`std::istream`](/docs/cpp/library/io/basic_istream)& or [`std::ostream`](/docs/cpp/library/io/basic_ostream)& as the left hand argument are known as insertion and extraction operators. Since they take the user-defined type as the right argument (`b` in `a @ b`), they must be implemented as non-members.
+
+{/* source:cpp-language-operators:0027 */}
+```cpp
+std::ostream& operator<<(std::ostream& os, const T& obj)
+{
+    // write obj to stream
+    return os;
+}
+
+std::istream& operator>>(std::istream& is, T& obj)
+{
+    // read obj from stream
+    if (/* T could not be constructed */)
+        is.setstate(std::ios::failbit);
+    return is;
+}
+```
+
+{/* source:cpp-language-operators:0028 */}
+These operators are sometimes implemented as [friend functions](/docs/cpp/language/classes/friend).
+
+### Function call operator
+
+{/* source:cpp-language-operators:0029 */}
+When a user-defined class overloads the function call operator `operator()`, it becomes a [FunctionObject](/docs/cpp/library/named_req/FunctionObject) type.
+
+{/* source:cpp-language-operators:0030 */}
+An object of such a type can be used in a function call expression:
+
+{/* source:cpp-language-operators:0031 */}
+```cpp
+// An object of this type represents a linear function of one variable a * x + b.
+struct Linear
+{
+    double a, b;
+
+    double operator()(double x) const
+    {
+        return a * x + b;
+    }
+};
+
+int main()
+{
+    Linear f{2, 1};  // Represents function 2x + 1.
+    Linear g{-1, 0}; // Represents function -x.
+    // f and g are objects that can be used like a function.
+
+    double f_0 = f(0);
+    double f_1 = f(1);
+
+    double g_0 = g(0);
+}
+```
+
+{/* source:cpp-language-operators:0032 */}
+Many standard library [algorithms](/docs/cpp/library/algorithm) accept [FunctionObjects](/docs/cpp/library/named_req/FunctionObject) to customize behavior. There are no particularly notable canonical forms of `operator()`, but to illustrate the usage:
+
+{/* source:cpp-language-operators:0033 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+struct Sum
+{
+    int sum = 0;
+    void operator()(int n) { sum += n; }
+};
+
+int main()
+{
+    std::vector<int> v = {1, 2, 3, 4, 5};
+    Sum s = std::for_each(v.begin(), v.end(), Sum());
+    std::cout << "The sum is " << s.sum << '\n';
+}
+```
+
+Output:
+
+```text
+The sum is 15
+```
+
+### Increment and decrement
+
+{/* source:cpp-language-operators:0034 */}
+When the postfix increment or decrement operator appears in an expression, the corresponding user-defined function (`operator++` or `operator--`) is called with an integer argument `0`. Typically, it is declared as `T operator++(int)` or `T operator--(int)`, where the argument is ignored. The postfix increment and decrement operators are usually implemented in terms of the prefix versions:
+
+{/* source:cpp-language-operators:0035 */}
+```cpp
+struct X
+{
+    // prefix increment
+    X& operator++()
+    {
+        // actual increment takes place here
+        return *this; // return new value by reference
+    }
+
+    // postfix increment
+    X operator++(int)
+    {
+        X old = *this; // copy old value
+        operator++();  // prefix increment
+        return old;    // return old value
+    }
+
+    // prefix decrement
+    X& operator--()
+    {
+        // actual decrement takes place here
+        return *this; // return new value by reference
+    }
+
+    // postfix decrement
+    X operator--(int)
+    {
+        X old = *this; // copy old value
+        operator--();  // prefix decrement
+        return old;    // return old value
+    }
+};
+```
+
+{/* source:cpp-language-operators:0036 */}
+Although the canonical implementations of the prefix increment and decrement operators return by reference, as with any operator overload, the return type is user-defined; for example the overloads of these operators for [`std::atomic`](/docs/cpp/library/atomic/atomic) return by value.
+
+### Binary arithmetic operators
+
+{/* source:cpp-language-operators:0037 */}
+Binary operators are typically implemented as non-members to maintain symmetry (for example, when adding a complex number and an integer, if `operator+` is a member function of the complex type, then only `complex + integer` would compile, and not `integer + complex`). Since for every binary arithmetic operator there exists a corresponding compound assignment operator, canonical forms of binary operators are implemented in terms of their compound assignments:
+
+{/* source:cpp-language-operators:0038 */}
+```cpp
+class X
+{
+public:
+    X& operator+=(const X& rhs) // compound assignment (does not need to be a member,
+    {                           // but often is, to modify the private members)
+        /* addition of rhs to *this takes place here */
+        return *this; // return the result by reference
+    }
+
+    // friends defined inside class body are inline and are hidden from non-ADL lookup
+    friend X operator+(X lhs,        // passing lhs by value helps optimize chained a+b+c
+                       const X& rhs) // otherwise, both parameters may be const references
+    {
+        lhs += rhs; // reuse compound assignment
+        return lhs; // return the result by value (uses move constructor)
+    }
+};
+```
+
+### Comparison operators
+
+{/* source:cpp-language-operators:0039 */}
+Standard library algorithms such as [`std::sort`](/docs/cpp/library/algorithm/sort) and containers such as [`std::set`](/docs/cpp/library/container/set) expect `operator<` to be defined, by default, for the user-provided types, and expect it to implement strict weak ordering (thus satisfying the [Compare](/docs/cpp/library/named_req/Compare) requirements). An idiomatic way to implement strict weak ordering for a structure is to use lexicographical comparison provided by [`std::tie`](/docs/cpp/library/utility/tuple/tie):
+
+{/* source:cpp-language-operators:0040 */}
+```cpp
+struct Record
+{
+    std::string name;
+    unsigned int floor;
+    double weight;
+
+    friend bool operator<(const Record& l, const Record& r)
+    {
+        return std::tie(l.name, l.floor, l.weight)
+             < std::tie(r.name, r.floor, r.weight); // keep the same order
+    }
+};
+```
+
+{/* source:cpp-language-operators:0041 */}
+Typically, once `operator<` is provided, the other relational operators are implemented in terms of `operator<`.
+
+{/* source:cpp-language-operators:0042 */}
+```cpp
+inline bool operator< (const X& lhs, const X& rhs) { /* do actual comparison */ }
+inline bool operator> (const X& lhs, const X& rhs) { return rhs < lhs; }
+inline bool operator<=(const X& lhs, const X& rhs) { return !(lhs > rhs); }
+inline bool operator>=(const X& lhs, const X& rhs) { return !(lhs < rhs); }
+```
+
+{/* source:cpp-language-operators:0043 */}
+Likewise, the inequality operator is typically implemented in terms of `operator==`:
+
+{/* source:cpp-language-operators:0044 */}
+```cpp
+inline bool operator==(const X& lhs, const X& rhs) { /* do actual comparison */ }
+inline bool operator!=(const X& lhs, const X& rhs) { return !(lhs == rhs); }
+```
+
+{/* source:cpp-language-operators:0045 */}
+When three-way comparison (such as [`std::memcmp`](/docs/cpp/library/text/byte/memcmp) or [`std::string::compare`](/docs/cpp/library/string/basic_string/compare)) is provided, all six two-way comparison operators may be expressed through that:
+
+{/* source:cpp-language-operators:0046 */}
+```cpp
+inline bool operator==(const X& lhs, const X& rhs) { return cmp(lhs,rhs) == 0; }
+inline bool operator!=(const X& lhs, const X& rhs) { return cmp(lhs,rhs) != 0; }
+inline bool operator< (const X& lhs, const X& rhs) { return cmp(lhs,rhs) <  0; }
+inline bool operator> (const X& lhs, const X& rhs) { return cmp(lhs,rhs) >  0; }
+inline bool operator<=(const X& lhs, const X& rhs) { return cmp(lhs,rhs) <= 0; }
+inline bool operator>=(const X& lhs, const X& rhs) { return cmp(lhs,rhs) >= 0; }
+```
+
+### Array subscript operator
+
+{/* source:cpp-language-operators:0047 */}
+User-defined classes that provide array-like access that allows both reading and writing typically define two overloads for `operator[]`: const and non-const variants:
+
+{/* source:cpp-language-operators:0048 */}
+```cpp
+struct T
+{
+          value_t& operator[](std::size_t idx)       { return mVector[idx]; }
+    const value_t& operator[](std::size_t idx) const { return mVector[idx]; }
+};
+```
+
+{/* source:cpp-language-operators:0049 */}
+<Revision since="C++23">
+Alternatively, they can be expressed as a single member function template using an [explicit object parameter](/docs/cpp/language/classes/member_functions#Explicit_object_parameter):
+
+```cpp
+struct T
+{
+    decltype(auto) operator[](this auto& self, std::size_t idx) 
+    { 
+        return self.mVector[idx]; 
+    }
+};
+```
+</Revision>
+
+{/* source:cpp-language-operators:0050 */}
+If the value type is known to be a scalar type, the const variant should return by value.
+
+{/* source:cpp-language-operators:0051 */}
+Where direct access to the elements of the container is not wanted or not possible or distinguishing between lvalue `c[i] = v;` and rvalue `v = c[i];` usage, `operator[]` may return a proxy. See for example [`std::bitset::operator[]`](/docs/cpp/library/utility/bitset/operator_at).
+
+{/* source:cpp-language-operators:0052 */}
+<Revision until="C++23">
+`operator[]` can only take one subscript. In order to provide multidimensional array access semantics, e.g. to implement a 3D array access `a[i][j][k] = x;`, `operator[]` has to return a reference to a 2D plane, which has to have its own `operator[]` which returns a reference to a 1D row, which has to have `operator[]` which returns a reference to the element. To avoid this complexity, some libraries opt for overloading `operator()` instead, so that 3D access expressions have the Fortran-like syntax `a(i, j, k) = x;`.
+</Revision>
+
+<Revision since="C++23">
+`operator[]` can take any number of subscripts. For example, an `operator[]` of a 3D array class declared as `T& operator[](std::size_t x, std::size_t y, std::size_t z);` can directly access the elements.
+
+```cpp
+#include <array>
+#include <cassert>
+#include <iostream>
+
+template<typename T, std::size_t Z, std::size_t Y, std::size_t X>
+struct Array3d
+{
+    std::array<T, X * Y * Z> m{};
+
+    constexpr T& operator[](std::size_t z, std::size_t y, std::size_t x) // C++23
+    {
+        assert(x < X and y < Y and z < Z);
+        return m[z * Y * X + y * X + x];
+    }
+};
+
+int main()
+{
+    Array3d<int, 4, 3, 2> v;
+    v[3, 2, 1] = 42;
+    std::cout << "v[3, 2, 1] = " << v[3, 2, 1] << '\n';
+}
+```
+
+Output:
+
+```text
+v[3, 2, 1] = 42
+```
+</Revision>
+
+### Bitwise arithmetic operators
+
+{/* source:cpp-language-operators:0053 */}
+User-defined classes and enumerations that implement the requirements of [BitmaskType](/docs/cpp/library/named_req/BitmaskType) are required to overload the bitwise arithmetic operators `operator&`, `operator|`, `operator^`, `operator~`, `operator&=`, `operator|=`, and `operator^=`, and may optionally overload the shift operators `operator<<` `operator>>`, `operator>>=`, and `operator<<=`. The canonical implementations usually follow the pattern for binary arithmetic operators described above.
+
+### Boolean negation operator
+
+{/* source:cpp-language-operators:0054 */}
+<Revision until="C++11">
+The operator `operator!` is commonly overloaded by the user-defined classes that are intended to be used in boolean contexts. Such classes also provide a user-defined conversion function to boolean type (see [`std::basic_ios`](/docs/cpp/library/io/basic_ios) for the standard library example), and the expected behavior of `operator!` is to return the value opposite of `operator bool`.
+</Revision>
+
+<Revision since="C++11">
+Since the built-in operator `!` performs [contextual conversion to bool](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions), user-defined classes that are intended to be used in boolean contexts could provide only `operator bool` and need not overload `operator!`.
+</Revision>
+
+### Rarely overloaded operators
+
+{/* source:cpp-language-operators:0055 */}
+The following operators are rarely overloaded:
+
+{/* source:cpp-language-operators:0056 */}
+- The address-of operator, `operator&`. If the unary `&` is applied to an lvalue of incomplete type and the complete type declares an overloaded `operator&`, it is unspecified whether the operator has the built-in meaning or the operator function is called. Because this operator may be overloaded, generic libraries use [`std::addressof`](/docs/cpp/library/memory/addressof) to obtain addresses of objects of user-defined types. The best known example of a canonical overloaded `operator&` is the Microsoft class [CComPtrBase](https://docs.microsoft.com/en-us/cpp/atl/reference/ccomptrbase-class?view=msvc-160#operator_amp). An example of this operator's use in EDSL can be found in [boost.spirit](https://www.boost.org/doc/libs/release/libs/spirit/doc/html/spirit/qi/reference/operator/and_predicate.html).
+- The boolean logic operators, `operator&&` and `operator||`. Unlike the built-in versions, the overloads cannot implement short-circuit evaluation.<InlineRevision until="C++17"> Also unlike the built-in versions, they do not sequence their left operand before the right one.</InlineRevision> In the standard library, these operators are only overloaded for [`std::valarray`](/docs/cpp/library/numeric/valarray).
+- The comma operator, `operator,`. <InlineRevision until="C++17">Unlike the built-in version, the overloads do not sequence their left operand before the right one.</InlineRevision> Because this operator may be overloaded, generic libraries use expressions such as `a, void(), b` instead of `a, b` to sequence execution of expressions of user-defined types. The boost library uses `operator,` in [boost.assign](https://www.boost.org/doc/libs/release/libs/assign/doc/index.html#intro), [boost.spirit](https://github.com/boostorg/spirit/blob/develop/include/boost/spirit/home/qi/string/symbols.hpp#L317), and other libraries. The database access library [SOCI](https://soci.sourceforge.net/doc.html) also overloads `operator,`.
+- The member access through pointer to member `operator->*`. There are no specific downsides to overloading this operator, but it is rarely used in practice. It was suggested that it could be part of a [smart pointer interface](https://www.aristeia.com/Papers/DDJ_Oct_1999.pdf), and in fact is used in that capacity by actors in [boost.phoenix](https://www.boost.org/doc/libs/release/libs/phoenix/doc/html/phoenix/modules/operator.html#phoenix.modules.operator.member_pointer_operator). It is more common in EDSLs such as [cpp.react](https://github.com/schlangster/cpp.react/blob/legacy1/include/react/Signal.h#L557).
+
+## Notes
+
+{/* source:cpp-language-operators:0057 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_static_call_operator`](/docs/cpp/library/feature_test#cpp_static_call_operator) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_static_call_operator_202207L) | (C++23) | static `operator()` |
+| [`__cpp_multidimensional_subscript`](/docs/cpp/library/feature_test#cpp_multidimensional_subscript) | [`202211L`](/docs/cpp/library/compiler_support/23#cpp_multidimensional_subscript_202211L) | (C++23) | static `operator[]` |
+
+## Keywords
+
+{/* source:cpp-language-operators:0058 */}
+[`operator`](/docs/cpp/language/keywords/operator)
+
+## Example
+
+{/* source:cpp-language-operators:0059 */}
+```cpp
+#include <iostream>
+
+class Fraction
+{
+    // or C++17's std::gcd
+    constexpr int gcd(int a, int b) { return b == 0 ? a : gcd(b, a % b); }
+
+    int n, d;
+public:
+    constexpr Fraction(int n, int d = 1) : n(n / gcd(n, d)), d(d / gcd(n, d)) {}
+
+    constexpr int num() const { return n; }
+    constexpr int den() const { return d; }
+
+    constexpr Fraction& operator*=(const Fraction& rhs)
+    {
+        int new_n = n * rhs.n / gcd(n * rhs.n, d * rhs.d);
+        d = d * rhs.d / gcd(n * rhs.n, d * rhs.d);
+        n = new_n;
+        return *this;
+    }
+};
+
+std::ostream& operator<<(std::ostream& out, const Fraction& f)
+{
+   return out << f.num() << '/' << f.den();
+}
+
+constexpr bool operator==(const Fraction& lhs, const Fraction& rhs)
+{
+    return lhs.num() == rhs.num() && lhs.den() == rhs.den();
+}
+
+constexpr bool operator!=(const Fraction& lhs, const Fraction& rhs)
+{
+    return !(lhs == rhs);
+}
+
+constexpr Fraction operator*(Fraction lhs, const Fraction& rhs)
+{
+    return lhs *= rhs;
+}
+
+int main()
+{
+    constexpr Fraction f1{3, 8}, f2{1, 2}, f3{10, 2};
+    std::cout << f1 << " * " << f2 << " = " << f1 * f2 << '\n'
+              << f2 << " * " << f3 << " = " << f2 * f3 << '\n'
+              << 2 << " * " << f1 << " = " << 2 * f1 << '\n';
+    static_assert(f3 == f2 * 10);
+}
+```
+
+Output:
+
+```text
+3/8 * 1/2 = 3/16
+1/2 * 5/1 = 5/2
+2 * 3/8 = 3/4
+```
+
+## Defect reports
+
+{/* source:cpp-language-operators:0060 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-operators:0061 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1481} standard="C++98">
+    <PublishedBehavior>the non-member prefix increment operator could only have a parameter of class type, enumeration type, or a reference type to such types</PublishedBehavior>
+    <CorrectedBehavior>no type requirement</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={2931} standard="C++23">
+    <PublishedBehavior>explicit object member operator functions could only have no parameter of class type, enumeration type, or a reference type to such types</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-language-operators:0062 */}
+- [Operator precedence](/docs/cpp/language/expressions/operator_precedence)
+- [Alternative operator syntax](/docs/cpp/language/expressions/operator_alternative)
+- [Argument-dependent lookup](/docs/cpp/language/functions/adl)
+
+{/* source:cpp-language-operators:0063 */}
+**Common operators:**
+
+- [assignment](/docs/cpp/language/expressions/operator_assignment): `a = b`, `a += b`, `a -= b`, `a *= b`, `a /= b`, `a %= b`, `a &= b`, `a |= b`, `a ^= b`, `a <<= b`, `a >>= b`
+- [increment decrement](/docs/cpp/language/expressions/operator_incdec): `++a`, `--a`, `a++`, `a--`
+- [arithmetic](/docs/cpp/language/expressions/operator_arithmetic): `+a`, `-a`, `a + b`, `a - b`, `a * b`, `a / b`, `a % b`, `~a`, `a & b`, `a | b`, `a ^ b`, `a << b`, `a >> b`
+- [logical](/docs/cpp/language/expressions/operator_logical): `!a`, `a && b`, `a || b`
+- [comparison](/docs/cpp/language/expressions/operator_comparison): `a == b`, `a != b`, `a < b`, `a > b`, `a <= b`, `a >= b`, `a <=> b`
+- [member access](/docs/cpp/language/expressions/operator_member_access): `a[...]`, `*a`, `&a`, `a->b`, `a.b`, `a->*b`, `a.*b`
+- [other](/docs/cpp/language/expressions/operator_other): `a(...)` function call; `a, b` comma; `a ? b : c` conditional
+
+**Special operators:**
+
+- [`static_cast`](/docs/cpp/language/expressions/static_cast) converts one type to another related type
+- [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast) converts within inheritance hierarchies
+- [`const_cast`](/docs/cpp/language/expressions/const_cast) adds or removes [`cv`](/docs/cpp/language/declarations/cv)-qualifiers
+- [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) converts type to unrelated type
+- [C-style cast](/docs/cpp/language/expressions/explicit_cast) converts one type to another by a mix of `static_cast`, `const_cast`, and `reinterpret_cast`
+- [`new`](/docs/cpp/language/expressions/new) creates objects with dynamic storage duration
+- [`delete`](/docs/cpp/language/expressions/delete) destructs objects previously created by the new expression and releases obtained memory area
+- [`sizeof`](/docs/cpp/language/expressions/sizeof) queries the size of a type
+- [`sizeof...`](/docs/cpp/language/templates/sizeof...) queries the size of a [`pack`](/docs/cpp/language/templates/parameter_pack) <InlineRevision since="C++11" />
+- [`typeid`](/docs/cpp/language/expressions/typeid) queries the type information of a type
+- [`noexcept`](/docs/cpp/language/exceptions/noexcept) checks if an expression can throw an exception <InlineRevision since="C++11" />
+- [`alignof`](/docs/cpp/language/expressions/alignof) queries alignment requirements of a type <InlineRevision since="C++11" />
+
+## External links
+
+{/* source:cpp-language-operators:0064 */}
+[^1]: ↑ [Operator Overloading](https://stackoverflow.com/questions/4421706/4421719#4421719) on StackOverflow C++ FAQ

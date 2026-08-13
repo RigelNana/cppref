@@ -1,0 +1,439 @@
+---
+title: "Type"
+description: "Objects, references, functions including function template specializations, and expressions have a property called type, which both restricts the operations that are permitted for those entities and provides semantic meaning to the otherwise generic sequences of bits."
+source_url: "https://en.cppreference.com/w/cpp/language/type"
+language: "C++"
+---
+
+{/* source:cpp-language-incomplete-type:0000 */}
+[Objects](/docs/cpp/language/basic_concepts/objects), [references](/docs/cpp/language/declarations/reference), [functions](/docs/cpp/language/functions) including [function template specializations](/docs/cpp/language/templates/template_specialization), and [expressions](/docs/cpp/language/expressions) have a property called *type*, which both restricts the operations that are permitted for those entities and provides semantic meaning to the otherwise generic sequences of bits.
+
+## Type classification
+
+{/* source:cpp-language-incomplete-type:0001 */}
+The C++ type system consists of the following types:
+
+{/* source:cpp-language-incomplete-type:0002 */}
+- [fundamental types](/docs/cpp/language/basic_concepts/types) (see also [`std::is_fundamental`](/docs/cpp/library/meta/is_fundamental)):
+  {/* source:cpp-language-incomplete-type:0003 */}
+  - the type `void` (see also [`std::is_void`](/docs/cpp/library/meta/is_void));
+  {/* source:cpp-language-incomplete-type:0004 */}
+  - <Revision since="C++11">the type [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t) (see also [`std::is_null_pointer`](/docs/cpp/library/meta/is_null_pointer));</Revision>
+  {/* source:cpp-language-incomplete-type:0005 */}
+  - arithmetic types (see also [`std::is_arithmetic`](/docs/cpp/library/meta/is_arithmetic)):
+    - integral types (including [cv-qualified versions](/docs/cpp/language/declarations/cv), see also [`std::is_integral`](/docs/cpp/library/meta/is_integral), a synonym for integral type is integer type):
+      - the type `bool`;
+      - character types:
+        - narrow character types:
+          - ordinary character types: `char`, `signed char`, `unsigned char`[^1]
+          {/* source:cpp-language-incomplete-type:0006 */}
+          - <Revision since="C++20">the type `char8_t`</Revision>
+          {/* source:cpp-language-incomplete-type:0007 */}
+          - wide character types: <InlineRevision since="C++11">`char16_t`, `char32_t`,</InlineRevision> `wchar_t`;
+        - signed integer types:
+          - standard signed integer types: `signed char`, `short`, `int`, `long`, `long long`;
+          {/* source:cpp-language-incomplete-type:0008 */}
+          - <Revision since="C++11">extended signed integer types (implementation-defined);</Revision>
+        {/* source:cpp-language-incomplete-type:0009 */}
+        - unsigned integer types:
+          - standard unsigned integer types: `unsigned char`, `unsigned short`, `unsigned`, `unsigned long`, `unsigned long long`;
+          {/* source:cpp-language-incomplete-type:0010 */}
+          - <Revision since="C++11">extended unsigned integer types (each corresponds to an extended signed integer type, and vice versa);</Revision>
+      {/* source:cpp-language-incomplete-type:0011 */}
+      - floating-point types (see also [`std::is_floating_point`](/docs/cpp/library/meta/is_floating_point)):
+        - standard floating-point types: `float`, `double`, `long double` and their [cv-qualified versions](/docs/cpp/language/declarations/cv);
+        {/* source:cpp-language-incomplete-type:0012 */}
+        <Revision since="C++23">
+        - extended floating-point types (including [cv-qualified versions](/docs/cpp/language/declarations/cv)):
+          - [fixed width floating-point types](/docs/cpp/library/utility/types/floating-point);
+          - other implementation-defined extended floating-point types;
+        </Revision>
+{/* source:cpp-language-incomplete-type:0013 */}
+- compound types (see also [`std::is_compound`](/docs/cpp/library/meta/is_compound)):
+  {/* source:cpp-language-incomplete-type:0014 */}
+  - [reference types](/docs/cpp/language/declarations/reference) (see also [`std::is_reference`](/docs/cpp/library/meta/is_reference)):
+    - [lvalue reference types](/docs/cpp/language/declarations/reference#Lvalue_references) (see also [`std::is_lvalue_reference`](/docs/cpp/library/meta/is_lvalue_reference)):
+      - lvalue reference to object types;
+      - lvalue reference to function types;
+    {/* source:cpp-language-incomplete-type:0015 */}
+    <Revision since="C++11">
+    - [rvalue reference types](/docs/cpp/language/declarations/reference#Rvalue_references) (see also [`std::is_rvalue_reference`](/docs/cpp/library/meta/is_rvalue_reference)):
+      - rvalue reference to object types;
+      - rvalue reference to function types;
+    </Revision>
+  {/* source:cpp-language-incomplete-type:0016 */}
+  - [pointer types](/docs/cpp/language/declarations/pointer#Pointers) (see also [`std::is_pointer`](/docs/cpp/library/meta/is_pointer)):
+    - [pointer-to-object types](/docs/cpp/language/declarations/pointer#Pointers_to_objects);
+    - [pointer-to-function types](/docs/cpp/language/declarations/pointer#Pointers_to_functions);
+    - [pointer-to-member types](/docs/cpp/language/declarations/pointer#Pointers_to_members) (see also [`std::is_member_pointer`](/docs/cpp/library/meta/is_member_pointer)):
+      - [pointer-to-data-member](/docs/cpp/language/declarations/pointer#Pointers_to_data_members) types (see also [`std::is_member_object_pointer`](/docs/cpp/library/meta/is_member_object_pointer));
+      - [pointer-to-member-function](/docs/cpp/language/declarations/pointer#Pointers_to_member_functions) types (see also [`std::is_member_function_pointer`](/docs/cpp/library/meta/is_member_function_pointer));
+    - [array types](/docs/cpp/language/declarations/array) (see also [`std::is_array`](/docs/cpp/library/meta/is_array));
+    - [function types](/docs/cpp/language/functions/function) (see also [`std::is_function`](/docs/cpp/library/meta/is_function));
+    - [enumeration types](/docs/cpp/language/declarations/enum) (see also [`std::is_enum`](/docs/cpp/library/meta/is_enum));
+      - [unscoped enumeration types](/docs/cpp/language/declarations/enum#Unscoped_enumerations);
+      {/* source:cpp-language-incomplete-type:0017 */}
+      - <Revision since="C++11">[scoped enumeration types](/docs/cpp/language/declarations/enum#Scoped_enumerations) (see also [`std::is_scoped_enum`](/docs/cpp/library/meta/is_scoped_enum));</Revision>
+  {/* source:cpp-language-incomplete-type:0018 */}
+  - [class types](/docs/cpp/language/classes/class):
+    - non-union types (see also [`std::is_class`](/docs/cpp/library/meta/is_class));
+    - [union types](/docs/cpp/language/classes/union) (see also [`std::is_union`](/docs/cpp/library/meta/is_union)).
+
+{/* source:cpp-language-incomplete-type:0019 */}
+[^1]: `signed char` and `unsigned char` are narrow character types, but they are not character types. In other words, the set of narrow character types is not a subset of the set of character types.
+
+{/* source:cpp-language-incomplete-type:0020 */}
+For every non-cv-qualified type other than reference and function, the type system supports three additional [cv-qualified versions](/docs/cpp/language/declarations/cv) of that type (`const`, `volatile`, and `const volatile`).
+
+## Other categories
+
+{/* source:cpp-language-incomplete-type:0021 */}
+An *object type* (see also [`std::is_object`](/docs/cpp/library/meta/is_object)) is a (possibly cv-qualified) type that is not a function type, not a reference type, and not (possibly cv-qualified) `void`.
+
+{/* source:cpp-language-incomplete-type:0022 */}
+The following types are collectively called *scalar types* (see also [`std::is_scalar`](/docs/cpp/library/meta/is_scalar)):
+
+{/* source:cpp-language-incomplete-type:0023 */}
+- arithmetic types
+- [enumeration types](/docs/cpp/language/declarations/enum)
+- [pointer types](/docs/cpp/language/declarations/pointer)
+- [pointer-to-member types](/docs/cpp/language/declarations/pointer#Pointers_to_members)
+
+{/* source:cpp-language-incomplete-type:0024 */}
+- <Revision since="C++11">[`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t)</Revision>
+
+{/* source:cpp-language-incomplete-type:0025 */}
+- cv-qualified versions of these types
+
+{/* source:cpp-language-incomplete-type:0026 */}
+The following types are collectively called *implicit-lifetime types*:
+
+{/* source:cpp-language-incomplete-type:0027 */}
+- scalar types
+- [implicit-lifetime class types](/docs/cpp/language/classes#Implicit-lifetime_class)
+- array types
+- cv-qualified versions of these types
+
+{/* source:cpp-language-incomplete-type:0028 */}
+<Revision since="C++11">
+The following types are collectively called *trivially copyable types*:
+
+- scalar types
+- [trivially copyable class types](/docs/cpp/language/classes#Trivially_copyable_class)
+- arrays of such types
+- cv-qualified versions of these types
+
+The following types are collectively called *standard-layout types*:
+
+- scalar types
+- [standard-layout class types](/docs/cpp/language/classes#Standard-layout_class)
+- arrays of such types
+- cv-qualified versions of these types
+</Revision>
+
+{/* source:cpp-language-incomplete-type:0029 */}
+**Type traits hierarchy diagram**
+
+*Note: Elements of SVG image are clickable, but you must open the diagram in a new browser tab first*
+
+### Deprecated categories
+
+{/* source:cpp-language-incomplete-type:0030 */}
+<Revision removed="C++20">
+The following types are collectively called *POD types* (see also [`std::is_pod`](/docs/cpp/library/meta/is_pod)):
+
+- scalar types
+- [POD classes](/docs/cpp/language/classes#POD_class)
+- arrays of such types
+- cv-qualified versions of these types
+</Revision>
+
+<Revision since="C++11" removed="C++26">
+The following types are collectively called *trivial types* (see also [`std::is_trivial`](/docs/cpp/library/meta/is_trivial)):
+
+- scalar types
+- [trivial class types](/docs/cpp/language/classes#Trivial_class)
+- arrays of such types
+- cv-qualified versions of these types
+</Revision>
+
+## Program-defined type
+
+{/* source:cpp-language-incomplete-type:0031 */}
+A *program-defined specialization* is an [explicit specialization](/docs/cpp/language/templates/template_specialization) or [partial specialization](/docs/cpp/language/templates/partial_specialization) that is not part of the C++ [standard library](/docs/cpp/library/standard_library) and not defined by the implementation.
+
+{/* source:cpp-language-incomplete-type:0032 */}
+A *program-defined type* is one of the following types:
+
+{/* source:cpp-language-incomplete-type:0033 */}
+- A<InlineRevision since="C++11"> non-[closure](/docs/cpp/language/functions/lambda)</InlineRevision> [class type](/docs/cpp/language/classes/class) or [enumeration type](/docs/cpp/language/declarations/enum) that is not part of the C++ standard library and not defined by the implementation.
+
+{/* source:cpp-language-incomplete-type:0034 */}
+- <Revision since="C++11">A closure type of a non-implementation-provided [lambda expression](/docs/cpp/language/functions/lambda).</Revision>
+
+{/* source:cpp-language-incomplete-type:0035 */}
+- An [instantiation](/docs/cpp/language/templates) of a program-defined specialization.
+
+## Type naming
+
+{/* source:cpp-language-incomplete-type:0036 */}
+A [name](/docs/cpp/language/basic_concepts/name) can be declared to refer to a type by means of:
+
+{/* source:cpp-language-incomplete-type:0037 */}
+- [class](/docs/cpp/language/classes/class) declaration;
+- [union](/docs/cpp/language/classes/union) declaration;
+- [enum](/docs/cpp/language/declarations/enum) declaration;
+- [`typedef`](/docs/cpp/language/declarations/typedef) declaration;
+- [type alias](/docs/cpp/language/declarations/type_alias) declaration.
+
+{/* source:cpp-language-incomplete-type:0038 */}
+Types that do not have names often need to be referred to in C++ programs; the syntax for that is known as *type-id*. The syntax of the type-id that names type `T` is exactly the syntax of a [declaration](/docs/cpp/language/declarations) of a variable or function of type `T`, with the identifier omitted, except that *decl-specifier-seq* of the declaration grammar is constrained to *type-specifier-seq*, and that new types may be defined only if the type-id appears on the right-hand side of a non-template type alias declaration.
+
+{/* source:cpp-language-incomplete-type:0039 */}
+```cpp
+int* p;               // declaration of a pointer to int
+static_cast<int*>(p); // type-id is "int*"
+
+int a[3];   // declaration of an array of 3 int
+new int[3]; // type-id is "int[3]" (called new-type-id)
+
+int (*(*x[2])())[3];      // declaration of an array of 2 pointers to functions
+                          // returning pointer to array of 3 int
+new (int (*(*[2])())[3]); // type-id is "int (*(*[2])())[3]"
+
+void f(int);                    // declaration of a function taking int and returning void
+std::function<void(int)> x = f; // type template parameter is a type-id "void(int)"
+std::function<auto(int) -> void> y = f; // same
+
+std::vector<int> v;       // declaration of a vector of int
+sizeof(std::vector<int>); // type-id is "std::vector<int>"
+
+struct { int x; } b;         // creates a new type and declares an object b of that type
+sizeof(struct { int x; });   // error: cannot define new types in a sizeof expression
+using t = struct { int x; }; // creates a new type and declares t as an alias of that type
+
+sizeof(static int); // error: storage class specifiers not part of type-specifier-seq
+std::function<inline void(int)> f; // error: neither are function specifiers
+```
+
+{/* source:cpp-language-incomplete-type:0040 */}
+The *declarator* part of the declaration grammar with the name removed is referred to as *abstract-declarator*.
+
+{/* source:cpp-language-incomplete-type:0041 */}
+Type-id may be used in the following situations:
+
+{/* source:cpp-language-incomplete-type:0042 */}
+- to specify the target type in [cast expressions](/docs/cpp/language/expressions#Conversions);
+- as arguments to [`sizeof`](/docs/cpp/language/expressions/sizeof), [`alignof`](/docs/cpp/language/expressions/alignof), [`alignas`](/docs/cpp/language/declarations/alignas), [`new`](/docs/cpp/language/expressions/new), and [`typeid`](/docs/cpp/language/expressions/typeid);
+- on the right-hand side of a [type alias](/docs/cpp/language/declarations/type_alias) declaration;
+- as the trailing return type of a [function](/docs/cpp/language/functions/function) declaration;
+- as the default argument of a [template type parameter](/docs/cpp/language/templates/template_parameters#Type_template_parameter);
+- as the template argument for a [template type parameter](/docs/cpp/language/templates/template_parameters#Template_type_arguments);
+
+{/* source:cpp-language-incomplete-type:0043 */}
+- <Revision until="C++17">in [dynamic exception specification](/docs/cpp/language/exceptions/except_spec).</Revision>
+
+{/* source:cpp-language-incomplete-type:0044 */}
+Type-id can be used with some modifications in the following situations:
+
+{/* source:cpp-language-incomplete-type:0045 */}
+- in the parameter list of a [function](/docs/cpp/language/functions/function#Parameter_list) (when the parameter name is omitted), type-id uses *decl-specifier-seq* instead of *type-specifier-seq* (in particular, some storage class specifiers are allowed);
+- in the name of a [user-defined conversion function](/docs/cpp/language/expressions/cast_operator), the abstract declarator cannot include function or array operators.
+
+{/* source:cpp-language-incomplete-type:0046 */}
+This section is incomplete
+
+Reason: 8.2[dcl.ambig.res] if it can be compactly summarized
+
+{/* source:cpp-language-incomplete-type:0047 */}
+This section is incomplete
+
+Reason: mention and link to decltype and auto
+
+## Elaborated type specifier
+
+{/* source:cpp-language-incomplete-type:0048 */}
+Elaborated type specifiers may be used to refer to a previously-declared class name (class, struct, or union) or to a previously-declared enum name even if the name was [hidden by a non-type declaration](/docs/cpp/language/basic_concepts/lookup). They may also be used to declare new class names.
+
+{/* source:cpp-language-incomplete-type:0049 */}
+See [elaborated type specifier](/docs/cpp/language/declarations/elaborated_type_specifier) for details.
+
+## Static type
+
+{/* source:cpp-language-incomplete-type:0050 */}
+The type of an expression that results from the compile-time analysis of the program is known as the *static type* of the expression. The static type does not change while the program is executing.
+
+## Dynamic type
+
+{/* source:cpp-language-incomplete-type:0051 */}
+If some [glvalue expression](/docs/cpp/language/expressions/value_category) refers to a [polymorphic object](/docs/cpp/language/basic_concepts/objects), the type of its most derived object is known as the dynamic type.
+
+{/* source:cpp-language-incomplete-type:0052 */}
+```cpp
+// given
+struct B { virtual ~B() {} }; // polymorphic type
+struct D : B {};               // polymorphic type
+
+D d; // most-derived object
+B* ptr = &d;
+
+// the static type of (*ptr) is B
+// the dynamic type of (*ptr) is D
+```
+
+{/* source:cpp-language-incomplete-type:0053 */}
+For prvalue expressions, the dynamic type is always the same as the static type.
+
+## Incomplete type
+
+{/* source:cpp-language-incomplete-type:0054 */}
+The following types are *incomplete types*:
+
+{/* source:cpp-language-incomplete-type:0055 */}
+- the type `void` (possibly [cv](/docs/cpp/language/declarations/cv)-qualified);
+- *incompletely-defined object types*:
+  - class type that has been declared (e.g. by [forward declaration](/docs/cpp/language/classes/class#Forward_declaration)) but not defined;
+  - [array of unknown bound](/docs/cpp/language/declarations/array#Arrays_of_unknown_bound);
+  - array of elements of incomplete type;
+  - [enumeration type](/docs/cpp/language/declarations/enum) from the point of declaration until its underlying type is determined.
+
+{/* source:cpp-language-incomplete-type:0056 */}
+All other types are complete.
+
+{/* source:cpp-language-incomplete-type:0057 */}
+Any of the following contexts requires type `T` to be complete:
+
+{/* source:cpp-language-incomplete-type:0058 */}
+- [definition](/docs/cpp/language/functions/function) of or call to a function with return type `T` or argument type `T`;
+- [definition](/docs/cpp/language/basic_concepts/definition) of an object of type `T`;
+- declaration of a [non-static class data member](/docs/cpp/language/classes/data_members) of type `T`;
+- [`new` expression](/docs/cpp/language/expressions/new) for an object of type `T` or an array whose element type is `T`;
+- [lvalue-to-rvalue conversion](/docs/cpp/language/expressions/implicit_cast#Lvalue_to_rvalue_conversion) applied to a glvalue of type `T`;
+- an [implicit](/docs/cpp/language/expressions/implicit_cast) or [explicit](/docs/cpp/language/expressions/explicit_cast) conversion to type `T`;
+- a [standard conversion](/docs/cpp/language/expressions/implicit_cast), [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast), or [`static_cast`](/docs/cpp/language/expressions/static_cast) to type `T*` or `T&`, except when converting from the [null pointer constant](/docs/cpp/language/declarations/pointer#Null_pointers) or from a [pointer to possibly cv-qualified void](/docs/cpp/language/declarations/pointer#Pointers_to_void);
+- [class member access operator](/docs/cpp/language/expressions/operator_member_access) applied to an expression of type `T`;
+- [`typeid`](/docs/cpp/language/expressions/typeid), [`sizeof`](/docs/cpp/language/expressions/sizeof), or [`alignof`](/docs/cpp/language/expressions/alignof) operator applied to type `T`;
+- [arithmetic operator](/docs/cpp/language/expressions/operator_arithmetic) applied to a pointer to `T`;
+- definition of a class with base class `T`;
+- assignment to an lvalue of type `T`;
+- a [handler](/docs/cpp/language/exceptions/catch) of type `T`, `T&`, or `T*`.
+
+{/* source:cpp-language-incomplete-type:0059 */}
+(In general, when the size and layout of `T` must be known.)
+
+{/* source:cpp-language-incomplete-type:0060 */}
+If any of these situations occur in a translation unit, the definition of the type must appear in the same translation unit. Otherwise, it is not required.
+
+{/* source:cpp-language-incomplete-type:0061 */}
+An incompletely-defined object type can be completed:
+
+{/* source:cpp-language-incomplete-type:0062 */}
+- A class type (such as `class X`) might be regarded as incomplete at one point in a translation unit and regarded as complete later on; the type `class X` is the same type at both points:
+
+{/* source:cpp-language-incomplete-type:0063 */}
+```cpp
+struct X;            // declaration of X, no definition provided yet
+extern X* xp;        // xp is a pointer to an incomplete type:
+                     // the definition of X is not reachable
+
+void foo()
+{
+    xp++;            // ill-formed: X is incomplete
+}
+
+struct X { int i; }; // definition of X
+X x;                 // OK: the definition of X is reachable
+
+void bar()
+{
+    xp = &x;         // OK: type is “pointer to X”
+    xp++;            // OK: X is complete
+}
+```
+
+{/* source:cpp-language-incomplete-type:0064 */}
+- The declared type of an array object might be an array of incomplete class type and therefore incomplete; if the class type is completed later on in the translation unit, the array type becomes complete; the array type at those two points is the same type.
+- The declared type of an array object might be an array of unknown bound and therefore be incomplete at one point in a translation unit and complete later on; the array types at those two points ("array of unknown bound of `T`" and "array of `N` `T`") are different types.
+
+{/* source:cpp-language-incomplete-type:0065 */}
+The type of a pointer or reference to array of unknown bound permanently points to or refers to an incomplete type. An array of unknown bound named by a [`typedef`](/docs/cpp/language/declarations/typedef) declaration permanently refers to an incomplete type. In either case, the array type cannot be completed:
+
+{/* source:cpp-language-incomplete-type:0066 */}
+```cpp
+extern int arr[];   // the type of arr is incomplete
+typedef int UNKA[]; // UNKA is an incomplete type
+
+UNKA* arrp;         // arrp is a pointer to an incomplete type
+UNKA** arrpp;
+
+void foo()
+{
+    arrp++;         // error: UNKA is an incomplete type
+    arrpp++;        // OK: sizeof UNKA* is known
+}
+
+int arr[10];        // now the type of arr is complete
+
+void bar()
+{
+    arrp = &arr;    // OK: qualification conversion (since C++20)
+    arrp++;         // error: UNKA cannot be completed
+}
+```
+
+## Defect reports
+
+{/* source:cpp-language-incomplete-type:0067 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-incomplete-type:0068 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={328} standard="C++98"><PublishedBehavior>class members of incomplete type were not prohibited if an object of the class type was never created</PublishedBehavior><CorrectedBehavior>non-static class data members need to be complete</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={977} standard="C++98"><PublishedBehavior>the point when an enumeration type becomes complete in its definition was unclear</PublishedBehavior><CorrectedBehavior>the type is complete once the underlying type is determined</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1362} standard="C++98"><PublishedBehavior>user-defined conversions to type `T*` or `T&` required `T` to be complete</PublishedBehavior><CorrectedBehavior>not required</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2006} standard="C++98"><PublishedBehavior>cv-qualified `void` types were object type and complete type</PublishedBehavior><CorrectedBehavior>excluded from both categories</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2448} standard="C++98"><PublishedBehavior>only cv-unqualified types could be integral and floating-point types</PublishedBehavior><CorrectedBehavior>allows cv-qualified types</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2630} standard="C++98"><PublishedBehavior>it was unclear whether a class is considered complete outside the translation unit where the definition of the class appears</PublishedBehavior><CorrectedBehavior>the class is complete if its definition is reachable in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2643} standard="C++98"><PublishedBehavior>the type of a pointer to array of unknown bound could not be completed (but it is already complete)</PublishedBehavior><CorrectedBehavior>the pointed-to array type cannot be completed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2139} standard="C++98"><PublishedBehavior>the meaning of “user-defined type” was unclear</PublishedBehavior><CorrectedBehavior>defines and uses “program-defined type” instead</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={3119} standard="C++11"><PublishedBehavior>it was unclear whether closure types are program-defined types</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-incomplete-type:0069 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 6.8.2 Fundamental types [basic.fundamental]
+
+{/* source:cpp-language-incomplete-type:0070 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 6.8.2 Fundamental types [basic.fundamental]
+
+{/* source:cpp-language-incomplete-type:0071 */}
+- C++17 standard (ISO/IEC 14882:2017):
+  - 6.9.1 Fundamental types [basic.fundamental]
+
+{/* source:cpp-language-incomplete-type:0072 */}
+- C++14 standard (ISO/IEC 14882:2014):
+  - 3.9.1 Fundamental types [basic.fundamental]
+
+{/* source:cpp-language-incomplete-type:0073 */}
+- C++11 standard (ISO/IEC 14882:2011):
+  - 3.9.1 Fundamental types [basic.fundamental]
+
+{/* source:cpp-language-incomplete-type:0074 */}
+- C++98 standard (ISO/IEC 14882:1998):
+  - 3.9.1 Fundamental types [basic.fundamental]
+
+## See also
+
+{/* source:cpp-language-incomplete-type:0075 */}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[Type traits](/docs/cpp/library/meta#Type_traits)</DescriptionTerm><DescriptionBody>A compile-time template-based interfaces to query the properties of types</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[C documentation](/docs/c/language/basic_concepts/compatible_type)</DescriptionTerm><DescriptionBody>for Type</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+## External links
+
+{/* source:cpp-language-incomplete-type:0076 */}
+1. [Howard Hinnant's C++0x type tree](https://howardhinnant.github.io/TypeHiearchy.pdf)

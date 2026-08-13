@@ -1,0 +1,398 @@
+---
+title: "static_cast conversion"
+description: "Converts between types using a combination of implicit and user-defined conversions."
+source_url: "https://en.cppreference.com/w/cpp/language/static_cast"
+language: "C++"
+---
+
+{/* source:cpp-language-static-cast:0000 */}
+Converts between types using a combination of implicit and user-defined conversions.
+
+## Syntax
+
+{/* source:cpp-language-static-cast:0001 */}
+<DeclarationDoc>
+  <Declaration language="cpp" grammar code="static_cast< target-type >( expression )" />
+</DeclarationDoc>
+
+{/* source:cpp-language-static-cast:0002 */}
+Returns a value of type *target-type*.
+
+## Explanation
+
+{/* source:cpp-language-static-cast:0003 */}
+Only the following conversions can be done with `static_cast`, except when such conversions would [cast away constness](/docs/cpp/language/expressions/const_cast#Casting_away_constness) (or volatility).
+
+{/* source:cpp-language-static-cast:0004 */}
+1. If *expression* is an lvalue of type "*cv1* `Base`" and *target-type* is "reference to *cv2* `Derived`", the result refers to the object of type `Derived` enclosing *expression* if all following conditions are satisfied:
+
+- `Derived` is a complete class type.
+- `Base` is a base class of `Derived`.
+- *cv1* is not a greater cv-qualification than *cv2*.
+
+{/* source:cpp-language-static-cast:0005 */}
+If any of the following conditions is satisfied, the program is ill-formed:
+
+- `Base` is a [virtual base class](/docs/cpp/language/classes/derived_class#Virtual_base_classes) of `Derived`.
+- `Base` is a base class of a virtual base class of `Derived`.
+- No valid [standard conversion](/docs/cpp/language/expressions/implicit_cast) from "pointer to `Derived`" to "pointer to `Base`" exists.
+
+{/* source:cpp-language-static-cast:0006 */}
+If *expression* is actually not a base class subobject of an object of type `Derived`, the behavior is undefined.
+
+```cpp
+struct B {};
+struct D : B { B b; };
+
+D d;
+B& br1 = d;
+B& br2 = d.b;
+
+static_cast<D&>(br1); // OK, lvalue denoting the original “d” object
+static_cast<D&>(br2); // UB: the “b” subobject is not a base class subobject
+```
+
+{/* source:cpp-language-static-cast:0007 */}
+<Revision since="C++11">
+2. If *target-type* is "rvalue reference to `Derived`" and *expression* is an xvalue of type "(possibly cv-qualified) `Base`" such that `Base` is a base class of `Derived`, the result and constraints of such a conversion are the same as those of the "`Base` lvalue to `Derived` reference" conversion.
+
+3. If *target-type* is an rvalue reference type and the referenced type is [reference-compatible](/docs/cpp/language/initialization/reference_initialization#Definitions) with the type of *expression*, `static_cast` converts the value of <InlineRevision until="C++17">glvalue, class prvalue, or array prvalue</InlineRevision><InlineRevision since="C++17">any lvalue</InlineRevision> *expression* to xvalue referring to the same object as the expression, or to its base class subobject (depending on target-type).[^1]
+
+If *target-type* is an inaccessible or ambiguous base of the type of *expression*, the program is ill-formed.
+
+If *expression* is a [bit-field](/docs/cpp/language/classes/bit_field) lvalue, it is first converted to prvalue of the underlying type.
+</Revision>
+
+{/* source:cpp-language-static-cast:0008 */}
+4. If *target-type* is the (possibly cv-qualified) `void`, the conversion has no result. In this case, *expression* is a [discarded-value expression](/docs/cpp/language/expressions#Discarded-value_expressions).
+
+{/* source:cpp-language-static-cast:0009 */}
+5. Otherwise, *expression* can be explicitly converted to *target-type* if
+
+<Revision until="C++17">
+the declaration `target-type temp( expression ) ;` is well-formed for some invented temporary variable `temp`.
+
+The effect of such an explicit conversion is the same as performing the declaration and initialization and then using `temp` as the result of the conversion. The *expression* is used as <InlineRevision until="C++11">an lvalue</InlineRevision><InlineRevision since="C++11">a glvalue</InlineRevision> if and only if the initialization uses it as <InlineRevision until="C++11">an lvalue</InlineRevision><InlineRevision since="C++11">a glvalue</InlineRevision> .
+</Revision>
+
+<Revision since="C++17">
+any of the following conditions is satisfied:
+
+- There is an implicit conversion sequence from *expression* to *target-type*.
+- The [overload resolution](/docs/cpp/language/functions/overload_resolution) for a [direct-initialization](/docs/cpp/language/initialization/direct_initialization) of an object or reference of type *target-type* from *expression* would find at least one viable function.
+
+<Revision since="C++20">
+- *target-type* is an [aggregate type](/docs/cpp/language/initialization/aggregate_initialization#Aggregate) having a first element `x` and there is an implicit conversion sequence from *expression* to the type of `x`.
+</Revision>
+
+The explicit conversion is defined as follows:
+
+- If *target-type* is a reference type, the effect is the same as performing the declaration and initialization `target-type temp( expression ) ;` for some invented temporary variable `temp` and then using `temp` as the result of the conversion.
+- Otherwise, the result object is direct-initialized from *expression*.
+</Revision>
+
+{/* source:cpp-language-static-cast:0010 */}
+6. Otherwise, if the conversion from *expression* to *target-type* is an inverse of a standard conversion sequence, and the conversion sequence does not contain any of the following conversions, the conversion can be performed by `static_cast`:
+
+- [lvalue-to-rvalue conversion](/docs/cpp/language/expressions/implicit_cast#Lvalue-to-rvalue_conversion)
+- [array-to-pointer conversion](/docs/cpp/language/expressions/implicit_cast#Array-to-pointer_conversion)
+- [function-to-pointer conversion](/docs/cpp/language/expressions/implicit_cast#Function-to-pointer_conversion)
+- [null pointer conversion](/docs/cpp/language/expressions/implicit_cast#Pointer_conversions)
+- [null member pointer conversion](/docs/cpp/language/expressions/implicit_cast#Pointer-to-member_conversions)
+- [boolean conversion](/docs/cpp/language/expressions/implicit_cast#Boolean_conversions)
+
+<Revision since="C++17">
+- [function pointer conversion](/docs/cpp/language/expressions/implicit_cast#Function_pointer_conversions)
+</Revision>
+
+{/* source:cpp-language-static-cast:0011 */}
+If a program uses `static_cast` to perform the inverse of an ill-formed standard conversion sequence, it is ill-formed.
+
+{/* source:cpp-language-static-cast:0012 */}
+7. Otherwise, lvalue-to-rvalue, array-to-pointer, and function-to-pointer conversions are applied to *expression*. After these conversions, only the following conversions can be performed by `static_cast`:
+
+{/* source:cpp-language-static-cast:0013 */}
+<Revision since="C++11">
+- a) A value of [scoped enumeration](/docs/cpp/language/declarations/enum#Scoped_enumerations) type can be converted to an integer or floating-point type.
+
+<Revision until="C++20">
+- If *target-type* is (possibly cv-qualified) `bool`, the result is `false` if the original value of *expression* is zero and `true` for all other values.
+- If *target-type* is an integral type other than (possibly cv-qualified) `bool`, the value is unchanged if the original value of *expression* can be represented by *target-type*. Otherwise, the resulting value is unspecified.
+</Revision>
+
+<Revision since="C++20">
+- If *target-type* is an integral type, the result is the same as that of converting to the enumeration's underlying type and then to *target-type*.
+</Revision>
+
+- If *target-type* is a floating-point type, the result is the same as that of converting from the original value to *target-type*.
+</Revision>
+
+{/* source:cpp-language-static-cast:0014 */}
+- b) A value of integer or enumeration type can be converted to any complete enumeration type. If *target-type* has a fixed underlying type, *expression* is first converted to that type by [integral promotion](/docs/cpp/language/expressions/implicit_cast#Integral_promotion) or [integral conversion](/docs/cpp/language/expressions/implicit_cast#Integral_conversions), if necessary, and then to *target-type*. If *target-type* does not have a fixed underlying type, the value of *expression* is unchanged if the original value is [within the range of the enumeration values](/docs/cpp/language/declarations/enum#Notes), otherwise the behavior is undefined.
+
+{/* source:cpp-language-static-cast:0015 */}
+- c) A value of a floating-point type can also be converted to any complete enumeration type. The result is the same as [converting](/docs/cpp/language/expressions/implicit_cast#Floating-integral_conversions) the original value of *expression* first to the underlying type of *target-type*, and then to *target-type* itself.
+
+{/* source:cpp-language-static-cast:0016 */}
+<Revision since="C++23">
+- d) A prvalue of floating-point type can be explicitly converted to any other floating-point type.
+
+- If the source value of *expression* can be represented exactly in *target-type*, it does not change.
+- Otherwise, if the source value of *expression* is between two representable values of *target-type*, the result of the conversion is an implementation-defined choice of either of those values.[^2]
+- Otherwise, the behavior is undefined.
+</Revision>
+
+{/* source:cpp-language-static-cast:0017 */}
+- e) <InlineRevision until="C++11">An rvalue</InlineRevision><InlineRevision since="C++11">A prvalue</InlineRevision> of type "pointer to *cv1* `Base`" can be explicitly converted to the type "pointer to *cv2* `Derived`" if all following conditions are satisfied:
+
+  - `Derived` is a complete class type.
+  - `Base` is a base class of `Derived`.
+  - *cv1* is not a greater cv-qualification than *cv2*.
+
+{/* source:cpp-language-static-cast:0018 */}
+- If *expression* is a [null pointer value](/docs/cpp/language/declarations/pointer#Null_pointers), the result is a null pointer value of type *target-type*. Otherwise, the result is a pointer to the object of type `Derived` enclosing the object of type `Base` pointed to by *expression*.
+
+{/* source:cpp-language-static-cast:0019 */}
+- If any of the following conditions is satisfied, the program is ill-formed:
+
+  - `Base` is a [virtual base class](/docs/cpp/language/classes/derived_class#Virtual_base_classes) of `Derived`.
+  - `Base` is a base class of a virtual base class of `Derived`.
+  - No valid standard conversion from "pointer to `Derived`" to "pointer to `Base`" exists.
+
+{/* source:cpp-language-static-cast:0020 */}
+- If *expression* is not a null pointer value and does not actually point to a base class subobject of an object of type `Derived`, the behavior is undefined.
+
+{/* source:cpp-language-static-cast:0021 */}
+- f) <InlineRevision until="C++11">An rvalue</InlineRevision><InlineRevision since="C++11">A prvalue</InlineRevision> of type "pointer to member of `Derived` of type *cv1* `T`" can be explicitly converted to the type "pointer to member of `Base` of type *cv2* `T`" if all following conditions are satisfied:
+
+  - `Derived` is a complete class type.
+  - `Base` is a base class of `Derived`.
+  - *cv1* is not a greater cv-qualification than *cv2*.
+
+{/* source:cpp-language-static-cast:0022 */}
+- If *expression* is a null member pointer value, the result is a null member pointer value of type *target-type*. Otherwise, the result is a pointer to the original (possibly indirect) member of class `Base`.
+
+{/* source:cpp-language-static-cast:0023 */}
+- If no valid standard conversion from "pointer to member of `Base` of type `T`" to "pointer to member of `Derived` of type `T`" exists, the program is ill-formed.
+
+{/* source:cpp-language-static-cast:0024 */}
+- If *expression* is not a null member pointer value and the member it denotes is not a (possibly indirect) member of class `Base`, the behavior is undefined.
+
+{/* source:cpp-language-static-cast:0025 */}
+- g) <InlineRevision until="C++11">An rvalue</InlineRevision><InlineRevision since="C++11">A prvalue</InlineRevision> of type "pointer to *cv1* `void`" can be explicitly converted to the type "pointer to *cv2* `T`" if `T` is an object type and *cv1* is not a greater cv-qualification than *cv2*.
+
+<Revision until="C++17">
+- If *expression* is a null pointer value, the result is a null pointer value of type *target-type*.
+- If the *expression* [represents the address](/docs/cpp/language/declarations/pointer#Pointers) `A` of a [byte](/docs/cpp/language/basic_concepts/memory_model#Byte) in memory and `A` satisfies the [alignment](/docs/cpp/language/basic_concepts/objects#Alignment) requirement of `T`, then the resulting pointer value also represents `A`.
+- The result of any other such pointer conversion is unspecified.
+- If *expression* the result of a prior conversion from an object of type "pointer to *cv3* `T`", the result has the original value.
+</Revision>
+
+<Revision since="C++17">
+- If *expression* [represents the address](/docs/cpp/language/declarations/pointer#Pointers) `A` of a [byte](/docs/cpp/language/basic_concepts/memory_model#Byte) in memory but `A` does not satisfy the [alignment](/docs/cpp/language/basic_concepts/objects#Alignment) requirement of `T`, then the resulting pointer value is unspecified.
+- Otherwise, if *expression* points to an object `a`, and there is an object `b` of type `T` (ignoring cv-qualification) that is pointer-interconvertible (see below) with `a`, the result is a pointer to `b`.
+- Otherwise, the pointer value is unchanged by the conversion.
+</Revision>
+
+{/* source:cpp-language-static-cast:0026 */}
+As with all cast expressions, the result is:
+
+{/* source:cpp-language-static-cast:0027 */}
+- an lvalue if *target-type* is an lvalue reference type<InlineRevision since="C++11"> or an rvalue reference to function type</InlineRevision>;
+
+{/* source:cpp-language-static-cast:0028 */}
+<Revision since="C++11">
+- an xvalue if *target-type* is an rvalue reference to object type;
+</Revision>
+
+{/* source:cpp-language-static-cast:0029 */}
+- a prvalue otherwise.
+
+{/* source:cpp-language-static-cast:0030 */}
+[^1]: This type of `static_cast` is used to implement move semantics in `std::move`.
+[^2]: If IEEE arithmetic is supported, rounding defaults to nearest.
+
+## Pointer-interconvertible objects
+
+{/* source:cpp-language-static-cast:0031 */}
+Two objects `a` and `b` are pointer-interconvertible if:
+
+{/* source:cpp-language-static-cast:0032 */}
+- they are the same object, or
+- one is a union object and the other is a non-static data member of that object, or
+- one is a [standard-layout](/docs/cpp/language/classes/data_members#Standard-layout) class object and the other is the first non-static data member of that object or any base class subobject of that object, or
+- there exists an object `c` such that `a` and `c` are pointer-interconvertible, and `c` and `b` are pointer-interconvertible.
+
+{/* source:cpp-language-static-cast:0033 */}
+```cpp
+union U { int a; double b; } u;
+void* x = &u;                        // x's value is “pointer to u”
+double* y = static_cast<double*>(x); // y's value is “pointer to u.b”
+char* z = static_cast<char*>(x);     // z's value is “pointer to u”
+```
+
+## Notes
+
+{/* source:cpp-language-static-cast:0034 */}
+Base-to-derived conversions (downcasts) using `static_cast` make no runtime checks to ensure that the [dynamic type](/docs/cpp/language/basic_concepts/type-id#Dynamic_type) of the pointed/referred object is `Derived`, and may only be used safely if this precondition is guaranteed by other means, such as when implementing [static polymorphism](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern#Static_polymorphism). Safe downcast may be done with [dynamic_cast](/docs/cpp/language/expressions/dynamic_cast).
+
+{/* source:cpp-language-static-cast:0035 */}
+`static_cast` may also be used to disambiguate function overloads by performing a function-to-pointer conversion to specific type, as in
+
+{/* source:cpp-language-static-cast:0036 */}
+```cpp
+std::for_each(files.begin(), files.end(),
+              static_cast<std::ostream&(*)(std::ostream&)>(std::flush));
+```
+
+## Keywords
+
+{/* source:cpp-language-static-cast:0037 */}
+[`static_cast`](/docs/cpp/language/keywords/static_cast)
+
+## Example
+
+{/* source:cpp-language-static-cast:0038 */}
+```cpp
+#include <iostream>
+#include <vector>
+
+struct B
+{
+    int m = 42;
+    const char* hello() const
+    {
+        return "Hello world, this is B!\n";
+    }
+};
+
+struct D : B
+{
+    const char* hello() const
+    {
+        return "Hello world, this is D!\n";
+    }
+};
+
+enum class E { ONE = 1, TWO, THREE };
+enum EU { ONE = 1, TWO, THREE };
+
+int main()
+{
+    // 1. static downcast
+    D d;
+    B& br = d; // upcast via implicit conversion
+    std::cout << "1) " << br.hello();
+    D& another_d = static_cast<D&>(br); // downcast
+    std::cout << "1) " << another_d.hello();
+
+    // 3. lvalue to xvalue
+    std::vector<int> v0{1, 2, 3};
+    std::vector<int> v2 = static_cast<std::vector<int>&&>(v0);
+    std::cout << "3) after move, v0.size() = " << v0.size() << '\n';
+
+    // 4. discarded-value expression
+    static_cast<void>(v2.size());
+
+    // 5. initializing conversion
+    int n = static_cast<int>(3.14);
+    std::cout << "5) n = " << n << '\n';
+    std::vector<int> v = static_cast<std::vector<int>>(10);
+    std::cout << "5) v.size() = " << v.size() << '\n';
+
+    // 6. inverse of implicit conversion
+    void* nv = &n;
+    int* ni = static_cast<int*>(nv);
+    std::cout << "6) *ni = " << *ni << '\n';
+
+    // 7a. scoped enum to int
+    E e = E::TWO;
+    int two = static_cast<int>(e);
+    std::cout << "7a) " << two << '\n';
+
+    // 7b. int to enum, enum to another enum
+    E e2 = static_cast<E>(two);
+    [[maybe_unused]]
+    EU eu = static_cast<EU>(e2);
+
+    // 7f. pointer to member upcast
+    int D::*pm = &D::m;
+    std::cout << "7f) " << br.*static_cast<int B::*>(pm) << '\n';
+
+    // 7g. void* to any object pointer
+    void* voidp = &e;
+    [[maybe_unused]]
+    std::vector<int>* p = static_cast<std::vector<int>*>(voidp);
+}
+```
+
+Output:
+
+```text
+1) Hello world, this is B!
+1) Hello world, this is D!
+3) after move, v0.size() = 0
+5) n = 3
+5) v.size() = 10
+6) *ni = 3
+7a) 2
+7f) 42
+```
+
+## Defect reports
+
+{/* source:cpp-language-static-cast:0039 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-static-cast:0040 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={137} standard="C++98"><PublishedBehavior>the constness and volatility of pointers to `void` could be casted away</PublishedBehavior><CorrectedBehavior>cv-qualifications cannot be casted away in such cases</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={427} standard="C++98"><PublishedBehavior>downcast might be ambiguous with direct-initialization</PublishedBehavior><CorrectedBehavior>selects downcast in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={439} standard="C++98"><PublishedBehavior>when converting a "pointer to object" to "pointer to `void`" then back to itself, it could only preserve its value if the result type has the same cv-qualification</PublishedBehavior><CorrectedBehavior>cv-qualification may be different</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1094} standard="C++98"><PublishedBehavior>the conversion from floating-point values to enumeration values was unspecified</PublishedBehavior><CorrectedBehavior>specified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1320} standard="C++11"><PublishedBehavior>the conversion from scoped enumeration values to bool was unspecified</PublishedBehavior><CorrectedBehavior>specified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1412} standard="C++98"><PublishedBehavior>the result of the conversion from "pointer to `void`" to "pointer to object" was unclear</PublishedBehavior><CorrectedBehavior>made clear</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1447} standard="C++11"><PublishedBehavior>the conversion from bit-fields to rvalue references was unspecified (cannot bind references to bit-fields)</PublishedBehavior><CorrectedBehavior>specified</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1766} standard="C++98"><PublishedBehavior>the conversion from integral or enumeration values to enumeration values yielded unspecified result if *expression* is out of range</PublishedBehavior><CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={1832} standard="C++98"><PublishedBehavior>the conversion from integral or enumeration values to enumeration values allowed *target-type* to be incomplete</PublishedBehavior><CorrectedBehavior>not allowed</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2224} standard="C++98"><PublishedBehavior>the conversion from a member of base class type to its complete object of derived class type was valid</PublishedBehavior><CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2254} standard="C++11"><PublishedBehavior>a standard-layout class object with no data members was pointer-interconvertible to its first base class</PublishedBehavior><CorrectedBehavior>it is pointer-interconvertible to any of its base classes</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2284} standard="C++11"><PublishedBehavior>a non-standard-layout union object and a non-static data member of that object were not pointer-interconvertible</PublishedBehavior><CorrectedBehavior>they are</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2310} standard="C++98"><PublishedBehavior>for base-to-derived pointer conversions and derived-to-base pointer-to-member conversions, the derived class type could be incomplete</PublishedBehavior><CorrectedBehavior>must be complete</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2338} standard="C++11"><PublishedBehavior>the conversion to enumeration types with fixed underlying type resulted in undefined behavior if *expression* is out of range</PublishedBehavior><CorrectedBehavior>convert to the underlying type first (no undefined behavior)</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2499} standard="C++11"><PublishedBehavior>a standard-layout class might have a non-pointer-interconvertible base class, even though all base subobjects have the same address</PublishedBehavior><CorrectedBehavior>it does not have</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2718} standard="C++98"><PublishedBehavior>for base-to-derived reference conversions, the derived class type could be incomplete</PublishedBehavior><CorrectedBehavior>must be complete</CorrectedBehavior></DefectReport>
+  <DefectReport kind="cwg" id={2882} standard="C++98"><PublishedBehavior>it was unclear whether `static_cast<void>(expr)` attempts to form an implicit conversion sequence from `expr` to `void`</PublishedBehavior><CorrectedBehavior>no attempt in this case</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+## References
+
+{/* source:cpp-language-static-cast:0041 */}
+C++23 standard (ISO/IEC 14882:2024): 7.6.1.9 Static cast [expr.static.cast]
+
+{/* source:cpp-language-static-cast:0042 */}
+C++20 standard (ISO/IEC 14882:2020): 7.6.1.8 Static cast [expr.static.cast]
+
+{/* source:cpp-language-static-cast:0043 */}
+C++17 standard (ISO/IEC 14882:2017): 8.2.9 Static cast [expr.static.cast]
+
+{/* source:cpp-language-static-cast:0044 */}
+C++14 standard (ISO/IEC 14882:2014): 5.2.9 Static cast [expr.static.cast]
+
+{/* source:cpp-language-static-cast:0045 */}
+C++11 standard (ISO/IEC 14882:2011): 5.2.9 Static cast [expr.static.cast]
+
+{/* source:cpp-language-static-cast:0046 */}
+C++98 standard (ISO/IEC 14882:1998): 5.2.9 Static cast [expr.static.cast]
+
+{/* source:cpp-language-static-cast:0047 */}
+C++03 standard (ISO/IEC 14882:2003): 5.2.9 Static cast [expr.static.cast]
+
+## See also
+
+{/* source:cpp-language-static-cast:0048 */}
+- [const_cast](/docs/cpp/language/expressions/const_cast)
+- [dynamic_cast](/docs/cpp/language/expressions/dynamic_cast)
+- [reinterpret_cast](/docs/cpp/language/expressions/reinterpret_cast)
+- [explicit cast](/docs/cpp/language/expressions/explicit_cast)
+- [implicit conversions](/docs/cpp/language/expressions/implicit_cast)

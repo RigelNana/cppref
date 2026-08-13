@@ -1,0 +1,179 @@
+---
+title: "C++ attribute: nodiscard (since C++17)"
+description: "If a function declared nodiscard or a function returning an enumeration or class declared nodiscard by value is called from a discarded-value expression other than a cast to void, the compiler is encouraged to issue a warning."
+source_url: "https://en.cppreference.com/w/cpp/language/attributes/nodiscard"
+language: "C++"
+---
+
+{{/* source:cpp-language-attributes-nodiscard:0000 */}}
+If a function declared `nodiscard` or a function returning an enumeration or class declared `nodiscard` by value is called from a [discarded-value expression](/docs/cpp/language/expressions#Discarded-value_expressions) other than a cast to `void`, the compiler is encouraged to issue a warning.
+
+## Syntax
+
+{{/* source:cpp-language-attributes-nodiscard:0001 */}}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar since="C++17" code="[[nodiscard]]" />
+  <Declaration id="2" language="cpp" grammar since="C++20" code="[[nodiscard( string-literal )]]" />
+</DeclarationDoc>
+
+{{/* source:cpp-language-attributes-nodiscard:0002 */}}
+<ParameterList>
+  <Parameter name="string-literal">
+    an [unevaluated string literal](/docs/cpp/language/expressions/string_literal#Unevaluated_strings) that could be used to explain the rationale for why the result should not be discarded
+  </Parameter>
+</ParameterList>
+
+## Explanation
+
+{{/* source:cpp-language-attributes-nodiscard:0003 */}}
+Appears in a function declaration, enumeration declaration, or class declaration.
+
+{{/* source:cpp-language-attributes-nodiscard:0004 */}}
+If, from a [discarded-value expression](/docs/cpp/language/expressions#Discarded-value_expressions) other than a cast to `void`,
+
+{{/* source:cpp-language-attributes-nodiscard:0005 */}}
+- a function declared `nodiscard` is called, or
+- a function returning an enumeration or class declared `nodiscard` by value is called, or
+- a constructor declared `nodiscard` is called by [explicit type conversion](/docs/cpp/language/expressions/explicit_cast) or [`static_cast`](/docs/cpp/language/expressions/static_cast), or
+- an object of an enumeration or class type declared `nodiscard` is initialized by [explicit type conversion](/docs/cpp/language/expressions/explicit_cast) or [`static_cast`](/docs/cpp/language/expressions/static_cast),
+
+{{/* source:cpp-language-attributes-nodiscard:0006 */}}
+the compiler is encouraged to issue a warning.
+
+{{/* source:cpp-language-attributes-nodiscard:0007 */}}
+<Revision since="C++20">
+The *string-literal*, if specified, is usually included in the warnings.
+</Revision>
+
+## Example
+
+{{/* source:cpp-language-attributes-nodiscard:0008 */}}
+```cpp
+struct [[nodiscard]] error_info { /*...*/ };
+
+error_info enable_missile_safety_mode() { /*...*/ return {}; }
+
+void launch_missiles() { /*...*/ }
+
+void test_missiles()
+{
+    enable_missile_safety_mode(); // compiler may warn on discarding a nodiscard value
+    launch_missiles();
+}
+
+error_info& foo() { static error_info e; /*...*/ return e; }
+
+void f1() { foo(); } // nodiscard type is not returned by value, no warning
+
+// nodiscard( string-literal ) (since C++20):
+[[nodiscard("PURE FUN")]] int strategic_value(int x, int y) { return x ^ y; }
+
+int main()
+{
+    strategic_value(4, 2); // compiler may warn on discarding a nodiscard value
+    auto z = strategic_value(0, 0); // OK: return value is not discarded
+    return z;
+}
+```
+
+Possible output:
+
+```text
+game.cpp:5:4: warning: ignoring return value of function declared with ⮠
+ 'nodiscard' attribute
+game.cpp:17:5: warning: ignoring return value of function declared with ⮠
+ 'nodiscard' attribute: PURE FUN
+```
+
+{{/* source:cpp-language-attributes-nodiscard:0009 */}}
+<Revision until="C++26">
+### Standard library
+
+The following standard functions are declared with `nodiscard` attribute:
+
+**Extended content**
+
+#### Allocation functions
+
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`operator new`, `operator new[]`](/docs/cpp/library/memory/new/operator_new)</DescriptionTerm><DescriptionBody>allocation functions (function)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`allocate`](/docs/cpp/library/memory/allocator/allocate)</DescriptionTerm><DescriptionBody>allocates uninitialized storage (public member function of `std::allocator<T>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`allocate`](/docs/cpp/library/memory/allocator_traits/allocate)</DescriptionTerm><DescriptionBody>allocates uninitialized storage using the allocator (public static member function of `std::allocator_traits<Alloc>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`allocate`](/docs/cpp/library/memory/memory_resource/allocate)</DescriptionTerm><DescriptionBody>allocates memory (public member function of `std::pmr::memory_resource`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`allocate`](/docs/cpp/library/memory/polymorphic_allocator/allocate)</DescriptionTerm><DescriptionBody>allocate memory (public member function of `std::pmr::polymorphic_allocator<T>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`allocate`](/docs/cpp/library/memory/scoped_allocator_adaptor/allocate)</DescriptionTerm><DescriptionBody>allocates uninitialized storage using the outer allocator (public member function of `std::scoped_allocator_adaptor<OuterAlloc,InnerAlloc...>`)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+#### Indirect access
+
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`launder`](/docs/cpp/library/memory/new/launder) <InlineRevision since="C++17" /></DescriptionTerm><DescriptionBody>pointer optimization barrier (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`assume_aligned`](/docs/cpp/library/memory/assume_aligned) <InlineRevision since="C++20" /></DescriptionTerm><DescriptionBody>informs the compiler that a pointer is aligned (function template)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+#### Emptiness-checking functions
+
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/iterator/empty) <InlineRevision since="C++17" /></DescriptionTerm><DescriptionBody>checks whether the container is empty (function template)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/node_handle#empty)</DescriptionTerm><DescriptionBody>checks whether the node handle is empty (public member function of *`node handle`*)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/array/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::array<T,N>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/string/basic_string/empty)</DescriptionTerm><DescriptionBody>checks whether the string is empty (public member function of `std::basic_string<CharT,Traits,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/string/basic_string_view/empty)</DescriptionTerm><DescriptionBody>checks whether the view is empty (public member function of `std::basic_string_view<CharT,Traits>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/deque/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::deque<T,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/forward_list/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::forward_list<T,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/list/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::list<T,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/map/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::map<Key,T,Compare,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/text/regex/match_results/empty)</DescriptionTerm><DescriptionBody>checks whether the match was successful (public member function of `std::match_results<BidirIt,Alloc>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/multimap/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::multimap<Key,T,Compare,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/multiset/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::multiset<Key,Compare,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/priority_queue/empty)</DescriptionTerm><DescriptionBody>checks whether the container adaptor is empty (public member function of `std::priority_queue<T,Container,Compare>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/queue/empty)</DescriptionTerm><DescriptionBody>checks whether the container adaptor is empty (public member function of `std::queue<T,Container>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/set/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::set<Key,Compare,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/span/empty)</DescriptionTerm><DescriptionBody>checks if the sequence is empty (public member function of `std::span<T,Extent>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/stack/empty)</DescriptionTerm><DescriptionBody>checks whether the container adaptor is empty (public member function of `std::stack<T,Container>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/unordered_map/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::unordered_map<Key,T,Hash,KeyEqual,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/unordered_multimap/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::unordered_multimap<Key,T,Hash,KeyEqual,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/unordered_multiset/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::unordered_multiset<Key,Hash,KeyEqual,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/unordered_set/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::unordered_set<Key,Hash,KeyEqual,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/container/vector/empty)</DescriptionTerm><DescriptionBody>checks whether the container is empty (public member function of `std::vector<T,Allocator>`)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[`empty`](/docs/cpp/library/filesystem/path/empty)</DescriptionTerm><DescriptionBody>checks if the path is empty (public member function of `std::filesystem::path`)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+
+#### Miscellaneous
+
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`async`](/docs/cpp/library/atomic/async) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>runs a function asynchronously (potentially in a new thread) and returns a [`std::future`](/docs/cpp/library/atomic/future) that will hold the result (function template)</DescriptionBody></DescriptionItem>
+</DescriptionList>
+</Revision>
+
+## Defect reports
+
+{{/* source:cpp-language-attributes-nodiscard:0010 */}}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{{/* source:cpp-language-attributes-nodiscard:0011 */}}
+<DefectReportList>
+  <DefectReport kind="paper" id="P1771R1" standard="C++17">
+    <PublishedBehavior>`[[nodiscard]]` on constructors has no effect</PublishedBehavior>
+    <CorrectedBehavior>can cause a warning if the constructed object is discarded</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## References
+
+{{/* source:cpp-language-attributes-nodiscard:0012 */}}
+- C++23 standard (ISO/IEC 14882:2024): 9.12.9 Nodiscard attribute [dcl.attr.nodiscard]
+
+{{/* source:cpp-language-attributes-nodiscard:0013 */}}
+- C++20 standard (ISO/IEC 14882:2020): 9.12.8 Nodiscard attribute [dcl.attr.nodiscard]
+
+{{/* source:cpp-language-attributes-nodiscard:0014 */}}
+- C++17 standard (ISO/IEC 14882:2017): 10.6.7 Nodiscard attribute [dcl.attr.nodiscard]
+
+## See also
+
+{{/* source:cpp-language-attributes-nodiscard:0015 */}}
+<DescriptionList>
+  <DescriptionItem><DescriptionTerm>[`ignore`](/docs/cpp/library/utility/tuple/ignore) <InlineRevision since="C++11" /></DescriptionTerm><DescriptionBody>placeholder to skip an element when unpacking a `tuple` using [`tie`](/docs/cpp/library/utility/tuple/tie) (constant)</DescriptionBody></DescriptionItem>
+  <DescriptionItem><DescriptionTerm>[C documentation](/docs/c/language/declarations/attributes/nodiscard) for `nodiscard`</DescriptionTerm><DescriptionBody /></DescriptionItem>
+</DescriptionList>

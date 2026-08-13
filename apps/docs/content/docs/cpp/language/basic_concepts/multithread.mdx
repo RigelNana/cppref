@@ -1,0 +1,205 @@
+---
+title: "Multi-threaded executions and data races (since C++11)"
+description: "A thread of execution is a flow of control within a program that begins with the invocation of a specific top-level function (by std::thread, std::async, std::jthread or other means), and recursively including every function invocation subsequently executed by the thread."
+source_url: "https://en.cppreference.com/w/cpp/language/multithread"
+language: "C++"
+---
+
+{/* source:cpp-language-multithread:0000 */}
+A *thread of execution* is a flow of control within a program that begins with the invocation of a specific top-level function (by [`std::thread`](/docs/cpp/library/atomic/thread), [`std::async`](/docs/cpp/library/atomic/async)<InlineRevision since="C++20">, [`std::jthread`](/docs/cpp/library/atomic/jthread)</InlineRevision> or other means), and recursively including every function invocation subsequently executed by the thread.
+
+{/* source:cpp-language-multithread:0001 */}
+- When one thread creates another, the initial call to the top-level function of the new thread is executed by the new thread, not by the creating thread.
+
+{/* source:cpp-language-multithread:0002 */}
+Any thread can potentially access any object and function in the program:
+
+{/* source:cpp-language-multithread:0003 */}
+- Objects with automatic and thread-local [storage duration](/docs/cpp/language/declarations/storage_duration) may still be accessed by another thread through a pointer or by reference.
+- Under a [hosted implementation](/docs/cpp/library/freestanding), a C++ program can have more than one thread running concurrently. The execution of each thread proceeds as defined by the rest of this page. The execution of the entire program consists of an execution of all of its threads.
+- Under a [freestanding implementation](/docs/cpp/library/freestanding), it is implementation-defined whether a program can have more than one thread of execution.
+
+{/* source:cpp-language-multithread:0004 */}
+For a [signal handler](/docs/cpp/library/utility/program/signal#Signal_handler) that is not executed as a result of a call to [`std::raise`](/docs/cpp/library/utility/program/raise), it is unspecified which thread of execution contains the signal handler invocation.
+
+## Data races
+
+{/* source:cpp-language-multithread:0005 */}
+Different threads of execution are always allowed to access (read and modify) different [memory locations](/docs/cpp/language/basic_concepts/memory_model#Memory_location) concurrently, with no interference and no synchronization requirements.
+
+{/* source:cpp-language-multithread:0006 */}
+Two expression [evaluations](/docs/cpp/language/expressions/eval_order) *conflict* if one of them modifies a memory location or starts/ends the lifetime of an object in a memory location, and the other one reads or modifies the same memory location or starts/ends the lifetime of an object occupying storage that overlaps with the memory location.
+
+{/* source:cpp-language-multithread:0007 */}
+A program that has two conflicting evaluations has a data race unless
+
+{/* source:cpp-language-multithread:0008 */}
+- both evaluations execute on the same thread or in the same [signal handler](/docs/cpp/library/utility/program/signal#Signal_handler), or
+- both conflicting evaluations are atomic operations (see [`std::atomic`](/docs/cpp/library/atomic/atomic)), or
+- one of the conflicting evaluations *happens-before* another (see [`std::memory_order`](/docs/cpp/library/atomic/memory_order)).
+
+{/* source:cpp-language-multithread:0009 */}
+If a data race occurs, the behavior of the program is undefined.
+
+{/* source:cpp-language-multithread:0010 */}
+(In particular, release of a [`std::mutex`](/docs/cpp/library/atomic/mutex) is *synchronized-with*, and therefore, *happens-before* acquisition of the same mutex by another thread, which makes it possible to use mutex locks to guard against data races.)
+
+{/* source:cpp-language-multithread:0011 */}
+```cpp
+int cnt = 0;
+auto f = [&] { cnt++; };
+std::thread t1{f}, t2{f}, t3{f}; // undefined behavior
+```
+
+{/* source:cpp-language-multithread:0012 */}
+```cpp
+std::atomic<int> cnt{0};
+auto f = [&] { cnt++; };
+std::thread t1{f}, t2{f}, t3{f}; // OK
+```
+
+### Container data races
+
+{/* source:cpp-language-multithread:0013 */}
+All [containers](/docs/cpp/library/container) in the standard library except [`std::vector<bool>`](/docs/cpp/library/container/vector_bool) guarantee that concurrent modifications on contents of the contained object in different elements in the same container will never result in data races.
+
+{/* source:cpp-language-multithread:0014 */}
+```cpp
+std::vector<int> vec = {1, 2, 3, 4};
+auto f = [&](int index) { vec[index] = 5; };
+std::thread t1{f, 0}, t2{f, 1}; // OK
+std::thread t3{f, 2}, t4{f, 2}; // undefined behavior
+```
+
+{/* source:cpp-language-multithread:0015 */}
+```cpp
+std::vector<bool> vec = {false, false};
+auto f = [&](int index) { vec[index] = true; };
+std::thread t1{f, 0}, t2{f, 1}; // undefined behavior
+```
+
+## Memory order
+
+{/* source:cpp-language-multithread:0016 */}
+When a thread reads a value from a memory location, it may see the initial value, the value written in the same thread, or the value written in another thread. See [`std::memory_order`](/docs/cpp/library/atomic/memory_order) for details on the order in which writes made from threads become visible to other threads.
+
+## Forward progress
+
+### Obstruction freedom
+
+{/* source:cpp-language-multithread:0017 */}
+When only one thread that is not blocked in a standard library function executes an [atomic function](/docs/cpp/library/atomic#Atomic_operations) that is lock-free, that execution is guaranteed to complete (all standard library lock-free operations are [obstruction-free](https://en.wikipedia.org/wiki/Non-blocking_algorithm#Obstruction-freedom)).
+
+### Lock freedom
+
+{/* source:cpp-language-multithread:0018 */}
+When one or more lock-free atomic functions run concurrently, at least one of them is guaranteed to complete (all standard library lock-free operations are [lock-free](https://en.wikipedia.org/wiki/Non-blocking_algorithm#Lock-freedom) — it is the job of the implementation to ensure they cannot be live-locked indefinitely by other threads, such as by continuously stealing the cache line).
+
+### Progress guarantee
+
+{/* source:cpp-language-multithread:0019 */}
+In a valid C++ program, every thread eventually does one of the following:
+
+{/* source:cpp-language-multithread:0020 */}
+- Terminates.
+- Invokes [`std::this_thread::yield`](/docs/cpp/library/atomic/yield).
+- Makes a call to an library I/O function.
+- Performs an access through a [volatile](/docs/cpp/language/declarations/cv) glvalue.
+- Performs an atomic operation or a synchronization operation.
+- Continues execution of a trivial infinite loop (see below).
+
+{/* source:cpp-language-multithread:0021 */}
+A thread is said to make progress if it performs one of the execution steps above, blocks in a standard library function, or calls an atomic lock-free function that does not complete because of a non-blocked concurrent thread.
+
+{/* source:cpp-language-multithread:0022 */}
+This allows the compilers to remove, merge and reorder all loops that have no observable behavior, without having to prove that they would eventually terminate because it can assume that no thread of execution can execute forever without performing any of these observable behaviors. An affordance is made for trivial infinite loops, which cannot be removed nor reordered.
+
+### Trivial infinite loops
+
+{/* source:cpp-language-multithread:0023 */}
+A trivially empty iteration statement is an iteration statement matching one of the following forms:
+
+{/* source:cpp-language-multithread:0024 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" grammar code="while ( condition ) ;" />
+  <Declaration id="2" language="cpp" grammar code="while ( condition ) { }" />
+  <Declaration id="3" language="cpp" grammar code="do ; while ( condition ) ;" />
+  <Declaration id="4" language="cpp" grammar code="do { } while ( condition ) ;" />
+  <Declaration id="5" language="cpp" grammar code="for ( init-statement condition (optional) ; ) ;" />
+  <Declaration id="6" language="cpp" grammar code="for ( init-statement condition (optional) ; ) { }" />
+</DeclarationDoc>
+
+{/* source:cpp-language-multithread:0025 */}
+1. A [`while` statement](/docs/cpp/language/statements/while) whose loop body is an empty simple statement.
+
+{/* source:cpp-language-multithread:0026 */}
+2. A [`while` statement](/docs/cpp/language/statements/while) whose loop body is an empty compound statement.
+
+{/* source:cpp-language-multithread:0027 */}
+3. A [`do`-`while` statement](/docs/cpp/language/statements/do) whose loop body is an empty simple statement.
+
+{/* source:cpp-language-multithread:0028 */}
+4. A [`do`-`while` statement](/docs/cpp/language/statements/do) whose loop body is an empty compound statement.
+
+{/* source:cpp-language-multithread:0029 */}
+5. A [`for` statement](/docs/cpp/language/statements/for) whose loop body is an empty simple statement, the `for` statement does not have an *iteration-expression*.
+
+{/* source:cpp-language-multithread:0030 */}
+6. A [`for` statement](/docs/cpp/language/statements/for) whose loop body is an empty compound statement, the `for` statement does not have an *iteration-expression*.
+
+{/* source:cpp-language-multithread:0031 */}
+The controlling expression of a trivially empty iteration statement is:
+
+{/* source:cpp-language-multithread:0032 */}
+1-4. *condition*.
+
+{/* source:cpp-language-multithread:0033 */}
+5,6. *condition* if present, otherwise `true`.
+
+{/* source:cpp-language-multithread:0034 */}
+A *trivial infinite loop* is a trivially empty iteration statement for which the converted controlling expression is a [constant expression](/docs/cpp/language/expressions/constant_expression), when [manifestly constant-evaluated](/docs/cpp/language/expressions/constant_expression#Manifestly_constant-evaluated_expressions), and evaluates to `true`.
+
+{/* source:cpp-language-multithread:0035 */}
+The loop body of a trivial infinite loop is replaced with a call to the function [`std::this_thread::yield`](/docs/cpp/library/atomic/yield). It is implementation-defined whether this replacement occurs on [freestanding implementations](/docs/cpp/library/freestanding).
+
+{/* source:cpp-language-multithread:0036 */}
+```cpp
+for (;;); // trivial infinite loop, well defined as of P2809
+for (;;) { int x; } // undefined behavior
+```
+
+{/* source:cpp-language-multithread:0037 */}
+<Revision since="C++17">
+### Concurrent forward progress
+
+If a thread offers *concurrent forward progress guarantee*, it will *make progress* (as defined above) in finite amount of time, for as long as it has not terminated, regardless of whether other threads (if any) are making progress.
+
+The standard encourages, but doesn't require that the main thread and the threads started by [`std::thread`](/docs/cpp/library/atomic/thread)<InlineRevision since="C++20"> and [`std::jthread`](/docs/cpp/library/atomic/jthread)</InlineRevision> offer concurrent forward progress guarantee.
+
+### Parallel forward progress
+
+If a thread offers *parallel forward progress guarantee*, the implementation is not required to ensure that the thread will eventually make progress if it has not yet executed any execution step (I/O, volatile, atomic, or synchronization), but once this thread has executed a step, it provides *concurrent forward progress* guarantees (this rule describes a thread in a thread pool that executes tasks in arbitrary order).
+
+### Weakly parallel forward progress
+
+If a thread offers *weakly parallel forward progress guarantee*, it does not guarantee to eventually make progress, regardless of whether other threads make progress or not.
+
+Such threads can still be guaranteed to make progress by blocking with forward progress guarantee delegation: if a thread `P` blocks in this manner on the completion of a set of threads `S`, then at least one thread in `S` will offer a forward progress guarantee that is same or stronger than `P`. Once that thread completes, another thread in `S` will be similarly strengthened. Once the set is empty, `P` will unblock.
+
+The [parallel algorithms](/docs/cpp/library/algorithm) from the C++ standard library block with forward progress delegation on the completion of an unspecified set of library-managed threads.
+</Revision>
+
+## Defect reports
+
+{/* source:cpp-language-multithread:0038 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-language-multithread:0039 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1953} standard="C++11"><PublishedBehavior>two expression evaluations that start/end the lifetimes of objects with overlapping storages did not conflict</PublishedBehavior><CorrectedBehavior>they conflict</CorrectedBehavior></DefectReport>
+  <DefectReport kind="lwg" id={2200} standard="C++11"><PublishedBehavior>it was unclear whether the container data race requirement only applies to sequence containers</PublishedBehavior><CorrectedBehavior>applies to all containers</CorrectedBehavior></DefectReport>
+  <DefectReport kind="paper" id="P2809R3" standard="C++11"><PublishedBehavior>the behavior of executing “trivial”[^1] infinite loops was undefined</PublishedBehavior><CorrectedBehavior>properly defines “trivial infinite loops” and made the behavior well-defined</CorrectedBehavior></DefectReport>
+</DefectReportList>
+
+{/* source:cpp-language-multithread:0040 */}
+[^1]: “Trivial” here means executing the infinite loop never makes any progress.
