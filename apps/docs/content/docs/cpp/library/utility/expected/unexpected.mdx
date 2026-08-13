@@ -1,0 +1,242 @@
+---
+title: "std::unexpected"
+description: "The class template std::unexpected represents an unexpected value stored in std::expected."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/unexpected"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-unexpected:0000 */}
+Defined in header [`<expected>`](/docs/cpp/library/headers/expected)
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class E >
+class unexpected;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-unexpected:0001 */}
+The class template `std::unexpected` represents an unexpected value stored in [`std::expected`](/docs/cpp/library/utility/expected). In particular, `std::expected` has constructors with `std::unexpected` as a single argument, which creates an expected object that contains an unexpected value.
+
+{/* source:cpp-utility-expected-unexpected:0002 */}
+A program is ill-formed if it instantiates an `unexpected` with a non-object type, an array type, a specialization of `std::unexpected`, or a cv-qualified type.
+
+### Template parameters
+
+{/* source:cpp-utility-expected-unexpected:0003 */}
+<ParameterList>
+  <Parameter name="E">the type of the unexpected value. The type must not be an array type, a non-object type, a specialization of `std::unexpected`, or a cv-qualified type.</Parameter>
+</ParameterList>
+
+### Member functions
+
+{/* source:cpp-utility-expected-unexpected:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/expected/unexpected#ctor)</DescriptionTerm>
+    <DescriptionBody>constructs the unexpected object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`(destructor)` (implicitly declared)</DescriptionTerm>
+    <DescriptionBody>destroys the unexpected object, along with the stored value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` (implicitly declared)</DescriptionTerm>
+    <DescriptionBody>assigns the stored value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`error`](/docs/cpp/library/utility/expected/unexpected#error)</DescriptionTerm>
+    <DescriptionBody>accesses the stored value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/utility/expected/unexpected#swap)</DescriptionTerm>
+    <DescriptionBody>swaps the stored value (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-utility-expected-unexpected:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`](/docs/cpp/library/utility/expected/unexpected#compare) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>compares the stored value (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap(std::unexpected)`](/docs/cpp/library/utility/expected/unexpected#swap2) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+## std::unexpected::unexpected
+
+{/* source:cpp-utility-expected-unexpected:0006 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`constexpr unexpected( const unexpected& ) = default;`} />
+  <Declaration id="2" language="cpp" code={`constexpr unexpected( unexpected&& ) = default;`} />
+  <Declaration id="3" language="cpp" code={`template< class Err = E >
+constexpr explicit unexpected( Err&& e );`} />
+  <Declaration id="4" language="cpp" code={`template< class... Args >
+constexpr explicit unexpected( std::in_place_t, Args&&... args );`} />
+  <Declaration id="5" language="cpp" code={`template< class U, class... Args >
+constexpr explicit unexpected( std::in_place_t,
+
+                               std::initializer_list<U> il, Args&&... args );`} />
+</DeclarationDoc>
+
+Constructs a `std::unexpected` object.
+
+1,2) Copy/move constructor. Copies or moves the stored value, respectively.
+
+3) Constructs the stored value, as if by [direct-initializing](/docs/cpp/language/initialization/direct_initialization) a value of type `E` from `std::forward<Err>(e)`.
+
+This overload participates in overload resolution only if `std::is_same_v<std::remove_cvref_t<Err>, unexpected>` is `false`, and `std::is_same_v<std::remove_cvref_t<Err>, std::in_place_t>` is `false`, and `std::is_constructible_v<E, Err>` is `true`.
+
+4) Constructs the stored value, as if by [direct-initializing](/docs/cpp/language/initialization/direct_initialization) a value of type `E` from the arguments `std::forward<Args>(args)...`.
+
+This overload participates in overload resolution only if `std::is_constructible_v<E, Args...>` is `true`.
+
+5) Constructs the stored value, as if by [direct-initializing](/docs/cpp/language/initialization/direct_initialization) a value of type `E` from the arguments `il, std::forward<Args>(args)...`.
+
+This overload participates in overload resolution only if `std::is_constructible_v<E, std::initializer_list<U>&, Args...>` is `true`.
+
+Parameters
+
+<ParameterList>
+  <Parameter name="e">value with which to initialize the contained value</Parameter>
+  <Parameter name="args...">arguments with which to initialize the contained value</Parameter>
+  <Parameter name="il">initializer list with which to initialize the contained value</Parameter>
+</ParameterList>
+
+Exceptions: Throws any exception thrown by the constructor of `E`.
+
+## std::unexpected::error
+
+{/* source:cpp-utility-expected-unexpected:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`constexpr const E& error() const& noexcept;
+constexpr E& error() & noexcept;
+constexpr const E&& error() const&& noexcept;
+
+constexpr E&& error() && noexcept;`} />
+</DeclarationDoc>
+
+Returns a reference to the stored value.
+
+## std::unexpected::swap
+
+{/* source:cpp-utility-expected-unexpected:0008 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`constexpr void swap( unexpected& other ) noexcept(std::is_nothrow_swappable_v<E>);`} />
+</DeclarationDoc>
+
+Swaps the stored values, as if by `using std::swap; swap(error(), other.error());`.
+
+The program is ill-formed if `std::is_swappable_v<E>` is `false`.
+
+## operator==(std::unexpected)
+
+{/* source:cpp-utility-expected-unexpected:0009 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class E2 >
+friend constexpr bool operator==( unexpected& x, std::unexpected<E2>& y );`} />
+</DeclarationDoc>
+
+Compares the stored values, as if by `return x.error() == y.error()`.
+
+If the expression `x.error() == e.error()` is not well-formed, or if its result is not convertible to `bool`, the program is ill-formed.
+
+This function is not visible to ordinary [unqualified](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified lookup](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [argument-dependent lookup](/docs/cpp/language/functions/adl) when `std::unexpected<E>` is an associated class of the arguments.
+
+## swap(std::unexpected)
+
+{/* source:cpp-utility-expected-unexpected:0010 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`friend constexpr void
+swap( unexpected& x, unexpected& y ) noexcept(noexcept(x.swap(y)));`} />
+</DeclarationDoc>
+
+Equivalent to `x.swap(y)`.
+
+This overload participates in overload resolution only if `std::is_swappable_v<E>` is `true`.
+
+This function is not visible to ordinary [unqualified](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified lookup](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [argument-dependent lookup](/docs/cpp/language/functions/adl) when `std::unexpected<E>` is an associated class of the arguments.
+
+### Deduction guides
+
+{/* source:cpp-utility-expected-unexpected:0011 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class E >
+unexpected(E) -> unexpected<E>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-unexpected:0012 */}
+The [deduction guide](/docs/cpp/language/templates/ctad) is provided for `unexpected` to allow deduction from the constructor argument.
+
+### Notes
+
+{/* source:cpp-utility-expected-unexpected:0013 */}
+Prior to C++17, the name [`std::unexpected`](/docs/cpp/library/error/unexpected) denoted the function called by the C++ runtime when a dynamic exception specification was violated.
+
+### Example
+
+{/* source:cpp-utility-expected-unexpected:0014 */}
+```cpp
+#include <expected>
+#include <iostream>
+ 
+enum class error
+{
+    compile_time_error,
+    runtime_error
+};
+ 
+[[nodiscard]] auto unexpected_runtime_error() -> std::expected<int, error>
+{
+    return std::unexpected(error::runtime_error);
+}
+ 
+int main()
+{
+    std::expected<double, int> ex = std::unexpected(3);
+ 
+    if (!ex)
+        std::cout << "ex contains an error value\n";
+ 
+    if (ex == std::unexpected(3))
+        std::cout << "The error value is equal to 3\n";
+ 
+    const auto e = unexpected_runtime_error();
+ 
+    e.and_then([](const auto& e) -> std::expected<int, error>
+    {
+        std::cout << "and_then: " << int(e); // not printed
+        return {};
+    })
+    .or_else([](const auto& e) -> std::expected<int, error>
+    {
+        std::cout << "or_else: " << int(e); // prints this line
+        return {};
+    });
+}
+```
+
+Output:
+
+```text
+ex contains an error value
+The error value is equal to 3
+or_else: 1
+```
+
+### See also
+
+{/* source:cpp-utility-expected-unexpected:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/expected/expected) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>constructs the expected object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`](/docs/cpp/library/utility/expected/operator_cmp) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>compares expected objects (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

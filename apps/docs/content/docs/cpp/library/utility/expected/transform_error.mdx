@@ -1,0 +1,154 @@
+---
+title: "std::expected<T,E>::transform_error"
+description: "If *this contains an unexpected value, invokes f with the unexpected value of *this as the argument and returns a std::expected object that contains an unexpected value, which is initialized with the result of f. Otherwise, returns a std::expected object that represents an expected value."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/transform_error"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-transform-error:0000 */}
+<DeclarationDoc>
+  Primary template
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) &;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) const&;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) &&;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) const&&;`} />
+
+  `void` partial specialization
+
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) &;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) const&;`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) &&;`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform_error( F&& f ) const&&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-transform-error:0001 */}
+If `*this` contains an unexpected value, invokes `f` with the unexpected value of `*this` as the argument and returns a `std::expected` object that contains an unexpected value, which is initialized with the result of `f`. Otherwise, returns a `std::expected` object that represents an expected value.
+
+{/* source:cpp-utility-expected-transform-error:0002 */}
+1-4) The expected value is initialized with the expected value [`val`](/docs/cpp/library/utility/expected#Data_members) of `*this`.
+
+{/* source:cpp-utility-expected-transform-error:0003 */}
+Given type `G` as:
+
+{/* source:cpp-utility-expected-transform-error:0004 */}
+1,2) `std::remove_cv_t<std::invoke_result_t<F, decltype(error())>>`
+
+{/* source:cpp-utility-expected-transform-error:0005 */}
+3,4) `std::remove_cv_t<std::invoke_result_t<F, decltype(std::move(error()))>>`
+
+{/* source:cpp-utility-expected-transform-error:0006 */}
+5,6) `std::remove_cv_t<std::invoke_result_t<F, decltype(error())>>`
+
+{/* source:cpp-utility-expected-transform-error:0007 */}
+7,8) `std::remove_cv_t<std::invoke_result_t<F, decltype(std::move(error()))>>`
+
+{/* source:cpp-utility-expected-transform-error:0008 */}
+If any of the following conditions is satisfied, the program is ill-formed:
+
+{/* source:cpp-utility-expected-transform-error:0009 */}
+- `G` is not a valid template argument for [`std::unexpected`](/docs/cpp/library/utility/expected/unexpected).
+- The following corresponding declaration is ill-formed:
+
+{/* source:cpp-utility-expected-transform-error:0010 */}
+1,2) `G g(std::invoke(std::forward<F>(f), error()));`
+
+{/* source:cpp-utility-expected-transform-error:0011 */}
+3,4) `G g(std::invoke(std::forward<F>(f), std::move(error()));`
+
+{/* source:cpp-utility-expected-transform-error:0012 */}
+5,6) `G g(std::invoke(std::forward<F>(f), error()));`
+
+{/* source:cpp-utility-expected-transform-error:0013 */}
+7,8) `G g(std::invoke(std::forward<F>(f), std::move(error()));`
+
+{/* source:cpp-utility-expected-transform-error:0014 */}
+1,2) This overload participates in overload resolution only if `std::is_constructible_v<T, decltype((`[`val`](/docs/cpp/library/utility/expected#Data_members)`)`))>` is `true`.
+
+{/* source:cpp-utility-expected-transform-error:0015 */}
+3,4) This overload participates in overload resolution only if `std::is_constructible_v<T, decltype(std::move(`[`val`](/docs/cpp/library/utility/expected#Data_members)`)`))>` is `true`.
+
+### Parameters
+
+{/* source:cpp-utility-expected-transform-error:0016 */}
+<ParameterList>
+  <Parameter name="f">a suitable function or [Callable](/docs/cpp/library/named_req/Callable) object whose call signature returns a non-reference type</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-expected-transform-error:0017 */}
+Given expression `expr` as:
+
+{/* source:cpp-utility-expected-transform-error:0018 */}
+1,2) `std::invoke(std::forward<F>(f), error())`
+
+{/* source:cpp-utility-expected-transform-error:0019 */}
+3,4) `std::invoke(std::forward<F>(f), std::move(error()))`
+
+{/* source:cpp-utility-expected-transform-error:0020 */}
+5,6) `std::invoke(std::forward<F>(f), error())`
+
+{/* source:cpp-utility-expected-transform-error:0021 */}
+7,8) `std::invoke(std::forward<F>(f), std::move(error()))`
+
+{/* source:cpp-utility-expected-transform-error:0022 */}
+The return values are defined as follows:
+
+{/* source:cpp-utility-expected-transform-error:0023 */}
+| Overload | Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| ([`1,2`](/docs/cpp/library/utility/expected/transform_error#Version_1)) | `std::expected<T, G>(std::in_place, `[`val`](/docs/cpp/library/utility/expected#Data_members)`)` | `std::expected<T, G>` `  (std::unexpect, expr)` |
+| ([`3,4`](/docs/cpp/library/utility/expected/transform_error#Version_3)) | `std::expected<T, G>(std::in_place, std::move(`[`val`](/docs/cpp/library/utility/expected#Data_members)`))` |  |
+| ([`5,6`](/docs/cpp/library/utility/expected/transform_error#Version_5)) | `std::expected<T, G>()` |  |
+| ([`7,8`](/docs/cpp/library/utility/expected/transform_error#Version_7)) |  |  |
+
+### Example
+
+{/* source:cpp-utility-expected-transform-error:0024 */}
+This section is incomplete
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-utility-expected-transform-error:0025 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-expected-transform-error:0026 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3938} standard="C++23">
+    <PublishedBehavior>the expected value was obtained by `value()`[^1]</PublishedBehavior>
+    <CorrectedBehavior>changed to `**this`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3973} standard="C++23">
+    <PublishedBehavior>the expected value was obtained by `**this`[^2]</PublishedBehavior>
+    <CorrectedBehavior>changed to [`val`](/docs/cpp/library/utility/expected#Data_members)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-utility-expected-transform-error:0027 */}
+[^1]: ↑ [`value()`](/docs/cpp/library/utility/expected/value) requires `E` to be copy constructible (see [LWG issue 3843](https://cplusplus.github.io/LWG/issue3843)), where [`operator*`](/docs/cpp/library/utility/expected/operator_star_) does not.
+[^2]: ↑ `**this` can trigger [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+### See also
+
+{/* source:cpp-utility-expected-transform-error:0028 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`or_else`](/docs/cpp/library/utility/expected/or_else)</DescriptionTerm>
+    <DescriptionBody>returns the expected itself if it contains an expected value; otherwise, returns the result of the given function on the unexpected value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform`](/docs/cpp/library/utility/expected/transform)</DescriptionTerm>
+    <DescriptionBody>returns an `expected` containing the transformed expected value if it exists; otherwise, returns the expected itself (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

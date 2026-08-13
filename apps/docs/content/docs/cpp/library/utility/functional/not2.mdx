@@ -1,0 +1,157 @@
+---
+title: "std::not2"
+description: "std::not2 is a helper function to create a function object that returns the complement of the binary predicate function passed."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/not2"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-not2:0000 */}
+<DeclarationDoc>
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration language="cpp" until="C++14" code={`template< class Predicate >
+std::binary_negate<Predicate> not2( const Predicate& pred );`} />
+  <Declaration language="cpp" since="C++14" removed="C++20" code={`template< class Predicate >
+constexpr std::binary_negate<Predicate> not2( const Predicate& pred );`} />
+  (deprecated in C++17)
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-not2:0001 */}
+`std::not2` is a helper function to create a function object that returns the complement of the binary predicate function passed. The function object created is of type `std::binary_negate<Predicate>`.
+
+{/* source:cpp-utility-functional-not2:0002 */}
+The binary predicate type must define two member types, `first_argument_type` and `second_argument_type`, that are convertible to the predicate's parameter types. The function objects obtained from [`std::owner_less`](/docs/cpp/library/memory/owner_less), [`std::ref`](/docs/cpp/library/utility/functional/ref), [`std::cref`](/docs/cpp/library/utility/functional/ref), [`std::plus`](/docs/cpp/library/utility/functional/plus), [`std::minus`](/docs/cpp/library/utility/functional/minus), [`std::multiplies`](/docs/cpp/library/utility/functional/multiplies), [`std::divides`](/docs/cpp/library/utility/functional/divides), [`std::modulus`](/docs/cpp/library/utility/functional/modulus), [`std::equal_to`](/docs/cpp/library/utility/functional/equal_to), [`std::not_equal_to`](/docs/cpp/library/utility/functional/not_equal_to), [`std::greater`](/docs/cpp/library/utility/functional/greater), [`std::less`](/docs/cpp/library/utility/functional/less), [`std::greater_equal`](/docs/cpp/library/utility/functional/greater_equal), [`std::less_equal`](/docs/cpp/library/utility/functional/less_equal), [`std::logical_not`](/docs/cpp/library/utility/functional/logical_not), [`std::logical_or`](/docs/cpp/library/utility/functional/logical_or), [`std::bit_and`](/docs/cpp/library/utility/functional/bit_and), [`std::bit_or`](/docs/cpp/library/utility/functional/bit_or), [`std::bit_xor`](/docs/cpp/library/utility/functional/bit_xor), [`std::mem_fn`](/docs/cpp/library/utility/functional/mem_fn), [`std::map::value_comp`](/docs/cpp/library/container/map/value_comp), [`std::multimap::value_comp`](/docs/cpp/library/container/multimap/value_comp), [`std::function`](/docs/cpp/library/utility/functional/function), or from another call to `std::not2` have these types defined, as are function objects derived from the deprecated `std::binary_function`.
+
+### Parameters
+
+{/* source:cpp-utility-functional-not2:0003 */}
+<ParameterList>
+  <Parameter name="pred">binary predicate</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-functional-not2:0004 */}
+`std::not2` returns an object of type `std::binary_negate<Predicate>`, constructed with `pred`.
+
+### Exceptions
+
+{/* source:cpp-utility-functional-not2:0005 */}
+(none)
+
+### Example
+
+{/* source:cpp-utility-functional-not2:0006 */}
+```cpp
+#include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <vector>
+ 
+struct old_same : std::binary_function<int, int, bool>
+{
+    bool operator()(int a, int b) const { return a == b; }
+};
+ 
+struct new_same
+{
+    bool operator()(int a, int b) const { return a == b; }
+};
+ 
+bool same_fn(int a, int b)
+{
+    return a == b;
+}
+ 
+int main()
+{
+    std::vector<int> v1{0, 1, 2};
+    std::vector<int> v2{2, 1, 0};
+    std::vector<bool> v3(v1.size());
+ 
+    std::cout << "negating a binary_function:\n";
+    std::transform(v1.begin(), v1.end(), v2.begin(), v3.begin(),
+                   std::not2(old_same()));
+ 
+    std::cout << std::boolalpha;
+    for (std::size_t i = 0; i < v1.size(); ++i)
+        std::cout << v1[i] << ' ' << v2[i] << ' ' << v3[i] << '\n';
+ 
+    std::cout << "negating a standard functor:\n";
+    std::transform(v1.begin(), v1.end(), v2.begin(), v3.begin(),
+                   std::not2(std::equal_to<int>()));
+ 
+    for (std::size_t i = 0; i < v1.size(); ++i)
+        std::cout << v1[i] << ' ' << v2[i] << ' ' << v3[i] << '\n';
+ 
+    std::cout << "negating a std::function:\n";
+    std::transform(v1.begin(), v1.end(), v2.begin(), v3.begin(),
+                   std::not2(std::function<bool(int, int)>(new_same())));
+ 
+    for (std::size_t i = 0; i < v1.size(); ++i)
+        std::cout << v1[i] << ' ' << v2[i] << ' ' << v3[i] << '\n';
+ 
+    std::cout << "negating a std::reference_wrapper:\n";
+    std::transform(v1.begin(), v1.end(), v2.begin(), v3.begin(),
+                   std::not2(std::ref(same_fn)));
+ 
+    for (std::size_t i = 0; i < v1.size(); ++i)
+        std::cout << v1[i] << ' ' << v2[i] << ' ' << v3[i] << '\n';
+}
+```
+
+Output:
+
+```text
+negating a binary_function:
+0 2 true
+1 1 false
+2 0 true
+negating a standard functor:
+0 2 true
+1 1 false
+2 0 true
+negating a std::function:
+0 2 true
+1 1 false
+2 0 true
+negating a std::reference_wrapper:
+0 2 true
+1 1 false
+2 0 true
+```
+
+### See also
+
+{/* source:cpp-utility-functional-not2:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`not_fn`](/docs/cpp/library/utility/functional/not_fn) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a function object that returns the complement of the result of the function object it holds (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_negate`](/docs/cpp/library/utility/functional/binary_negate) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>wrapper function object returning the complement of the binary predicate it holds (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`function`](/docs/cpp/library/utility/functional/function) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copyable wrapper of any copy constructible callable object (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_only_function`](/docs/cpp/library/utility/functional/move_only_function) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>move-only wrapper of any callable object that supports qualifiers in a given call signature (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not1`](/docs/cpp/library/utility/functional/not1) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs custom [`std::unary_negate`](/docs/cpp/library/utility/functional/unary_negate) object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ptr_fun`](/docs/cpp/library/utility/functional/ptr_fun) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates an adaptor-compatible function object wrapper from a pointer to function (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_function`](/docs/cpp/library/utility/functional/binary_function) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>adaptor-compatible binary function base class (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

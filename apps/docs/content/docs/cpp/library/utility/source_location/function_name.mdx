@@ -1,0 +1,105 @@
+---
+title: "std::source_location::function_name"
+description: "Returns the name of the function associated with the position represented by this object, if any."
+source_url: "https://en.cppreference.com/w/cpp/utility/source_location/function_name"
+language: "C++"
+---
+
+{/* source:cpp-utility-source-location-function-name:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr const char* function_name() const noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-source-location-function-name:0001 */}
+Returns the name of the function associated with the position represented by this object, if any.
+
+### Parameters
+
+{/* source:cpp-utility-source-location-function-name:0002 */}
+(none)
+
+### Return value
+
+{/* source:cpp-utility-source-location-function-name:0003 */}
+If this object represents a position in a body of a function, returns an implementation-defined null-terminated byte string corresponding to the name of the function.
+
+{/* source:cpp-utility-source-location-function-name:0004 */}
+Otherwise, an empty string is returned.
+
+### Example
+
+{/* source:cpp-utility-source-location-function-name:0005 */}
+`std::source_location::function_name` may help to obtain the names of functions (including the special functions) alongside with their signatures.
+
+```cpp
+#include <cstdio>
+#include <utility>
+#include <source_location>
+ 
+inline void print_function_name(
+    const std::source_location& location = std::source_location::current())
+{
+    std::puts(location.function_name()); // prints the name of the caller
+}
+ 
+void foo(double &&) { print_function_name(); }
+ 
+namespace bar { void baz() { print_function_name(); } }
+ 
+template <typename T> auto pub(T) { print_function_name(); return 42; }
+ 
+struct S {
+    S() { print_function_name(); }
+    S(int) { print_function_name(); }
+    ~S() { print_function_name(); }
+    S& operator=(S const&) { print_function_name(); return *this; }
+    S& operator=(S&&) { print_function_name(); return *this; }
+};
+ 
+int main(int, char const* const[])
+{
+    print_function_name();
+    foo(3.14);
+    bar::baz();
+    pub(0xFULL);
+    S p;
+    S q{42};
+    p = q;
+    p = std::move(q);
+    [] { print_function_name(); }();
+}
+```
+
+Possible output:
+
+```text
+int main(int, const char* const*)
+void foo(double&&)
+void bar::baz()
+auto pub(T) [with T = long long unsigned int]
+S::S()
+S::S(int)
+S& S::operator=(const S&)
+S& S::operator=(S&&)
+main(int, const char* const*)::<lambda()>
+S::~S()
+S::~S()
+```
+
+### See also
+
+{/* source:cpp-utility-source-location-function-name:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`line`](/docs/cpp/library/utility/source_location/line)</DescriptionTerm>
+    <DescriptionBody>return the line number represented by this object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`column`](/docs/cpp/library/utility/source_location/column)</DescriptionTerm>
+    <DescriptionBody>return the column number represented by this object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`file_name`](/docs/cpp/library/utility/source_location/file_name)</DescriptionTerm>
+    <DescriptionBody>return the file name represented by this object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

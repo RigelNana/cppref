@@ -1,0 +1,105 @@
+---
+title: "std::optional<T>::reset"
+description: "If *this contains a value, destroy that value as if by value().T::~T(). Otherwise, there are no effects."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/reset"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-reset:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`void reset() noexcept;`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-reset:0001 */}
+If `*this` contains a value, destroy that value as if by `value().T::~T()`. Otherwise, there are no effects.
+
+{/* source:cpp-utility-optional-reset:0002 */}
+`*this` does not contain a value after this call.
+
+### Notes
+
+{/* source:cpp-utility-optional-reset:0003 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_optional`](/docs/cpp/library/feature_test#cpp_lib_optional) | [`202106L`](/docs/cpp/library/compiler_support/20#cpp_lib_optional_202106L) | (C++20) (DR20) | Fully `constexpr` |
+
+### Example
+
+{/* source:cpp-utility-optional-reset:0004 */}
+```cpp
+#include <iostream>
+#include <optional>
+ 
+struct A
+{
+    std::string s;
+    A(std::string str) : s(std::move(str)) { std::cout << " constructed\n"; }
+    ~A() { std::cout << " destructed\n"; }
+    A(const A& o) : s(o.s) { std::cout << " copy constructed\n"; }
+    A(A&& o) : s(std::move(o.s)) { std::cout << " move constructed\n"; }
+ 
+    A& operator=(const A& other)
+    {
+        s = other.s;
+        std::cout << " copy assigned\n";
+        return *this;
+    }
+ 
+    A& operator=(A&& other)
+    {
+        s = std::move(other.s);
+        std::cout << " move assigned\n";
+        return *this;
+    }
+};
+ 
+int main()
+{
+    std::cout << "Create empty optional:\n";
+    std::optional<A> opt;
+ 
+    std::cout << "Construct and assign value:\n";
+    opt = A("Lorem ipsum dolor sit amet, consectetur adipiscing elit nec.");
+ 
+    std::cout << "Reset optional:\n";
+    opt.reset();
+    std::cout << "End example\n";
+}
+```
+
+Output:
+
+```text
+Create empty optional:
+Construct and assign value:
+ constructed
+ move constructed
+ destructed
+Reset optional:
+ destructed
+End example
+```
+
+### Defect reports
+
+{/* source:cpp-utility-optional-reset:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-optional-reset:0006 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2231R1" standard="C++20">
+    <PublishedBehavior>`reset` was not constexpr while non-trivial destruction is allowed in `constexpr` in C++20</PublishedBehavior>
+    <CorrectedBehavior>made `constexpr`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-optional-reset:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/utility/optional/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

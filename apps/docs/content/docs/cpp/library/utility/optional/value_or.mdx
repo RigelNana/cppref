@@ -1,0 +1,86 @@
+---
+title: "std::optional<T>::value_or"
+description: "Returns the contained value if *this has a value, otherwise returns default_value."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/value_or"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-value-or:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class U > 
+constexpr T value_or( U&& default_value ) const&;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class U > 
+constexpr T value_or( U&& default_value ) &&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-value-or:0001 */}
+Returns the contained value if `*this` has a value, otherwise returns `default_value`.
+
+{/* source:cpp-utility-optional-value-or:0002 */}
+1. 1) Equivalent to `bool(*this) ? **this : static_cast<T>(std::forward<U>(default_value))`.
+
+{/* source:cpp-utility-optional-value-or:0003 */}
+2. 2) Equivalent to `bool(*this) ? std::move(**this) : static_cast<T>(std::forward<U>(default_value))`.
+
+### Parameters
+
+{/* source:cpp-utility-optional-value-or:0004 */}
+<ParameterList>
+  <Parameter name="default_value">the value to use in case `*this` is empty</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `T` must meet the requirements of [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) in order to use overload (1).
+- `T` must meet the requirements of [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible) in order to use overload (2).
+- `U&&` must be convertible to `T`.
+
+### Return value
+
+{/* source:cpp-utility-optional-value-or:0005 */}
+The current value if `*this` has a value, or `default_value` otherwise.
+
+### Exceptions
+
+{/* source:cpp-utility-optional-value-or:0006 */}
+Any exception thrown by the selected constructor of the return value `T`.
+
+### Example
+
+{/* source:cpp-utility-optional-value-or:0007 */}
+```cpp
+#include <cstdlib>
+#include <iostream>
+#include <optional>
+ 
+std::optional<const char*> maybe_getenv(const char* n)
+{
+    if (const char* x = std::getenv(n))
+        return x;
+    else
+        return {};
+}
+ 
+int main()
+{
+    std::cout << maybe_getenv("SHELL").value_or("(none)") << '\n';
+    std::cout << maybe_getenv("MYPWD").value_or("(none)") << '\n';
+}
+```
+
+Possible output:
+
+```text
+/usr/bin/zsh
+(none)
+```
+
+### See also
+
+{/* source:cpp-utility-optional-value-or:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`value`](/docs/cpp/library/utility/optional/value)</DescriptionTerm>
+    <DescriptionBody>returns the contained value (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

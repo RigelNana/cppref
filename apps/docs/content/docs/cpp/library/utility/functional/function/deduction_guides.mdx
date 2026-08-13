@@ -1,0 +1,66 @@
+---
+title: "deduction guides for std::function"
+description: "The following deduction guides are provided for std::function."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/function/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-function-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class R, class... ArgTypes >
+function( R(*)(ArgTypes...) ) -> function<R(ArgTypes...)>;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class F >
+function( F ) -> function</*see below*/>;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class F >
+function( F ) -> function</*see below*/>;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class F >
+function( F ) -> function</*see below*/>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-function-deduction-guides:0001 */}
+1) This [deduction guide](/docs/cpp/language/templates/ctad) is provided for [`std::function`](/docs/cpp/library/utility/functional/function) to allow deduction from functions.
+
+{/* source:cpp-utility-functional-function-deduction-guides:0002 */}
+2) This overload participates in overload resolution only if `&F::operator()` is well-formed when treated as an unevaluated operand and `decltype(&F::operator())` is of the form `R(G::*)(A...)` (optionally cv-qualified, optionally noexcept, optionally lvalue reference qualified). The deduced type is `std::function<R(A...)>`.
+
+{/* source:cpp-utility-functional-function-deduction-guides:0003 */}
+3) This overload participates in overload resolution only if `&F::operator()` is well-formed when treated as an unevaluated operand and `F::operator()` is an [explicit object parameter function](/docs/cpp/language/classes/member_functions#Explicit_object_parameter) whose type is of form `R(G, A...)` or `R(G, A...) noexcept`. The deduced type is `std::function<R(A...)>`.
+
+{/* source:cpp-utility-functional-function-deduction-guides:0004 */}
+4) This overload participates in overload resolution only if `&F::operator()` is well-formed when treated as an unevaluated operand and `F::operator()` is a [static member function](/docs/cpp/language/classes/static#Static_member_functions) whose type is of form `R(A...)` or `R(A...) noexcept`. The deduced type is `std::function<R(A...)>`.
+
+### Notes
+
+{/* source:cpp-utility-functional-function-deduction-guides:0005 */}
+These deduction guides do not allow deduction from a function with [ellipsis parameter](/docs/cpp/language/functions/variadic_arguments), and the `...` in the types is always treated as a [pack expansion](/docs/cpp/language/templates/parameter_pack#Pack_expansion).
+
+{/* source:cpp-utility-functional-function-deduction-guides:0006 */}
+The type deduced by these deduction guides may change in a later standard revision (in particular, this might happen if `noexcept` support is added to `std::function` in a later standard).
+
+### Example
+
+{/* source:cpp-utility-functional-function-deduction-guides:0007 */}
+```cpp
+#include <functional>
+int func(double) { return 0; }
+int main() {
+  std::function f{func}; // guide #1 deduces function<int(double)>
+  int i = 5;
+  std::function g = [&](double) { return i; }; // guide #2 deduces function<int(double)>
+}
+```
+
+### Defect reports
+
+{/* source:cpp-utility-functional-function-deduction-guides:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-functional-function-deduction-guides:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3238} standard="C++17">
+    <PublishedBehavior>behavior of (2) was unclear when<br />`F::operator()` is `&&`-qualified</PublishedBehavior>
+    <CorrectedBehavior>clarified to be excluded from overload resolution</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

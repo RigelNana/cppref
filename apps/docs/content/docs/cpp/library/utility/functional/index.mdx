@@ -1,0 +1,594 @@
+---
+title: "Function objects"
+description: "A function object is any object for which the function call operator is defined."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional:0000 */}
+A function object is any object for which the function call operator is defined. C++ provides many built-in function objects as well as support for creation and manipulation of new function objects.
+
+### Function invocation
+
+{/* source:cpp-utility-functional:0001 */}
+<Revision since="C++11">
+The exposition-only operation `INVOKE`(f, arg_0, arg_1, arg_2, ..., arg_N) is defined as follows:
+
+Let type `Obj` be the unqualified type of `arg_0` (i.e., `std::remove_cv<std::remove_reference<decltype(arg_0)>::type>::type`)
+
+- If `f` is a [pointer to member function](/docs/cpp/language/declarations/pointer#Pointers_to_member_functions) of class `C`, then `INVOKE`(f, obj, arg_1, arg_2, ..., arg_N) is equivalent to:
+
+  - If `std::is_same<C, Obj>::value || std::is_base_of<C, Obj>::value` is `true`
+
+    - `(obj.*f)(arg_1, arg_2, ..., arg_N)` (invoke the member function on the object).
+  - If `Obj` is a specialization of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper)
+
+    - `(obj.get().*f)(arg_1, arg_2, ..., arg_N)` (invoke the member function on the specially referred object).
+  - Otherwise
+
+    - `((*obj).*f)(arg_1, arg_2, ..., arg_N)` (invoke the member function on the dereferenced object).
+
+- Otherwise, if `N == 0` and `f` is a [pointer to data member](/docs/cpp/language/declarations/pointer#Pointers_to_data_members) of class `C`, then `INVOKE`(mptr, obj) is equivalent to:
+
+  - If `std::is_same<C, Obj>::value || std::is_base_of<C, Obj>::value` is `true`
+
+    - `obj.*mptr` (access the data member of the object).
+  - If `Obj` is a specialization of `std::reference_wrapper`
+
+    - `obj.get().*mptr` (access the data member of the specially referred object).
+  - Otherwise
+
+    - `(*obj).*mptr` (access the data member of the dereferenced object).
+
+- Otherwise
+
+  - `INVOKE`(f, arg_0, arg_1, arg_2, ..., arg_N) is equivalent to `f(arg_0, arg_1, arg_2, ..., arg_N)` (invoke the callable).
+
+The exposition-only operation `INVOKE<R>`(f, arg_0, arg_1, arg_2, ..., arg_N) is defined as follows:
+
+- If `R` is (possibly cv-qualified) `void`
+
+  - `static_cast<void>(`INVOKE`(f, arg_0, arg_1, arg_2, ..., arg_N))`.
+- Otherwise
+
+  - `INVOKE`(f, arg_0, arg_1, arg_2, ..., arg_N) implicitly converted to `R`.
+
+<Revision since="C++23">
+Let type `Actual` be `decltype(`INVOKE`(f, arg_0, arg_1, arg_2, ..., arg_N))`
+
+- If [`std::reference_converts_from_temporary_v`](/docs/cpp/library/meta/reference_converts_from_temporary)`<R, Actual>` is `true`
+
+  - `INVOKE<R>`(f, arg_0, arg_1, arg_2, ..., arg_N) is ill-formed.
+</Revision>
+</Revision>
+
+{/* source:cpp-utility-functional:0002 */}
+`std::invoke` <InlineRevision since="C++23">and `std::invoke_r`</InlineRevision> can invoke any [Callable](/docs/cpp/library/named_req/Callable) object with given arguments according to the rules of `INVOKE` <InlineRevision since="C++23">and `INVOKE<R>`</InlineRevision>.
+
+{/* source:cpp-utility-functional:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`invoke`, `invoke_r`](/docs/cpp/library/utility/functional/invoke) <InlineRevision since="C++17" /> <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>invokes any [Callable](/docs/cpp/library/named_req/Callable) object with given arguments <InlineRevision since="C++23">and possibility to specify return type</InlineRevision> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Function wrappers
+
+{/* source:cpp-utility-functional:0004 */}
+These polymorphic wrapper classes provide support for storing arbitrary function objects.
+
+{/* source:cpp-utility-functional:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`function`](/docs/cpp/library/utility/functional/function) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copyable wrapper of any copy constructible callable object (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_only_function`](/docs/cpp/library/utility/functional/move_only_function) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>move-only wrapper of any callable object that supports qualifiers in a given call signature (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copyable_function`](/docs/cpp/library/utility/functional/copyable_function) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>copyable wrapper of any copy constructible callable object that supports qualifiers in a given call signature (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`function_ref`](/docs/cpp/library/utility/functional/function_ref) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>non-owning wrapper of any callable object (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bad_function_call`](/docs/cpp/library/utility/functional/bad_function_call) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>the exception thrown when invoking an empty [`std::function`](/docs/cpp/library/utility/functional/function) (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mem_fn`](/docs/cpp/library/utility/functional/mem_fn) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a function object out of a pointer to a member (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Identity
+
+{/* source:cpp-utility-functional:0006 */}
+`std::identity` is the identity function object: it returns its argument unchanged.
+
+{/* source:cpp-utility-functional:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`identity`](/docs/cpp/library/utility/functional/identity) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>function object that returns its argument unchanged (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Partial function application
+
+{/* source:cpp-utility-functional:0008 */}
+`std::bind_front` and `std::bind` provide support for [partial function application](https://en.wikipedia.org/wiki/Partial_application), i.e. binding arguments to functions to produce new functions.
+
+{/* source:cpp-utility-functional:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`bind_front`, `bind_back`](/docs/cpp/library/utility/functional/bind_front) <InlineRevision since="C++20" /> <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>bind a variable number of arguments, in order, to a function object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bind`](/docs/cpp/library/utility/functional/bind) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>binds one or more arguments to a function object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_bind_expression`](/docs/cpp/library/utility/functional/is_bind_expression) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>indicates that an object is `std::bind` expression or can be used as one (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_placeholder`](/docs/cpp/library/utility/functional/is_placeholder) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>indicates that an object is a standard placeholder or can be used as one (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Defined in namespace `std::placeholders`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`_1, _2, _3, _4, ...`](/docs/cpp/library/utility/functional/placeholders) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>placeholders for the unbound arguments in a `std::bind` expression (constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Negators
+
+{/* source:cpp-utility-functional:0010 */}
+[`std::not_fn`](/docs/cpp/library/utility/functional/not_fn) creates a function object that negates the result of the callable object passed to it.
+
+{/* source:cpp-utility-functional:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`not_fn`](/docs/cpp/library/utility/functional/not_fn) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a function object that returns the complement of the result of the function object it holds (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Searchers
+
+{/* source:cpp-utility-functional:0012 */}
+Searchers implementing several string searching algorithms are provided and can be used either directly or with [`std::search`](/docs/cpp/library/algorithm/search).
+
+{/* source:cpp-utility-functional:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`default_searcher`](/docs/cpp/library/utility/functional/default_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>standard C++ library search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`boyer_moore_searcher`](/docs/cpp/library/utility/functional/boyer_moore_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>Boyer-Moore search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`boyer_moore_horspool_searcher`](/docs/cpp/library/utility/functional/boyer_moore_horspool_searcher) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>Boyer-Moore-Horspool search algorithm implementation (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Reference wrappers
+
+{/* source:cpp-utility-functional:0014 */}
+Reference wrappers allow reference arguments to be stored in copyable function objects:
+
+{/* source:cpp-utility-functional:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>[CopyConstructible](/docs/cpp/library/named_req/CopyConstructible) and [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) reference wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ref`, `cref`](/docs/cpp/library/utility/functional/ref) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) with a type deduced from its argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unwrap_reference`, `unwrap_ref_decay`](/docs/cpp/library/utility/functional/unwrap_reference) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>get the reference type wrapped in [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-functional:0016 */}
+<Revision since="C++14">
+[Associative containers](/docs/cpp/library/container#Associative_containers) <InlineRevision since="C++20">and [unordered associative containers](/docs/cpp/library/container#Unordered_associative_containers)</InlineRevision> provide heterogeneous lookup <InlineRevision since="C++23">and erasure</InlineRevision> operations, but they are only enabled if the supplied function object type `T` is *transparent*: the qualified identifier `T::is_transparent` is valid and denotes a type.
+
+All transparent function object types in the standard library defines a nested type `is_transparent`. However, user-defined transparent function object types do not need to directly provide `is_transparent` as a nested type: it can be defined in a base class, as long as `T::is_transparent` satisfies the transparent requirement stated above.
+</Revision>
+
+### Operator function objects
+
+{/* source:cpp-utility-functional:0017 */}
+C++ defines the following function objects that represent common arithmetic and logical operations.
+
+{/* source:cpp-utility-functional:0018 */}
+<Revision since="C++14">
+The `void` specializations deduce their parameter types and return types from their arguments, they are all [transparent](/docs/cpp/library/utility/functional#Transparent_function_objects).
+</Revision>
+
+{/* source:cpp-utility-functional:0019 */}
+#### Arithmetic operations
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`plus`](/docs/cpp/library/utility/functional/plus)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x + y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`plus<void>`](/docs/cpp/library/utility/functional/plus_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x + y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`minus`](/docs/cpp/library/utility/functional/minus)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x - y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`minus<void>`](/docs/cpp/library/utility/functional/minus_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x - y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`multiplies`](/docs/cpp/library/utility/functional/multiplies)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x * y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`multiplies<void>`](/docs/cpp/library/utility/functional/multiplies_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x * y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`divides`](/docs/cpp/library/utility/functional/divides)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x / y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`divides<void>`](/docs/cpp/library/utility/functional/divides_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x / y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`modulus`](/docs/cpp/library/utility/functional/modulus)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x % y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`modulus<void>`](/docs/cpp/library/utility/functional/modulus_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x % y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`negate`](/docs/cpp/library/utility/functional/negate)</DescriptionTerm>
+    <DescriptionBody>function object implementing `-x` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`negate<void>`](/docs/cpp/library/utility/functional/negate_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `-x` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Comparisons
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_to`](/docs/cpp/library/utility/functional/equal_to)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x == y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_to<void>`](/docs/cpp/library/utility/functional/equal_to_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x == y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not_equal_to`](/docs/cpp/library/utility/functional/not_equal_to)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x != y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not_equal_to<void>`](/docs/cpp/library/utility/functional/not_equal_to_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x != y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`greater`](/docs/cpp/library/utility/functional/greater)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x > y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`greater<void>`](/docs/cpp/library/utility/functional/greater_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x > y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`less`](/docs/cpp/library/utility/functional/less)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x < y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`less<void>`](/docs/cpp/library/utility/functional/less_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x < y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`greater_equal`](/docs/cpp/library/utility/functional/greater_equal)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x >= y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`greater_equal<void>`](/docs/cpp/library/utility/functional/greater_equal_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x >= y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`less_equal`](/docs/cpp/library/utility/functional/less_equal)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x <= y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`less_equal<void>`](/docs/cpp/library/utility/functional/less_equal_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x <= y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Logical operations
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`logical_and`](/docs/cpp/library/utility/functional/logical_and)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x && y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`logical_and<void>`](/docs/cpp/library/utility/functional/logical_and_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x && y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`logical_or`](/docs/cpp/library/utility/functional/logical_or)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x || y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`logical_or<void>`](/docs/cpp/library/utility/functional/logical_or_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x || y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`logical_not`](/docs/cpp/library/utility/functional/logical_not)</DescriptionTerm>
+    <DescriptionBody>function object implementing `!x` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`logical_not<void>`](/docs/cpp/library/utility/functional/logical_not_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `!x` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Bitwise operations
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_and`](/docs/cpp/library/utility/functional/bit_and)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x & y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_and<void>`](/docs/cpp/library/utility/functional/bit_and_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x & y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_or`](/docs/cpp/library/utility/functional/bit_or)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x | y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_or<void>`](/docs/cpp/library/utility/functional/bit_or_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x | y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_xor`](/docs/cpp/library/utility/functional/bit_xor)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x ^ y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_xor<void>`](/docs/cpp/library/utility/functional/bit_xor_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `x ^ y` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_not`](/docs/cpp/library/utility/functional/bit_not) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `~x` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_not<void>`](/docs/cpp/library/utility/functional/bit_not_void) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>function object implementing `~x` deducing parameter and return types (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-functional:0020 */}
+<Revision since="C++20">
+### Constrained comparison function objects
+
+The following comparison function objects are [constrained](/docs/cpp/language/templates/constraints).
+
+- The equality operators (`ranges::equal_to` and `ranges::not_equal_to`) require the types of the arguments to satisfy [`equality_comparable_with`](/docs/cpp/library/concepts/equality_comparable).
+- The relational operators (`ranges::less`, `ranges::greater`, `ranges::less_equal`, and `ranges::greater_equal`) require the types of the arguments to satisfy [`totally_ordered_with`](/docs/cpp/library/concepts/totally_ordered).
+- The three-way comparison operator (`compare_three_way`) requires the type to model [`three_way_comparable_with`](/docs/cpp/library/utility/compare/three_way_comparable).
+
+All these function objects are [transparent](/docs/cpp/library/utility/functional#Transparent_function_objects).
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal_to`](/docs/cpp/library/utility/functional/ranges/equal_to) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x == y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::not_equal_to`](/docs/cpp/library/utility/functional/ranges/not_equal_to) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x != y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::less`](/docs/cpp/library/utility/functional/ranges/less) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x < y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::greater`](/docs/cpp/library/utility/functional/ranges/greater) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x > y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::less_equal`](/docs/cpp/library/utility/functional/ranges/less_equal) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x <= y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::greater_equal`](/docs/cpp/library/utility/functional/ranges/greater_equal) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x >= y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare_three_way`](/docs/cpp/library/utility/functional/compare_three_way) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x <=> y` (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+</Revision>
+
+{/* source:cpp-utility-functional:0021 */}
+<Revision since="C++26">
+### Helper items
+
+Following exposition-only items are used for several components in the standard library but they are not part of the interface of the standard library.
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< class Fn, class... Args >
+concept /*callable*/ =
+    requires (Fn&& fn, Args&&... args) {
+        std::forward<Fn>(fn)(std::forward<Args>(args)...);
+
+    };`} />
+  (exposition only*)
+  <Declaration id="2" language="cpp" code={`template< class Fn, class... Args >
+concept /*nothrow-callable*/ =
+    /*callable*/<Fn, Args...> &&
+    requires (Fn&& fn, Args&&... args) {
+        { std::forward<Fn>(fn)(std::forward<Args>(args)...) } noexcept;
+
+    };`} />
+  (exposition only*)
+  <Declaration id="3" language="cpp" code={`template< class Fn, class... Args >
+using /*call-result-t*/ = decltype(std::declval<Fn>()(std::declval<Args>()...));`} />
+  (exposition only*)
+  <Declaration id="4" language="cpp" code={`template< const auto& T >
+using /*decayed-typeof*/ = decltype(auto(T));`} />
+  (exposition only*)
+</DeclarationDoc>
+</Revision>
+
+{/* source:cpp-utility-functional:0022 */}
+<Revision until="C++20">
+### Old binders and adaptors
+
+Several utilities that provided early functional support are deprecated and removed:
+
+#### Base
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unary_function`](/docs/cpp/library/utility/functional/unary_function) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>adaptor-compatible unary function base class (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_function`](/docs/cpp/library/utility/functional/binary_function) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>adaptor-compatible binary function base class (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Binders
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`binder1st`, `binder2nd`](/docs/cpp/library/utility/functional/binder12) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>function object holding a binary function and one of its arguments (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bind1st`, `bind2nd`](/docs/cpp/library/utility/functional/bind12) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>binds one argument to a binary function (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Function adaptors
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pointer_to_unary_function`](/docs/cpp/library/utility/functional/pointer_to_unary_function) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>adaptor-compatible wrapper for a pointer to unary function (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pointer_to_binary_function`](/docs/cpp/library/utility/functional/pointer_to_binary_function) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>adaptor-compatible wrapper for a pointer to binary function (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ptr_fun`](/docs/cpp/library/utility/functional/ptr_fun) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates an adaptor-compatible function object wrapper from a pointer to function (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mem_fun_t`, `mem_fun1_t`, `const_mem_fun_t`, `const_mem_fun1_t`](/docs/cpp/library/utility/functional/mem_fun_t) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>wrapper for a pointer to nullary or unary member function, callable with a pointer to object (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mem_fun`](/docs/cpp/library/utility/functional/mem_fun) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a wrapper from a pointer to member function, callable with a pointer to object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mem_fun_ref_t`, `mem_fun1_ref_t`, `const_mem_fun_ref_t`, `const_mem_fun1_ref_t`](/docs/cpp/library/utility/functional/mem_fun_ref_t) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>wrapper for a pointer to nullary or unary member function, callable with a reference to object (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mem_fun_ref`](/docs/cpp/library/utility/functional/mem_fun_ref) (deprecated in C++11) <InlineRevision removed="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a wrapper from a pointer to member function, callable with a reference to object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unary_negate`](/docs/cpp/library/utility/functional/unary_negate) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>wrapper function object returning the complement of the unary predicate it holds (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_negate`](/docs/cpp/library/utility/functional/binary_negate) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>wrapper function object returning the complement of the binary predicate it holds (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not1`](/docs/cpp/library/utility/functional/not1) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs custom [`std::unary_negate`](/docs/cpp/library/utility/functional/unary_negate) object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not2`](/docs/cpp/library/utility/functional/not2) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs custom [`std::binary_negate`](/docs/cpp/library/utility/functional/binary_negate) object (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+</Revision>
+
+### Defect reports
+
+{/* source:cpp-utility-functional:0023 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-functional:0024 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={185} standard="C++98">
+    <PublishedBehavior>using function objects improved the program efficiency</PublishedBehavior>
+    <CorrectedBehavior>removed the claim</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={660} standard="C++98">
+    <PublishedBehavior>function objects for bitwise operations are missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2149} standard="C++98">
+    <PublishedBehavior>function objects taking one or two arguments were required to<br />provide nested types to denote the argument and result types</PublishedBehavior>
+    <CorrectedBehavior>not required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2219} standard="C++11">
+    <PublishedBehavior>`INVOKE` did not handle [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) correctly</PublishedBehavior>
+    <CorrectedBehavior>handles correctly</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2420} standard="C++11">
+    <PublishedBehavior>`INVOKE<R>` did not discard the return value if `R` is `void`</PublishedBehavior>
+    <CorrectedBehavior>discards the return value in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2926} standard="C++11">
+    (P0604R0)
+    <PublishedBehavior>the syntax of the `INVOKE` operation with a return<br />type `R` was `INVOKE`(f, t1, t2, ..., tN, R)</PublishedBehavior>
+    <CorrectedBehavior>changed to<br />`INVOKE<R>`(f, t1, t2, ..., tN)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3655} standard="C++11">
+    <PublishedBehavior>`INVOKE` did not handle unions correctly<br />due to the resolution of [LWG issue 2219](https://cplusplus.github.io/LWG/issue2219)</PublishedBehavior>
+    <CorrectedBehavior>handles correctly</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

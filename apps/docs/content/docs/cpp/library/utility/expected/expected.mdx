@@ -1,0 +1,309 @@
+---
+title: "std::expected<T,E>::expected"
+description: "Constructs a new expected object."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/expected"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-expected:0000 */}
+<DeclarationDoc>
+  Main template
+
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr expected();`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr expected( const expected& other );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`constexpr expected( expected&& other ) noexcept(/* see below */);`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class U, class G >
+constexpr expected( const expected<U, G>& other );`} />
+  (conditionally explicit)
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class U, class G >
+constexpr expected( expected<U, G>&& other );`} />
+  (conditionally explicit)
+  <Declaration id="6" language="cpp" since="C++23" code={`template< class U = T >
+constexpr explicit(!std::is_convertible_v<U, T>) expected( U&& v );`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< class G >
+constexpr explicit(!std::is_convertible_v<const G&, E>)
+
+    expected( const std::unexpected<G>& e );`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class G >
+constexpr explicit(!std::is_convertible_v<G, E>)
+
+    expected( std::unexpected<G>&& e );`} />
+  <Declaration id="9" language="cpp" since="C++23" code={`template< class... Args >
+constexpr explicit expected( std::in_place_t, Args&&... args );`} />
+  <Declaration id="10" language="cpp" since="C++23" code={`template< class U, class... Args >
+constexpr explicit
+    expected( std::in_place_t,
+
+              std::initializer_list<U> il, Args&&... args );`} />
+  <Declaration id="11" language="cpp" since="C++23" code={`template< class... Args >
+constexpr explicit expected( std::unexpect_t, Args&&... args );`} />
+  <Declaration id="12" language="cpp" since="C++23" code={`template< class U, class... Args >
+constexpr explicit
+    expected( std::unexpect_t,
+
+              std::initializer_list<U> il, Args&&... args );`} />
+
+  `void` partial specialization
+
+  <Declaration id="13" language="cpp" since="C++23" code={`constexpr expected();`} />
+  <Declaration id="14" language="cpp" since="C++23" code={`constexpr expected( const expected& other );`} />
+  <Declaration id="15" language="cpp" since="C++23" code={`constexpr expected( expected&& other )
+    noexcept(std::is_nothrow_move_constructible_v<E>);`} />
+  <Declaration id="16" language="cpp" since="C++23" code={`template< class U, class G >
+constexpr explicit(!std::is_convertible_v<const G&, E>)
+
+    expected( const expected<U, G>& other );`} />
+  <Declaration id="17" language="cpp" since="C++23" code={`template< class U, class G >
+constexpr explicit(!std::is_convertible_v<G, E>)
+
+    expected( expected<U, G>&& other );`} />
+  <Declaration id="18" language="cpp" since="C++23" code={`template< class G >
+constexpr explicit(!std::is_convertible_v<const G&, E>)
+
+    expected( const std::unexpected<G>& e );`} />
+  <Declaration id="19" language="cpp" since="C++23" code={`template< class G >
+constexpr explicit(!std::is_convertible_v<G, E>)
+
+    expected( std::unexpected<G>&& e );`} />
+  <Declaration id="20" language="cpp" since="C++23" code={`template< class... Args >
+constexpr explicit expected( std::in_place_t );`} />
+  <Declaration id="21" language="cpp" since="C++23" code={`template< class... Args >
+constexpr explicit expected( std::unexpect_t, Args&&... args );`} />
+  <Declaration id="22" language="cpp" since="C++23" code={`template< class U, class... Args >
+constexpr explicit
+    expected( std::unexpect_t,
+
+              std::initializer_list<U> il, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-expected:0001 */}
+Constructs a new `expected` object.
+
+### Parameters
+
+{/* source:cpp-utility-expected-expected:0002 */}
+<ParameterList>
+  <Parameter name="other">another expected object whose contained value is copied</Parameter>
+  <Parameter name="e">[`std::unexpected`](/docs/cpp/library/utility/expected/unexpected) object whose contained value is copied</Parameter>
+  <Parameter name="v">value with which to initialize the contained value</Parameter>
+  <Parameter name="args">arguments with which to initialize the contained value</Parameter>
+  <Parameter name="il">initializer list with which to initialize the contained value</Parameter>
+</ParameterList>
+
+### Effects
+
+#### Primary template constructors
+
+{/* source:cpp-utility-expected-expected:0003 */}
+| Overload | Initialization method | Initializer for... |  | has_value() after construction |
+| --- | --- | --- | --- | --- |
+|  |  | the expected value | the unexpected value |  |
+| ([`1`](/docs/cpp/library/utility/expected/expected#Version_1)) | [Value](/docs/cpp/language/initialization/value_initialization) | (empty) | - | `true` |
+| ([`2`](/docs/cpp/library/utility/expected/expected#Version_2)) | [Direct](/docs/cpp/language/initialization/direct_initialization) (non-list) | `*other` | `other.error()` | [`other.has_value()`](/docs/cpp/library/utility/expected/operator_bool) If `true`, only initializes the expected value. If `false`, only initializes the unexpected value. |
+| ([`3`](/docs/cpp/library/utility/expected/expected#Version_3)) |  | `std::move(*other)` | `std::move(other.error())` |  |
+| ([`4`](/docs/cpp/library/utility/expected/expected#Version_4)) |  | `std::forward<const U&>` `(*other)` | `std::forward<const G&>` `(other.error())` |  |
+| ([`5`](/docs/cpp/library/utility/expected/expected#Version_5)) |  | `std::forward<U>(*other)` | `std::forward<G>` `(other.error())` |  |
+| ([`6`](/docs/cpp/library/utility/expected/expected#Version_6)) |  | `std::forward<U>(v)` | - | `true` |
+| ([`7`](/docs/cpp/library/utility/expected/expected#Version_7)) |  | - | `std::forward<const G&>` `(e.error())` | `false` |
+| ([`8`](/docs/cpp/library/utility/expected/expected#Version_8)) |  |  | `std::forward<G>(e.error())` |  |
+| ([`9`](/docs/cpp/library/utility/expected/expected#Version_9)) |  | `std::forward<Args>(args)...` | - | `true` |
+| ([`10`](/docs/cpp/library/utility/expected/expected#Version_10)) |  | `il,` `std::forward<Args>(args)...` |  |  |
+| ([`11`](/docs/cpp/library/utility/expected/expected#Version_11)) |  | - | `std::forward<Args>(args)...` | `false` |
+| ([`12`](/docs/cpp/library/utility/expected/expected#Version_12)) |  | `il,` `std::forward<Args>(args)...` |  |  |
+
+#### void partial specialization constructors
+
+{/* source:cpp-utility-expected-expected:0004 */}
+| Overload | Initialization method | Initializer for the unexpected value | has_value() after construction |
+| --- | --- | --- | --- |
+| ([`13`](/docs/cpp/library/utility/expected/expected#Version_13)) | N/A | - | `true` |
+| ([`14`](/docs/cpp/library/utility/expected/expected#Version_14)) | Direct (non-list) | `rhs.error()` | [`other.has_value()`](/docs/cpp/library/utility/expected/operator_bool) If `false`, initializes the unexpected value. |
+| ([`15`](/docs/cpp/library/utility/expected/expected#Version_15)) |  | `std::move(rhs.error)` |  |
+| ([`16`](/docs/cpp/library/utility/expected/expected#Version_16)) |  | `std::forward<const G&>(rhs.error())` |  |
+| ([`17`](/docs/cpp/library/utility/expected/expected#Version_17)) |  | `std::forward<G>(rhs.error())` |  |
+| ([`18`](/docs/cpp/library/utility/expected/expected#Version_18)) |  | `std::forward<const G&>(e.error())` | `false` |
+| ([`19`](/docs/cpp/library/utility/expected/expected#Version_19)) |  | `std::forward<G>(e.error())` |  |
+| ([`20`](/docs/cpp/library/utility/expected/expected#Version_20)) | N/A | - | `true` |
+| ([`21`](/docs/cpp/library/utility/expected/expected#Version_21)) | Direct (non-list) | `std::forward<Args>(args)...` | `false` |
+| ([`22`](/docs/cpp/library/utility/expected/expected#Version_22)) |  | `il, std::forward<Args>(args)...` |  |
+
+### Constraints and supplement information
+
+#### Primary template constructors
+
+{/* source:cpp-utility-expected-expected:0005 */}
+1) This overload participates in overload resolution only if `std::is_default_constructible_v<T>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0006 */}
+2) This constructor is defined as deleted unless `std::is_copy_constructible_v<T>` and `std::is_copy_constructible_v<E>` are both `true`.
+
+{/* source:cpp-utility-expected-expected:0007 */}
+This constructor is trivial if `std::is_trivially_copy_constructible_v<T>` and `std::is_trivially_copy_constructible_v<E>` are both `true`.
+
+{/* source:cpp-utility-expected-expected:0008 */}
+3) This overload participates in overload resolution only if `std::is_move_constructible_v<T>` and `std::is_move_constructible_v<E>` are both `true`.
+
+{/* source:cpp-utility-expected-expected:0009 */}
+This constructor is trivial if `std::is_trivially_move_constructible_v<T>` and `std::is_trivially_move_constructible_v<E>` are both `true`.
+
+{/* source:cpp-utility-expected-expected:0010 */}
+4,5) These overloads participate in overload resolution only if all following conditions are satisfied:
+
+For overload (4), `std::is_constructible_v<T, const U&>` and `std::is_constructible_v<E, const G&>` are both `true`. For overload (5), `std::is_constructible_v<T, U>` and `std::is_constructible_v<E, G>` are both `true`.
+
+If `T` is not (possibly cv-qualified) `bool`, the following 8 values are all `false`:
+
+- `std::is_constructible_v<T, std::expected<U, G>&>`
+- `std::is_constructible_v<T, std::expected<U, G>>`
+- `std::is_constructible_v<T, const std::expected<U, G>&>`
+- `std::is_constructible_v<T, const std::expected<U, G>>`
+- `std::is_convertible_v<std::expected<U, G>&, T>`
+- `std::is_convertible_v<std::expected<U, G>, T>`
+- `std::is_convertible_v<const std::expected<U, G>&, T>`
+- `std::is_convertible_v<const std::expected<U, G>, T>`
+- `std::is_constructible_v<std::unexpected<E>, std::expected<U, G>&>`
+- `std::is_constructible_v<std::unexpected<E>, std::expected<U, G>>`
+- `std::is_constructible_v<std::unexpected<E>, const std::expected<U, G>&>`
+- `std::is_constructible_v<std::unexpected<E>, const std::expected<U, G>>`
+
+{/* source:cpp-utility-expected-expected:0011 */}
+4) This constructor is `explicit` if `std::is_convertible_v<const U&, T>` or `std::is_convertible_v<const G&, E>` is `false`.
+
+{/* source:cpp-utility-expected-expected:0012 */}
+5) This constructor is `explicit` if `std::is_convertible_v<U, T>` or `std::is_convertible_v<G, E>` is `false`.
+
+{/* source:cpp-utility-expected-expected:0013 */}
+6) This overload participates in overload resolution only if all following conditions are satisfied:
+
+- `std::is_same_v<std::remove_cvref_t<U>, std::in_place_t>` is `false`.
+- `std::is_same_v<std::expected<T, E>, std::remove_cvref_t<U>>` is `false`.
+- `std::is_constructible_v<T, U>` is `true`.
+- `std::remove_cvref_t<U>` is not a specialization of [`std::unexpected`](/docs/cpp/library/utility/expected/unexpected).
+
+If `T` is (possibly cv-qualified) `bool`, `std::remove_cvref_t<U>` is not a specialization of [`std::expected`](/docs/cpp/library/utility/expected).
+
+{/* source:cpp-utility-expected-expected:0014 */}
+7) This overload participates in overload resolution only if `std::is_constructible_v<E, const G&>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0015 */}
+8) This overload participates in overload resolution only if `std::is_constructible_v<E, G>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0016 */}
+9) This overload participates in overload resolution only if `std::is_constructible_v<T, Args...>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0017 */}
+10) This overload participates in overload resolution only if `std::is_constructible_v<T, std::initializer_list<U>&, Args...>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0018 */}
+11) This overload participates in overload resolution only if `std::is_constructible_v<E, Args...>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0019 */}
+12) This overload participates in overload resolution only if `std::is_constructible_v<E, std::initializer_list<U>&, Args...>` is `true`.
+
+#### void partial specialization constructors
+
+{/* source:cpp-utility-expected-expected:0020 */}
+14) This constructor is defined as deleted unless `std::is_copy_constructible_v<E>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0021 */}
+This constructor is trivial if `std::is_trivially_copy_constructible_v<E>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0022 */}
+15) This overload participates in overload resolution only if `std::is_move_constructible_v<E>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0023 */}
+This constructor is trivial if `std::is_trivially_move_constructible_v<E>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0024 */}
+16,17) These overloads participate in overload resolution only if all following conditions are satisfied:
+
+For overload (16), `std::is_constructible_v<E, const G&>` is `true`. For overload (17), `std::is_constructible_v<E, G>` is `true`.
+
+`std::is_void_v<U>` is `true`.
+
+The following 4 values are all `false`:
+
+- `std::is_constructible_v<std::unexpected<E>, std::expected<U, G>&>`
+- `std::is_constructible_v<std::unexpected<E>, std::expected<U, G>>`
+- `std::is_constructible_v<std::unexpected<E>, const std::expected<U, G>&>`
+- `std::is_constructible_v<std::unexpected<E>, const std::expected<U, G>>`
+
+{/* source:cpp-utility-expected-expected:0025 */}
+18) This overload participates in overload resolution only if `std::is_constructible_v<E, const G&>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0026 */}
+19) This overload participates in overload resolution only if `std::is_constructible_v<E, G>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0027 */}
+21) This overload participates in overload resolution only if `std::is_constructible_v<E, Args...>` is `true`.
+
+{/* source:cpp-utility-expected-expected:0028 */}
+22) This overload participates in overload resolution only if `std::is_constructible_v<E, std::initializer_list<U>&, Args...>` is `true`.
+
+### Exceptions
+
+#### Primary template constructors
+
+{/* source:cpp-utility-expected-expected:0029 */}
+1) Throws any exception thrown by the initialization of the expected value.
+
+{/* source:cpp-utility-expected-expected:0030 */}
+2) Throws any exception thrown by the initialization of the expected or unexpected value.
+
+{/* source:cpp-utility-expected-expected:0031 */}
+3) Throws any exception thrown by the initialization of the expected or unexpected value.
+
+{/* source:cpp-utility-expected-expected:0032 */}
+[`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(std::is_nothrow_move_constructible_v<T>
+    && std::is_nothrow_move_constructible_v<E>)
+```
+
+{/* source:cpp-utility-expected-expected:0033 */}
+4,5) Throws any exception thrown by the initialization of the expected or unexpected value.
+
+{/* source:cpp-utility-expected-expected:0034 */}
+6) Throws any exception thrown by the initialization of the expected value.
+
+{/* source:cpp-utility-expected-expected:0035 */}
+7,8) Throws any exception thrown by the initialization of the unexpected value.
+
+{/* source:cpp-utility-expected-expected:0036 */}
+9,10) Throws any exception thrown by the initialization of the expected value.
+
+{/* source:cpp-utility-expected-expected:0037 */}
+11,12) Throws any exception thrown by the initialization of the unexpected value.
+
+#### void partial specialization constructors
+
+{/* source:cpp-utility-expected-expected:0038 */}
+14-19) Throws any exception thrown by the initialization of the unexpected value.
+
+{/* source:cpp-utility-expected-expected:0039 */}
+21,22) Throws any exception thrown by the initialization of the unexpected value.
+
+### Example
+
+{/* source:cpp-utility-expected-expected:0040 */}
+This section is incomplete
+Reason: no example
+
+### See also
+
+{/* source:cpp-utility-expected-expected:0041 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unexpected`](/docs/cpp/library/utility/expected/unexpected) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>represented as an unexpected value (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_place in_place_type in_place_index in_place_t in_place_type_t in_place_index_t`](/docs/cpp/library/utility/in_place) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>in-place construction tag (tag)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unexpect unexpect_t`](/docs/cpp/library/utility/expected/unexpect_t) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>in-place construction tag for unexpected value in `expected` (tag)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,121 @@
+---
+title: "std::source_location::source_location"
+description: "Constructs a new source_location object."
+source_url: "https://en.cppreference.com/w/cpp/utility/source_location/source_location"
+language: "C++"
+---
+
+{/* source:cpp-utility-source-location-source-location:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr source_location() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`source_location( const source_location& other );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`source_location( source_location&& other ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-source-location-source-location:0001 */}
+1. 1) Constructs a `source_location` object of unspecified value.
+
+{/* source:cpp-utility-source-location-source-location:0002 */}
+2. 2,3) Copy and move constructors. It is unspecified whether they are trivial and/or `constexpr`.
+
+### Parameters
+
+{/* source:cpp-utility-source-location-source-location:0003 */}
+<ParameterList>
+  <Parameter name="other">another `source_location` to copy or move from</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-utility-source-location-source-location:0004 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <ranges>
+#include <source_location>
+#include <string_view>
+#include <vector>
+ 
+// GCC specific type name printer
+#if (__GNUG__ >= 11)
+template<typename T>
+auto type_name_helper(const std::source_location s = std::source_location::current())
+{
+    using std::operator""sv;
+    const std::string_view fun_name{s.function_name()};
+    constexpr auto prefix{"[with T = "sv};
+    const auto type_name_begin{fun_name.find(prefix)};
+    if (""sv.npos == type_name_begin)
+        return ""sv;
+    const std::size_t first{type_name_begin + prefix.length()};
+    return std::string_view{fun_name.cbegin() + first, fun_name.cend() - 1};
+}
+ 
+template<typename T>
+auto type_name() { return type_name_helper<T>(); }
+#endif
+ 
+void print(std::string_view const comment, std::source_location const l)
+{
+    std::cout << comment << ":\n"
+              << "  file_name     : " << std::quoted(l.file_name()) << '\n'
+              << "  function_name : " << std::quoted(l.function_name()) << '\n'
+              << "  line          : " << l.line() << '\n'
+              << "  column        : " << l.column() << '\n';
+}
+ 
+int main()
+{
+    constexpr std::source_location default_constructed;
+    print("default constructed", default_constructed);
+ 
+    constexpr std::source_location current = std::source_location::current();
+    print("current", current);
+ 
+#if (__GNUG__ >= 11)
+    const std::vector<std::vector<int>> v{{1,2}, {3,4,5}, {6}};
+    auto jv = std::ranges::join_view(v);
+    std::cout << '\n'
+              << '[' << type_name<int>() << "]\n"
+              << '[' << type_name<double*>() << "]\n"
+              << '[' << type_name<decltype([](){})>() << "]\n"
+              << '[' << type_name<decltype(type_name<int>())>() << "]\n"
+              << '[' << type_name<decltype(jv)>() << "]\n";
+#endif
+}
+```
+
+Possible output:
+
+```text
+default constructed:
+  file_name     : ""
+  function_name : ""
+  line          : 0
+  column        : 0
+current:
+  file_name     : "main.cpp"
+  function_name : "int main()"
+  line          : 39
+  column        : 75
+ 
+[int]
+[double*]
+[main()::<lambda()>]
+[std::basic_string_view<char>]
+[std::ranges::join_view<std::ranges::ref_view<const std::vector<std::vector<int> > > >]
+```
+
+### See also
+
+{/* source:cpp-utility-source-location-source-location:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`current`](/docs/cpp/library/utility/source_location/current)</DescriptionTerm>
+    <DescriptionBody>constructs a new `source_location` corresponding to the location of the call site (public static member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/error/stacktrace_entry/stacktrace_entry)</DescriptionTerm>
+    <DescriptionBody>constructs a new `stacktrace_entry` (public member function of `std::stacktrace_entry`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

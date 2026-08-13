@@ -1,0 +1,112 @@
+---
+title: "std::copyable_function::copyable_function"
+description: "Creates a new std::copyable_function."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/copyable_function/copyable_function"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`copyable_function() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`copyable_function( std::nullptr_t ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++26" code={`copyable_function( const copyable_function& other );`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`copyable_function( copyable_function&& other ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++26" code={`template< class F > 
+copyable_function( F&& f );`} />
+  <Declaration id="6" language="cpp" since="C++26" code={`template< class T, class... CArgs > 
+explicit copyable_function( std::in_place_type_t<T>, CArgs&&... args );`} />
+  <Declaration id="7" language="cpp" since="C++26" code={`template< class T, class U, class... CArgs > 
+explicit copyable_function( std::in_place_type_t<T>,
+
+                            std::initializer_list<U> il, CArgs&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0001 */}
+Creates a new `std::copyable_function`.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0002 */}
+1. 1,2) Default constructor and the constructor taking `nullptr` construct an empty `std::copyable_function`.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0003 */}
+2. 3) Copy constructor constructs a `std::copyable_function` whose target is a copy of the target of `other`. Otherwise, constructs an empty `std::copyable_function` if `other` is empty.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0004 */}
+3. 4) Move constructor constructs a `std::copyable_function` whose target is that of `other`. `other` is in a valid but unspecified state after move construction.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0005 */}
+4. 5) Let `VT` be `std::decay_t<F>`. If `f` is a null function pointer, a null pointer to member value, or an empty `std::copyable_function` (may be any other specialization), then constructs an empty `std::copyable_function`. Otherwise, constructs a `std::copyable_function` whose target is of type `VT` and direct-non-list-initialized with `std::forward<F>(f)`.
+
+   - This overload participates in overload resolution only if `VT` is neither same as `copyable_function` nor a specialization of [`std::in_place_type_t`](/docs/cpp/library/utility/in_place), and `/*is-callable-from*/<VT>` (see below) is `true`.
+   - The program is ill-formed if `std::is_constructible_v<VT, F>` or `std::is_copy_constructible_v<VT>` is not `true`.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0006 */}
+5. 6) Let `VT` be `std::decay_t<T>`. Constructs a `std::copyable_function` whose target is of type `VT` and direct-non-list-initialized with `std::forward<CArgs>(args)...`.
+
+   - This overload participates in overload resolution only if both `std::is_constructible_v<VT, CArgs...>` and `/*is-callable-from*/<VT>` (see below) are `true`.
+   - The program is ill-formed if `VT` is not the same type as `T` or `std::is_copy_constructible_v<VT>` is not `true`.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0007 */}
+6. 7) Let `VT` be `std::decay_t<T>`. Constructs a `std::copyable_function` whose target is of type `VT` and direct-non-list-initialized with `il, std::forward<CArgs>(args)...`.
+
+   - This overload participates in overload resolution only if both `std::is_constructible_v<VT, std::initializer_list<U>&, CArgs...>` and `/*is-callable-from*/<VT>` (see below) are `true`.
+   - The program is ill-formed if `VT` is not the same type as `T` or `std::is_copy_constructible_v<VT>` is not `true`.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0008 */}
+For constructors (5-7), the behavior is undefined unless `VT` satisfies both [Destructible](/docs/cpp/library/named_req/Destructible) and [CopyConstructible](/docs/cpp/library/named_req/CopyConstructible) requirements.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0009 */}
+The constant `/*is-callable-from*/<VT>` is dependent on `cv`, `ref`, and `noex` in the template parameter of `std::copyable_function` as below:
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0010 */}
+| `cv` `ref` `noexcept(` `noex` `)` | `/*is-callable-from*/<VT>` |
+| --- | --- |
+| `noexcept(false)` | `std::is_invocable_r_v<R, VT, Args...> && std::is_invocable_r_v<R, VT&, Args...>` |
+| `noexcept(true)` | `std::is_nothrow_invocable_r_v<R, VT, Args...> && std::is_nothrow_invocable_r_v<R, VT&, Args...>` |
+| `const noexcept(false)` | `std::is_invocable_r_v<R, const VT, Args...> && std::is_invocable_r_v<R, const VT&, Args...>` |
+| `const noexcept(true)` | `std::is_nothrow_invocable_r_v<R, const VT, Args...> && std::is_nothrow_invocable_r_v<R, const VT&, Args...>` |
+| `& noexcept(false)` | `std::is_invocable_r_v<R, VT&, Args...>` |
+| `& noexcept(true)` | `std::is_nothrow_invocable_r_v<R, VT&, Args...>` |
+| `const & noexcept(false)` | `std::is_invocable_r_v<R, const VT&, Args...>` |
+| `const & noexcept(true)` | `std::is_nothrow_invocable_r_v<R, const VT&, Args...>` |
+| `&& noexcept(false)` | `std::is_invocable_r_v<R, VT, Args...>` |
+| `&& noexcept(true)` | `std::is_nothrow_invocable_r_v<R, VT, Args...>` |
+| `const && noexcept(false)` | `std::is_invocable_r_v<R, const VT, Args...>` |
+| `const && noexcept(true)` | `std::is_nothrow_invocable_r_v<R, const VT, Args...>` |
+
+### Parameters
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0011 */}
+<ParameterList>
+  <Parameter name="other">another `std::copyable_function` to copy or move from</Parameter>
+  <Parameter name="f">a function or a [Callable](/docs/cpp/library/named_req/Callable) object to wrap</Parameter>
+  <Parameter name="args">arguments to construct the target object</Parameter>
+  <Parameter name="il">[`std::initializer_list`](/docs/cpp/library/utility/initializer_list) to construct the target object</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0012 */}
+3) May throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) on allocation failure or propagate the exception thrown by the initialization of the target.
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0013 */}
+5-7) May throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) on allocation failure or propagate the exception thrown by the initialization of the target. No exception is thrown if `VT` is a function pointer type or a specialization of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper).
+
+### Example
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0014 */}
+This section is incomplete
+Reason: no example
+
+### See also
+
+{/* source:cpp-utility-functional-copyable-function-copyable-function:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/functional/function/function)</DescriptionTerm>
+    <DescriptionBody>constructs a new `std::function` instance (public member function of `std::function<R(Args...)>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/functional/move_only_function/move_only_function)</DescriptionTerm>
+    <DescriptionBody>constructs a new `std::move_only_function` object (public member function of `std::move_only_function`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

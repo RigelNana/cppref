@@ -1,0 +1,189 @@
+---
+title: "std::bitset<N>::bitset"
+description: "std::bitset<N>::bitset constructs a new bitset from one of several optional data sources."
+source_url: "https://en.cppreference.com/w/cpp/utility/bitset/bitset"
+language: "C++"
+---
+
+{/* source:cpp-utility-bitset-bitset:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`bitset();`} />
+  (noexcept since C++11)
+  (constexpr since C++11)
+
+  <Declaration id="2" language="cpp" until="C++11" code={`bitset( unsigned long val );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`constexpr bitset( unsigned long long val ) noexcept;`} />
+  <Declaration id="3" language="cpp" code={`template< class CharT, class Traits, class Alloc >
+explicit bitset
+    ( const std::basic_string<CharT, Traits, Alloc>& str,
+      typename std::basic_string
+                   <CharT, Traits, Alloc>::size_type pos = 0,
+      typename std::basic_string<CharT, Traits, Alloc>::size_type
+          n = std::basic_string<CharT, Traits, Alloc>::npos,
+
+      CharT zero = CharT('0'), CharT one = CharT('1') );`} />
+  (constexpr since C++23)
+
+  <Declaration id="4" language="cpp" since="C++26" code={`template< class CharT, class Traits >
+constexpr explicit bitset
+    ( std::basic_string_view<CharT, Traits> str,
+      std::size_t pos = 0, std::size_t n = std::size_t(-1),
+
+      CharT zero = CharT('0'), CharT one = CharT('1') );`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class CharT >
+explicit bitset( const CharT* str, std::size_t n = std::size_t(-1),
+
+                 CharT zero = CharT('0'), CharT one = CharT('1') );`} />
+  (constexpr since C++23)
+</DeclarationDoc>
+
+{/* source:cpp-utility-bitset-bitset:0001 */}
+Constructs a new bitset from one of several optional data sources:
+
+{/* source:cpp-utility-bitset-bitset:0002 */}
+1. 1) Default constructor. Constructs a bitset with all bits set to zero.
+
+{/* source:cpp-utility-bitset-bitset:0003 */}
+2. 2) Constructs a bitset from an unsigned integer `val`.
+
+{/* source:cpp-utility-bitset-bitset:0004 */}
+Given the number of bits in the [value representation](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation) of <InlineRevision until="C++11">`unsigned long`</InlineRevision> / <InlineRevision since="C++11">`unsigned long long`</InlineRevision> as `S`:
+
+- The first (rightmost, least significant) `std::min(S, N)` bit positions are initialized with the corresponding bit values of `val`.
+- If `S` is less than `N`, the remaining bit positions are initialized to zeroes.
+
+{/* source:cpp-utility-bitset-bitset:0005 */}
+3. 3) Constructs a bitset using the characters in `str`. An optional starting position `pos` and length `n` can be provided, as well as characters denoting alternate values for set (`one`) and unset (`zero`) bits. `Traits::eq()` is used to compare the character values.
+
+{/* source:cpp-utility-bitset-bitset:0006 */}
+The effective length of the initializing string is `std::min(n, str.size() - pos)`.
+
+{/* source:cpp-utility-bitset-bitset:0007 */}
+4. 4) Similar to (3), but uses a [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view) instead of a [`std::basic_string`](/docs/cpp/library/string/basic_string).
+
+{/* source:cpp-utility-bitset-bitset:0008 */}
+5. 5) Similar to (3), but uses a `const CharT*` instead of a [`std::basic_string`](/docs/cpp/library/string/basic_string).
+
+<Revision until="C++26">
+Equivalent to `bitset(n == std::basic_string<CharT>::npos ? std::basic_string<CharT>(str) : std::basic_string<CharT>(str, n), 0, n, zero, one)`.
+</Revision>
+
+<Revision since="C++26">
+Equivalent to `bitset(n == std::basic_string_view<CharT>::npos ? std::basic_string_view<CharT>(str) : std::basic_string_view<CharT>(str, n), 0, n, zero, one)`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-utility-bitset-bitset:0009 */}
+<ParameterList>
+  <Parameter name="val">number used to initialize the bitset</Parameter>
+  <Parameter name="str">string used to initialize the bitset</Parameter>
+  <Parameter name="pos">a starting offset into `str`</Parameter>
+  <Parameter name="n">number of characters to use from `str`</Parameter>
+  <Parameter name="zero">alternate character for unset bits in `str`</Parameter>
+  <Parameter name="one">alternate character for set bits in `str`</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-utility-bitset-bitset:0010 */}
+3,4) [`std::out_of_range`](/docs/cpp/library/error/out_of_range) if `pos > str.size()`, [`std::invalid_argument`](/docs/cpp/library/error/invalid_argument) if any character is not `one` or `zero`.
+
+{/* source:cpp-utility-bitset-bitset:0011 */}
+5) [`std::invalid_argument`](/docs/cpp/library/error/invalid_argument) if any character is not `one` or `zero`.
+
+### Notes
+
+{/* source:cpp-utility-bitset-bitset:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_constexpr_bitset`](/docs/cpp/library/feature_test#cpp_lib_constexpr_bitset) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_constexpr_bitset_202207L) | (C++23) | A more constexpr `std::bitset`, overloads ([3,5](/docs/cpp/library/utility/bitset/bitset#Version_3)) |
+| [`__cpp_lib_bitset`](/docs/cpp/library/feature_test#cpp_lib_bitset) | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_lib_bitset_202306L) | (C++26) | Interfacing `std::bitset` with [`std::string_view`](/docs/cpp/library/string/basic_string_view), ([4](/docs/cpp/library/utility/bitset/bitset#Version_4)) |
+
+### Example
+
+{/* source:cpp-utility-bitset-bitset:0013 */}
+```cpp
+#include <bitset>
+#include <climits>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    // empty constructor (1)
+    std::bitset<8> b1; // [0,0,0,0,0,0,0,0]
+ 
+    // unsigned long long constructor (2)
+    std::bitset<8> b2(42);          // [0,0,1,0,1,0,1,0]
+    std::bitset<70> bl(ULLONG_MAX); // [0,0,0,0,0,0,1,1,1,...,1,1,1] in C++11
+    std::bitset<8> bs(0xfff0);      // [1,1,1,1,0,0,0,0]
+ 
+    // string constructor (3)
+    std::string bit_string = "110010";
+    std::bitset<8> b3(bit_string);       // [0,0,1,1,0,0,1,0]
+    std::bitset<8> b4(bit_string, 2);    // [0,0,0,0,0,0,1,0]
+    std::bitset<8> b5(bit_string, 2, 3); // [0,0,0,0,0,0,0,1]
+ 
+    // string constructor using custom zero/one digits (3)
+    std::string alpha_bit_string = "aBaaBBaB";
+    std::bitset<8> b6(alpha_bit_string, 0, alpha_bit_string.size(),
+                      'a', 'B');         // [0,1,0,0,1,1,0,1]
+ 
+    // char* constructor using custom digits (5)
+    std::bitset<8> b7("XXXXYYYY", 8, 'X', 'Y'); // [0,0,0,0,1,1,1,1]
+ 
+    std::cout <<   "b1: " << b1 << "\nb2: " << b2 << "\nbl: " << bl
+              << "\nbs: " << bs << "\nb3: " << b3 << "\nb4: " << b4
+              << "\nb5: " << b5 << "\nb6: " << b6 << "\nb7: " << b7 << '\n';
+}
+```
+
+Possible output:
+
+```text
+b1: 00000000
+b2: 00101010
+bl: 0000001111111111111111111111111111111111111111111111111111111111111111
+bs: 11110000
+b3: 00110010
+b4: 00000010
+b5: 00000001
+b6: 01001101
+b7: 00001111
+```
+
+### Defect reports
+
+{/* source:cpp-utility-bitset-bitset:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-bitset-bitset:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={396} standard="C++98">
+    <PublishedBehavior>the values of the zero and one characters for overload (3)<br />were `0` and `1` (which do not correspond to `'0'` and `'1'`)</PublishedBehavior>
+    <CorrectedBehavior>added parameters to provide<br />values for these characters</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={457} standard="C++98">
+    <PublishedBehavior>`S` was `CHAR_BIT * sizeof(unsigned long)`<br />for overload (2), but `unsigned long` is not<br />guaranteed to use all its bits to represent its value</PublishedBehavior>
+    <CorrectedBehavior>consider the number<br />of bits of the value<br />representation instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2250} standard="C++98">
+    <PublishedBehavior>the behavior was undefined if `pos > str.size()` is `true`</PublishedBehavior>
+    <CorrectedBehavior>always throws an<br />exception in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-bitset-bitset:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`set`](/docs/cpp/library/utility/bitset/set)</DescriptionTerm>
+    <DescriptionBody>sets bits to `true` or given value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/utility/bitset/reset)</DescriptionTerm>
+    <DescriptionBody>sets bits to `false` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

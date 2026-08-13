@@ -1,0 +1,156 @@
+---
+title: "std::any::any"
+description: "Constructs a new any object."
+source_url: "https://en.cppreference.com/w/cpp/utility/any/any"
+language: "C++"
+---
+
+{/* source:cpp-utility-any-any:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`constexpr any() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`any( const any& other );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`any( any&& other ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class ValueType >
+any( ValueType&& value );`} />
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class ValueType, class... Args >
+explicit any( std::in_place_type_t<ValueType>, Args&&... args );`} />
+  <Declaration id="6" language="cpp" since="C++17" code={`template< class ValueType, class U, class... Args >
+explicit any( std::in_place_type_t<ValueType>, std::initializer_list<U> il,
+
+              Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-any-any:0001 */}
+Constructs a new `any` object.
+
+{/* source:cpp-utility-any-any:0002 */}
+1. 1) Constructs an empty object.
+
+{/* source:cpp-utility-any-any:0003 */}
+2. 2,3) Copies (2) or moves (3) content of `other` into a new instance, so that any content is equivalent in both type and value to those of `other` prior to the constructor call, or empty if `other` is empty. Formally,
+
+{/* source:cpp-utility-any-any:0004 */}
+   1. 2) If `other` is empty, the constructed object is empty. Otherwise, equivalent to `any(std::in_place_type<T>, std::any_cast<const T&>(other))`, where `T` is the type of the object contained in `other`.
+
+{/* source:cpp-utility-any-any:0005 */}
+   2. 3) If `other` is empty, the constructed object is empty. Otherwise, the constructed object contains either the object contained in `other`, or an object of the same type constructed from the object contained in `other`, considering that object as an rvalue.
+
+{/* source:cpp-utility-any-any:0006 */}
+3. 4) Constructs an object with initial content an object of type `std::decay_t<ValueType>`, [direct-initialized](/docs/cpp/language/initialization/direct_initialization) from `std::forward<ValueType>(value)`.
+
+   - This overload participates in overload resolution only if `std::decay_t<ValueType>` is not the same type as `any` nor a specialization of [`std::in_place_type_t`](/docs/cpp/library/utility/in_place), and `std::is_copy_constructible_v<std::decay_t<ValueType>>` is `true`.
+
+{/* source:cpp-utility-any-any:0007 */}
+4. 5) Constructs an object with initial content an object of type `std::decay_t<ValueType>`, [direct-non-list-initialized](/docs/cpp/language/initialization/direct_initialization) from `std::forward<Args>(args)...`.
+
+   - This overload participates in overload resolution only if `std::is_constructible_v<std::decay_t<ValueType>, Args...>` and `std::is_copy_constructible_v<std::decay_t<ValueType>>` are both `true`.
+
+{/* source:cpp-utility-any-any:0008 */}
+5. 6) Constructs an object with initial content an object of type `std::decay_t<ValueType>`, [direct-non-list-initialized](/docs/cpp/language/initialization/direct_initialization) from `il, std::forward<Args>(args)...`.
+
+   - This overload participates in overload resolution only if `std::is_constructible_v<std::decay_t<ValueType>, std::initializer_list<U>&, Args...>` and `std::is_copy_constructible_v<std::decay_t<ValueType>>` are both `true`.
+
+### Template parameters
+
+{/* source:cpp-utility-any-any:0009 */}
+<ParameterList>
+  <Parameter name="ValueType">contained value type</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `std::decay_t<ValueType>` must meet the requirements of [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible).
+
+### Parameters
+
+{/* source:cpp-utility-any-any:0010 */}
+<ParameterList>
+  <Parameter name="other">another `any` object to copy or move from</Parameter>
+  <Parameter name="value">value to initialize the contained value with</Parameter>
+  <Parameter name="il, args">arguments to be passed to the constructor of the contained object</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-utility-any-any:0011 */}
+1. 2,4-6) Throws any exception thrown by the constructor of the contained type.
+
+### Notes
+
+{/* source:cpp-utility-any-any:0012 */}
+Because the default constructor is `constexpr`, static `std::anys` are initialized as part of [static non-local initialization](/docs/cpp/language/initialization#Non-local_variables), before any dynamic non-local initialization begins. This makes it safe to use an object of type `std::any` in a constructor of any static object.
+
+### Example
+
+{/* source:cpp-utility-any-any:0013 */}
+```cpp
+#include <boost/core/demangle.hpp>
+ 
+#include <any>
+#include <initializer_list>
+#include <iostream>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+ 
+struct A
+{
+    int age;
+    std::string name;
+    double salary;
+ 
+#if __cpp_aggregate_paren_init < 201902L
+    // Required before C++20 for in-place construction
+    A(int age, std::string name, double salary)
+        : age(age), name(std::move(name)), salary(salary) {}
+#endif
+};
+ 
+// Using abi demangle to print nice type name of instance of any holding
+void printType(const std::any& a)
+{
+    std::cout << boost::core::demangle(a.type().name()) << '\n';
+}
+ 
+int main()
+{
+    // Constructor #4: std::any holding int
+    std::any a1{7};
+ 
+    // Constructor #5: std::any holding A, constructed in place
+    std::any a2(std::in_place_type<A>, 30, "Ada", 1000.25);
+ 
+    // Constructor #6: std::any holding a set of A with custom comparison
+    auto lambda = [](auto&& l, auto&& r){ return l.age < r.age; };
+    std::any a3(
+        std::in_place_type<std::set<A, decltype(lambda)>>,
+        {
+            A{39, std::string{"Ada"}, 100.25},
+            A{20, std::string{"Bob"}, 75.5}
+        },
+        lambda);
+ 
+    printType(a1);
+    printType(a2);
+    printType(a3);
+}
+```
+
+Possible output:
+
+```text
+int
+A
+std::set<A, main::{lambda(auto:1&&, auto:2&&)#1}, std::allocator<A> >
+```
+
+### See also
+
+{/* source:cpp-utility-any-any:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/utility/any/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns an `any` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

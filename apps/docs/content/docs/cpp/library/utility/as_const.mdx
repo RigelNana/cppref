@@ -1,0 +1,92 @@
+---
+title: "std::as_const"
+description: "std::as_const forms an lvalue reference to const type of the argument."
+source_url: "https://en.cppreference.com/w/cpp/utility/as_const"
+language: "C++"
+---
+
+{/* source:cpp-utility-as-const:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class T >
+constexpr std::add_const_t<T>& as_const( T& t ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T >
+void as_const( const T&& ) = delete;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-as-const:0001 */}
+1. 1) Forms lvalue reference to const type of `t`.
+
+{/* source:cpp-utility-as-const:0002 */}
+2. 2) const rvalue reference overload is deleted to disallow rvalue arguments.
+
+### Possible implementation
+
+{/* source:cpp-utility-as-const:0003 */}
+```cpp
+template<class T>
+constexpr std::add_const_t<T>& as_const(T& t) noexcept
+{
+    return t;
+}
+```
+
+### Notes
+
+{/* source:cpp-utility-as-const:0004 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_as_const`](/docs/cpp/library/feature_test#cpp_lib_as_const) | [`201510L`](/docs/cpp/library/compiler_support/17#cpp_lib_as_const_201510L) | (C++17) | [`std::as_const`](/docs/cpp/library/utility/as_const#Top) |
+
+### Example
+
+{/* source:cpp-utility-as-const:0005 */}
+```cpp
+#include <cassert>
+#include <string>
+#include <type_traits>
+#include <utility>
+ 
+int main()
+{
+    std::string mutableString = "Hello World!";
+    auto&& constRef = std::as_const(mutableString);
+ 
+    mutableString.clear(); // OK
+//  constRef.clear(); // Error: 'constRef' is 'const' qualified,
+                      //        but 'clear' is not marked const
+ 
+    assert(&constRef == &mutableString);
+    assert(&std::as_const(mutableString) == &mutableString);
+ 
+    using ExprType = std::remove_reference_t<decltype(std::as_const(mutableString))>;
+ 
+    static_assert(std::is_same_v<std::remove_const_t<ExprType>, std::string>,
+                  "ExprType should be some kind of string.");
+    static_assert(!std::is_same_v<ExprType, std::string>,
+                  "ExprType shouldn't be a mutable string.");
+}
+```
+
+### See also
+
+{/* source:cpp-utility-as-const:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_const`](/docs/cpp/library/meta/is_const) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is const-qualified (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`add_cv` `add_const` `add_volatile`](/docs/cpp/library/meta/add_cv) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>adds const and/or volatile specifiers to the given type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_cv` `remove_const` `remove_volatile`](/docs/cpp/library/meta/remove_cv) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes const and/or volatile specifiers from the given type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::as_const_view` `views::as_const`](/docs/cpp/library/ranges/as_const_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>converts a [view](/docs/cpp/library/ranges/view) into a [constant_range](/docs/cpp/library/ranges/constant_range) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

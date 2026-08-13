@@ -1,0 +1,129 @@
+---
+title: "std::optional<T>::transform"
+description: "If *this contains a value, invokes f with the contained value as an argument, and returns an std::optional that contains the result of that invocation; otherwise, returns an empty std::optional."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/transform"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-transform:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform( F&& f ) &;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform( F&& f ) const&;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform( F&& f ) &&;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class F >
+constexpr auto transform( F&& f ) const&&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-transform:0001 */}
+If `*this` contains a value, invokes `f` with the contained value as an argument, and returns an `std::optional` that contains the result of that invocation; otherwise, returns an empty `std::optional`.
+
+{/* source:cpp-utility-optional-transform:0002 */}
+The type of contained value in the result (denoted by `U` below) must be a non-array object type, and must not be [`std::in_place_t`](/docs/cpp/library/utility/in_place) or [`std::nullopt_t`](/docs/cpp/library/utility/optional/nullopt_t)). Otherwise, the program is ill-formed.
+
+{/* source:cpp-utility-optional-transform:0003 */}
+1. 1) Let `U` be `std::remove_cv_t<std::invoke_result_t<F, T&>>`. If `*this` contains a value, returns a `std::optional<U>` whose contained value is [direct-initialized](/docs/cpp/language/initialization/direct_initialization) from `std::invoke(std::forward<F>(f), **this)` (unlike [`and_then()`](/docs/cpp/library/utility/optional/and_then), which must return an [`std::optional`](/docs/cpp/library/utility/optional) directly). Otherwise, returns an empty `std::optional<U>`.<br />The program is ill-formed if the variable definition `U x(std::invoke(std::forward<F>(f), **this));` is ill-formed.
+
+{/* source:cpp-utility-optional-transform:0004 */}
+2. 2) Same as (1), except that `U` is `std::remove_cv_t<std::invoke_result_t<F, const T&>>`.
+
+{/* source:cpp-utility-optional-transform:0005 */}
+3. 3) Let `U` be `std::remove_cv_t<std::invoke_result_t<F, T>>`. If `*this` contains a value, returns a `std::optional<U>` whose contained value is direct-initialized from `std::invoke(std::forward<F>(f), std::move(**this))`. Otherwise, returns an empty `std::optional<U>`.<br />The program is ill-formed if the variable definition `U x(std::invoke(std::forward<F>(f), std::move(**this)));` is ill-formed.
+
+{/* source:cpp-utility-optional-transform:0006 */}
+4. 4) Same as (3), except that `U` is `std::remove_cv_t<std::invoke_result_t<F, const T>>`.
+
+### Parameters
+
+{/* source:cpp-utility-optional-transform:0007 */}
+<ParameterList>
+  <Parameter name="f">a suitable function or [*Callable*](/docs/cpp/library/named_req/Callable) object whose call signature returns a non-reference type</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-optional-transform:0008 */}
+An [`std::optional`](/docs/cpp/library/utility/optional) containing the result of `f` or an empty [`std::optional`](/docs/cpp/library/utility/optional), as described above.
+
+### Notes
+
+{/* source:cpp-utility-optional-transform:0009 */}
+Because `transform` directly constructs a `U` object at the right location, rather than passing it to a constructor, `std::is_move_constructible_v<U>` can be `false`.
+
+{/* source:cpp-utility-optional-transform:0010 */}
+As the callable `f` can't return a reference type, it cannot be a [pointer to data member](/docs/cpp/language/declarations/pointer#Pointers_to_data_members).
+
+{/* source:cpp-utility-optional-transform:0011 */}
+Some languages call this operation [*map*](https://en.wikipedia.org/wiki/Map_(higher-order_function)).
+
+{/* source:cpp-utility-optional-transform:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_optional`](/docs/cpp/library/feature_test#cpp_lib_optional) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_optional_202110L) | (C++23) | [Monadic operations](/docs/cpp/library/utility/optional#Monadic_operations) in [`std::optional`](/docs/cpp/library/utility/optional) |
+
+### Example
+
+{/* source:cpp-utility-optional-transform:0013 */}
+```cpp
+#include <iostream>
+#include <optional>
+ 
+struct A { /* ... */ };
+struct B { /* ... */ };
+struct C { /* ... */ };
+struct D { /* ... */ };
+ 
+auto A_to_B(A) -> B { /* ... */ std::cout << "A => B \n"; return {}; }
+auto B_to_C(B) -> C { /* ... */ std::cout << "B => C \n"; return {}; }
+auto C_to_D(C) -> D { /* ... */ std::cout << "C => D \n"; return {}; }
+ 
+void try_transform_A_to_D(std::optional<A> o_A)
+{
+    std::cout << (o_A ? "o_A has a value\n" : "o_A is empty\n");
+ 
+    std::optional<D> o_D = o_A.transform(A_to_B)
+                              .transform(B_to_C)
+                              .transform(C_to_D);
+ 
+    std::cout << (o_D ? "o_D has a value\n\n" : "o_D is empty\n\n");
+};
+ 
+int main()
+{
+    try_transform_A_to_D( A{} );
+    try_transform_A_to_D( {} );
+}
+```
+
+Output:
+
+```text
+o_A has a value
+A => B
+B => C
+C => D
+o_D has a value
+ 
+o_A is empty
+o_D is empty
+```
+
+### See also
+
+{/* source:cpp-utility-optional-transform:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`value_or`](/docs/cpp/library/utility/optional/value_or)</DescriptionTerm>
+    <DescriptionBody>returns the contained value if available, another value otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`and_then`](/docs/cpp/library/utility/optional/and_then) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns the result of the given function on the contained value if it exists, or an empty `optional` otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`or_else`](/docs/cpp/library/utility/optional/or_else) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns the `optional` itself if it contains a value, or the result of the given function otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

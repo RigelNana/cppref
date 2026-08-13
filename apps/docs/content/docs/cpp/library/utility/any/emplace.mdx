@@ -1,0 +1,119 @@
+---
+title: "std::any::emplace"
+description: "Changes the contained object to one of type std::decay_t<ValueType> constructed from the arguments."
+source_url: "https://en.cppreference.com/w/cpp/utility/any/emplace"
+language: "C++"
+---
+
+{/* source:cpp-utility-any-emplace:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class ValueType, class... Args >
+std::decay_t<ValueType>& emplace( Args&&... args );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ValueType, class U, class... Args >
+std::decay_t<ValueType>& emplace( std::initializer_list<U> il, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-any-emplace:0001 */}
+Changes the contained object to one of type `std::decay_t<ValueType>` constructed from the arguments.
+
+{/* source:cpp-utility-any-emplace:0002 */}
+First destroys the current contained object (if any) by [`reset()`](/docs/cpp/library/utility/any/reset), then:
+
+{/* source:cpp-utility-any-emplace:0003 */}
+1. 1) constructs an object of type `std::decay_t<ValueType>`, [direct-non-list-initialized](/docs/cpp/language/initialization/direct_initialization) from `std::forward<Args>(args)...`, as the contained object.
+
+   - This overload participates in overload resolution only if `std::is_constructible_v<std::decay_t<ValueType>, Args...>` and `std::is_copy_constructible_v<std::decay_t<ValueType>>` are both `true`.
+
+{/* source:cpp-utility-any-emplace:0004 */}
+2. 2) constructs an object of type `std::decay_t<ValueType>`, [direct-non-list-initialized](/docs/cpp/language/initialization/direct_initialization) from `il, std::forward<Args>(args)...`, as the contained object.
+
+   - This overload participates in overload resolution only if `std::is_constructible_v<std::decay_t<ValueType>, std::initializer_list<U>&, Args...>` and `std::is_copy_constructible_v<std::decay_t<ValueType>>` are both `true`.
+
+### Template parameters
+
+{/* source:cpp-utility-any-emplace:0005 */}
+<ParameterList>
+  <Parameter name="ValueType">contained value type</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `std::decay_t<ValueType>` must meet the requirements of [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible).
+
+### Return value
+
+{/* source:cpp-utility-any-emplace:0006 */}
+A reference to the new contained object.
+
+### Exceptions
+
+{/* source:cpp-utility-any-emplace:0007 */}
+Throws any exception thrown by `T`'s constructor. If an exception is thrown, the previously contained object (if any) has been destroyed, and `*this` does not contain a value.
+
+### Example
+
+{/* source:cpp-utility-any-emplace:0008 */}
+```cpp
+#include <algorithm>
+#include <any>
+#include <iostream>
+#include <string>
+#include <vector>
+ 
+class Star
+{
+    std::string name;
+    int id;
+ 
+public:
+    Star(std::string name, int id) : name{name}, id{id}
+    {
+        std::cout << "Star::Star(string, int)\n";
+    }
+ 
+    void print() const
+    {
+        std::cout << "Star{\"" << name << "\" : " << id << "};\n";
+    }
+};
+ 
+int main()
+{
+    std::any celestial;
+    // (1) emplace(Args&&... args);
+    celestial.emplace<Star>("Procyon", 2943);
+    const auto* star = std::any_cast<Star>(&celestial);
+    star->print();
+ 
+    std::any av;
+    // (2) emplace(std::initializer_list<U> il, Args&&... args);
+    av.emplace<std::vector<char>>({'C', '+', '+', '1', '7'} /* no args */);
+    std::cout << av.type().name() << '\n';
+    const auto* va = std::any_cast<std::vector<char>>(&av);
+    std::for_each(va->cbegin(), va->cend(), [](char const& c) { std::cout << c; });
+    std::cout << '\n';
+}
+```
+
+Possible output:
+
+```text
+Star::Star(string, int)
+Star{"Procyon" : 2943};
+St6vectorIcSaIcEE
+C++17
+```
+
+### See also
+
+{/* source:cpp-utility-any-emplace:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/any/any)</DescriptionTerm>
+    <DescriptionBody>constructs an `any` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/utility/any/reset)</DescriptionTerm>
+    <DescriptionBody>destroys contained object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

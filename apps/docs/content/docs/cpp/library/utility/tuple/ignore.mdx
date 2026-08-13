@@ -1,0 +1,119 @@
+---
+title: "std::ignore"
+description: "std::ignore is an object such that any value can be assigned to it with no effect."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/ignore"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-ignore:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration id="1" language="cpp" since="C++11" until="C++14" code={`const /*ignore-type*/ ignore;`} />
+  <Declaration id="1" language="cpp" since="C++14" code={`constexpr /*ignore-type*/ ignore;`} />
+(inline since c++17)
+  <Declaration id="2" language="cpp" since="C++11" until="C++14" code={`struct /*ignore-type*/
+{
+    template< class T >
+    const /*ignore-type*/& operator=( const T& ) const noexcept
+    {
+        return *this;
+    }
+
+};`} />
+(exposition only*)
+  <Declaration id="2" language="cpp" since="C++14" code={`struct /*ignore-type*/
+{
+    template< class T >
+    constexpr const /*ignore-type*/& operator=( const T& ) const noexcept
+    {
+        return *this;
+    }
+
+};`} />
+(exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-ignore:0001 */}
+1. 1) An object such that any value can be assigned to it with no effect.
+
+{/* source:cpp-utility-tuple-ignore:0002 */}
+2. 2) The type of `std::ignore`.
+
+### Notes
+
+{/* source:cpp-utility-tuple-ignore:0003 */}
+A `void` expression or a volatile bit-field value cannot be assigned to `std::ignore`.
+
+{/* source:cpp-utility-tuple-ignore:0004 */}
+`std::ignore` is intended for use with [`std::tie`](/docs/cpp/library/utility/tuple/tie) when unpacking a [`std::tuple`](/docs/cpp/library/utility/tuple), as a placeholder for the arguments that are not used, but can be used for any unwanted assignment.
+
+{/* source:cpp-utility-tuple-ignore:0005 */}
+Some code guides recommend using `std::ignore` to avoid warnings from unused return values of [`[[nodiscard]]`](/docs/cpp/language/declarations/attributes/nodiscard) functions, even though an assignment isn't required.
+
+{/* source:cpp-utility-tuple-ignore:0006 */}
+For ignoring values not requiring assignment, one may cast to `void`. For variables that have names, but whose value is unused, one may cast those to `void` or declare those variables with [`[[maybe_unused]]`](/docs/cpp/language/declarations/attributes/maybe_unused).
+
+### Example
+
+{/* source:cpp-utility-tuple-ignore:0007 */}
+1. Demonstrates the use of `std::ignore` together with a [`[[nodiscard]]`](/docs/cpp/language/declarations/attributes/nodiscard) function.
+2. Unpacks a `std::pair<iterator, bool>` returned by [`std::set::insert()`](/docs/cpp/library/container/set/insert), but only saves the boolean.
+
+{/* source:cpp-utility-tuple-ignore:0008 */}
+```cpp
+#include <iostream>
+#include <set>
+#include <string>
+#include <tuple>
+ 
+[[nodiscard]] int dontIgnoreMe()
+{
+    return 42;
+}
+ 
+int main()
+{
+    std::ignore = dontIgnoreMe();
+ 
+    std::set<std::string> set_of_str;
+    if (bool inserted{false};
+        std::tie(std::ignore, inserted) = set_of_str.insert("Test"),
+        inserted)
+        std::cout << "Value was inserted successfully.\n";
+}
+```
+
+Output:
+
+```text
+Value was inserted successfully.
+```
+
+### Defect reports
+
+{/* source:cpp-utility-tuple-ignore:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-tuple-ignore:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2773} standard="C++14">
+    <PublishedBehavior>[`std::tuple`](/docs/cpp/library/utility/tuple) was made `constexpr` but `std::ignore` was not yet</PublishedBehavior>
+    <CorrectedBehavior>made `constexpr`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2968R2" standard="C++11">
+    <PublishedBehavior>the behavior of `std::ignore` outside of [`std::tie`](/docs/cpp/library/utility/tuple/tie) was not formally specified</PublishedBehavior>
+    <CorrectedBehavior>made fully specified</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-tuple-ignore:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`tie`](/docs/cpp/library/utility/tuple/tie) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a [`tuple`](/docs/cpp/library/utility/tuple) of lvalue references or unpacks a tuple into individual objects (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

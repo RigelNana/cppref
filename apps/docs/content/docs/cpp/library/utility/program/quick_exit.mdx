@@ -1,0 +1,104 @@
+---
+title: "std::quick_exit"
+description: "Causes normal program termination to occur without completely cleaning the resources."
+source_url: "https://en.cppreference.com/w/cpp/utility/program/quick_exit"
+language: "C++"
+---
+
+{/* source:cpp-utility-program-quick-exit:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration language="cpp" since="C++11" code={`[[noreturn]] void quick_exit( int exit_code ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-program-quick-exit:0001 */}
+Causes normal program termination to occur without completely cleaning the resources.
+
+{/* source:cpp-utility-program-quick-exit:0002 */}
+Functions passed to [`std::at_quick_exit`](/docs/cpp/library/utility/program/at_quick_exit) are called in reverse order of their registration. If an exception tries to propagate out of any of the functions, [`std::terminate`](/docs/cpp/library/error/terminate) is called. After calling the registered functions, calls `std::_Exit(exit_code)`.
+
+{/* source:cpp-utility-program-quick-exit:0003 */}
+Functions passed to [`std::atexit`](/docs/cpp/library/utility/program/atexit) are not called.
+
+### Parameters
+
+{/* source:cpp-utility-program-quick-exit:0004 */}
+<ParameterList>
+  <Parameter name="exit_code">exit status of the program</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-program-quick-exit:0005 */}
+(none)
+
+### Example
+
+{/* source:cpp-utility-program-quick-exit:0006 */}
+```cpp
+#include <cstdlib>
+#include <iostream>
+ 
+template<int N>
+void quick_exit_handler()
+{
+    std::cout << "quick_exit handler #" << N << std::endl; // flush is intended
+}
+ 
+void at_exit_handler()
+{
+    std::cout << "at_exit handler\n";
+}
+ 
+int main()
+{
+    if (std::at_quick_exit(quick_exit_handler<1>) ||
+        std::at_quick_exit(quick_exit_handler<2>))
+    {
+        std::cerr << "Registration failed\n";
+        return EXIT_FAILURE;
+    }
+ 
+    std::atexit(at_exit_handler); // the handler will not be called
+ 
+    struct R { ~R() { std::cout << "destructor\n"; } } resource;
+ 
+    /*...*/
+ 
+    std::quick_exit(EXIT_SUCCESS);
+ 
+    std::cout << "This statement is unreachable...\n";
+}
+```
+
+Output:
+
+```text
+quick_exit handler #2
+quick_exit handler #1
+```
+
+### See also
+
+{/* source:cpp-utility-program-quick-exit:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`abort`](/docs/cpp/library/utility/program/abort)</DescriptionTerm>
+    <DescriptionBody>causes abnormal program termination (without cleaning up) (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exit`](/docs/cpp/library/utility/program/exit)</DescriptionTerm>
+    <DescriptionBody>causes normal program termination with cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atexit`](/docs/cpp/library/utility/program/atexit)</DescriptionTerm>
+    <DescriptionBody>registers a function to be called on [`std::exit()`](/docs/cpp/library/utility/program/exit) invocation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`at_quick_exit`](/docs/cpp/library/utility/program/at_quick_exit) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>registers a function to be called on `std::quick_exit` invocation (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/program/quick_exit) for `quick_exit`

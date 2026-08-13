@@ -1,0 +1,168 @@
+---
+title: "std::apply"
+description: "Invoke the Callable object f with the elements of t as arguments."
+source_url: "https://en.cppreference.com/w/cpp/utility/apply"
+language: "C++"
+---
+
+{/* source:cpp-utility-apply:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration id="1" language="cpp" since="C++17" until="C++23" code={`template< class F, class Tuple >
+constexpr decltype(auto) apply( F&& f, Tuple&& t );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F, tuple-like Tuple >
+constexpr decltype(auto) apply( F&& f, Tuple&& t ) noexcept(/* see below */);`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-apply:0001 */}
+Invoke the [*Callable*](/docs/cpp/library/named_req/Callable) object `f` with the elements of `t` as arguments.
+
+{/* source:cpp-utility-apply:0002 */}
+Given the exposition-only function `apply-impl` defined as follows:
+
+{/* source:cpp-utility-apply:0003 */}
+`template<class F,class Tuple, std::size_t... I>`<br />
+`constexpr decltype(auto)`<br />
+    *`apply-impl`*(`F&& f, Tuple&& t, std::index_sequence<I...>`) // exposition only<br />
+`{`<br />
+    `return` [*`INVOKE`*](/docs/cpp/library/utility/functional)`(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);`<br />
+`}`
+
+{/* source:cpp-utility-apply:0004 */}
+The effect is equivalent to:
+
+{/* source:cpp-utility-apply:0005 */}
+`return` *`apply-impl`*(`std::forward<F>(f), std::forward<Tuple>(t),`<br />
+                  `std::make_index_sequence<`<br />
+                      `std::tuple_size_v<std::decay_t<Tuple>>>{});`.
+
+### Parameters
+
+{/* source:cpp-utility-apply:0006 */}
+<ParameterList>
+  <Parameter name="f">[*Callable*](/docs/cpp/library/named_req/Callable) object to be invoked</Parameter>
+  <Parameter name="t">tuple whose elements to be used as arguments to `f`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-apply:0007 */}
+The value returned by `f`.
+
+### Exceptions
+
+{/* source:cpp-utility-apply:0008 */}
+<Revision until="C++23">
+(none)
+</Revision>
+
+<Revision since="C++23">
+[`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(
+    noexcept(std::invoke(std::forward<F>(f),
+                         std::get<Is>(std::forward<Tuple>(t))...))
+
+)
+```
+
+where `Is...` denotes the [pack](/docs/cpp/language/templates/parameter_pack):
+
+- `0, 1, ..., std::tuple_size_v<std::remove_reference_t<Tuple>> - 1`.
+</Revision>
+
+### Notes
+
+{/* source:cpp-utility-apply:0009 */}
+<Revision until="C++23">
+`Tuple` need not be [`std::tuple`](/docs/cpp/library/utility/tuple), and instead may be anything that supports [`std::get`](/docs/cpp/library/utility/tuple/get) and [`std::tuple_size`](/docs/cpp/library/utility/tuple_size); in particular, [`std::array`](/docs/cpp/library/container/array) and [`std::pair`](/docs/cpp/library/utility/pair) may be used.
+</Revision>
+
+<Revision since="C++23">
+`Tuple` is constrained to be tuple-like, i.e. each type therein is required to be a specialization of [`std::tuple`](/docs/cpp/library/utility/tuple) or another type (such as [`std::array`](/docs/cpp/library/container/array) and [`std::pair`](/docs/cpp/library/utility/pair)) that models [*tuple-like*](/docs/cpp/library/utility/tuple/tuple-like).
+</Revision>
+
+{/* source:cpp-utility-apply:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_apply`](/docs/cpp/library/feature_test#cpp_lib_apply) | [`201603L`](/docs/cpp/library/compiler_support/17#cpp_lib_apply_201603L) | (C++17) | `std::apply` |
+
+### Example
+
+{/* source:cpp-utility-apply:0011 */}
+```cpp
+#include <iostream>
+#include <tuple>
+#include <utility>
+ 
+int add(int first, int second) { return first + second; }
+ 
+template<typename T>
+T add_generic(T first, T second) { return first + second; }
+ 
+auto add_lambda = [](auto first, auto second) { return first + second; };
+ 
+template<typename... Ts>
+std::ostream& operator<<(std::ostream& os, std::tuple<Ts...> const& theTuple)
+{
+    std::apply
+    (
+        [&os](Ts const&... tupleArgs)
+        {
+            os << '[';
+            std::size_t n{0};
+            ((os << tupleArgs << (++n != sizeof...(Ts) ? ", " : "")), ...);
+            os << ']';
+        }, theTuple
+    );
+    return os;
+}
+ 
+int main()
+{
+    // OK
+    std::cout << std::apply(add, std::pair(1, 2)) << '\n';
+ 
+    // Error: can't deduce the function type
+    // std::cout << std::apply(add_generic, std::make_pair(2.0f, 3.0f)) << '\n'; 
+ 
+    // OK
+    std::cout << std::apply(add_lambda, std::pair(2.0f, 3.0f)) << '\n'; 
+ 
+    // advanced example
+    std::tuple myTuple{25, "Hello", 9.31f, 'c'};
+    std::cout << myTuple << '\n';
+}
+```
+
+Output:
+
+```text
+3
+5
+[25, Hello, 9.31, c]
+```
+
+### See also
+
+{/* source:cpp-utility-apply:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_tuple`](/docs/cpp/library/utility/tuple/make_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` object of the type defined by the argument types (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_as_tuple`](/docs/cpp/library/utility/tuple/forward_as_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` of [forwarding references](/docs/cpp/language/declarations/reference#Forwarding_references) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_from_tuple`](/docs/cpp/library/utility/make_from_tuple) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>construct an object with a tuple of arguments (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`invoke` `invoke_r`](/docs/cpp/library/utility/functional/invoke) <InlineRevision since="C++17" /> <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>invokes any [*Callable*](/docs/cpp/library/named_req/Callable) object with given arguments <InlineRevision since="C++23">and possibility to specify return type</InlineRevision> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

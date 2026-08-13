@@ -1,0 +1,89 @@
+---
+title: "std::basic_common_reference<std::reference_wrapper>"
+description: "The common reference type of a reference_wrapper (denoted as R) and a type T, correspondingly applied with cv and reference qualifiers (denoted as RQ and TQ respectively), is equivalent to a common reference type of underlying type of R applied with lvalue reference and the TQ."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper/basic_common_reference"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0000 */}
+<DeclarationDoc>
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class R, class T,
+          template<class> RQual, template<class> TQual >
+    requires (/*ref-wrap-common-reference-exists-with*/<R, T, RQual<R>, TQual<T>> &&
+              !/*ref-wrap-common-reference-exists-with*/<T, R, TQual<T>, RQual<R>>)
+
+struct basic_common_reference<R, T, RQual, TQual>;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class T, class R,
+          template<class> TQual, template<class> RQual >
+    requires (/*ref-wrap-common-reference-exists-with*/<R, T, RQual<R>, TQual<T>> &&
+              !/*ref-wrap-common-reference-exists-with*/<T, R, TQual<T>, RQual<R>>)
+
+struct basic_common_reference<T, R, TQual, RQual>;`} />
+
+Helper concepts
+
+  <Declaration id="3" language="cpp" code={`template< class R, class T, class RQ, class TQ >
+concept /*ref-wrap-common-reference-exists-with*/ =
+    /*is-ref-wrapper*/<R> &&
+    requires { typename std::common_reference_t<typename R::type&, TQ>; } &&
+
+    std::convertible<RQ, std::common_reference_t<typename R::type&, TQ>>;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0001 */}
+The common reference type of a `reference_wrapper` (denoted as `R`) and a type `T`, correspondingly applied with cv and reference qualifiers (denoted as `RQ` and `TQ` respectively), is equivalent to a common reference type of underlying type of `R` applied with lvalue reference and the `TQ`.
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0002 */}
+The common reference type is defined only if `R` is the only `reference_wrapper`, the underlying type of `R` applied with lvalue reference and the `TQ` have a common reference type to which `RQ` must be convertible.
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0003 */}
+The exposition-only constant `/*is-ref-wrapper*/<R>` is `true` if and only if `R` is a specialization of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper).
+
+### Member types
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::common_reference_t<typename R::type&, TQual<T>>` ([1,2](/docs/cpp/library/utility/functional/reference_wrapper/basic_common_reference#Version_1))</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0005 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_common_reference_wrapper`](/docs/cpp/library/feature_test#cpp_lib_common_reference_wrapper) | [`202302L`](/docs/cpp/library/compiler_support/23#cpp_lib_common_reference_wrapper_202302L) | (C++23) | Make `std::common_reference_t` of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) a reference type |
+
+### Example
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0006 */}
+```cpp
+#include <concepts>
+#include <functional>
+ 
+static_assert(std::same_as<std::common_reference_t<int&,
+                                                   std::reference_wrapper<int>>,
+                                                   int&>);
+static_assert(std::same_as<std::common_reference_t<std::reference_wrapper<int>&,
+                                                   int&>,
+                                                   int&>);
+static_assert(std::same_as<std::common_reference_t<int&,
+                                                   const std::reference_wrapper<int>&>,
+                                                   int&>);
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-utility-functional-reference-wrapper-basic-common-reference:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`common_reference` `basic_common_reference`](/docs/cpp/library/meta/common_reference) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>determines the common reference type of a group of types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

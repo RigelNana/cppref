@@ -1,0 +1,126 @@
+---
+title: "std::atexit"
+description: "Registers the function pointed to by func to be called on normal program termination (via std::exit() or returning from the main function)"
+source_url: "https://en.cppreference.com/w/cpp/utility/program/atexit"
+language: "C++"
+---
+{/* source:cpp-utility-program-atexit:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+    <Declaration id="1" language="cpp" until="C++11" code={`int atexit( /* c-atexit-handler */* func );
+int atexit( /* atexit-handler */* func );`} />
+    <Declaration id="1" language="cpp" since="C++11" code={`int atexit( /* c-atexit-handler */* func ) noexcept;
+int atexit( /* atexit-handler */* func ) noexcept;`} />
+    <Declaration id="2" language="cpp" code={`extern "C" using /* c-atexit-handler */ = void();
+extern "C++" using /* atexit-handler */ = void();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-utility-program-atexit:0001 */}
+Registers the function pointed to by `func` to be called on normal program termination (via [`std::exit()`](/docs/cpp/library/utility/program/exit) or returning from the [main function](/docs/cpp/language/basic_concepts/main_function))
+
+{/* source:cpp-utility-program-atexit:0002 */}
+<Revision until="C++11">
+The functions will be called during the destruction of the static objects, in reverse order: if A was registered before B, then the call to B is made before the call to A. Same applies to the ordering between static object constructors and the calls to `atexit`: see [`std::exit`](/docs/cpp/library/utility/program/exit).
+</Revision>
+
+<Revision since="C++11">
+The functions may be called concurrently with the destruction of the objects with static storage duration and with each other, maintaining the guarantee that if registration of A was sequenced-before the registration of B, then the call to B is sequenced-before the call to A, same applies to the sequencing between static object constructors and calls to `atexit`: see [`std::exit`](/docs/cpp/library/utility/program/exit).
+</Revision>
+
+{/* source:cpp-utility-program-atexit:0003 */}
+The same function may be registered more than once.
+
+{/* source:cpp-utility-program-atexit:0004 */}
+If a function exits via an exception, [`std::terminate`](/docs/cpp/library/error/terminate) is called.
+
+{/* source:cpp-utility-program-atexit:0005 */}
+`atexit` is thread-safe: calling the function from several threads does not induce a data race.
+
+{/* source:cpp-utility-program-atexit:0006 */}
+The implementation is guaranteed to support the registration of at least 32 functions. The exact limit is implementation-defined.
+
+### Parameters
+
+{/* source:cpp-utility-program-atexit:0007 */}
+<ParameterList>
+  <Parameter name="func">pointer to a function to be called on normal program termination</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-program-atexit:0008 */}
+`0` if the registration succeeds, nonzero value otherwise.
+
+### Notes
+
+{/* source:cpp-utility-program-atexit:0009 */}
+The two overloads are distinct because the types of the parameter `func` are distinct ([language linkage](/docs/cpp/language/declarations/language_linkage) is part of its type).
+
+### Example
+
+{/* source:cpp-utility-program-atexit:0010 */}
+```cpp
+#include <cstdlib>
+#include <iostream>
+ 
+void atexit_handler_1()
+{
+    std::cout << "At exit #1\n";
+}
+ 
+void atexit_handler_2()
+{
+    std::cout << "At exit #2\n";
+}
+ 
+int main()
+{
+    const int result_1 = std::atexit(atexit_handler_1);
+    const int result_2 = std::atexit(atexit_handler_2);
+ 
+    if (result_1 || result_2)
+    {
+        std::cerr << "Registration failed!\n";
+        return EXIT_FAILURE;
+    }
+ 
+    std::cout << "Returning from main...\n";
+    return EXIT_SUCCESS;
+}
+```
+
+Output:
+
+```text
+Returning from main...
+At exit #2
+At exit #1
+```
+
+### See also
+
+{/* source:cpp-utility-program-atexit:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`abort`](/docs/cpp/library/utility/program/abort)</DescriptionTerm>
+    <DescriptionBody>causes abnormal program termination (without cleaning up) (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exit`](/docs/cpp/library/utility/program/exit)</DescriptionTerm>
+    <DescriptionBody>causes normal program termination with cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`quick_exit`](/docs/cpp/library/utility/program/quick_exit) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>causes quick program termination without completely cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`at_quick_exit`](/docs/cpp/library/utility/program/at_quick_exit) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>registers a function to be called on [`std::quick_exit`](/docs/cpp/library/utility/program/quick_exit) invocation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/program/atexit)</DescriptionTerm>
+    <DescriptionBody>for `atexit`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

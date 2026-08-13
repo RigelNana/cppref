@@ -1,0 +1,298 @@
+---
+title: "std::expected<T,E>::operator="
+description: "Assigns a new value to an existing expected object."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/operator_assignment"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-operator:0000 */}
+<DeclarationDoc>
+  Primary template
+
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr expected& operator=( const expected& other );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr expected& operator=( expected&& other )
+    noexcept(/* see below */);`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class U = T >
+constexpr expected& operator=( U&& v );`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class G >
+constexpr expected& operator=( const std::unexpected<G>& e );`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class G >
+constexpr expected& operator=( std::unexpected<G>&& e );`} />
+
+  `void` partial specialization
+
+  <Declaration id="6" language="cpp" since="C++23" code={`constexpr expected& operator=( const expected& other );`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`constexpr expected& operator=( expected&& other )
+    noexcept(/* see below */);`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class G >
+constexpr expected& operator=( const std::unexpected<G>& e );`} />
+  <Declaration id="9" language="cpp" since="C++23" code={`template< class G >
+constexpr expected& operator=( std::unexpected<G>&& e );`} />
+
+  Helper function template
+
+  <Declaration id="10" language="cpp" since="C++23" code={`template< class T, class U, class... Args >
+constexpr void reinit-expected( T& newval, U& oldval, Args&&... args )`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-operator:0001 */}
+Assigns a new value to an existing `expected` object.
+
+### Parameters
+
+{/* source:cpp-utility-expected-operator:0002 */}
+<ParameterList>
+  <Parameter name="other">another expected object whose contained value to assign</Parameter>
+  <Parameter name="v">value to assign to the contained value</Parameter>
+  <Parameter name="e">[`std::unexpected`](/docs/cpp/library/utility/expected/unexpected) object whose contained value to assign</Parameter>
+  <Parameter name="newval">the contained value to be constructed</Parameter>
+  <Parameter name="oldval">the contained value to be destroyed</Parameter>
+  <Parameter name="args">the arguments used as initializers of `newval`</Parameter>
+</ParameterList>
+
+### Effects
+
+#### Primary template assignment operators
+
+{/* source:cpp-utility-expected-operator:0003 */}
+1,2) Assigns the state of `other` to `*this`.
+
+{/* source:cpp-utility-expected-operator:0004 */}
+If [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) and `rhs.has_value()` have different values (i.e. one of `*this` and `other` contains an expected value [`val`](/docs/cpp/library/utility/expected#Data_members) and the other contains an unexpected value [`unex`](/docs/cpp/library/utility/expected#Data_members)), the exposition-only function template [`reinit-expected`](/docs/cpp/library/utility/expected/operator_assignment#Helper_function_template) is called to safely update the state.
+
+{/* source:cpp-utility-expected-operator:0005 */}
+1) The contained value is assigned as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Value of `other.has_value()` |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| `true` | `val = *other;` | `reinit-expected(unex, val, other.error());` |
+| `false` | `reinit-expected(val, unex, *other);` | `unex = other.error();` |
+
+{/* source:cpp-utility-expected-operator:0006 */}
+2) The contained value is assigned as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Value of `other.has_value()` |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| `true` | `val = std::move(*other);` | `reinit-expected(unex, val, std::move(other.error()));` |
+| `false` | `reinit-expected(val, unex, std::move(*other));` | `unex = std::move(other.error());` |
+
+{/* source:cpp-utility-expected-operator:0007 */}
+Then, if no exception was thrown, executes [`has_val`](/docs/cpp/library/utility/expected#Data_members) `= other.has_value();`.
+
+{/* source:cpp-utility-expected-operator:0008 */}
+3) The expected value is assigned as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Equivalent to |
+| --- | --- |
+| `true` | `val = std::forward<U>(v);` |
+| `false` | `reinit-expected(val, unex, std::forward<U>(v)); has_val = false;` |
+
+{/* source:cpp-utility-expected-operator:0009 */}
+4,5) The unexpected value is assigned as follows:
+
+| Overload | Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Equivalent to |
+| --- | --- | --- |
+| ([`4`](/docs/cpp/library/utility/expected/operator_assignment#Version_4)) | `true` | `reinit-expected(val, unex, std::forward<const G&>(e.error())); has_val = false;` |
+|  | `false` | `unex = std::forward<const G&>(e.error());` |
+| ([`5`](/docs/cpp/library/utility/expected/operator_assignment#Version_5)) | `true` | `reinit-expected(val, unex, std::forward<G>(e.error())); has_val = false;` |
+|  | `false` | `unex = std::forward<G>(e.error());` |
+
+#### void partial specialization assignment operators
+
+{/* source:cpp-utility-expected-operator:0010 */}
+6) The unexpected value is assigned or destroyed as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Value of `other.has_value()` |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| `true` | (no effects) | `std::construct_at(std::addressof(unex), rhs.unex); has_val = false;` |
+| `false` | `std::destroy_at(std::addressof(unex)); has_val = true;` | `unex = other.error();` |
+
+{/* source:cpp-utility-expected-operator:0011 */}
+7) The unexpected value is assigned or destroyed as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Value of `other.has_value()` |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| `true` | (no effects) | `std::construct_at(std::addressof(unex), std::move(rhs.unex)); has_val = false;` |
+| `false` | `std::destroy_at(std::addressof(unex)); has_val = true;` | `unex = std::move(other.error());` |
+
+{/* source:cpp-utility-expected-operator:0012 */}
+8,9) The unexpected value is assigned as follows:
+
+| Overload | Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Equivalent to |
+| --- | --- | --- |
+| ([`8`](/docs/cpp/library/utility/expected/operator_assignment#Version_8)) | `true` | `std::construct_at(std::addressof(unex), std::forward<const G&>(e.error())); has_val = false;` |
+|  | `false` | `unex = std::forward<const G&>(e.error());` |
+| ([`9`](/docs/cpp/library/utility/expected/operator_assignment#Version_9)) | `true` | `std::construct_at(std::addressof(unex), std::forward<G>(e.error())); has_val = false;` |
+|  | `false` | `unex = std::forward<G>(e.error());` |
+
+#### Helper function template
+
+{/* source:cpp-utility-expected-operator:0013 */}
+The exposition-only function template `reinit-expected` is “defined” as follows:
+
+{/* source:cpp-utility-expected-operator:0014 */}
+```cpp
+template<class NewType, class OldType, class... Args>
+constexpr void reinit-expected(NewType& new_val, OldType& old_val, Args&&... args)
+{
+    // Case 1: the construction of “new_val” is non-throwing:
+    // “new_val” can be directly constructed after destroying “old_val”
+    if constexpr (std::is_nothrow_constructible_v<NewType, Args...>)
+    {
+        std::destroy_at(std::addressof(old_val));
+        std::construct_at(std::addressof(new_val), std::forward<Args>(args)...);
+    }
+    // Case 2: the move construction of “new_val” is non-throwing:
+    // constuct a temporary NewType object first
+    // (“old_val” is left intact if an exception is thrown from this construction)
+    else if constexpr (std::is_nothrow_move_constructible_v<NewType>)
+    {
+        NewType temp(std::forward<Args>(args)...); // may throw
+        std::destroy_at(std::addressof(old_val));
+        std::construct_at(std::addressof(new_val), std::move(temp));
+    }
+    // Case 3: the construction of “new_val” is potentially-throwing:
+    // a backup of “old_val” is required in order to recover from an exception
+    else
+    {
+        OldType temp(std::move(old_val)); // may throw
+        std::destroy_at(std::addressof(old_val));
+        try
+        {
+            std::construct_at(std::addressof(new_val),
+                              std::forward<Args>(args)...); // may throw
+        }
+        catch (...)
+        {
+            std::construct_at(std::addressof(old_val), std::move(temp));
+            throw;
+        }
+    }
+}
+```
+
+{/* source:cpp-utility-expected-operator:0015 */}
+This function template is called when the assignment is going to make `*this` hold the alternative value (i.e. from expected value to unexpected value, or from unexpected value to expected value).
+
+{/* source:cpp-utility-expected-operator:0016 */}
+In this case, the old value `oldval` needs to be destroyed before constructing the new value `newval`. However, the construction of `newval` may throw an exception. In order to provide [strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety), the old value needs to be restored before rethrowing the exception so that `*this` will have a valid state while the exception is being handled.
+
+### Return value
+
+{/* source:cpp-utility-expected-operator:0017 */}
+1-9) `*this`
+
+### Constraints and supplement information
+
+#### Primary template assignment operators
+
+{/* source:cpp-utility-expected-operator:0018 */}
+1) This overload is defined as deleted unless all following values are `true`:
+
+- `std::is_copy_assignable_v<T>`
+- `std::is_copy_constructible_v<T>`
+- `std::is_copy_assignable_v<E>`
+- `std::is_copy_constructible_v<E>`
+- `std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>`
+
+{/* source:cpp-utility-expected-operator:0019 */}
+2) This overload participates in overload resolution only if all following values are `true`:
+
+- `std::is_move_assignable_v<T>`
+- `std::is_move_constructible_v<T>`
+- `std::is_move_assignable_v<E>`
+- `std::is_move_constructible_v<E>`
+- `std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>`
+
+{/* source:cpp-utility-expected-operator:0020 */}
+3) This overload participates in overload resolution only if all following conditions are satisfied:
+
+- `std::is_same_v<expected, std::remove_cvref_t<U>>` is `false`.
+- `std::remove_cvref_t<U>` is not a specialization of `std::unexpected`.
+
+All following values are `true`:
+
+- `std::is_constructible_v<T, U>`
+- `std::is_assignable_v<T&, U>`
+- `std::is_nothrow_constructible_v<T, U> || std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>`
+
+{/* source:cpp-utility-expected-operator:0021 */}
+4) This overload participates in overload resolution only if all following values are `true`:
+
+- `std::is_constructible_v<E, const G&>`
+- `std::is_assignable_v<E&, const G&>`
+- `std::is_nothrow_constructible_v<E, const G&> || std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>`
+
+{/* source:cpp-utility-expected-operator:0022 */}
+5) This overload participates in overload resolution only if all following values are `true`:
+
+- `std::is_constructible_v<E, G>`
+- `std::is_assignable_v<E&, G>`
+- `std::is_nothrow_constructible_v<E, G> || std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>`
+
+#### void partial specialization assignment operators
+
+{/* source:cpp-utility-expected-operator:0023 */}
+6) This overload is defined as deleted unless `std::is_copy_assignable_v<E>` and `std::is_copy_constructible_v<E>` are both `true`.
+
+{/* source:cpp-utility-expected-operator:0024 */}
+7) This overload participates in overload resolution only if `std::is_move_constructible_v<E>` and `std::is_move_assignable_v<E>` are both `true`.
+
+{/* source:cpp-utility-expected-operator:0025 */}
+8) This overload participates in overload resolution only if `std::is_constructible_v<E, const G&>` and `std::is_assignable_v<E&, const G&>` are both `true`.
+
+{/* source:cpp-utility-expected-operator:0026 */}
+9) This overload participates in overload resolution only if `std::is_constructible_v<E, G>` and `std::is_assignable_v<E&, G>` are both `true`.
+
+### Exceptions
+
+{/* source:cpp-utility-expected-operator:0027 */}
+2) [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(
+    std::is_nothrow_move_constructible_v<T> && std::is_nothrow_move_assignable_v<T> &&
+
+    std::is_nothrow_move_constructible_v<E> && std::is_nothrow_move_assignable_v<E>)
+```
+
+{/* source:cpp-utility-expected-operator:0028 */}
+7) [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(std::is_nothrow_move_constructible_v<E> && std::is_nothrow_move_assignable_v<E>)
+```
+
+### Example
+
+{/* source:cpp-utility-expected-operator:0029 */}
+This section is incomplete
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-utility-expected-operator:0030 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-expected-operator:0031 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={4025} standard="C++23">
+    <PublishedBehavior>overload (7) was defined as deleted if `E` is not<br />move constructible or not move assignable</PublishedBehavior>
+    <CorrectedBehavior>it does not participate in<br />overload resolution in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-expected-operator:0032 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/utility/expected/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs the expected value in-place (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

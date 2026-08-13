@@ -1,0 +1,123 @@
+---
+title: "std::ref, std::cref"
+description: "Function templates ref and cref are helper functions that generate an object of type std::reference_wrapper, using template argument deduction to determine the template argument of the result."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/ref"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-ref:0000 */}
+<DeclarationDoc>
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+std::reference_wrapper<T> ref( T& t ) noexcept;`} />
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+std::reference_wrapper<T>
+
+    ref( std::reference_wrapper<T> t ) noexcept;`} />
+  (constexpr since C++20)
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+void ref( const T&& ) = delete;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class T >
+std::reference_wrapper<const T> cref( const T& t ) noexcept;`} />
+  (constexpr since C++20)
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class T >
+std::reference_wrapper<const T>
+
+    cref( std::reference_wrapper<T> t ) noexcept;`} />
+  (constexpr since C++20)
+  <Declaration id="6" language="cpp" since="C++11" code={`template< class T >
+void cref( const T&& ) = delete;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-ref:0001 */}
+Function templates `ref` and `cref` are helper functions that generate an object of type [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper), using [template argument deduction](/docs/cpp/language/templates/template_argument_deduction) to determine the template argument of the result.
+
+{/* source:cpp-utility-functional-ref:0002 */}
+<Revision since="C++20">
+`T` may be an incomplete type.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-utility-functional-ref:0003 */}
+<ParameterList>
+  <Parameter name="t">lvalue reference to object that needs to be wrapped or an instance of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper)</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-functional-ref:0004 */}
+1. 1) `std::reference_wrapper<T>(t)`
+
+{/* source:cpp-utility-functional-ref:0005 */}
+2. 2) `t`
+
+{/* source:cpp-utility-functional-ref:0006 */}
+3. 4) `std::reference_wrapper<const T>(t)`
+
+{/* source:cpp-utility-functional-ref:0007 */}
+4. 5) `t`
+
+{/* source:cpp-utility-functional-ref:0008 */}
+5. 3,6) rvalue reference wrapper is deleted.
+
+### Example
+
+{/* source:cpp-utility-functional-ref:0009 */}
+```cpp
+#include <functional>
+#include <iostream>
+ 
+void f(int& n1, int& n2, const int& n3)
+{
+    std::cout << "In function: " << n1 << ' ' << n2 << ' ' << n3 << '\n';
+    ++n1; // increments the copy of n1 stored in the function object
+    ++n2; // increments the main()'s n2
+    // ++n3; // compile error
+}
+ 
+int main()
+{
+    int n1 = 1, n2 = 2, n3 = 3;
+    std::function<void()> bound_f = std::bind(f, n1, std::ref(n2), std::cref(n3));
+    n1 = 10;
+    n2 = 11;
+    n3 = 12;
+    std::cout << "Before function: " << n1 << ' ' << n2 << ' ' << n3 << '\n';
+    bound_f();
+    std::cout << "After function: " << n1 << ' ' << n2 << ' ' << n3 << '\n';
+}
+```
+
+Output:
+
+```text
+Before function: 10 11 12
+In function: 1 11 12
+After function: 10 12 12
+```
+
+### Defect reports
+
+{/* source:cpp-utility-functional-ref:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-functional-ref:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3146} standard="C++11">
+    <PublishedBehavior>unwrapping overloads sometimes led to error</PublishedBehavior>
+    <CorrectedBehavior>made always valid</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-functional-ref:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>[*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) and [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable) reference wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

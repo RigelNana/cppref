@@ -1,0 +1,105 @@
+---
+title: "std::make_pair"
+description: "Creates a std::pair object, deducing the target type from the types of arguments."
+source_url: "https://en.cppreference.com/w/cpp/utility/pair/make_pair"
+language: "C++"
+---
+
+{/* source:cpp-utility-pair-make-pair:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration language="cpp" code={`template< class T1, class T2 >
+std::pair<T1, T2> make_pair( T1 x, T2 y );`} />
+  (until C++11)
+  <Declaration language="cpp" code={`template< class T1, class T2 >
+std::pair</*V1*/, /*V2*/> make_pair( T1&& x, T2&& y );`} />
+  (since C++11)
+  (constexpr since C++14)
+  (until C++20)
+  <Declaration language="cpp" code={`template< class T1, class T2 >
+constexpr std::pair<std::unwrap_ref_decay_t<T1>,
+                    std::unwrap_ref_decay_t<T2>>
+
+    make_pair( T1&& x, T2&& y );`} />
+  (since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-pair-make-pair:0001 */}
+Creates a [`std::pair`](/docs/cpp/library/utility/pair) object, deducing the target type from the types of arguments.
+
+{/* source:cpp-utility-pair-make-pair:0002 */}
+<Revision since="C++11" until="C++20">
+Given types `std::decay<T1>::type` as `U1` and `std::decay<T2>::type` as `U2`, the types `/*V1*/` and `/*V2*/` are defined as follows:
+
+- If `U1` is `std::reference_wrapper<X>`, `/*V1*/` is `X&`; otherwise `/*V1*/` is `U1`.
+- If `U2` is `std::reference_wrapper<Y>`, `/*V2*/` is `Y&`; otherwise `/*V2*/` is `U2`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-utility-pair-make-pair:0003 */}
+<ParameterList>
+  <Parameter name="x, y">the values to construct the pair from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-pair-make-pair:0004 */}
+<Revision until="C++11">
+`std::pair<T1, T2>(x, y)`
+</Revision>
+
+<Revision since="C++11" until="C++20">
+`std::pair</*V1*/, /*V2*/>(std::forward<T1>(x), std::forward<T2>(y))`
+</Revision>
+
+<Revision since="C++20">
+`std::pair<std::unwrap_ref_decay_t<T1>, std::unwrap_ref_decay_t<T2>>(std::forward<T1>(x), std::forward<T2>(y))`
+</Revision>
+
+### Example
+
+{/* source:cpp-utility-pair-make-pair:0005 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <utility>
+ 
+int main()
+{
+    int n = 1;
+    int a[5] = {1, 2, 3, 4, 5};
+ 
+    // build a pair from two ints
+    auto p1 = std::make_pair(n, a[1]);
+    std::cout << "The value of p1 is "
+              << '(' << p1.first << ", " << p1.second << ")\n";
+ 
+    // build a pair from a reference to int and an array (decayed to pointer)
+    auto p2 = std::make_pair(std::ref(n), a);
+    n = 7;
+    std::cout << "The value of p2 is "
+              << '(' << p2.first << ", " << *(p2.second + 2) << ")\n";
+}
+```
+
+Output:
+
+```text
+The value of p1 is (1, 2)
+The value of p2 is (7, 3)
+```
+
+### Defect reports
+
+{/* source:cpp-utility-pair-make-pair:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-pair-make-pair:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={181} standard="C++98">
+    <PublishedBehavior>the parameter types were const-reference types, which made passing arrays impossible</PublishedBehavior>
+    <CorrectedBehavior>changed these types to value types</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

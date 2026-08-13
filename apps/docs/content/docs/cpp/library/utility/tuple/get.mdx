@@ -1,0 +1,156 @@
+---
+title: "std::get(std::tuple)"
+description: "Extracts the I-th element from the tuple, or the element of the tuple whose type is T."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/get"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-get:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< std::size_t I, class... Types >
+typename std::tuple_element<I, std::tuple<Types...>>::type&
+
+    get( std::tuple<Types...>& t ) noexcept;`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++11" code={`template< std::size_t I, class... Types >
+typename std::tuple_element<I, std::tuple<Types...>>::type&&
+
+    get( std::tuple<Types...>&& t ) noexcept;`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="3" language="cpp" since="C++11" code={`template< std::size_t I, class... Types >
+const typename std::tuple_element<I, std::tuple<Types...>>::type&
+
+    get( const std::tuple<Types...>& t ) noexcept;`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++11" code={`template< std::size_t I, class... Types >
+const typename std::tuple_element<I, std::tuple<Types...>>::type&&
+
+    get( const std::tuple<Types...>&& t ) noexcept;`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="5" language="cpp" since="C++14" code={`template< class T, class... Types >
+constexpr T& get( std::tuple<Types...>& t ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++14" code={`template< class T, class... Types >
+constexpr T&& get( std::tuple<Types...>&& t ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++14" code={`template< class T, class... Types >
+constexpr const T& get( const std::tuple<Types...>& t ) noexcept;`} />
+  <Declaration id="8" language="cpp" since="C++14" code={`template< class T, class... Types >
+constexpr const T&& get( const std::tuple<Types...>&& t ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-get:0001 */}
+1. 1-4) Extracts the `I`th element from the tuple. `I` must be an integer value in [0, `sizeof...(Types)`).
+
+{/* source:cpp-utility-tuple-get:0002 */}
+2. 5-8) Extracts the element of the tuple `t` whose type is `T`. Fails to compile unless the tuple has exactly one element of that type.
+
+### Parameters
+
+{/* source:cpp-utility-tuple-get:0003 */}
+<ParameterList>
+  <Parameter name="t">tuple whose contents to extract</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-tuple-get:0004 */}
+A reference to the selected element of `t`.
+
+### Notes
+
+{/* source:cpp-utility-tuple-get:0005 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_tuples_by_type`](/docs/cpp/library/feature_test#cpp_lib_tuples_by_type) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_lib_tuples_by_type_201304L) | (C++14) | Addressing tuples by type ([5-8](/docs/cpp/library/utility/tuple/get#Version_5)) |
+
+### Example
+
+{/* source:cpp-utility-tuple-get:0006 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <string>
+#include <tuple>
+ 
+int main()
+{
+    auto x = std::make_tuple(1, "Foo", 3.14);
+ 
+    // Index-based access
+    std::cout << "( " << std::get<0>(x)
+              << ", " << std::get<1>(x)
+              << ", " << std::get<2>(x)
+              << " )\n";
+ 
+    // Type-based access (since C++14)
+    std::cout << "( " << std::get<int>(x)
+              << ", " << std::get<const char*>(x)
+              << ", " << std::get<double>(x)
+              << " )\n";
+ 
+    const std::tuple<int, const int, double, double> y(1, 2, 6.9, 9.6);
+    const int& i1 = std::get<int>(y); // OK: not ambiguous
+    assert(i1 == 1);
+    const int& i2 = std::get<const int>(y); // OK: not ambiguous
+    assert(i2 == 2);
+    // const double& d = std::get<double>(y); // Error: ill-formed (ambiguous)
+ 
+    // Note: std::tie and structured binding can be
+    // used to unpack a tuple into individual objects.
+}
+```
+
+Output:
+
+```text
+( 1, Foo, 3.14 )
+( 1, Foo, 3.14 )
+```
+
+### Defect reports
+
+{/* source:cpp-utility-tuple-get:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-tuple-get:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2485} standard="C++11 (by index) C++14 (by type)">
+    <PublishedBehavior>there are no overloads for `const tuple&&`</PublishedBehavior>
+    <CorrectedBehavior>added these overloads ([4](/docs/cpp/library/utility/tuple/get#Version_4) and [8](/docs/cpp/library/utility/tuple/get#Version_8))</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-tuple-get:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::array)`](/docs/cpp/library/container/array/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element of an array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::pair)`](/docs/cpp/library/utility/pair/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element of a pair (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::variant)`](/docs/cpp/library/utility/variant/get) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>reads the value of the variant given the index or the type (if the type is unique), throws on error (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::ranges::subrange)`](/docs/cpp/library/ranges/subrange/get) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains iterator or sentinel from a [`std::ranges::subrange`](/docs/cpp/library/ranges/subrange) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::complex)`](/docs/cpp/library/numeric/complex/get) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>obtains a reference to real or imaginary part from a [`std::complex`](/docs/cpp/library/numeric/complex) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tie`](/docs/cpp/library/utility/tuple/tie) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a [`tuple`](/docs/cpp/library/utility/tuple) of lvalue references or unpacks a tuple into individual objects (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[Structured binding](/docs/cpp/language/declarations/structured_binding) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>binds the specified names to sub-objects or tuple elements of the initializer</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

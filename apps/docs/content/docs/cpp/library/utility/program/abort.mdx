@@ -1,0 +1,127 @@
+---
+title: "std::abort"
+description: "Causes abnormal program termination unless SIGABRT is being caught by a signal handler passed to std::signal and the handler does not return."
+source_url: "https://en.cppreference.com/w/cpp/utility/program/abort"
+language: "C++"
+---
+{/* source:cpp-utility-program-abort:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+    <Declaration language="cpp" until="C++11" code={`void abort();`} />
+    <Declaration language="cpp" since="C++11" code={`[[noreturn]] void abort() noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-program-abort:0001 */}
+Causes abnormal program termination unless [`SIGABRT`](/docs/cpp/library/utility/program/SIG_types) is being caught by a signal handler passed to [`std::signal`](/docs/cpp/library/utility/program/signal) and the handler does not return.
+
+{/* source:cpp-utility-program-abort:0002 */}
+Destructors of variables with automatic<InlineRevision since="C++11">, thread local</InlineRevision> and static [storage durations](/docs/cpp/language/declarations/storage_duration) are not called. Functions registered with [`std::atexit()`](/docs/cpp/library/utility/program/atexit) <InlineRevision since="C++11">and [`std::at_quick_exit`](/docs/cpp/library/utility/program/at_quick_exit)</InlineRevision> are also not called. Whether open resources such as files are closed is implementation defined. An implementation defined status is returned to the host environment that indicates unsuccessful execution.
+
+### Parameters
+
+{/* source:cpp-utility-program-abort:0003 */}
+(none)
+
+### Return value
+
+{/* source:cpp-utility-program-abort:0004 */}
+None because it does not return.
+
+### Exceptions
+
+{/* source:cpp-utility-program-abort:0005 */}
+Throws nothing.
+
+### Notes
+
+{/* source:cpp-utility-program-abort:0006 */}
+POSIX specifies that the [`abort()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/abort.html) function overrides blocking or ignoring the `SIGABRT` signal.
+
+{/* source:cpp-utility-program-abort:0007 */}
+Some compiler intrinsics, e.g. [`__builtin_trap`](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html) (gcc, clang, and icc) or [`__fastfail`](https://learn.microsoft.com/en-us/cpp/intrinsics/fastfail)/[`__debugbreak`](https://learn.microsoft.com/en-us/cpp/intrinsics/debugbreak) (msvc), can be used to terminate the program as fast as possible.
+
+### Example
+
+{/* source:cpp-utility-program-abort:0008 */}
+```cpp
+#include <csignal>
+#include <cstdlib>
+#include <iostream>
+ 
+class Tester
+{
+public:
+    Tester()  { std::cout << "Tester ctor\n"; }
+    ~Tester() { std::cout << "Tester dtor\n"; }
+};
+ 
+Tester static_tester; // Destructor not called
+ 
+void signal_handler(int signal) 
+{
+    if (signal == SIGABRT)
+        std::cerr << "SIGABRT received\n";
+    else
+        std::cerr << "Unexpected signal " << signal << " received\n";
+    std::_Exit(EXIT_FAILURE);
+}
+ 
+int main()
+{
+    Tester automatic_tester; // Destructor not called
+ 
+    // Setup handler
+    auto previous_handler = std::signal(SIGABRT, signal_handler);
+    if (previous_handler == SIG_ERR)
+    {
+        std::cerr << "Setup failed\n";
+        return EXIT_FAILURE;
+    }
+ 
+    std::abort(); // Raise SIGABRT
+    std::cout << "This code is unreachable\n";
+}
+```
+
+Output:
+
+```text
+Tester ctor
+Tester ctor
+SIGABRT received
+```
+
+### See also
+
+{/* source:cpp-utility-program-abort:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`exit`](/docs/cpp/library/utility/program/exit)</DescriptionTerm>
+    <DescriptionBody>causes normal program termination with cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atexit`](/docs/cpp/library/utility/program/atexit)</DescriptionTerm>
+    <DescriptionBody>registers a function to be called on [`std::exit()`](/docs/cpp/library/utility/program/exit) invocation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`quick_exit`](/docs/cpp/library/utility/program/quick_exit) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>causes quick program termination without completely cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`at_quick_exit`](/docs/cpp/library/utility/program/at_quick_exit) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>registers a function to be called on [`std::quick_exit`](/docs/cpp/library/utility/program/quick_exit) invocation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`signal`](/docs/cpp/library/utility/program/signal)</DescriptionTerm>
+    <DescriptionBody>sets a signal handler for particular signal (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`terminate`](/docs/cpp/library/error/terminate)</DescriptionTerm>
+    <DescriptionBody>function called when exception handling fails (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/program/abort)</DescriptionTerm>
+    <DescriptionBody>for `abort`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,144 @@
+---
+title: "std::tie"
+description: "Creates a tuple of lvalue references to its arguments or instances of std::ignore."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/tie"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-tie:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration language="cpp" since="C++11" code={`template< class... Types >
+std::tuple<Types&...> tie( Types&... args ) noexcept;`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-tie:0001 */}
+Creates a tuple of lvalue references to its arguments or instances of [`std::ignore`](/docs/cpp/library/utility/tuple/ignore).
+
+### Parameters
+
+{/* source:cpp-utility-tuple-tie:0002 */}
+<ParameterList>
+  <Parameter name="args">zero or more lvalue arguments to construct the tuple from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-tuple-tie:0003 */}
+A [`std::tuple`](/docs/cpp/library/utility/tuple) object containing lvalue references.
+
+### Possible implementation
+
+{/* source:cpp-utility-tuple-tie:0004 */}
+```cpp
+template <typename... Args>
+constexpr // since C++14
+std::tuple<Args&...> tie(Args&... args) noexcept
+{
+    return {args...};
+}
+```
+
+### Notes
+
+{/* source:cpp-utility-tuple-tie:0005 */}
+[`std::tie`](/docs/cpp/library/utility/tuple/tie) may be used to unpack a [`std::pair`](/docs/cpp/library/utility/pair) because [`std::tuple`](/docs/cpp/library/utility/tuple) has a [converting assignment](/docs/cpp/library/utility/tuple/operator_assignment) from pairs:
+
+{/* source:cpp-utility-tuple-tie:0006 */}
+```cpp
+bool result;
+std::tie(std::ignore, result) = set.insert(value);
+```
+
+### Example
+
+{/* source:cpp-utility-tuple-tie:0007 */}
+1. `std::tie` can be used to introduce lexicographical comparison to a struct or to unpack a tuple;
+2. `std::tie` can work with [structured bindings](/docs/cpp/language/declarations/structured_binding):
+
+```cpp
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <string>
+#include <tuple>
+ 
+struct S
+{
+    int n;
+    std::string s;
+    float d;
+ 
+    friend bool operator<(const S& lhs, const S& rhs) noexcept
+    {
+        // compares lhs.n to rhs.n,
+        // then lhs.s to rhs.s,
+        // then lhs.d to rhs.d
+        // in that order, first non-equal result is returned
+        // or false if all elements are equal
+        return std::tie(lhs.n, lhs.s, lhs.d) < std::tie(rhs.n, rhs.s, rhs.d);
+    }
+};
+ 
+int main()
+{
+    // Lexicographical comparison demo:
+    std::set<S> set_of_s;
+ 
+    S value{42, "Test", 3.14};
+    std::set<S>::iterator iter;
+    bool is_inserted;
+ 
+    // Unpack a pair:
+    std::tie(iter, is_inserted) = set_of_s.insert(value);
+    assert(is_inserted);
+ 
+ 
+    // std::tie and structured bindings:
+    auto position = [](int w) { return std::tuple(1 * w, 2 * w); };
+ 
+    auto [x, y] = position(1);
+    assert(x == 1 && y == 2);
+    std::tie(x, y) = position(2); // reuse x, y with tie
+    assert(x == 2 && y == 4);
+ 
+ 
+    // Implicit conversions are permitted:
+    std::tuple<char, short> coordinates(6, 9);
+    std::tie(x, y) = coordinates;
+    assert(x == 6 && y == 9);
+ 
+    // Skip an element:
+    std::string z;
+    std::tie(x, std::ignore, z) = std::tuple(1, 2.0, "Test");
+    assert(x == 1 && z == "Test");
+}
+```
+
+### See also
+
+{/* source:cpp-utility-tuple-tie:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[Structured binding](/docs/cpp/language/declarations/structured_binding) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>binds the specified names to sub-objects or tuple elements of the initializer</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_tuple`](/docs/cpp/library/utility/tuple/make_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` object of the type defined by the argument types (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_as_tuple`](/docs/cpp/library/utility/tuple/forward_as_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` of [forwarding references](/docs/cpp/language/declarations/reference#Forwarding_references) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple_cat`](/docs/cpp/library/utility/tuple/tuple_cat) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` by concatenating any number of tuples (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ignore`](/docs/cpp/library/utility/tuple/ignore) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>placeholder to skip an element when unpacking a `tuple` using `tie` (constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

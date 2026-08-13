@@ -1,0 +1,144 @@
+---
+title: "std::make_from_tuple"
+description: "Construct an object of type T, using the elements of the tuple t as the arguments to the constructor."
+source_url: "https://en.cppreference.com/w/cpp/utility/make_from_tuple"
+language: "C++"
+---
+
+{/* source:cpp-utility-make-from-tuple:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration id="1" language="cpp" since="C++17" until="C++23" code={`template< class T, class Tuple >
+constexpr T make_from_tuple( Tuple&& t );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class T, tuple-like Tuple >
+constexpr T make_from_tuple( Tuple&& t );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-make-from-tuple:0001 */}
+Construct an object of type `T`, using the elements of the tuple `t` as the arguments to the constructor.
+
+{/* source:cpp-utility-make-from-tuple:0002 */}
+Given the exposition-only function `/*make-from-tuple-impl*/` defined as follows:
+
+```cpp
+template<class T, tuple-like Tuple, std::size_t... I> // no constraint on Tuple before C++23
+constexpr T /*make-from-tuple-impl*/(Tuple&& t, std::index_sequence<I...>)
+{
+    return T(std::get<I>(std::forward<Tuple>(t))...);
+}
+```
+
+{/* source:cpp-utility-make-from-tuple:0003 */}
+The effect is equivalent to:
+
+```cpp
+return /*make-from-tuple-impl*/<T>(
+    std::forward<Tuple>(t),
+    std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Tuple>>>{}
+);
+```
+
+{/* source:cpp-utility-make-from-tuple:0004 */}
+If
+
+{/* source:cpp-utility-make-from-tuple:0005 */}
+<Revision since="C++23">
+- `std::tuple_size_v<std::remove_reference_t<Tuple>>` is `1` and `std::reference_constructs_from_temporary_v<`<br />`    T, decltype(std::get<0>(std::declval<Tuple>()))>` is `true`, or
+</Revision>
+
+{/* source:cpp-utility-make-from-tuple:0006 */}
+- `std::is_constructible_v<T, decltype(std::get<I>(std::declval<Tuple>()))...>` is `false`,
+
+{/* source:cpp-utility-make-from-tuple:0007 */}
+the program is ill-formed.
+
+### Parameters
+
+{/* source:cpp-utility-make-from-tuple:0008 */}
+<ParameterList>
+  <Parameter name="t">tuple whose elements to be used as arguments to the constructor of `T`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-make-from-tuple:0009 */}
+The constructed `T` object or reference.
+
+### Notes
+
+{/* source:cpp-utility-make-from-tuple:0010 */}
+<Revision until="C++23">
+`Tuple` need not be [`std::tuple`](/docs/cpp/library/utility/tuple), and instead may be anything that supports [`std::get`](/docs/cpp/library/utility/tuple/get) and [`std::tuple_size`](/docs/cpp/library/utility/tuple_size); in particular, [`std::array`](/docs/cpp/library/container/array) and [`std::pair`](/docs/cpp/library/utility/pair) may be used.
+</Revision>
+
+<Revision since="C++23">
+`Tuple` is constrained to be tuple-like, i.e. each type therein is required to be a specialization of [`std::tuple`](/docs/cpp/library/utility/tuple) or another type (such as [`std::array`](/docs/cpp/library/container/array) and [`std::pair`](/docs/cpp/library/utility/pair)) that models [`tuple-like`](/docs/cpp/library/utility/tuple/tuple-like).
+</Revision>
+
+{/* source:cpp-utility-make-from-tuple:0011 */}
+Due to [guaranteed copy elision](/docs/cpp/language/initialization/copy_elision), `T` need not be movable.
+
+{/* source:cpp-utility-make-from-tuple:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_make_from_tuple`](/docs/cpp/library/feature_test#cpp_lib_make_from_tuple) | [`201606L`](/docs/cpp/library/compiler_support/17#cpp_lib_make_from_tuple_201606L) | (C++17) | `std::make_from_tuple` |
+
+### Example
+
+{/* source:cpp-utility-make-from-tuple:0013 */}
+```cpp
+#include <iostream>
+#include <tuple>
+ 
+struct Foo
+{
+    Foo(int first, float second, int third)
+    {
+        std::cout << first << ", " << second << ", " << third << '\n';
+    }
+};
+ 
+int main()
+{
+    auto tuple = std::make_tuple(42, 3.14f, 0);
+    std::make_from_tuple<Foo>(std::move(tuple));
+}
+```
+
+Output:
+
+```text
+42, 3.14, 0
+```
+
+### Defect reports
+
+{/* source:cpp-utility-make-from-tuple:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-make-from-tuple:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3528} standard="C++17">
+    <PublishedBehavior>cast containing `reinterpret_cast` etc. was allowed in the case of 1-tuple</PublishedBehavior>
+    <CorrectedBehavior>prohibited</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-make-from-tuple:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_tuple`](/docs/cpp/library/utility/tuple/make_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` object of the type defined by the argument types (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_as_tuple`](/docs/cpp/library/utility/tuple/forward_as_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a `tuple` of [forwarding references](/docs/cpp/language/declarations/reference#Forwarding_references) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`apply`](/docs/cpp/library/utility/apply) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>calls a function with a tuple of arguments (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

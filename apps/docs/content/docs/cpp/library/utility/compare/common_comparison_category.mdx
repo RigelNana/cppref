@@ -1,0 +1,106 @@
+---
+title: "std::common_comparison_category"
+description: "The class template std::common_comparison_category provides an alias (as the member typedef type) for the strongest comparison category to which all of the template arguments Ts... can be converted."
+source_url: "https://en.cppreference.com/w/cpp/utility/compare/common_comparison_category"
+language: "C++"
+---
+{/* source:cpp-utility-compare-common-comparison-category:0000 */}
+<DeclarationDoc>
+Defined in header [`<compare>`](/docs/cpp/library/headers/compare)
+
+  <Declaration language="cpp" since="C++20" code={`template< class... Ts >
+struct common_comparison_category
+{
+    using type = /* see below */ ;
+
+};`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-compare-common-comparison-category:0001 */}
+The class template `std::common_comparison_category` provides an alias (as the member typedef `type`) for the strongest comparison category to which all of the template arguments `Ts...` can be converted.
+
+{/* source:cpp-utility-compare-common-comparison-category:0002 */}
+In detail, the common comparison type of a list of n types `T` 0...`T` n-1 is defined as follows:
+
+{/* source:cpp-utility-compare-common-comparison-category:0003 */}
+- If any `T` i is not a comparison category type ([`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering), [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering), [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering)), `U` is `void`.
+- Otherwise, if at least one `T` i is [`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering), `U` is [`std::partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering).
+- Otherwise, if at least one `T` i is [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering), `U` is [`std::weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering).
+- Otherwise (if every `T` i is [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering), or if the list is empty), `U` is [`std::strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering).
+
+### Template parameters
+
+{/* source:cpp-utility-compare-common-comparison-category:0004 */}
+<ParameterList>
+  <Parameter name="...Ts">a possibly empty list of types</Parameter>
+</ParameterList>
+
+### Helper template
+
+{/* source:cpp-utility-compare-common-comparison-category:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class... Ts >
+using common_comparison_category_t = common_comparison_category<Ts...>::type;`} />
+</DeclarationDoc>
+
+### Member types
+
+{/* source:cpp-utility-compare-common-comparison-category:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the strongest common comparison category (as defined above)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-utility-compare-common-comparison-category:0007 */}
+```cpp
+namespace detail
+{
+    template<unsigned int>
+    struct common_cmpcat_base     { using type = void; };
+    template<>
+    struct common_cmpcat_base<0u> { using type = std::strong_ordering; };
+    template<>
+    struct common_cmpcat_base<2u> { using type = std::partial_ordering; };
+    template<>
+    struct common_cmpcat_base<4u> { using type = std::weak_ordering; };
+    template<>
+    struct common_cmpcat_base<6u> { using type = std::partial_ordering; };
+} // namespace detail
+ 
+template<class...Ts>
+struct common_comparison_category :
+    detail::common_cmpcat_base<(0u | ... |
+        (std::is_same_v<Ts, std::strong_ordering>  ? 0u :
+         std::is_same_v<Ts, std::weak_ordering>    ? 4u :
+         std::is_same_v<Ts, std::partial_ordering> ? 2u : 1u)
+    )> {};
+```
+
+### Example
+
+{/* source:cpp-utility-compare-common-comparison-category:0008 */}
+This section is incomplete
+
+Reason: no example
+
+### See also
+
+{/* source:cpp-utility-compare-common-comparison-category:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`strong_ordering`](/docs/cpp/library/utility/compare/strong_ordering) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>the result type of 3-way comparison that supports all 6 operators and is substitutable (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`weak_ordering`](/docs/cpp/library/utility/compare/weak_ordering) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>the result type of 3-way comparison that supports all 6 operators and is not substitutable (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_ordering`](/docs/cpp/library/utility/compare/partial_ordering) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>the result type of 3-way comparison that supports all 6 operators, is not substitutable, and allows incomparable values (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,158 @@
+---
+title: "std::unwrap_reference, std::unwrap_ref_decay"
+description: "Unwraps any std::reference_wrapper: changing std::reference_wrapper<U> to U&."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/unwrap_reference"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-unwrap-reference:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T >
+struct unwrap_reference;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T >
+struct unwrap_ref_decay;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-unwrap-reference:0001 */}
+Unwraps any [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper): changing [`std::reference_wrapper<U>`](/docs/cpp/library/utility/functional/reference_wrapper) to `U&`.
+
+{/* source:cpp-utility-functional-unwrap-reference:0002 */}
+1. 1) If `T` is a specialization of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper), unwraps it; otherwise, `T` remains the same.
+
+{/* source:cpp-utility-functional-unwrap-reference:0003 */}
+2. 2) If the decayed `T` is a specialization of [`std::reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper), unwraps it; otherwise, `T` is decayed.
+
+{/* source:cpp-utility-functional-unwrap-reference:0004 */}
+If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+
+### Nested types
+
+{/* source:cpp-utility-functional-unwrap-reference:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>(1) `U&` if `T` is [`std::reference_wrapper<U>`](/docs/cpp/library/utility/functional/reference_wrapper); `T` otherwise<br />(2) `U&` if [`std::decay_t<T>`](/docs/cpp/library/meta/decay) is [`std::reference_wrapper<U>`](/docs/cpp/library/utility/functional/reference_wrapper); [`std::decay_t<T>`](/docs/cpp/library/meta/decay) otherwise</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-utility-functional-unwrap-reference:0006 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template<class T>
+using unwrap_reference_t = unwrap_reference<T>::type;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template<class T>
+using unwrap_ref_decay_t = unwrap_ref_decay<T>::type;`} />
+</DeclarationDoc>
+
+### Possible implementation
+
+{/* source:cpp-utility-functional-unwrap-reference:0007 */}
+```cpp
+template<class T>
+struct unwrap_reference { using type = T; };
+template<class U>
+struct unwrap_reference<std::reference_wrapper<U>> { using type = U&; };
+ 
+template<class T>
+struct unwrap_ref_decay : std::unwrap_reference<std::decay_t<T>> {};
+```
+
+### Notes
+
+{/* source:cpp-utility-functional-unwrap-reference:0008 */}
+`std::unwrap_ref_decay` performs the same transformation as used by [`std::make_pair`](/docs/cpp/library/utility/pair/make_pair) and [`std::make_tuple`](/docs/cpp/library/utility/tuple/make_tuple).
+
+{/* source:cpp-utility-functional-unwrap-reference:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_unwrap_ref`](/docs/cpp/library/feature_test#cpp_lib_unwrap_ref) | [`201811L`](/docs/cpp/library/compiler_support/20#cpp_lib_unwrap_ref_201811L) | (C++20) | `std::unwrap_ref_decay` and `std::unwrap_reference` |
+
+### Example
+
+{/* source:cpp-utility-functional-unwrap-reference:0010 */}
+```cpp
+#include <cassert>
+#include <functional>
+#include <iostream>
+#include <type_traits>
+ 
+int main()
+{
+    static_assert(std::is_same_v<std::unwrap_reference_t<int>, int>);
+    static_assert(std::is_same_v<std::unwrap_reference_t<const int>, const int>);
+    static_assert(std::is_same_v<std::unwrap_reference_t<int&>, int&>);
+    static_assert(std::is_same_v<std::unwrap_reference_t<int&&>, int&&>);
+    static_assert(std::is_same_v<std::unwrap_reference_t<int*>, int*>);
+ 
+    {
+        using T = std::reference_wrapper<int>;
+        using X = std::unwrap_reference_t<T>;
+        static_assert(std::is_same_v<X, int&>);
+    }
+    {
+        using T = std::reference_wrapper<int&>;
+        using X = std::unwrap_reference_t<T>;
+        static_assert(std::is_same_v<X, int&>);
+    }
+ 
+    static_assert(std::is_same_v<std::unwrap_ref_decay_t<int>, int>);
+    static_assert(std::is_same_v<std::unwrap_ref_decay_t<const int>, int>);
+    static_assert(std::is_same_v<std::unwrap_ref_decay_t<const int&>, int>);
+ 
+    {
+        using T = std::reference_wrapper<int&&>;
+        using X = std::unwrap_ref_decay_t<T>;
+        static_assert(std::is_same_v<X, int&>);
+    }
+ 
+    {
+        auto reset = []<typename T>(T&& z)
+        {
+        //  x = 0; // Error: does not work if T is reference_wrapper<>
+            // converts T&& into T& for ordinary types
+            // converts T&& into U& for reference_wrapper<U>
+            decltype(auto) r = std::unwrap_reference_t<T>(z);
+            std::cout << "r: " << r << '\n';
+            r = 0; // OK, r has reference type
+        };
+ 
+        int x = 1;
+        reset(x);
+        assert(x == 0);
+ 
+        int y = 2;
+        reset(std::ref(y));
+        assert(y == 0);
+    }
+}
+```
+
+Output:
+
+```text
+r: 1
+r: 2
+```
+
+### See also
+
+{/* source:cpp-utility-functional-unwrap-reference:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reference_wrapper`](/docs/cpp/library/utility/functional/reference_wrapper) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>[*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) and [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable) reference wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_pair`](/docs/cpp/library/utility/pair/make_pair)</DescriptionTerm>
+    <DescriptionBody>creates a pair object of type, determined by the argument types (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_tuple`](/docs/cpp/library/utility/tuple/make_tuple)</DescriptionTerm>
+    <DescriptionBody>creates a tuple object of the type defined by the argument types (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

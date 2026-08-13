@@ -1,0 +1,108 @@
+---
+title: "std::variant_alternative, std::variant_alternative_t"
+description: "Provides compile-time indexed access to the types of the alternatives of the possibly cv-qualified variant, combining cv-qualifications of the variant (if any) with the cv-qualifications of the alternative."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/variant_alternative"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-variant-alternative:0000 */}
+<DeclarationDoc>
+Defined in header [`<variant>`](/docs/cpp/library/headers/variant)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template <std::size_t I, class T>
+struct variant_alternative; /* undefined */`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template <std::size_t I, class... Types>
+struct variant_alternative<I, variant<Types...>>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template <std::size_t I, class T> class variant_alternative<I, const T>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template <std::size_t I, class T>
+class variant_alternative<I, volatile T>;
+template <std::size_t I, class T>
+
+class variant_alternative<I, const volatile T>;`} />
+  (deprecated in C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-variant-alternative:0001 */}
+Provides compile-time indexed access to the types of the alternatives of the possibly cv-qualified variant, combining cv-qualifications of the variant (if any) with the cv-qualifications of the alternative.
+
+{/* source:cpp-utility-variant-variant-alternative:0002 */}
+Formally,
+
+{/* source:cpp-utility-variant-variant-alternative:0003 */}
+2) meets the [TransformationTrait](/docs/cpp/library/named_req/TransformationTrait) requirements with a member typedef `type` equal to the type of the alternative with index `I`
+
+{/* source:cpp-utility-variant-variant-alternative:0004 */}
+3) meets the [TransformationTrait](/docs/cpp/library/named_req/TransformationTrait) requirements with a member typedef `type` that names, respectively, `std::add_const_t<std::variant_alternative_t<I,T>>`, `std::add_volatile_t<std::variant_alternative_t<I,T>>`, and `std::add_cv_t<std::variant_alternative_t<I,T>>`
+
+### Member types
+
+{/* source:cpp-utility-variant-variant-alternative:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the type of `Ith` alternative of the variant, where `I` must be in `[0, sizeof...(Types))`, otherwise the program is ill-formed.</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper template alias
+
+{/* source:cpp-utility-variant-variant-alternative:0006 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template <size_t I, class T>
+using variant_alternative_t = typename variant_alternative<I, T>::type;`} />
+</DeclarationDoc>
+
+### Example
+
+{/* source:cpp-utility-variant-variant-alternative:0007 */}
+```cpp
+#include <variant>
+#include <iostream>
+ 
+using my_variant = std::variant<int, float>;
+static_assert(std::is_same_v
+    <int,   std::variant_alternative_t<0, my_variant>>);
+static_assert(std::is_same_v
+    <float, std::variant_alternative_t<1, my_variant>>);
+// cv-qualification on the variant type propagates to the extracted alternative type.
+static_assert(std::is_same_v
+    <const int, std::variant_alternative_t<0, const my_variant>>);
+ 
+int main()
+{
+    std::cout << "All static assertions passed.\n";
+}
+```
+
+Output:
+
+```text
+All static assertions passed.
+```
+
+### Defect reports
+
+{/* source:cpp-utility-variant-variant-alternative:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-variant-variant-alternative:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2974} standard="C++17">
+    <PublishedBehavior>out-of-bounds index resulted in undefined behavior</PublishedBehavior>
+    <CorrectedBehavior>made ill-formed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-variant-variant-alternative:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`variant_size variant_size_v`](/docs/cpp/library/utility/variant/variant_size)</DescriptionTerm>
+    <DescriptionBody>obtains the size of the variant's list of alternatives at compile time (class template) (variable template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::tuple_element<std::tuple>`](/docs/cpp/library/utility/tuple/tuple_element) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the type of the specified element (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

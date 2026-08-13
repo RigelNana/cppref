@@ -1,0 +1,132 @@
+---
+title: "std::optional<T>::swap"
+description: "Swaps the contents with those of other."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/swap"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-swap:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`void swap( optional& other ) noexcept(/* see below */);`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-swap:0001 */}
+Swaps the contents with those of `other`.
+
+{/* source:cpp-utility-optional-swap:0002 */}
+- If neither `*this` nor `other` contain a value, the function has no effect.
+
+{/* source:cpp-utility-optional-swap:0003 */}
+- If only one of `*this` and `other` contains a value (let's call this object `in` and the other `un`), the contained value of `un` is [direct-initialized](/docs/cpp/language/initialization/direct_initialization) from `std::move(*in)`, followed by destruction of the contained value of `in` as if by `in->T::~T()`. After this call, `in` does not contain a value; `un` contains a value.
+
+{/* source:cpp-utility-optional-swap:0004 */}
+- If both `*this` and `other` contain values, the contained values are exchanged by calling `using std::swap; swap(**this, *other)`.
+
+{/* source:cpp-utility-optional-swap:0005 */}
+The program is ill-formed unless type `T` is [*Swappable*](/docs/cpp/library/named_req/Swappable) and `std::is_move_constructible_v<T>` is `true`.
+
+### Parameters
+
+{/* source:cpp-utility-optional-swap:0006 */}
+<ParameterList>
+  <Parameter name="other">the `optional` object to exchange the contents with</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-optional-swap:0007 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-utility-optional-swap:0008 */}
+[`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification: `noexcept(std::is_nothrow_move_constructible_v<T> &&
+         std::is_nothrow_swappable_v<T>)`
+
+{/* source:cpp-utility-optional-swap:0009 */}
+In the case of thrown exception, the states of the contained values of `*this` and `other` are determined by the exception safety guarantees of `swap` of type `T` or `T`'s move constructor, whichever is called. For both `*this` and `other`, if the object contained a value, it is left containing a value, and the other way round.
+
+{/* source:cpp-utility-optional-swap:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_optional`](/docs/cpp/library/feature_test#cpp_lib_optional) | [`202106L`](/docs/cpp/library/compiler_support/20#cpp_lib_optional_202106L) | (C++20) (DR20) | Fully `constexpr` |
+
+### Example
+
+{/* source:cpp-utility-optional-swap:0011 */}
+```cpp
+#include <iostream>
+#include <optional>
+#include <string>
+ 
+int main()
+{
+    std::optional<std::string> opt1("First example text");
+    std::optional<std::string> opt2("2nd text");
+ 
+    enum Swap { Before, After };
+    auto print_opts = [&](Swap e)
+    {
+        std::cout << (e == Before ? "Before swap:\n" : "After swap:\n");
+        std::cout << "opt1 contains '" << opt1.value_or("") << "'\n";
+        std::cout << "opt2 contains '" << opt2.value_or("") << "'\n";
+        std::cout << (e == Before ? "---SWAP---\n": "\n");
+    };
+ 
+    print_opts(Before);
+    opt1.swap(opt2);
+    print_opts(After);
+ 
+    // Swap with only 1 set
+    opt1 = "Lorem ipsum dolor sit amet, consectetur tincidunt.";
+    opt2.reset();
+ 
+    print_opts(Before);
+    opt1.swap(opt2);
+    print_opts(After);
+}
+```
+
+Output:
+
+```text
+Before swap:
+opt1 contains 'First example text'
+opt2 contains '2nd text'
+---SWAP---
+After swap:
+opt1 contains '2nd text'
+opt2 contains 'First example text'
+ 
+Before swap:
+opt1 contains 'Lorem ipsum dolor sit amet, consectetur tincidunt.'
+opt2 contains ''
+---SWAP---
+After swap:
+opt1 contains ''
+opt2 contains 'Lorem ipsum dolor sit amet, consectetur tincidunt.'
+```
+
+### Defect reports
+
+{/* source:cpp-utility-optional-swap:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-optional-swap:0013 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2231R1" standard="C++20">
+    <PublishedBehavior>`swap` was not `constexpr` while the required operations can be `constexpr` in C++20</PublishedBehavior>
+    <CorrectedBehavior>made `constexpr`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-optional-swap:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::optional)`](/docs/cpp/library/utility/optional/swap2) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

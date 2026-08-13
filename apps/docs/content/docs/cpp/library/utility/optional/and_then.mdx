@@ -1,0 +1,173 @@
+---
+title: "std::optional<T>::and_then"
+description: "If *this contains a value, invokes f with the contained value as an argument, and returns the result of that invocation; otherwise, returns an empty std::optional."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/and_then"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-and-then:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) &;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) const&;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) &&;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) const&&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-and-then:0001 */}
+If `*this` contains a value, invokes `f` with the contained value as an argument, and returns the result of that invocation; otherwise, returns an empty [`std::optional`](/docs/cpp/library/utility/optional).
+
+{/* source:cpp-utility-optional-and-then:0002 */}
+The return type (see below) must be a specialization of [`std::optional`](/docs/cpp/library/utility/optional) (unlike [`transform()`](/docs/cpp/library/utility/optional/transform)). Otherwise, the program is ill-formed.
+
+{/* source:cpp-utility-optional-and-then:0003 */}
+1. 1) Equivalent to
+
+   ```cpp
+   if (*this)
+       return std::invoke(std::forward<F>(f), value());
+   else
+       return std::remove_cvref_t<std::invoke_result_t<F, T&>>{};
+   ```
+
+{/* source:cpp-utility-optional-and-then:0004 */}
+2. 2) Equivalent to
+
+   ```cpp
+   if (*this)
+       return std::invoke(std::forward<F>(f), value());
+   else
+       return std::remove_cvref_t<std::invoke_result_t<F, const T&>>{};
+   ```
+
+{/* source:cpp-utility-optional-and-then:0005 */}
+3. 3) Equivalent to
+
+   ```cpp
+   if (*this)
+       return std::invoke(std::forward<F>(f), std::move(value()));
+   else
+       return std::remove_cvref_t<std::invoke_result_t<F, T>>{};
+   ```
+
+{/* source:cpp-utility-optional-and-then:0006 */}
+4. 4) Equivalent to
+
+   ```cpp
+   if (*this)
+       return std::invoke(std::forward<F>(f), std::move(value());
+   else
+       return std::remove_cvref_t<std::invoke_result_t<F, const T>>{};
+   ```
+
+### Parameters
+
+{/* source:cpp-utility-optional-and-then:0007 */}
+<ParameterList>
+  <Parameter name="f">a suitable function or [*Callable*](/docs/cpp/library/named_req/Callable) object that returns an [`std::optional`](/docs/cpp/library/utility/optional)</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-optional-and-then:0008 */}
+The result of `f` or an empty [`std::optional`](/docs/cpp/library/utility/optional), as described above.
+
+### Notes
+
+{/* source:cpp-utility-optional-and-then:0009 */}
+Some languages call this operation flatmap.
+
+{/* source:cpp-utility-optional-and-then:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_optional`](/docs/cpp/library/feature_test#cpp_lib_optional) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_optional_202110L) | (C++23) | [Monadic operations](/docs/cpp/library/utility/optional#Monadic_operations) in [`std::optional`](/docs/cpp/library/utility/optional) |
+
+### Example
+
+{/* source:cpp-utility-optional-and-then:0011 */}
+```cpp
+#include <charconv>
+#include <iomanip>
+#include <iostream>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <vector>
+ 
+std::optional<int> to_int(std::string_view sv)
+{
+    int r{};
+    auto [ptr, ec]{std::from_chars(sv.data(), sv.data() + sv.size(), r)};
+    if (ec == std::errc())
+        return r;
+    else
+        return std::nullopt;
+}
+ 
+int main()
+{
+    using namespace std::literals;
+ 
+    const std::vector<std::optional<std::string>> v
+    {
+        "1234", "15 foo", "bar", "42", "5000000000", " 5", std::nullopt, "-43"
+    };
+ 
+    for (auto&& x : v | std::views::transform(
+        [](auto&& o)
+        {
+            // debug print the content of input optional<string>
+            std::cout << std::left << std::setw(13)
+                      << std::quoted(o.value_or("nullopt")) << " -> ";
+ 
+            return o
+                // if optional is nullopt convert it to optional with "" string
+                .or_else([]{ return std::optional{""s}; })
+                // flatmap from strings to ints (making empty optionals where it fails)
+                .and_then(to_int)
+                // map int to int + 1
+                .transform([](int n) { return n + 1; })
+                // convert back to strings
+                .transform([](int n) { return std::to_string(n); })
+                // replace all empty optionals that were left by
+                // and_then and ignored by transforms with "NaN"
+                .value_or("NaN"s);
+        }))
+        std::cout << x << '\n';
+}
+```
+
+Output:
+
+```text
+"1234"        -> 1235
+"15 foo"      -> 16
+"bar"         -> NaN
+"42"          -> 43
+"5000000000"  -> NaN
+" 5"          -> NaN
+"nullopt"     -> NaN
+"-43"         -> -42
+```
+
+### See also
+
+{/* source:cpp-utility-optional-and-then:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`value_or`](/docs/cpp/library/utility/optional/value_or)</DescriptionTerm>
+    <DescriptionBody>returns the contained value if available, another value otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform`](/docs/cpp/library/utility/optional/transform) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns an `optional` containing the transformed contained value if it exists, or an empty `optional` otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`or_else`](/docs/cpp/library/utility/optional/or_else) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns the `optional` itself if it contains a value, or the result of the given function otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,127 @@
+---
+title: "std::monostate"
+description: "Unit type intended for use as a well-behaved empty alternative in std::variant."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/monostate"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-monostate:0000 */}
+<DeclarationDoc>
+Defined in header [`<variant>`](/docs/cpp/library/headers/variant)
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility) <InlineRevision since="C++26" />
+
+  <Declaration language="cpp" since="C++17" code={`struct monostate { };`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-monostate:0001 */}
+Unit type intended for use as a well-behaved empty alternative in [`std::variant`](/docs/cpp/library/utility/variant). In particular, a variant of non-default-constructible types may list `std::monostate` as its first alternative: this makes the variant itself default-constructible.
+
+### Member functions
+
+{/* source:cpp-utility-variant-monostate:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`(constructor)` (implicitly declared)</DescriptionTerm>
+    <DescriptionBody>trivial implicit default/copy/move constructor (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`(destructor)` (implicitly declared)</DescriptionTerm>
+    <DescriptionBody>trivial implicit destructor (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` (implicitly declared)</DescriptionTerm>
+    <DescriptionBody>trivial implicit copy/move assignment (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-utility-variant-monostate:0003 */}
+## std::operator==, !=, \<, \<=, \>, \>=, \<=>(std::monostate)
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`constexpr bool operator==( monostate, monostate ) noexcept { return true; }`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++20" code={`constexpr bool operator!=( monostate, monostate ) noexcept { return false; }
+constexpr bool operator< ( monostate, monostate ) noexcept { return false; }
+constexpr bool operator> ( monostate, monostate ) noexcept { return false; }
+constexpr bool operator<=( monostate, monostate ) noexcept { return true; }
+
+constexpr bool operator>=( monostate, monostate ) noexcept { return true; }`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr std::strong_ordering operator<=>( monostate, monostate ) noexcept
+{
+    return std::strong_ordering::equal;
+
+}`} />
+</DeclarationDoc>
+
+All instances of `std::monostate` compare equal.
+
+<Revision since="C++20">
+The `<`, `<=`, `>`, `>=`, and `!=` operators are [synthesized](/docs/cpp/language/expressions/operators#Comparison_operators) from `operator<=>` and `operator==` respectively.
+</Revision>
+
+### Helper classes
+
+{/* source:cpp-utility-variant-monostate:0004 */}
+## std::hash\<std::monostate\>
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template <>
+struct std::hash<monostate>;`} />
+</DeclarationDoc>
+
+Specializes the [`std::hash`](/docs/cpp/library/utility/hash) algorithm for `std::monostate`.
+
+### Example
+
+{/* source:cpp-utility-variant-monostate:0005 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <variant>
+ 
+struct S
+{
+    S(int i) : i(i) {}
+    int i;
+};
+ 
+int main()
+{
+    // Without the monostate type this declaration will fail.
+    // This is because S is not default-constructible.
+    std::variant<std::monostate, S> var;
+    assert(var.index() == 0);
+ 
+    try
+    {
+        std::get<S>(var); // throws! We need to assign a value
+    }
+    catch(const std::bad_variant_access& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+ 
+    var = 42;
+    std::cout << "std::get: " << std::get<S>(var).i << '\n'
+              << "std::hash: " << std::hex << std::showbase
+              << std::hash<std::monostate>{}(std::monostate{}) << '\n';
+}
+```
+Possible output:
+
+```text
+std::get: wrong index for variant
+std::get: 42
+std::hash: 0xffffffffffffe19f
+```
+
+### See also
+
+{/* source:cpp-utility-variant-monostate:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/variant/variant)</DescriptionTerm>
+    <DescriptionBody>constructs the `variant` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

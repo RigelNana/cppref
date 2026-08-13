@@ -1,0 +1,140 @@
+---
+title: "std::optional<T>::emplace"
+description: "Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/emplace"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-emplace:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class... Args >
+T& emplace( Args&&... args );`} />
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class U, class... Args >
+T& emplace( std::initializer_list<U> ilist, Args&&... args );`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-emplace:0001 */}
+Constructs the contained value in-place. If `*this` already contains a value before the call, the contained value is destroyed by calling its destructor.
+
+{/* source:cpp-utility-optional-emplace:0002 */}
+1. 1) Initializes the contained value by [direct-initializing](/docs/cpp/language/initialization/direct_initialization) (but not direct-list-initializing) with `std::forward<Args>(args)...` as parameters.
+
+{/* source:cpp-utility-optional-emplace:0003 */}
+2. 2) Initializes the contained value by calling its constructor with `ilist, std::forward<Args>(args)...` as parameters. This overload participates in overload resolution only if `std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value` is `true`.
+
+### Parameters
+
+{/* source:cpp-utility-optional-emplace:0004 */}
+<ParameterList>
+  <Parameter name="args...">the arguments to pass to the constructor</Parameter>
+  <Parameter name="ilist">the initializer list to pass to the constructor</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `T` must be constructible from `Args...` for overload (1)
+- `T` must be constructible from [`std::initializer_list`](/docs/cpp/library/utility/initializer_list) and `Args...` for overload (2)
+
+### Return value
+
+{/* source:cpp-utility-optional-emplace:0005 */}
+A reference to the new contained value.
+
+### Exceptions
+
+{/* source:cpp-utility-optional-emplace:0006 */}
+Any exception thrown by the selected constructor of `T`. If an exception is thrown, `*this` does not contain a value after this call (the previously contained value, if any, had been destroyed).
+
+{/* source:cpp-utility-optional-emplace:0007 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_optional`](/docs/cpp/library/feature_test#cpp_lib_optional) | [`202106L`](/docs/cpp/library/compiler_support/20#cpp_lib_optional_202106L) | (C++20) (DR20) | Fully `constexpr` ([1,2](/docs/cpp/library/utility/optional/emplace#Version_1)) |
+
+### Example
+
+{/* source:cpp-utility-optional-emplace:0008 */}
+```cpp
+#include <iostream>
+#include <optional>
+ 
+struct A
+{
+    std::string s;
+ 
+    A(std::string str) : s(std::move(str)), id{n++} { note("+ constructed"); }
+    ~A() { note("~ destructed"); }
+    A(const A& o) : s(o.s), id{n++} { note("+ copy constructed"); }
+    A(A&& o) : s(std::move(o.s)), id{n++} { note("+ move constructed"); }
+ 
+    A& operator=(const A& other)
+    {
+        s = other.s;
+        note("= copy assigned");
+        return *this;
+    }
+ 
+    A& operator=(A&& other)
+    {
+        s = std::move(other.s);
+        note("= move assigned");
+        return *this;
+    }
+ 
+    inline static int n{};
+    int id{};
+    void note(auto s) { std::cout << "  " << s << " #" << id << '\n'; }
+};
+ 
+int main()
+{
+    std::optional<A> opt;
+ 
+    std::cout << "Assign:\n";
+    opt = A("Lorem ipsum dolor sit amet, consectetur adipiscing elit nec.");
+ 
+    std::cout << "Emplace:\n";
+    // As opt contains a value it will also destroy that value
+    opt.emplace("Lorem ipsum dolor sit amet, consectetur efficitur.");
+ 
+    std::cout << "End example\n";
+}
+```
+
+Output:
+
+```text
+Assign:
+  + constructed #0
+  + move constructed #1
+  ~ destructed #0
+Emplace:
+  ~ destructed #1
+  + constructed #2
+End example
+  ~ destructed #2
+```
+
+### Defect reports
+
+{/* source:cpp-utility-optional-emplace:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-optional-emplace:0010 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2231R1" standard="C++20">
+    <PublishedBehavior>`emplace` was not `constexpr` while the required operations can be `constexpr` in C++20</PublishedBehavior>
+    <CorrectedBehavior>made `constexpr`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-optional-emplace:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/utility/optional/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

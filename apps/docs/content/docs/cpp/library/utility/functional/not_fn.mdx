@@ -1,0 +1,342 @@
+---
+title: "std::not_fn"
+description: "Creates a forwarding call wrapper that returns the negation of the callable object it holds."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/not_fn"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-not-fn:0000 */}
+<DeclarationDoc>
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class F >
+/* unspecified */ not_fn( F&& f );`} />
+  (constexpr since C++20)
+  <Declaration id="2" language="cpp" since="C++26" code={`template< auto ConstFn >
+constexpr /* unspecified */ not_fn() noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-not-fn:0001 */}
+1. 1) Creates a forwarding call wrapper that returns the negation of the callable object it holds.
+
+{/* source:cpp-utility-functional-not-fn:0002 */}
+2. 2) Creates a forwarding call wrapper that returns the negation of the statically determined callable target. The program is ill-formed if `ConstFn` is a null pointer or null pointer-to-member.
+
+### Parameters
+
+{/* source:cpp-utility-functional-not-fn:0003 */}
+<ParameterList>
+  <Parameter name="f">the object from which the [*Callable*](/docs/cpp/library/named_req/Callable) object held by the wrapper is constructed</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `std::decay_t<F>` must meet the requirements of [*Callable*](/docs/cpp/library/named_req/Callable) and [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible).
+- `std::is_constructible_v<std::decay_t<F>, F>` is required to be `true`.
+
+### Return value
+
+{/* source:cpp-utility-functional-not-fn:0004 */}
+1. 1) A function object of unspecified type `T`. It has the following members.
+
+## std::not_fn *return type*
+
+#### Member objects
+
+The return type of `std::not_fn` holds a member object of type `std::decay_t<F>`.
+
+#### Constructors
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`explicit T( F&& f );`} />
+  (constexpr since C++20)
+  (exposition only*)
+  <Declaration id="2" language="cpp" since="C++17" code={`T( T&& f ) = default;
+T( const T& f ) = default;`} />
+</DeclarationDoc>
+
+1. 1) The constructor direct-non-list-initializes the member object (of type `std::decay_t<F>`) from `std::forward<F>(f)`. Throws any exception thrown by the constructor selected.
+2. 2) Because `std::decay_t<F>` is required to be [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible), the returned call wrapper is always [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible), and is [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) if `std::decay_t<F>` is [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible).
+
+<Revision until="C++20">
+The explicitly defaulted definitions make the return type not assignable.
+</Revision>
+
+<Revision since="C++20">
+It is unspecified whether these constructors are explicitly defaulted and whether the return type is assignable.
+</Revision>
+
+#### Member function `operator()`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" until="C++20" code={`template< class... Args >
+auto operator()( Args&&... args ) &
+-> decltype(!std::declval<
+    std::invoke_result_t<std::decay_t<F>&, Args...>>());
+template< class... Args >
+auto operator()( Args&&... args ) const&
+-> decltype(!std::declval<
+
+    std::invoke_result_t<std::decay_t<F> const&, Args...>>());`} />
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class... Args >
+constexpr auto operator()( Args&&... args ) &
+    noexcept(/* see below */)
+-> decltype(!std::invoke(
+    std::declval<std::decay_t<F>&>(), std::declval<Args>()...));
+template< class... Args >
+constexpr auto operator()( Args&&... args ) const&
+    noexcept(/* see below */)
+-> decltype(!std::invoke(
+
+    std::declval<std::decay_t<F> const&>(), std::declval<Args>()...));`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++20" code={`template< class... Args >
+auto operator()( Args&&... args ) &&
+-> decltype(!std::declval<
+    std::invoke_result_t<std::decay_t<F>, Args...>>());
+template< class... Args >
+auto operator()( Args&&... args ) const&&
+-> decltype(!std::declval<
+
+    std::invoke_result_t<std::decay_t<F> const, Args...>>());`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class... Args >
+constexpr auto operator()( Args&&... args ) &&
+    noexcept(/* see below */)
+-> decltype(!std::invoke(
+    std::declval<std::decay_t<F>>(), std::declval<Args>()...));
+template< class... Args >
+constexpr auto operator()( Args&&... args ) const&&
+    noexcept(/* see below */)
+-> decltype(!std::invoke(
+
+    std::declval<std::decay_t<F> const>(), std::declval<Args>()...));`} />
+</DeclarationDoc>
+
+Let `fd` be the member object of type `std::decay_t<F>`.
+
+<Revision since="C++17" until="C++20">
+1. 1) Equivalent to `return !std::invoke(fd, std::forward<Args>(args)...);`
+2. 2) Equivalent to `return !std::invoke(std::move(fd), std::forward<Args>(args)...);`
+
+While invoking the result, if the substitution into the return type of the originally selected `operator()` overload fails, [another overload may be selected](/docs/cpp/language/templates/sfinae).
+</Revision>
+
+<Revision since="C++20">
+1. 1) [Expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `!std::invoke(fd, std::forward<Args>(args)...)`
+2. 2) [Expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `!std::invoke(std::move(fd), std::forward<Args>(args)...)`
+
+While invoking the result, if the substitution into the return type of the originally selected `operator()` overload fails, the invocation is ill-formed, which can also be a [substitution failure](/docs/cpp/language/templates/sfinae).
+</Revision>
+
+{/* source:cpp-utility-functional-not-fn:0005 */}
+2. 2) A value of the following type.
+
+## std::not_fn *stateless return type*
+
+The return type is a [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) stateless class. It is unspecified whether the return type is assignable.
+
+#### Member function `operator()`
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++26" code={`template< class... Args >
+constexpr auto operator()( Args&&... args ) const
+    noexcept(/* see below */)
+
+-> decltype(!std::invoke(ConstFn, std::declval<Args>()...));`} />
+</DeclarationDoc>
+
+[Expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `!std::invoke(ConstFn, std::forward<Args>(args)...)`.
+
+### Exceptions
+
+{/* source:cpp-utility-functional-not-fn:0006 */}
+1. 1) Throws no exceptions, unless the construction of `fd` throws.
+
+### Possible implementation
+
+{/* source:cpp-utility-functional-not-fn:0007 */}
+[(1) not_fn](/docs/cpp/library/utility/functional/not_fn#Version_1)
+
+```cpp
+namespace detail
+{
+    template<class V, class F, class... Args>
+    constexpr bool negate_invocable_impl = false;
+    template<class F, class... Args>
+    constexpr bool negate_invocable_impl<std::void_t<decltype(
+        !std::invoke(std::declval<F>(), std::declval<Args>()...))>, F, Args...> = true;
+ 
+    template<class F, class... Args>
+    constexpr bool negate_invocable_v = negate_invocable_impl<void, F, Args...>;
+ 
+    template<class F>
+    struct not_fn_t
+    {
+        F f;
+ 
+        template<class... Args,
+            std::enable_if_t<negate_invocable_v<F&, Args...>, int> = 0>
+        constexpr decltype(auto) operator()(Args&&... args) &
+            noexcept(noexcept(!std::invoke(f, std::forward<Args>(args)...)))
+        {
+            return !std::invoke(f, std::forward<Args>(args)...);
+        }
+ 
+        template<class... Args,
+            std::enable_if_t<negate_invocable_v<const F&, Args...>, int> = 0>
+        constexpr decltype(auto) operator()(Args&&... args) const&
+            noexcept(noexcept(!std::invoke(f, std::forward<Args>(args)...)))
+        {
+            return !std::invoke(f, std::forward<Args>(args)...);
+        }
+ 
+        template<class... Args,
+            std::enable_if_t<negate_invocable_v<F, Args...>, int> = 0>
+        constexpr decltype(auto) operator()(Args&&... args) &&
+            noexcept(noexcept(!std::invoke(std::move(f), std::forward<Args>(args)...)))
+        {
+            return !std::invoke(std::move(f), std::forward<Args>(args)...);
+        }
+ 
+        template<class... Args,
+            std::enable_if_t<negate_invocable_v<const F, Args...>, int> = 0>
+        constexpr decltype(auto) operator()(Args&&... args) const&&
+            noexcept(noexcept(!std::invoke(std::move(f), std::forward<Args>(args)...)))
+        {
+            return !std::invoke(std::move(f), std::forward<Args>(args)...);
+        }
+ 
+        // Deleted overloads are needed since C++20
+        // for preventing a non-equivalent but well-formed overload to be selected.
+ 
+        template<class... Args,
+            std::enable_if_t<!negate_invocable_v<F&, Args...>, int> = 0>
+        void operator()(Args&&...) & = delete;
+ 
+        template<class... Args,
+            std::enable_if_t<!negate_invocable_v<const F&, Args...>, int> = 0>
+        void operator()(Args&&...) const& = delete;
+ 
+        template<class... Args,
+            std::enable_if_t<!negate_invocable_v<F, Args...>, int> = 0>
+        void operator()(Args&&...) && = delete;
+ 
+        template<class... Args,
+            std::enable_if_t<!negate_invocable_v<const F, Args...>, int> = 0>
+        void operator()(Args&&...) const&& = delete;
+    };
+}
+ 
+template<class F>
+constexpr detail::not_fn_t<std::decay_t<F>> not_fn(F&& f)
+{
+    return {std::forward<F>(f)};
+}
+```
+
+[(2) not_fn](/docs/cpp/library/utility/functional/not_fn#Version_2)
+
+```cpp
+namespace detail
+{
+    template<auto ConstFn>
+    struct stateless_not_fn
+    {
+        template<class... Args>
+        constexpr auto operator()(Args&&... args) const
+            noexcept(noexcept(!std::invoke(ConstFn, std::forward<Args>(args)...)))
+            -> decltype(!std::invoke(ConstFn, std::forward<Args>(args)...))
+        {
+            return !std::invoke(ConstFn, std::forward<Args>(args)...);
+        }
+    };
+}
+ 
+template<auto ConstFn>
+constexpr detail::stateless_not_fn<ConstFn> not_fn() noexcept
+{
+    if constexpr (std::is_pointer_v<decltype(ConstFn)> ||
+                  std::is_member_pointer_v<decltype(ConstFn)>)
+        static_assert(ConstFn != nullptr);
+ 
+    return {};
+}
+```
+
+### Notes
+
+{/* source:cpp-utility-functional-not-fn:0008 */}
+`std::not_fn` is intended to replace the C++03-era negators [`std::not1`](/docs/cpp/library/utility/functional/not1) and [`std::not2`](/docs/cpp/library/utility/functional/not2).
+
+{/* source:cpp-utility-functional-not-fn:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_not_fn`](/docs/cpp/library/feature_test#cpp_lib_not_fn) | [`201603L`](/docs/cpp/library/compiler_support/17#cpp_lib_not_fn_201603L) | (C++17) | `std::not_fn()`, [1](/docs/cpp/library/utility/functional/not_fn#Version_1) |
+|  | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_lib_not_fn_202306L) | (C++26) | Allow passing callable objects as non-type template arguments to `std::not_fn`, [2](/docs/cpp/library/utility/functional/not_fn#Version_2) |
+
+### Example
+
+{/* source:cpp-utility-functional-not-fn:0010 */}
+```cpp
+#include <cassert>
+#include <functional>
+ 
+bool is_same(int a, int b) noexcept
+{
+    return a == b;
+}
+ 
+struct S
+{
+    int val;
+    bool is_same(int arg) const noexcept { return val == arg; }
+};
+ 
+int main()
+{
+    // Using with a free function:
+    auto is_differ = std::not_fn(is_same);
+    assert(is_differ(8, 8) == false); // equivalent to: !is_same(8, 8) == false
+    assert(is_differ(6, 9) == true); // equivalent to: !is_same(8, 0) == true
+ 
+    // Using with a member function:
+    auto member_differ = std::not_fn(&S::is_same);
+    assert(member_differ(S{3}, 3) == false); //: S tmp{6}; !tmp.is_same(6) == false
+ 
+    // Noexcept-specification is preserved:
+    static_assert(noexcept(is_differ) == noexcept(is_same));
+    static_assert(noexcept(member_differ) == noexcept(&S::is_same));
+ 
+    // Using with a function object:
+    auto same = [](int a, int b) { return a == b; };
+    auto differ = std::not_fn(same);
+    assert(differ(1, 2) == true); //: !same(1, 2) == true
+    assert(differ(2, 2) == false); //: !same(2, 2) == false
+ 
+#if __cpp_lib_not_fn >= 202306L
+    auto is_differ_cpp26 = std::not_fn<is_same>();
+    assert(is_differ_cpp26(8, 8) == false);
+    assert(is_differ_cpp26(6, 9) == true);
+ 
+    auto member_differ_cpp26 = std::not_fn<&S::is_same>();
+    assert(member_differ_cpp26(S{3}, 3) == false);
+ 
+    auto differ_cpp26 = std::not_fn<same>();
+    static_assert(differ_cpp26(1, 2) == true);
+    static_assert(differ_cpp26(2, 2) == false);
+#endif
+}
+```
+
+### See also
+
+{/* source:cpp-utility-functional-not-fn:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`not1`](/docs/cpp/library/utility/functional/not1) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs custom [`std::unary_negate`](/docs/cpp/library/utility/functional/unary_negate) object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not2`](/docs/cpp/library/utility/functional/not2) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs custom [`std::binary_negate`](/docs/cpp/library/utility/functional/binary_negate) object (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

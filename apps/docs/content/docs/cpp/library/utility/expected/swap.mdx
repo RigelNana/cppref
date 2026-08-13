@@ -1,0 +1,202 @@
+---
+title: "std::expected<T,E>::swap"
+description: "Swaps the contents with those of other."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/swap"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-swap:0000 */}
+<DeclarationDoc>
+  Primary template
+
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr void swap( expected& other ) noexcept(/* see below */);`} />
+
+  `void` partial specialization
+
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr void swap( expected& other ) noexcept(/* see below */);`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-swap:0001 */}
+Swaps the contents with those of `other`.
+
+{/* source:cpp-utility-expected-swap:0002 */}
+1) The contained values are swapped as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Value of `other.has_value()` |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| `true` | `using std::swap; swap(`[`val`](/docs/cpp/library/utility/expected#Data_members)`, rhs.`[`val`](/docs/cpp/library/utility/expected#Data_members)`);` | see below |
+| `false` | `other.swap(*this);` | `using std::swap; swap(`[`unex`](/docs/cpp/library/utility/expected#Data_members)`, rhs.`[`unex`](/docs/cpp/library/utility/expected#Data_members)`);` |
+
+{/* source:cpp-utility-expected-swap:0003 */}
+If [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) is `true` and `other.has_value()` is `false`, equivalent to:
+
+```cpp
+// Case 1: the move constructions of unexpected values are non-throwing:
+// “other.unex” will be restored if the construction of “other.val” fails
+if constexpr (std::is_nothrow_move_constructible_v<E>)
+{
+    E temp(std::move(other.unex));
+    std::destroy_at(std::addressof(other.unex));
+    try
+    {
+        std::construct_at(std::addressof(other.val), std::move(val)); // may throw
+        std::destroy_at(std::addressof(val));
+        std::construct_at(std::addressof(unex), std::move(temp));
+    }
+    catch(...)
+    {
+        std::construct_at(std::addressof(other.unex), std::move(temp));
+        throw;
+    }
+}
+// Case 2: the move constructions of expected values are non-throwing:
+// “this->val” will be restored if the construction of “this->unex” fails
+else
+{
+    T temp(std::move(val));
+    std::destroy_at(std::addressof(val));
+    try
+    {
+        std::construct_at(std::addressof(unex), std::move(other.unex)); // may throw 
+        std::destroy_at(std::addressof(other.unex));
+        std::construct_at(std::addressof(other.val), std::move(temp));
+    }
+    catch(...)
+    {
+        std::construct_at(std::addressof(val), std::move(temp));
+        throw;
+    }
+}
+has_val = false;
+rhs.has_val = true;
+```
+
+{/* source:cpp-utility-expected-swap:0004 */}
+This overload participates in overload resolution only if all following values are `true`:
+
+- `std::is_swappable_v<T>`
+- `std::is_swappable_v<E>`
+- `std::is_move_constructible_v<T> && std::is_move_constructible_v<E>`
+- `std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>`
+
+{/* source:cpp-utility-expected-swap:0005 */}
+2) The unexpected values are swapped as follows:
+
+| Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) | Value of `other.has_value()` |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| `true` | `using std::swap; swap(`[`val`](/docs/cpp/library/utility/expected#Data_members)`, rhs.`[`val`](/docs/cpp/library/utility/expected#Data_members)`);` | `std::construct_at(std::addressof(`[`unex`](/docs/cpp/library/utility/expected#Data_members)`), std::move(rhs.`[`unex`](/docs/cpp/library/utility/expected#Data_members)`)); std::destroy_at(std::addressof(rhs.`[`unex`](/docs/cpp/library/utility/expected#Data_members)`)); has_val = false; rhs.has_val = true;` |
+| `false` | `other.swap(*this);` | `using std::swap; swap(`[`unex`](/docs/cpp/library/utility/expected#Data_members)`, rhs.`[`unex`](/docs/cpp/library/utility/expected#Data_members)`);` |
+
+{/* source:cpp-utility-expected-swap:0006 */}
+This overload participates in overload resolution only if `std::is_swappable_v<E>` and `std::is_move_constructible_v<E>` are both `true`.
+
+### Parameters
+
+{/* source:cpp-utility-expected-swap:0007 */}
+<ParameterList>
+  <Parameter name="other">the expected object to exchange the contents with</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-utility-expected-swap:0008 */}
+1) [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(
+    std::is_nothrow_move_constructible_v<T> && std::is_nothrow_swappable_v<T> &&
+    std::is_nothrow_move_constructible_v<E> && std::is_nothrow_swappable_v<E>
+
+)
+```
+
+{/* source:cpp-utility-expected-swap:0009 */}
+2) [`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(
+    std::is_nothrow_move_constructible_v<E> && std::is_nothrow_swappable_v<E>
+
+)
+```
+
+### Example
+
+{/* source:cpp-utility-expected-swap:0010 */}
+```cpp
+#include <expected>
+#include <iostream>
+#include <string>
+ 
+using Ex = std::expected<std::string, int>;
+ 
+void show(const Ex& ex1, const Ex& ex2)
+{
+    for (int i{}; i < 2; ++i)
+    {
+        std::cout << (i ? "ex2" : "ex1");
+        if (const Ex& ex = (i ? ex2 : ex1); ex.has_value())
+            std::cout << ".has_value() = " << *ex << '\n';
+        else
+            std::cout << ".error() = " << ex.error() << '\n';
+    }
+}
+ 
+int main()
+{
+    Ex ex1("\N{CAT FACE}");
+    Ex ex2{"\N{GREEN HEART}"};
+    show(ex1, ex2);
+    ex1.swap(ex2);
+    std::cout << "ex1.swap(ex2);\n";
+    show(ex1, ex2);
+    std::cout << '\n';
+ 
+    ex2 = std::unexpected(13);
+    show(ex1, ex2);
+    std::cout << "ex1.swap(ex2);\n";
+    ex1.swap(ex2);
+    show(ex1, ex2);
+    std::cout << '\n';
+ 
+    ex2 = std::unexpected(19937);
+    show(ex1, ex2);
+    std::cout << "ex1.swap(ex2);\n";
+    ex1.swap(ex2);
+    show(ex1, ex2);
+}
+```
+
+Output:
+
+```text
+ex1.has_value() = 🐱
+ex2.has_value() = 💚
+ex1.swap(ex2);
+ex1.has_value() = 💚
+ex2.has_value() = 🐱
+ 
+ex1.has_value() = 💚
+ex2.error() = 13
+ex1.swap(ex2);
+ex1.error() = 13
+ex2.has_value() = 💚
+ 
+ex1.error() = 13
+ex2.error() = 19937
+ex1.swap(ex2);
+ex1.error() = 19937
+ex2.error() = 13
+```
+
+### See also
+
+{/* source:cpp-utility-expected-swap:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap(std::expected)`](/docs/cpp/library/utility/expected/swap2)</DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

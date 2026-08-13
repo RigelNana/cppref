@@ -1,0 +1,133 @@
+---
+title: "std::expected<T,E>::and_then"
+description: "If *this represents an expected value, invokes f and returns its result; otherwise, returns a std::expected object that contains an unexpected value."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/and_then"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-and-then:0000 */}
+<DeclarationDoc>
+Main template
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) &;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) const&;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) &&;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) const&&;`} />
+
+void partial specialization
+
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) &;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) const&;`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) &&;`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class F >
+constexpr auto and_then( F&& f ) const&&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-and-then:0001 */}
+If `*this` represents an expected value, invokes `f` and returns its result. Otherwise, returns a `std::expected` object that contains an unexpected value, which is initialized with the unexpected value of `*this`.
+
+{/* source:cpp-utility-expected-and-then:0002 */}
+1. 1-4) `f` is invoked with the expected value [`val`](/docs/cpp/library/utility/expected#Data_members) as the argument.
+
+{/* source:cpp-utility-expected-and-then:0003 */}
+2. 5-8) `f` is invoked without any argument.
+
+{/* source:cpp-utility-expected-and-then:0004 */}
+Given type `U` as:
+
+{/* source:cpp-utility-expected-and-then:0005 */}
+1. 1,2) `std::remove_cvref_t<std::invoke_result_t<F, decltype((val))>>`
+
+{/* source:cpp-utility-expected-and-then:0006 */}
+2. 3,4) `std::remove_cvref_t<std::invoke_result_t<F, decltype(std::move(val))>>`
+
+{/* source:cpp-utility-expected-and-then:0007 */}
+3. 5-8) `std::remove_cvref_t<std::invoke_result_t<F>>`
+
+{/* source:cpp-utility-expected-and-then:0008 */}
+If `U` is not a specialization of `std::expected`, or `std::is_same_v<U::error_type, E>` is `false`, the program is ill-formed.
+
+{/* source:cpp-utility-expected-and-then:0009 */}
+1. 1,2) These overloads participate in overload resolution only if `std::is_constructible_v<E, decltype(error())>` is `true`.
+
+{/* source:cpp-utility-expected-and-then:0010 */}
+2. 3,4) These overloads participate in overload resolution only if `std::is_constructible_v<E, decltype(std::move(error()))>` is `true`.
+
+{/* source:cpp-utility-expected-and-then:0011 */}
+3. 5,6) These overloads participate in overload resolution only if `std::is_constructible_v<E, decltype(error())>` is `true`.
+
+{/* source:cpp-utility-expected-and-then:0012 */}
+4. 7,8) These overloads participate in overload resolution only if `std::is_constructible_v<E, decltype(std::move(error()))>` is `true`.
+
+### Parameters
+
+{/* source:cpp-utility-expected-and-then:0013 */}
+<ParameterList>
+  <Parameter name="f">a suitable function or [Callable](/docs/cpp/library/named_req/Callable) object that returns a `std::expected`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-expected-and-then:0014 */}
+| Overload | Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool): `true` | Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool): `false` |
+| --- | --- | --- |
+| [(1,2)](/docs/cpp/library/utility/expected/and_then#Version_1) | `std::invoke(std::forward<F>(f), val)` | `U(std::unexpect, error())` |
+| [(3,4)](/docs/cpp/library/utility/expected/and_then#Version_3) | `std::invoke(std::forward<F>(f),std::move(val))` | `U(std::unexpect, std::move(error()))` |
+| [(5,6)](/docs/cpp/library/utility/expected/and_then#Version_5) | `std::invoke(std::forward<F>(f))` | `U(std::unexpect, error())` |
+| [(7,8)](/docs/cpp/library/utility/expected/and_then#Version_7) | `std::invoke(std::forward<F>(f))` | `U(std::unexpect, std::move(error()))` |
+
+### Notes
+
+{/* source:cpp-utility-expected-and-then:0015 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_expected`](/docs/cpp/library/feature_test#cpp_lib_expected) | [`202211L`](/docs/cpp/library/compiler_support/23#cpp_lib_expected_202211L) | (C++23) | Monadic functions for `std::expected` |
+
+### Example
+
+{/* source:cpp-utility-expected-and-then:0016 */}
+This section is incomplete
+
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-utility-expected-and-then:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-expected-and-then:0018 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3938} standard="C++23">
+    <PublishedBehavior>the expected value was obtained by `value()` [1]</PublishedBehavior>
+    <CorrectedBehavior>changed to \*\*this</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3973} standard="C++23">
+    <PublishedBehavior>the expected value was obtained by \*\*this [2]</PublishedBehavior>
+    <CorrectedBehavior>changed to [`val`](/docs/cpp/library/utility/expected#Data_members)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-utility-expected-and-then:0019 */}
+1. ↑ [`value()`](/docs/cpp/library/utility/expected/value) requires `E` to be copy constructible (see [LWG issue 3843](https://cplusplus.github.io/LWG/issue3843)), where [`operator*`](/docs/cpp/library/utility/expected/operator_star_) does not.
+2. ↑ \*\*this can trigger [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+### See also
+
+{/* source:cpp-utility-expected-and-then:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unexpect` `unexpect_t`](/docs/cpp/library/utility/expected/unexpect_t) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>in-place construction tag for unexpected value in `expected` (tag)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform`](/docs/cpp/library/utility/expected/transform) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns an `expected` containing the transformed expected value if it exists; otherwise, returns the `expected` itself (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

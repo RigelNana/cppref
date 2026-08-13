@@ -1,0 +1,117 @@
+---
+title: "std::_Exit"
+description: "Causes normal program termination to occur without completely cleaning the resources."
+source_url: "https://en.cppreference.com/w/cpp/utility/program/_Exit"
+language: "C++"
+---
+{/* source:cpp-utility-program-exit:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+    <Declaration language="cpp" since="C++11" code={`[[noreturn]] void _Exit( int exit_code ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-program-exit:0001 */}
+Causes normal program termination to occur without completely cleaning the resources.
+
+{/* source:cpp-utility-program-exit:0002 */}
+Destructors of variables with automatic, thread local and static storage durations are not called. Functions passed to [`std::at_quick_exit()`](/docs/cpp/library/utility/program/at_quick_exit) or [`std::atexit()`](/docs/cpp/library/utility/program/atexit) are not called. Whether open resources such as files are closed is implementation defined.
+
+{/* source:cpp-utility-program-exit:0003 */}
+If `exit_code` is 0 or [`EXIT_SUCCESS`](/docs/cpp/library/utility/program/EXIT_status), an implementation-defined status indicating successful termination is returned to the host environment. If `exit_code` is [`EXIT_FAILURE`](/docs/cpp/library/utility/program/EXIT_status), an implementation-defined status, indicating unsuccessful termination, is returned. In other cases implementation-defined status value is returned.
+
+{/* source:cpp-utility-program-exit:0004 */}
+<Revision since="C++23">
+A freestanding implementation is required to provide `std::_Exit`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-utility-program-exit:0005 */}
+<ParameterList>
+  <Parameter name="exit_code">exit status of the program</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-program-exit:0006 */}
+(none)
+
+### Notes
+
+{/* source:cpp-utility-program-exit:0007 */}
+Although `_Exit` is required to be freestanding since C++23, it is not required to be available in a freestanding C implementation.
+
+### Example
+
+{/* source:cpp-utility-program-exit:0008 */}
+```cpp
+#include <iostream>
+ 
+class Static
+{
+public:
+    ~Static() 
+    {
+        std::cout << "Static dtor\n";
+    }
+};
+ 
+class Local
+{
+public:
+    ~Local() 
+    {
+        std::cout << "Local dtor\n";
+    }
+};
+ 
+Static static_variable; // dtor of this object will *not* be called
+ 
+void atexit_handler()
+{
+    std::cout << "atexit handler\n";
+}
+ 
+int main()
+{
+    Local local_variable; // dtor of this object will *not* be called
+ 
+    // handler will *not* be called
+    const int result = std::atexit(atexit_handler);
+ 
+    if (result != 0)
+    {
+        std::cerr << "atexit registration failed\n";
+        return EXIT_FAILURE;
+    }
+ 
+    std::cout << "test" << std::endl; // flush from std::endl
+        // needs to be here, otherwise nothing will be printed
+    std::_Exit(EXIT_FAILURE);
+}
+```
+
+Output:
+
+```text
+test
+```
+
+### See also
+
+{/* source:cpp-utility-program-exit:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`abort`](/docs/cpp/library/utility/program/abort)</DescriptionTerm>
+    <DescriptionBody>causes abnormal program termination (without cleaning up) (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exit`](/docs/cpp/library/utility/program/exit)</DescriptionTerm>
+    <DescriptionBody>causes normal program termination with cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/program/_Exit)</DescriptionTerm>
+    <DescriptionBody>for `_Exit`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,225 @@
+---
+title: "std::cmp_equal, cmp_not_equal, cmp_less, cmp_greater, cmp_less_equal, cmp_greater_equal"
+description: "Compare the values of two integers t and u. Unlike builtin comparison operators, negative signed integers always compare less than (and not equal to) unsigned integers: the comparison is safe against non-value-preserving integer conversion."
+source_url: "https://en.cppreference.com/w/cpp/utility/intcmp"
+language: "C++"
+---
+
+{/* source:cpp-utility-intcmp:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool cmp_equal( T t, U u ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool cmp_not_equal( T t, U u ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool cmp_less( T t, U u ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool cmp_greater( T t, U u ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool cmp_less_equal( T t, U u ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool cmp_greater_equal( T t, U u ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-intcmp:0001 */}
+Compare the values of two integers `t` and `u`. Unlike builtin comparison operators, negative signed integers always compare less than (and not equal to) unsigned integers: the comparison is safe against non-value-preserving integer conversion.
+
+{/* source:cpp-utility-intcmp:0002 */}
+```cpp
+-1 > 0u; // true
+std::cmp_greater(-1, 0u); // false
+```
+
+{/* source:cpp-utility-intcmp:0003 */}
+It is a compile-time error if either `T` or `U` is a non-[integer](/docs/cpp/language/basic_concepts/types#Integer_types) type, a character type, or `bool`.
+
+### Parameters
+
+{/* source:cpp-utility-intcmp:0004 */}
+<ParameterList>
+  <Parameter name="t">left-hand argument</Parameter>
+  <Parameter name="u">right-hand argument</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-intcmp:0005 */}
+1. 1) `true` if `t` is equal to `u`.
+
+{/* source:cpp-utility-intcmp:0006 */}
+2. 2) `true` if `t` is not equal to `u`.
+
+{/* source:cpp-utility-intcmp:0007 */}
+3. 3) `true` if `t` is less than `u`.
+
+{/* source:cpp-utility-intcmp:0008 */}
+4. 4) `true` if `t` is greater than `u`.
+
+{/* source:cpp-utility-intcmp:0009 */}
+5. 5) `true` if `t` is less or equal to `u`.
+
+{/* source:cpp-utility-intcmp:0010 */}
+6. 6) `true` if `t` is greater or equal to `u`.
+
+### Possible implementation
+
+{/* source:cpp-utility-intcmp:0011 */}
+```cpp
+template<class T, class U>
+constexpr bool cmp_equal(T t, U u) noexcept
+{
+    if constexpr (std::is_signed_v<T> == std::is_signed_v<U>)
+        return t == u;
+    else if constexpr (std::is_signed_v<T>)
+        return t >= 0 && std::make_unsigned_t<T>(t) == u;
+    else
+        return u >= 0 && std::make_unsigned_t<U>(u) == t;
+}
+ 
+template<class T, class U>
+constexpr bool cmp_not_equal(T t, U u) noexcept
+{
+    return !cmp_equal(t, u);
+}
+ 
+template<class T, class U>
+constexpr bool cmp_less(T t, U u) noexcept
+{
+    if constexpr (std::is_signed_v<T> == std::is_signed_v<U>)
+        return t < u;
+    else if constexpr (std::is_signed_v<T>)
+        return t < 0 || std::make_unsigned_t<T>(t) < u;
+    else
+        return u >= 0 && t < std::make_unsigned_t<U>(u);
+}
+ 
+template<class T, class U>
+constexpr bool cmp_greater(T t, U u) noexcept
+{
+    return cmp_less(u, t);
+}
+ 
+template<class T, class U>
+constexpr bool cmp_less_equal(T t, U u) noexcept
+{
+    return !cmp_less(u, t);
+}
+ 
+template<class T, class U>
+constexpr bool cmp_greater_equal(T t, U u) noexcept
+{
+    return !cmp_less(t, u);
+}
+```
+
+### Notes
+
+{/* source:cpp-utility-intcmp:0012 */}
+These functions cannot be used to compare [enums](/docs/cpp/language/declarations/enum) (including [`std::byte`](/docs/cpp/library/utility/types/byte)), `char`, `char8_t`, `char16_t`, `char32_t`, `wchar_t` and `bool`.
+
+{/* source:cpp-utility-intcmp:0013 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_integer_comparison_functions`](/docs/cpp/library/feature_test#cpp_lib_integer_comparison_functions) | [`202002L`](/docs/cpp/library/compiler_support/20#cpp_lib_integer_comparison_functions_202002L) | (C++20) | [Integer comparison functions](/docs/cpp/library/utility#Integer_comparison_functions) |
+
+### Example
+
+{/* source:cpp-utility-intcmp:0014 */}
+The example below might produce different signedness comparison warning if compiled without an appropriate warning suppression flag, e.g., `-Wno-sign-compare` (gcc/clang with `-Wall -Wextra`, see also [SO: disabling a specific warning](https://stackoverflow.com/questions/3378560)).
+
+```cpp
+#include <utility>
+ 
+// Uncommenting the next line will disable "signed/unsigned comparison" warnings:
+// #pragma GCC diagnostic ignored "-Wsign-compare"
+ 
+int main()
+{
+    static_assert(sizeof(int) == 4); // precondition
+ 
+    // Quite surprisingly
+    static_assert(-1 > 1U); //< warning: sign-unsign comparison
+    // because after implicit conversion of -1 to the RHS type (`unsigned int`)
+    // the expression is equivalent to:
+    static_assert(0xFFFFFFFFU > 1U);
+    static_assert(0xFFFFFFFFU == static_cast<unsigned>(-1));
+ 
+    // In contrast, the cmp_* family compares integers as most expected -
+    // negative signed integers always compare less than unsigned integers:
+    static_assert(std::cmp_less(-1, 1U));
+    static_assert(std::cmp_less_equal(-1, 1U));
+    static_assert(!std::cmp_greater(-1, 1U));
+    static_assert(!std::cmp_greater_equal(-1, 1U));
+ 
+    static_assert(-1 == 0xFFFFFFFFU); //< warning: sign-unsign comparison
+    static_assert(std::cmp_not_equal(-1, 0xFFFFFFFFU));
+}
+```
+
+### See also
+
+{/* source:cpp-utility-intcmp:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`equal_to`](/docs/cpp/library/utility/functional/equal_to)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x == y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`not_equal_to`](/docs/cpp/library/utility/functional/not_equal_to)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x != y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`less`](/docs/cpp/library/utility/functional/less)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x < y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`greater`](/docs/cpp/library/utility/functional/greater)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x > y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`less_equal`](/docs/cpp/library/utility/functional/less_equal)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x <= y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`greater_equal`](/docs/cpp/library/utility/functional/greater_equal)</DescriptionTerm>
+    <DescriptionBody>function object implementing `x >= y` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::equal_to`](/docs/cpp/library/utility/functional/ranges/equal_to) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x == y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::not_equal_to`](/docs/cpp/library/utility/functional/ranges/not_equal_to) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x != y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::less`](/docs/cpp/library/utility/functional/ranges/less) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x < y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::greater`](/docs/cpp/library/utility/functional/ranges/greater) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x > y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::less_equal`](/docs/cpp/library/utility/functional/ranges/less_equal) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x <= y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::greater_equal`](/docs/cpp/library/utility/functional/ranges/greater_equal) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x >= y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare_three_way`](/docs/cpp/library/utility/functional/compare_three_way) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constrained function object implementing `x <=> y` (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_range`](/docs/cpp/library/utility/in_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if an integer value is in the range of a given integer type (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`numeric_limits`](/docs/cpp/library/utility/types/numeric_limits)</DescriptionTerm>
+    <DescriptionBody>provides an interface to query properties of all fundamental numeric types (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

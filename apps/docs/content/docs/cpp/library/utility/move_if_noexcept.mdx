@@ -1,0 +1,109 @@
+---
+title: "std::move_if_noexcept"
+description: "std::move_if_noexcept obtains an rvalue reference to its argument if its move constructor does not throw exceptions or if there is no copy constructor (move-only type), otherwise obtains an lvalue reference to its argument."
+source_url: "https://en.cppreference.com/w/cpp/utility/move_if_noexcept"
+language: "C++"
+---
+
+{/* source:cpp-utility-move-if-noexcept:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+/* see below */ move_if_noexcept( T& x ) noexcept;`} />
+  (constexpr since C++14)
+</DeclarationDoc>
+
+{/* source:cpp-utility-move-if-noexcept:0001 */}
+`std::move_if_noexcept` obtains an rvalue reference to its argument if its move constructor does not throw exceptions or if there is no copy constructor (move-only type), otherwise obtains an lvalue reference to its argument. It is typically used to combine move semantics with strong exception guarantee.
+
+{/* source:cpp-utility-move-if-noexcept:0002 */}
+The return type of `std::move_if_noexcept` is:
+
+{/* source:cpp-utility-move-if-noexcept:0003 */}
+- `T&&` if `std::is_nothrow_move_constructible<T>::value || !std::is_copy_constructible<T>::value` is `true`. Otherwise, `const T&`.
+
+### Parameters
+
+{/* source:cpp-utility-move-if-noexcept:0004 */}
+<ParameterList>
+  <Parameter name="x">the object to be moved or copied</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-move-if-noexcept:0005 */}
+`std::move(x)` or `x`, depending on exception guarantees.
+
+### Complexity
+
+{/* source:cpp-utility-move-if-noexcept:0006 */}
+Constant.
+
+### Notes
+
+{/* source:cpp-utility-move-if-noexcept:0007 */}
+This is used, for example, by [`std::vector::resize`](/docs/cpp/library/container/vector/resize), which may have to allocate new storage and then move or copy elements from old storage to new storage. If an exception occurs during this operation, [`std::vector::resize`](/docs/cpp/library/container/vector/resize) undoes everything it did to this point, which is only possible if `std::move_if_noexcept` was used to decide whether to use move construction or copy construction (unless copy constructor is not available, in which case move constructor is used either way and the strong exception guarantee may be waived).
+
+### Example
+
+{/* source:cpp-utility-move-if-noexcept:0008 */}
+```cpp
+#include <iostream>
+#include <utility>
+ 
+struct Bad
+{
+    Bad() {}
+    Bad(Bad&&) // may throw
+    {
+        std::cout << "Throwing move constructor called\n";
+    }
+    Bad(const Bad&) // may throw as well
+    {
+        std::cout << "Throwing copy constructor called\n";
+    }
+};
+ 
+struct Good
+{
+    Good() {}
+    Good(Good&&) noexcept // will NOT throw
+    {
+        std::cout << "Non-throwing move constructor called\n";
+    }
+    Good(const Good&) noexcept // will NOT throw
+    {
+        std::cout << "Non-throwing copy constructor called\n";
+    }
+};
+ 
+int main()
+{
+    Good g;
+    Bad b;
+    [[maybe_unused]] Good g2 = std::move_if_noexcept(g);
+    [[maybe_unused]] Bad b2 = std::move_if_noexcept(b);
+}
+```
+
+Output:
+
+```text
+Non-throwing move constructor called
+Throwing copy constructor called
+```
+
+### See also
+
+{/* source:cpp-utility-move-if-noexcept:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward`](/docs/cpp/library/utility/forward) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>forwards a function argument and use the type template argument to preserve its value category (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move`](/docs/cpp/library/utility/move) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts the argument to an xvalue (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

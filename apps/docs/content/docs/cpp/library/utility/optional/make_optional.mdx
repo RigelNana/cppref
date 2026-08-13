@@ -1,0 +1,98 @@
+---
+title: "std::make_optional"
+description: "Creates an optional object from value. Effectively calls std::optional<std::decay_t<T>>(std::forward<T>(value))."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/make_optional"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-make-optional:0000 */}
+<DeclarationDoc>
+Defined in header [`<optional>`](/docs/cpp/library/headers/optional)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class T >
+constexpr std::optional<std::decay_t<T>> make_optional( T&& value );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Args >
+constexpr std::optional<T> make_optional( Args&&... args );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class T, class U, class... Args >
+constexpr std::optional<T> make_optional( std::initializer_list<U> il,
+
+                                          Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-make-optional:0001 */}
+1. 1) Creates an optional object from `value`. Effectively calls `std::optional<std::decay_t<T>>(std::forward<T>(value))`.
+
+{/* source:cpp-utility-optional-make-optional:0002 */}
+2. 2) Creates an optional object constructed in-place from `args...`. Equivalent to `return std::optional<T>(std::in_place, std::forward<Args>(args)...);`. This overload participates in overload resolution only if `std::is_constructible_v<T, Args...>` is `true`.
+
+{/* source:cpp-utility-optional-make-optional:0003 */}
+3. 3) Creates an optional object constructed in-place from `il` and `args...`. Equivalent to `return std::optional<T>(std::in_place, il, std::forward<Args>(args)...);`. This overload participates in overload resolution only if `std::is_constructible_v<T, std::initializer_list<U>&, Args...>` is `true`.
+
+### Parameters
+
+{/* source:cpp-utility-optional-make-optional:0004 */}
+<ParameterList>
+  <Parameter name="value">the value to construct optional object with</Parameter>
+  <Parameter name="il, args">arguments to be passed to the constructor of `T`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-optional-make-optional:0005 */}
+The constructed optional object.
+
+### Exceptions
+
+{/* source:cpp-utility-optional-make-optional:0006 */}
+Throws any exception thrown by the constructor of `T`.
+
+### Notes
+
+{/* source:cpp-utility-optional-make-optional:0007 */}
+`T` need not be movable for overloads ([2,3](/docs/cpp/library/utility/optional/make_optional#Version_2)) due to guaranteed copy elision.
+
+### Example
+
+{/* source:cpp-utility-optional-make-optional:0008 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <optional>
+#include <string>
+#include <vector>
+ 
+int main()
+{
+    auto op1 = std::make_optional<std::vector<char>>({'a','b','c'});
+    std::cout << "op1: ";
+    for (char c : op1.value())
+        std::cout << c << ',';
+    auto op2 = std::make_optional<std::vector<int>>(5, 2);
+    std::cout << "\nop2: ";
+    for (int i : *op2)
+        std::cout << i << ',';
+    std::string str{"hello world"};
+    auto op3 = std::make_optional<std::string>(std::move(str));
+    std::cout << "\nop3: " << std::quoted(op3.value_or("empty value")) << '\n';
+    std::cout << "str: " << std::quoted(str) << '\n';
+}
+```
+
+Possible output:
+
+```text
+op1: a,b,c,
+op2: 2,2,2,2,2,
+op3: "hello world"
+str: ""
+```
+
+### See also
+
+{/* source:cpp-utility-optional-make-optional:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/optional/optional)</DescriptionTerm>
+    <DescriptionBody>constructs the optional object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

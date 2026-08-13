@@ -1,0 +1,93 @@
+---
+title: "std::get_if (std::variant)"
+description: "Obtains a pointer to the value of a pointed-to variant given the index or the type (if unique), returns null on error."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/get_if"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-get-if:0000 */}
+<DeclarationDoc>
+Defined in header [`<variant>`](/docs/cpp/library/headers/variant)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< std::size_t I, class... Types >
+constexpr std::add_pointer_t<std::variant_alternative_t<I, std::variant<Types...>>>
+
+    get_if( std::variant<Types...>* pv ) noexcept;`} />
+  <Declaration id="1" language="cpp" since="C++17" code={`template< std::size_t I, class... Types >
+constexpr std::add_pointer_t<const std::variant_alternative_t<I, std::variant<Types...>>>
+
+    get_if( const std::variant<Types...>* pv ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Types >
+constexpr std::add_pointer_t<T>
+
+    get_if( std::variant<Types...>* pv ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Types >
+constexpr std::add_pointer_t<const T>
+
+    get_if( const std::variant<Types...>* pv ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-get-if:0001 */}
+1) Index-based non-throwing accessor: If `pv` is not a null pointer and `pv->index() == I`, returns a pointer to the value stored in the variant pointed to by `pv`. Otherwise, returns a null pointer value. The call is ill-formed if `I` is not a valid index in the variant.
+
+{/* source:cpp-utility-variant-get-if:0002 */}
+2) Type-based non-throwing accessor: Equivalent to (1) with `I` being the zero-based index of `T` in `Types...`. The call is ill-formed if `T` is not a unique element of `Types...`.
+
+### Template parameters
+
+{/* source:cpp-utility-variant-get-if:0003 */}
+<ParameterList>
+  <Parameter name="I">index to look up</Parameter>
+  <Parameter name="Type">unique type to look up</Parameter>
+</ParameterList>
+
+### Parameters
+
+{/* source:cpp-utility-variant-get-if:0004 */}
+<ParameterList>
+  <Parameter name="pv">pointer to a variant</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-variant-get-if:0005 */}
+Pointer to the value stored in the pointed-to variant or null pointer on error.
+
+### Example
+
+{/* source:cpp-utility-variant-get-if:0006 */}
+```cpp
+#include <iostream>
+#include <variant>
+ 
+int main()
+{
+    auto check_value = [](const std::variant<int, float>& v)
+    {
+        if (const int* pval = std::get_if<int>(&v))
+            std::cout << "variant value: " << *pval << '\n';
+        else
+            std::cout << "failed to get value!" << '\n';
+    };
+ 
+    std::variant<int, float> v{12}, w{3.f};
+    check_value(v);
+    check_value(w);
+}
+```
+Output:
+
+```text
+variant value: 12
+failed to get value!
+```
+
+### See also
+
+{/* source:cpp-utility-variant-get-if:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::variant)`](/docs/cpp/library/utility/variant/get) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>reads the value of the variant given the index or the type (if the type is unique), throws on error (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,75 @@
+---
+title: "std::variant<Types...>::~variant"
+description: "If valueless_by_exception() is true, does nothing. Otherwise, destroys the currently contained object."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/~variant"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-variant:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`~variant();`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-variant:0001 */}
+If [`valueless_by_exception()`](/docs/cpp/library/utility/variant/valueless_by_exception) is `true`, does nothing. Otherwise, destroys the currently contained object.
+
+{/* source:cpp-utility-variant-variant:0002 */}
+This destructor is trivial if `std::is_trivially_destructible_v<T_i>` is `true` for all `T_i` in `Types...`.
+
+### Notes
+
+{/* source:cpp-utility-variant-variant:0003 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_variant`](/docs/cpp/library/feature_test#cpp_lib_variant) | [`202106L`](/docs/cpp/library/compiler_support/20#cpp_lib_variant_202106L) | (C++20) (DR) | Fully `constexpr` `std::variant` |
+
+### Example
+
+{/* source:cpp-utility-variant-variant:0004 */}
+```cpp
+#include <cstdio>
+#include <variant>
+ 
+int main()
+{
+    struct X { ~X() { puts("X::~X();"); } };
+    struct Y { ~Y() { puts("Y::~Y();"); } };
+ 
+    {
+        puts("entering block #1");
+        std::variant<X,Y> var;
+        puts("leaving block #1");
+    }
+ 
+    {
+        puts("entering block #2");
+        std::variant<X,Y> var{ std::in_place_index_t<1>{} }; // constructs var(Y)
+        puts("leaving block #2");
+    }
+}
+```
+
+Output:
+
+```text
+entering block #1
+leaving block #1
+X::~X();
+entering block #2
+leaving block #2
+Y::~Y();
+```
+
+### Defect reports
+
+{/* source:cpp-utility-variant-variant:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-variant-variant:0006 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2231R1" standard="C++20">
+    <PublishedBehavior>the destructor was not `constexpr` while non-trivial destructors can be `constexpr` in C++20</PublishedBehavior>
+    <CorrectedBehavior>made `constexpr`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

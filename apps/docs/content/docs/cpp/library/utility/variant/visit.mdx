@@ -1,0 +1,114 @@
+---
+title: "std::variant<Types...>::visit"
+description: "Applies the visitor vis (a Callable that can be called with any combination of types from the variant) to the variant held by self."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/visit"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-visit:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class Self, class Visitor >
+constexpr decltype(auto) visit( this Self&& self, Visitor&& vis );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class R, class Self, class Visitor >
+constexpr R visit( this Self&& self, Visitor&& vis );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-visit:0001 */}
+Applies the visitor `vis` (a [Callable](/docs/cpp/library/named_req/Callable) that can be called with any combination of types from the variant) to the variant held by `self`.
+
+{/* source:cpp-utility-variant-visit:0002 */}
+Given type `V` as `decltype(std::forward_like<Self>(std::declval<variant>()))`, the equivalent call is:
+
+{/* source:cpp-utility-variant-visit:0003 */}
+1. 1) `return std::visit(std::forward<Visitor>(vis), (V) self);`.
+
+{/* source:cpp-utility-variant-visit:0004 */}
+2. 2) `return std::visit<R>(std::forward<Visitor>(vis), (V) self);`.
+
+### Parameters
+
+{/* source:cpp-utility-variant-visit:0005 */}
+<ParameterList>
+  <Parameter name="vis">a [Callable](/docs/cpp/library/named_req/Callable) that accepts every possible alternative from the variant</Parameter>
+  <Parameter name="self">variant to pass to the visitor</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-variant-visit:0006 */}
+1. 1) The result of the `std::visit` invocation.
+
+{/* source:cpp-utility-variant-visit:0007 */}
+2. 2) Nothing if `R` is (possibly cv-qualified) `void`; otherwise the result of the `std::visit<R>` invocation.
+
+### Exceptions
+
+{/* source:cpp-utility-variant-visit:0008 */}
+Only throws if the call to `std::visit` throws.
+
+### Notes
+
+{/* source:cpp-utility-variant-visit:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_variant`](/docs/cpp/library/feature_test#cpp_lib_variant) | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_lib_variant_202306L) | (C++26) | member `visit` |
+
+### Example
+
+{/* source:cpp-utility-variant-visit:0010 */}
+```cpp
+#include <print>
+#include <string>
+#include <string_view>
+#include <variant>
+ 
+struct Base {};
+struct Derived : Base {};
+ 
+// helper type for the visitor
+template<class... Ts>
+struct overloads : Ts... { using Ts::operator()...; };
+ 
+// the variant to visit
+using var_t = std::variant<int, std::string, Derived>;
+ 
+int main()
+{
+    const auto visitor = overloads
+    {
+        [](int i){ std::print("int = {}\n", i); },
+        [](std::string_view s){ std::println("string = “{}”", s); },
+        [](const Base&){ std::println("base"); }
+    };
+ 
+    const var_t var1 = 42, var2 = "abc", var3 = Derived();
+ 
+#if (__cpp_lib_variant >= 202306L)
+    var1.visit(visitor);
+    var2.visit(visitor);
+    var3.visit(visitor);
+#else
+    std::visit(visitor, var1);
+    std::visit(visitor, var2);
+    std::visit(visitor, var3);
+#endif
+}
+```
+
+Output:
+
+```text
+int = 42
+string = “abc”
+base
+```
+
+### See also
+
+{/* source:cpp-utility-variant-visit:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`visit`](/docs/cpp/library/utility/variant/visit2) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>calls the provided functor with the arguments held by one or more variants (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

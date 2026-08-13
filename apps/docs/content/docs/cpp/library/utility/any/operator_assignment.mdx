@@ -1,0 +1,114 @@
+---
+title: "std::any::operator="
+description: "Assigns contents to the contained value."
+source_url: "https://en.cppreference.com/w/cpp/utility/any/operator_assignment"
+language: "C++"
+---
+
+{/* source:cpp-utility-any-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`any& operator=( const any& rhs );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`any& operator=( any&& rhs ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< typename ValueType >
+any& operator=( ValueType&& rhs );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-any-operator:0001 */}
+Assigns contents to the contained value.
+
+{/* source:cpp-utility-any-operator:0002 */}
+1. 1) Assigns by copying the state of `rhs`, as if by `std::any(rhs).swap(*this)`.
+
+{/* source:cpp-utility-any-operator:0003 */}
+2. 2) Assigns by moving the state of `rhs`, as if by `std::any(std::move(rhs)).swap(*this)`. `rhs` is left in a valid but unspecified state after the assignment.
+
+{/* source:cpp-utility-any-operator:0004 */}
+3. 3) Assigns the type and value of `rhs`, as if by `std::any(std::forward<ValueType>(rhs)).swap(*this)`. This overload participates in overload resolution only if `std::decay_t<ValueType>` is not the same type as [`std::any`](/docs/cpp/library/utility/any) and `std::is_copy_constructible_v<std::decay_t<ValueType>>` is `true`.
+
+### Template parameters
+
+{/* source:cpp-utility-any-operator:0005 */}
+<ParameterList>
+  <Parameter name="ValueType">contained value type</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `std::decay_t<ValueType>` must meet the requirements of [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible).
+
+### Parameters
+
+{/* source:cpp-utility-any-operator:0006 */}
+<ParameterList>
+  <Parameter name="rhs">object whose contained value to assign</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-any-operator:0007 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-utility-any-operator:0008 */}
+1. 1,3) Throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) or any exception thrown by the constructor of the contained type. If an exception is thrown for any reason, these functions have no effect ([strong exception safety guarantee](/docs/cpp/language/exceptions#Exception_safety)).
+
+### Example
+
+{/* source:cpp-utility-any-operator:0009 */}
+```cpp
+#include <any>
+#include <cassert>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <typeinfo>
+ 
+int main()
+{
+    using namespace std::string_literals;
+    std::string cat{"cat"};
+ 
+    std::any a1{42};
+    std::any a2{cat};
+    assert(a1.type() == typeid(int));
+    assert(a2.type() == typeid(std::string));
+ 
+    a1 = a2; // overload (1)
+    assert(a1.type() == typeid(std::string));
+    assert(a2.type() == typeid(std::string));
+    assert(std::any_cast<std::string&>(a1) == cat);
+    assert(std::any_cast<std::string&>(a2) == cat);
+ 
+    a1 = 96; // overload (3)
+    a2 = "dog"s; // overload (3)
+    a1 = std::move(a2); // overload (2)
+    assert(a1.type() == typeid(std::string));
+    assert(std::any_cast<std::string&>(a1) == "dog");
+    // The state of a2 is valid but unspecified. In fact,
+    // it is void in gcc/clang and std::string in msvc.
+    std::cout << "a2.type(): " << std::quoted(a2.type().name()) << '\n';
+ 
+    a1 = std::move(cat); // overload (3)
+    assert(*std::any_cast<std::string>(&a1) == "cat");
+    // The state of cat is valid but indeterminate:
+    std::cout << "cat: " << std::quoted(cat) << '\n';
+}
+```
+
+Possible output:
+
+```text
+a2.type(): "void"
+cat: ""
+```
+
+### See also
+
+{/* source:cpp-utility-any-operator:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/any/any)</DescriptionTerm>
+    <DescriptionBody>constructs an `any` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

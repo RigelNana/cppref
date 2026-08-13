@@ -1,0 +1,114 @@
+---
+title: "std::piecewise_construct, std::piecewise_construct_t"
+description: "std::piecewise_construct_t is an empty class tag type used to disambiguate between different functions that take two tuple arguments."
+source_url: "https://en.cppreference.com/w/cpp/utility/piecewise_construct"
+language: "C++"
+---
+
+{/* source:cpp-utility-piecewise-construct:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration id="1" language="cpp" code={`struct piecewise_construct_t { explicit piecewise_construct_t() = default; };`} />
+  (since C++11)
+  <Declaration id="2" language="cpp" code={`constexpr std::piecewise_construct_t piecewise_construct{};`} />
+  (since C++11)
+  (inline since C++17)
+</DeclarationDoc>
+
+{/* source:cpp-utility-piecewise-construct:0001 */}
+1) `std::piecewise_construct_t` is an empty class tag type used to disambiguate between different functions that take two tuple arguments.
+
+{/* source:cpp-utility-piecewise-construct:0002 */}
+2) The constant `std::piecewise_construct` is an instance of (1).
+
+{/* source:cpp-utility-piecewise-construct:0003 */}
+The overloads that do not use `std::piecewise_construct_t` assume that each tuple argument becomes the element of a pair. The overloads that use `std::piecewise_construct_t` assume that each tuple argument is used to construct, piecewise, a new object of specified type, which will become the element of the pair.
+
+### Standard library
+
+{/* source:cpp-utility-piecewise-construct:0004 */}
+The following standard library types and functions use it as a disambiguation tag:
+
+{/* source:cpp-utility-piecewise-construct:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pair`](/docs/cpp/library/utility/pair)</DescriptionTerm>
+    <DescriptionBody>implements binary tuple, i.e. a pair of values (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uses_allocator_construction_args`](/docs/cpp/library/memory/uses_allocator_construction_args) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>prepares the argument list matching the flavor of uses-allocator construction required by the given type (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::repeat_view`, `views::repeat`](/docs/cpp/library/ranges/repeat_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [view](/docs/cpp/library/ranges/view) consisting of a generated sequence by repeatedly producing the same value (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-utility-piecewise-construct:0006 */}
+```cpp
+#include <iostream>
+#include <tuple>
+#include <utility>
+ 
+struct Foo
+{
+    Foo(std::tuple<int, float>)
+    {
+        std::cout << "Constructed a Foo from a tuple\n";
+    }
+ 
+    Foo(int, float)
+    {
+        std::cout << "Constructed a Foo from an int and a float\n";
+    }
+};
+ 
+int main()
+{
+    std::tuple<int, float> t(1, 3.14);
+ 
+    std::cout << "Creating p1...\n";
+    std::pair<Foo, Foo> p1(t, t);
+ 
+    std::cout << "Creating p2...\n";
+    std::pair<Foo, Foo> p2(std::piecewise_construct, t, t);
+}
+```
+
+Output:
+
+```text
+Creating p1...
+Constructed a Foo from a tuple
+Constructed a Foo from a tuple
+Creating p2...
+Constructed a Foo from an int and a float
+Constructed a Foo from an int and a float
+```
+
+### Defect reports
+
+{/* source:cpp-utility-piecewise-construct:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-piecewise-construct:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2510} standard="C++11">
+    <PublishedBehavior>the default constructor was non-explicit, which could lead to ambiguity</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-piecewise-construct:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/pair/pair)</DescriptionTerm>
+    <DescriptionBody>constructs new pair (public member function of `std::pair<T1,T2>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

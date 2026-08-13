@@ -1,0 +1,92 @@
+---
+title: "std::function<R(Args...)>::target"
+description: "Returns a pointer to the stored callable function target."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/function/target"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-function-target:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T > 
+T* target() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T > 
+const T* target() const noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-function-target:0001 */}
+Returns a pointer to the stored callable function target.
+
+### Parameters
+
+{/* source:cpp-utility-functional-function-target:0002 */}
+(none)
+
+### Return value
+
+{/* source:cpp-utility-functional-function-target:0003 */}
+A pointer to the stored function if `target_type() == typeid(T)`, otherwise a null pointer.
+
+### Example
+
+{/* source:cpp-utility-functional-function-target:0004 */}
+```cpp
+#include <functional>
+#include <iostream>
+ 
+int f(int, int) { return 1; }
+int g(int, int) { return 2; }
+void test(std::function<int(int, int)> const& arg)
+{
+    std::cout << "test function: ";
+    if (arg.target<std::plus<int>>())
+        std::cout << "it is plus\n";
+    if (arg.target<std::minus<int>>())
+        std::cout << "it is minus\n";
+ 
+    int (*const* ptr)(int, int) = arg.target<int(*)(int, int)>();
+    if (ptr && *ptr == f)
+        std::cout << "it is the function f\n";
+    if (ptr && *ptr == g)
+        std::cout << "it is the function g\n";
+}
+ 
+int main()
+{
+    test(std::function<int(int, int)>(std::plus<int>()));
+    test(std::function<int(int, int)>(std::minus<int>()));
+    test(std::function<int(int, int)>(f));
+    test(std::function<int(int, int)>(g));
+}
+```
+
+Output:
+
+```text
+test function: it is plus
+test function: it is minus
+test function: it is the function f
+test function: it is the function g
+```
+
+### Defect reports
+
+{/* source:cpp-utility-functional-function-target:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-functional-function-target:0006 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2591} standard="C++11">
+    <PublishedBehavior>the behavior is undefined if `T` is not [*Callable*](/docs/cpp/library/named_req/Callable)</PublishedBehavior>
+    <CorrectedBehavior>behavior is defined (always returns `nullptr`)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-functional-function-target:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`target_type`](/docs/cpp/library/utility/functional/function/target_type)</DescriptionTerm>
+    <DescriptionBody>obtains the `typeid` of the stored target (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

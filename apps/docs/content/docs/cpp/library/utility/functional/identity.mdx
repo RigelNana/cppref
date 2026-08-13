@@ -1,0 +1,126 @@
+---
+title: "std::identity"
+description: "std::identity is a function object type whose operator() returns its argument unchanged."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/identity"
+language: "C++"
+---
+{/* source:cpp-utility-functional-identity:0000 */}
+<DeclarationDoc>
+Defined in header [`<functional>`](/docs/cpp/library/headers/functional)
+
+  <Declaration language="cpp" since="C++20" code={`struct identity;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-identity:0001 */}
+`std::identity` is a function object type whose `operator()` returns its argument unchanged.
+
+### Member types
+
+{/* source:cpp-utility-functional-identity:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`is_transparent`</DescriptionTerm>
+    <DescriptionBody>[`unspecified`](/docs/cpp/library/utility/functional#Transparent_function_objects)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-utility-functional-identity:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`</DescriptionTerm>
+    <DescriptionBody>returns the argument unchanged (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-functional-identity:0004 */}
+## std::identity::operator()
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class T >
+constexpr T&& operator()( T&& t ) const noexcept;`} />
+</DeclarationDoc>
+
+Returns `std::forward<T>(t)`.
+
+### Parameters
+
+<ParameterList>
+  <Parameter name="t">argument to return</Parameter>
+</ParameterList>
+
+### Return value
+
+`std::forward<T>(t)`.
+
+### Notes
+
+{/* source:cpp-utility-functional-identity:0005 */}
+`std::identity` serves as the default projection in [constrained algorithms](/docs/cpp/library/algorithm/ranges). Its direct usage is usually not needed.
+
+### Example
+
+{/* source:cpp-utility-functional-identity:0006 */}
+```cpp
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <ranges>
+#include <string>
+ 
+struct Pair
+{
+    int n;
+    std::string s;
+    friend std::ostream& operator<<(std::ostream& os, const Pair& p)
+    {
+        return os << '{' << p.n << ", " << p.s << '}';
+    }
+};
+ 
+// A range-printer that can print projected (modified) elements of a range.
+template<std::ranges::input_range R,
+         typename Projection = std::identity> //<- Notice the default projection
+void print(std::string_view const rem, R&& range, Projection projection = {})
+{
+    std::cout << rem << '{';
+    std::ranges::for_each(
+        range,
+        [O = 0](const auto& o) mutable { std::cout << (O++ ? ", " : "") << o; },
+        projection
+    );
+    std::cout << "}\n";
+}
+ 
+int main()
+{
+    const auto v = {Pair{1, "one"}, {2, "two"}, {3, "three"}};
+ 
+    print("Print using std::identity as a projection: ", v);
+    print("Project the Pair::n: ", v, &Pair::n);
+    print("Project the Pair::s: ", v, &Pair::s);
+    print("Print using custom closure as a projection: ", v,
+        [](Pair const& p) { return std::to_string(p.n) + ':' + p.s; });
+}
+```
+
+Output:
+
+```text
+Print using std::identity as a projection: {{1, one}, {2, two}, {3, three}}
+Project the Pair::n: {1, 2, 3}
+Project the Pair::s: {one, two, three}
+Print using custom closure as a projection: {1:one, 2:two, 3:three}
+```
+
+### See also
+
+{/* source:cpp-utility-functional-identity:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`type_identity`](/docs/cpp/library/meta/type_identity) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the type argument unchanged (class template)</DescriptionBody>
+  </DescriptionItem>
+
+</DescriptionList>

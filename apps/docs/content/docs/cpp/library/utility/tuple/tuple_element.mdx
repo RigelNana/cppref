@@ -1,0 +1,131 @@
+---
+title: "std::tuple_element<std::tuple>"
+description: "Provides compile-time indexed access to the types of the elements of the tuple."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/tuple_element"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-tuple-element:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration language="cpp" since="C++11" code={`template< std::size_t I, class... Types >
+struct tuple_element< I, std::tuple<Types...> >;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-tuple-element:0001 */}
+Provides compile-time indexed access to the types of the elements of the tuple.
+
+### Member types
+
+{/* source:cpp-utility-tuple-tuple-element:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the type of `I` th element of the tuple, where `I` is in [`0`, `sizeof...(Types)`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-utility-tuple-tuple-element:0003 */}
+```cpp
+template<std::size_t I, class T>
+struct tuple_element;
+ 
+#ifndef __cpp_pack_indexing
+// recursive case
+template<std::size_t I, class Head, class... Tail>
+struct tuple_element<I, std::tuple<Head, Tail...>>
+    : std::tuple_element<I - 1, std::tuple<Tail...>>
+{ };
+ 
+// base case
+template<class Head, class... Tail>
+struct tuple_element<0, std::tuple<Head, Tail...>>
+{
+    using type = Head;
+};
+ 
+#else
+// C++26 implementation using pack indexing
+template<std::size_t I, class... Ts>
+struct tuple_element<I, std::tuple<Ts...>>
+{
+    using type = Ts...[I];
+};
+#endif
+```
+
+### Example
+
+{/* source:cpp-utility-tuple-tuple-element:0004 */}
+```cpp
+#include <boost/type_index.hpp>
+#include <cstddef>
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <utility>
+ 
+template<typename TupleLike, std::size_t I = 0>
+void printTypes()
+{
+    if constexpr (I == 0)
+        std::cout << boost::typeindex::type_id_with_cvr<TupleLike>() << '\n';
+ 
+    if constexpr (I < std::tuple_size_v<TupleLike>)
+    {
+        using SelectedType = std::tuple_element_t<I, TupleLike>;
+ 
+        std::cout << "  The type at index " << I << " is: "
+                  << boost::typeindex::type_id_with_cvr<SelectedType>() << '\n';
+        printTypes<TupleLike, I + 1>();
+    }
+}
+ 
+struct MyStruct {};
+ 
+using MyTuple = std::tuple<int, long&, const char&, bool&&,
+                           std::string, volatile MyStruct>;
+ 
+using MyPair = std::pair<char, bool&&>;
+ 
+static_assert(std::is_same_v<std::tuple_element_t<0, MyPair>, char>);
+static_assert(std::is_same_v<std::tuple_element_t<1, MyPair>, bool&&>);
+ 
+int main()
+{
+    printTypes<MyTuple>();
+    printTypes<MyPair>();
+}
+```
+
+Possible output:
+
+```text
+std::tuple<int, long&, char const&, bool&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, MyStruct volatile>
+  The type at index 0 is: int
+  The type at index 1 is: long&
+  The type at index 2 is: char const&
+  The type at index 3 is: bool&&
+  The type at index 4 is: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >
+  The type at index 5 is: MyStruct volatile
+std::pair<char, bool&&>
+  The type at index 0 is: char
+  The type at index 1 is: bool&&
+```
+
+### See also
+
+{/* source:cpp-utility-tuple-tuple-element:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[Structured binding](/docs/cpp/language/declarations/structured_binding) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>binds the specified names to sub-objects or tuple elements of the initializer</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple_element`](/docs/cpp/library/utility/tuple_element) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the element types of a tuple-like type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

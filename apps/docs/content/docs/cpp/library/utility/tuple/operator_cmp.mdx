@@ -1,0 +1,241 @@
+---
+title: "operator==,!=,<,<=,>,>=,<=>(std::tuple)"
+description: "Compares every element of the tuple lhs with the corresponding element of the tuple rhs."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-operator-cmp:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class... TTypes, class... UTypes >
+bool operator==( const std::tuple<TTypes...>& lhs,
+
+                 const std::tuple<UTypes...>& rhs );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++11" until="C++20" code={`template< class... TTypes, class... UTypes >
+bool operator!=( const std::tuple<TTypes...>& lhs,
+
+                 const std::tuple<UTypes...>& rhs );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="3" language="cpp" since="C++11" until="C++20" code={`template< class... TTypes, class... UTypes >
+bool operator<( const std::tuple<TTypes...>& lhs,
+
+                const std::tuple<UTypes...>& rhs );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="4" language="cpp" since="C++11" until="C++20" code={`template< class... TTypes, class... UTypes >
+bool operator<=( const std::tuple<TTypes...>& lhs,
+
+                 const std::tuple<UTypes...>& rhs );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="5" language="cpp" since="C++11" until="C++20" code={`template< class... TTypes, class... UTypes >
+bool operator>( const std::tuple<TTypes...>& lhs,
+
+                const std::tuple<UTypes...>& rhs );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="6" language="cpp" since="C++11" until="C++20" code={`template< class... TTypes, class... UTypes >
+bool operator>=( const std::tuple<TTypes...>& lhs,
+
+                 const std::tuple<UTypes...>& rhs );`} />
+  <InlineRevision since="C++14">constexpr</InlineRevision>
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class... TTypes, class... UTypes >
+constexpr std::common_comparison_category_t<
+    synth-three-way-result<TTypes, Elems>...>
+    operator<=>( const std::tuple<TTypes...>& lhs,
+
+                 const std::tuple<UTypes...>& rhs );`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class... TTypes, tuple-like UTuple >
+constexpr bool operator==( const tuple<TTypes...>& lhs, const UTuple& rhs );`} />
+  <Declaration id="9" language="cpp" since="C++23" code={`template< class... TTypes, tuple-like UTuple >
+constexpr std::common_comparison_category_t<
+    synth-three-way-result<TTypes, /* Elems */>...>
+
+    operator<=>( const tuple<TTypes...>& lhs, const UTuple& rhs );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-operator-cmp:0001 */}
+1. 1,2) Compares every element of the tuple `lhs` with the corresponding element of the tuple `rhs` by `operator==`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0002 */}
+   1. 1) Returns `true` if all pairs of corresponding elements are equal.
+
+{/* source:cpp-utility-tuple-operator-cmp:0003 */}
+   2. 2) Returns `!(lhs == rhs)`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0004 */}
+<Revision until="C++26">
+If `sizeof...(TTypes)` does not equal `sizeof...(UTypes)`, or `std::get<i>(lhs) == std::get<i>(rhs)` is not a valid expression for any `i` in [0, `sizeof...(Types)`), the program is ill-formed.
+</Revision>
+
+<Revision since="C++26">
+If the type and value category of `std::get<i>(lhs) == std::get<i>(rhs)` do not meet the [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable) requirements for any `i` in [0, `sizeof...(Types)`), the behavior is undefined.
+
+This overload participates in overload resolution only if `sizeof...(TTypes)` equals `sizeof...(UTypes)`, `std::get<i>(lhs) == std::get<i>(rhs)` is a valid expression and `decltype(std::get<i>(lhs) == std::get<i>(rhs))` model [boolean-testable](/docs/cpp/library/concepts/boolean-testable) for every `i` in [0, `sizeof...(Types)`).
+</Revision>
+
+{/* source:cpp-utility-tuple-operator-cmp:0005 */}
+2. 3-6) Compares `lhs` and `rhs` lexicographically by `operator<`, that is, compares the first elements, if they are equivalent, compares the second elements, if those are equivalent, compares the third elements, and so on.
+
+{/* source:cpp-utility-tuple-operator-cmp:0006 */}
+   1. 3) For empty tuples, returns `false`. For non-empty tuples, the effect is equivalent to
+
+      ```cpp
+      if (std::get<0>(lhs) < std::get<0>(rhs)) return true;
+      if (std::get<0>(rhs) < std::get<0>(lhs)) return false;
+      if (std::get<1>(lhs) < std::get<1>(rhs)) return true;
+      if (std::get<1>(rhs) < std::get<1>(lhs)) return false;
+      ...
+
+      return std::get<N - 1>(lhs) < std::get<N - 1>(rhs);
+      ```
+
+{/* source:cpp-utility-tuple-operator-cmp:0007 */}
+   2. 4) Returns `!(rhs < lhs)`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0008 */}
+   3. 5) Returns `rhs < lhs`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0009 */}
+   4. 6) Returns `!(lhs < rhs)`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0010 */}
+3. If `sizeof...(TTypes)` does not equal `sizeof...(UTypes)`, or any of the comparison expression shown in the equivalent-to statements is not a valid expression, the program is ill-formed.
+
+{/* source:cpp-utility-tuple-operator-cmp:0011 */}
+4. If the type and value category of any of the comparison expression shown in the equivalent-to statements do not meet the [BooleanTestable](/docs/cpp/library/named_req/BooleanTestable) requirements, the behavior is undefined.
+
+{/* source:cpp-utility-tuple-operator-cmp:0012 */}
+5. 7) Compares `lhs` and `rhs` lexicographically by [`synth-three-way`](/docs/cpp/library/standard_library/synth-three-way), that is, compares the first elements, if they are equivalent, compares the second elements, if those are equivalent, compares the third elements, and so on. For empty tuples, returns [`std::strong_ordering::equal`](/docs/cpp/library/utility/compare/strong_ordering). For non-empty tuples, the effect is equivalent to
+
+{/* source:cpp-utility-tuple-operator-cmp:0013 */}
+   1.
+
+      ```cpp
+      if (auto c = synth-three-way((std::get<0>(lhs), std::get<0>(rhs)); c != 0) return c;
+      if (auto c = synth-three-way((std::get<1>(lhs), std::get<1>(rhs)); c != 0) return c;
+      ...
+      return synth-three-way((std::get<N - 1>(lhs), std::get<N - 1>(rhs));
+      ```
+
+{/* source:cpp-utility-tuple-operator-cmp:0014 */}
+6. 8) Same as (1), except that `rhs` is a [tuple-like](/docs/cpp/library/utility/tuple/tuple-like) object, and the number of elements of `rhs` is determined by `std::tuple_size_v<UTuple>` instead. This overload can only be found via [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-utility-tuple-operator-cmp:0015 */}
+7. 9) Same as (7), except that `rhs` is a [tuple-like](/docs/cpp/library/utility/tuple/tuple-like) object. `/* Elems */` denotes the pack of types `std::tuple_element_t<i, UTuple>` for each `i` in [0, `std::tuple_size_v<UTuple>`) in increasing order. This overload can only be found via [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-utility-tuple-operator-cmp:0016 */}
+All comparison operators are short-circuited; they do not access tuple elements beyond what is necessary to determine the result of the comparison.
+
+{/* source:cpp-utility-tuple-operator-cmp:0017 */}
+<Revision since="C++20">
+The `<`, `<=`, `>`, `>=`, and `!=` operators are [synthesized](/docs/cpp/language/expressions/operators#Comparison_operators) from `operator<=>` and `operator==` respectively.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-utility-tuple-operator-cmp:0018 */}
+<ParameterList>
+  <Parameter name="lhs, rhs">tuples to compare</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-tuple-operator-cmp:0019 */}
+1. 1,8) `true` if `std::get<i>(lhs) == std::get<i>(rhs)` for all `i` in [0, `sizeof...(Types)`), otherwise `false`. For two empty tuples returns `true`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0020 */}
+2. 2) `!(lhs == rhs)`
+
+{/* source:cpp-utility-tuple-operator-cmp:0021 */}
+3. 3) `true` if the first non-equivalent element in `lhs` is less than the one in `rhs`, `false` if the first non-equivalent element in `rhs` is less than the one in `lhs` or there is no non-equivalent element. For two empty tuples, returns `false`.
+
+{/* source:cpp-utility-tuple-operator-cmp:0022 */}
+4. 4) `!(rhs < lhs)`
+
+{/* source:cpp-utility-tuple-operator-cmp:0023 */}
+5. 5) `rhs < lhs`
+
+{/* source:cpp-utility-tuple-operator-cmp:0024 */}
+6. 6) `!(lhs < rhs)`
+
+{/* source:cpp-utility-tuple-operator-cmp:0025 */}
+7. 7,9) The relation between the first pair of non-equivalent elements if there is any, [`std::strong_ordering::equal`](/docs/cpp/library/utility/compare/strong_ordering) otherwise. For two empty tuples, returns [`std::strong_ordering::equal`](/docs/cpp/library/utility/compare/strong_ordering).
+
+### Notes
+
+{/* source:cpp-utility-tuple-operator-cmp:0026 */}
+<Revision until="C++20">
+The relational operators are defined in terms of each element's `operator<`.
+</Revision>
+
+<Revision since="C++20">
+The relational operators are defined in terms of [`synth-three-way`](/docs/cpp/library/standard_library/synth-three-way), which uses `operator<=>` if possible, or `operator<` otherwise. Notably, if an element type does not itself provide `operator<=>`, but is implicitly convertible to a three-way comparable type, that conversion will be used instead of `operator<`.
+</Revision>
+
+{/* source:cpp-utility-tuple-operator-cmp:0027 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_constrained_equality`](/docs/cpp/library/feature_test#cpp_lib_constrained_equality) | [`202403L`](/docs/cpp/library/compiler_support/26#cpp_lib_constrained_equality_202403L) | (C++26) | Constrained `operator==` for [`std::tuple`](/docs/cpp/library/utility/tuple) |
+
+### Example
+
+{/* source:cpp-utility-tuple-operator-cmp:0028 */}
+Because `operator<` is defined for tuples, containers of tuples can be sorted.
+
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <tuple>
+#include <vector>
+ 
+int main()
+{
+    std::vector<std::tuple<int, std::string, float>> v
+    {
+        {2, "baz", -0.1},
+        {2, "bar", 3.14},
+        {1, "foo", 10.1},
+        {2, "baz", -1.1},
+    };
+    std::sort(v.begin(), v.end());
+ 
+    for (const auto& p: v)
+        std::cout << "{ " << get<0>(p)
+                  << ", " << get<1>(p)
+                  << ", " << get<2>(p)
+                  << " }\n";
+}
+```
+
+Output:
+
+```text
+{ 1, foo, 10.1 }
+{ 2, bar, 3.14 }
+{ 2, baz, -1.1 }
+{ 2, baz, -0.1 }
+```
+
+### Defect reports
+
+{/* source:cpp-utility-tuple-operator-cmp:0029 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-tuple-operator-cmp:0030 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2114} standard="C++11">
+    <PublishedBehavior>type preconditions for boolean operations were missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-tuple-operator-cmp:0031 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==` `operator!=` `operator<` `operator<=` `operator>` `operator>=` `operator<=>`](/docs/cpp/library/utility/pair/operator_cmp) <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares the values in the pair (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

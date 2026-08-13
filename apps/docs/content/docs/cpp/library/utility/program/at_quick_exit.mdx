@@ -1,0 +1,107 @@
+---
+title: "std::at_quick_exit"
+description: "Registers the function pointed to by func to be called on quick program termination (via std::quick_exit)."
+source_url: "https://en.cppreference.com/w/cpp/utility/program/at_quick_exit"
+language: "C++"
+---
+{/* source:cpp-utility-program-at-quick-exit:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+    <Declaration id="1" language="cpp" since="C++11" code={`int at_quick_exit( /*atexit-handler*/* func ) noexcept;
+int at_quick_exit( /*c-atexit-handler*/* func ) noexcept;`} />
+    <Declaration id="2" language="cpp" code={`extern "C++" using /*atexit-handler*/ = void();
+extern "C" using /*c-atexit-handler*/ = void();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-utility-program-at-quick-exit:0001 */}
+Registers the function pointed to by `func` to be called on quick program termination (via [`std::quick_exit`](/docs/cpp/library/utility/program/quick_exit)).
+
+{/* source:cpp-utility-program-at-quick-exit:0002 */}
+Calling the function from several threads does not induce a data race. The implementation is guaranteed to support the registration of at least 32 functions. The exact limit is implementation-defined.
+
+{/* source:cpp-utility-program-at-quick-exit:0003 */}
+The registered functions will not be called on [normal program termination](/docs/cpp/library/utility/program/exit). If a function need to be called in that case, [`std::atexit`](/docs/cpp/library/utility/program/atexit) must be used.
+
+### Parameters
+
+{/* source:cpp-utility-program-at-quick-exit:0004 */}
+<ParameterList>
+  <Parameter name="func">pointer to a function to be called on quick program termination</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-program-at-quick-exit:0005 */}
+`0` if the registration succeeds, nonzero value otherwise.
+
+### Notes
+
+{/* source:cpp-utility-program-at-quick-exit:0006 */}
+The two overloads are distinct because the types of the parameter `func` are distinct ([language linkage](/docs/cpp/language/declarations/language_linkage) is part of its type).
+
+### Example
+
+{/* source:cpp-utility-program-at-quick-exit:0007 */}
+```cpp
+#include <cstdlib>
+#include <iostream>
+ 
+void f1()
+{
+    std::cout << "pushed first" << std::endl; // flush is intentional
+}
+ 
+extern "C" void f2()
+{
+    std::cout << "pushed second\n";
+}
+ 
+int main()
+{
+    auto f3 = []
+    {
+        std::cout << "pushed third\n";
+    };
+ 
+    std::at_quick_exit(f1);
+    std::at_quick_exit(f2);
+    std::at_quick_exit(f3);
+    std::quick_exit(0);
+}
+```
+
+Output:
+
+```text
+pushed third
+pushed second
+pushed first
+```
+
+### See also
+
+{/* source:cpp-utility-program-at-quick-exit:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`abort`](/docs/cpp/library/utility/program/abort)</DescriptionTerm>
+    <DescriptionBody>causes abnormal program termination (without cleaning up) (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exit`](/docs/cpp/library/utility/program/exit)</DescriptionTerm>
+    <DescriptionBody>causes normal program termination with cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atexit`](/docs/cpp/library/utility/program/atexit)</DescriptionTerm>
+    <DescriptionBody>registers a function to be called on [`std::exit()`](/docs/cpp/library/utility/program/exit) invocation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`quick_exit`](/docs/cpp/library/utility/program/quick_exit) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>causes quick program termination without completely cleaning up (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/program/at_quick_exit)</DescriptionTerm>
+    <DescriptionBody>for `at_quick_exit`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

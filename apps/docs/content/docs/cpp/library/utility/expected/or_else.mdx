@@ -1,0 +1,123 @@
+---
+title: "std::expected<T,E>::or_else"
+description: "If *this contains an unexpected value, invokes f with the unexpected value of *this as the argument and returns its result. Otherwise, returns a std::expected object that represents an expected value."
+source_url: "https://en.cppreference.com/w/cpp/utility/expected/or_else"
+language: "C++"
+---
+
+{/* source:cpp-utility-expected-or-else:0000 */}
+<DeclarationDoc>
+  Primary template
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) &;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) const&;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) &&;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) const&&;`} />
+
+  `void` partial specialization
+
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) &;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) const&;`} />
+  <Declaration id="7" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) &&;`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class F >
+constexpr auto or_else( F&& f ) const&&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-expected-or-else:0001 */}
+If `*this` contains an unexpected value, invokes `f` with the unexpected value of `*this` as the argument and returns its result. Otherwise, returns a `std::expected` object that represents an expected value.
+
+{/* source:cpp-utility-expected-or-else:0002 */}
+1-4) The expected value is initialized with the expected value [`val`](/docs/cpp/library/utility/expected#Data_members) of `*this`.
+
+{/* source:cpp-utility-expected-or-else:0003 */}
+Given type `G` as:
+
+{/* source:cpp-utility-expected-or-else:0004 */}
+1,2) `std::remove_cvref_t<std::invoke_result_t<F, decltype(error())>>`
+
+{/* source:cpp-utility-expected-or-else:0005 */}
+3,4) `std::remove_cvref_t<std::invoke_result_t<F, decltype(std::move(error()))>>`
+
+{/* source:cpp-utility-expected-or-else:0006 */}
+5,6) `std::remove_cvref_t<std::invoke_result_t<F, decltype(error())>>`
+
+{/* source:cpp-utility-expected-or-else:0007 */}
+7,8) `std::remove_cvref_t<std::invoke_result_t<F, decltype(std::move(error()))>>`
+
+{/* source:cpp-utility-expected-or-else:0008 */}
+If `G` is not a specialization of `std::expected`, or `std::is_same_v<G::value_type, T>` is `false`, the program is ill-formed.
+
+{/* source:cpp-utility-expected-or-else:0009 */}
+1,2) These overloads participate in overload resolution only if `std::is_constructible_v<T, decltype((`[`val`](/docs/cpp/library/utility/expected#Data_members)`)`))>` is `true`.
+
+{/* source:cpp-utility-expected-or-else:0010 */}
+3,4) These overloads participate in overload resolution only if `std::is_constructible_v<T, decltype(std::move(`[`val`](/docs/cpp/library/utility/expected#Data_members)`)`))>` is `true`.
+
+### Parameters
+
+{/* source:cpp-utility-expected-or-else:0011 */}
+<ParameterList>
+  <Parameter name="f">a suitable function or [Callable](/docs/cpp/library/named_req/Callable) object that returns a `std::expected`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-expected-or-else:0012 */}
+| Overload | Value of [`has_value()`](/docs/cpp/library/utility/expected/operator_bool) |  |
+| --- | --- | --- |
+|  | `true` | `false` |
+| ([`1,2`](/docs/cpp/library/utility/expected/or_else#Version_1)) | `G(std::in_place, `[`val`](/docs/cpp/library/utility/expected#Data_members)`)` | `std::invoke(std::forward<F>(f), error())` |
+| ([`3,4`](/docs/cpp/library/utility/expected/or_else#Version_3)) | `G(std::in_place, std::move(`[`val`](/docs/cpp/library/utility/expected#Data_members)`))` | `std::invoke(std::forward<F>(f), std::move(error()))` |
+| ([`5,6`](/docs/cpp/library/utility/expected/or_else#Version_5)) | `G()` | `std::invoke(std::forward<F>(f), error())` |
+| ([`7,8`](/docs/cpp/library/utility/expected/or_else#Version_7)) |  | `std::invoke(std::forward<F>(f), std::move(error()))` |
+
+### Notes
+
+{/* source:cpp-utility-expected-or-else:0013 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_expected`](/docs/cpp/library/feature_test#cpp_lib_expected) | [`202211L`](/docs/cpp/library/compiler_support/23#cpp_lib_expected_202211L) | (C++23) | Monadic functions for `std::expected` |
+
+### Example
+
+{/* source:cpp-utility-expected-or-else:0014 */}
+This section is incomplete
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-utility-expected-or-else:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-expected-or-else:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3938} standard="C++23">
+    <PublishedBehavior>the expected value was obtained by `value()`[^1]</PublishedBehavior>
+    <CorrectedBehavior>changed to `**this`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3973} standard="C++23">
+    <PublishedBehavior>the expected value was obtained by `**this`[^2]</PublishedBehavior>
+    <CorrectedBehavior>changed to [`val`](/docs/cpp/library/utility/expected#Data_members)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-utility-expected-or-else:0017 */}
+[^1]: ↑ [`value()`](/docs/cpp/library/utility/expected/value) requires `E` to be copy constructible (see [LWG issue 3843](https://cplusplus.github.io/LWG/issue3843)), where [`operator*`](/docs/cpp/library/utility/expected/operator_star_) does not.
+[^2]: ↑ `**this` can trigger [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+### See also
+
+{/* source:cpp-utility-expected-or-else:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform_error`](/docs/cpp/library/utility/expected/transform_error)</DescriptionTerm>
+    <DescriptionBody>returns the expected itself if it contains an expected value; otherwise, returns an `expected` containing the transformed unexpected value (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

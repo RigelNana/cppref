@@ -1,0 +1,82 @@
+---
+title: "std::uses_allocator<std::tuple>"
+description: "This specialization of std::uses_allocator informs other library components that tuples support uses-allocator construction, even though they do not have a nested allocator_type."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/uses_allocator"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-uses-allocator:0000 */}
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`template< class... Types, class Alloc >
+struct uses_allocator< std::tuple<Types...>, Alloc > : std::true_type { };`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-uses-allocator:0001 */}
+This specialization of [`std::uses_allocator`](/docs/cpp/library/memory/uses_allocator) informs other library components that tuples support uses-allocator construction, even though they do not have a nested `allocator_type`.
+
+{/* source:cpp-utility-tuple-uses-allocator:0002 */}
+#### Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+##### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()` <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-utility-tuple-uses-allocator:0003 */}
+```cpp
+// myalloc is a stateful Allocator with a single-argument constructor
+// that takes an int. It has no default constructor.
+ 
+    using innervector_t = std::vector<int, myalloc<int>>;
+    using elem_t = std::tuple<int, innervector_t>;
+    using Alloc = std::scoped_allocator_adaptor< myalloc<elem_t>, myalloc<int>>;
+ 
+    Alloc a(1,2);
+    std::vector<elem_t, Alloc> v(a);
+    v.resize(1);                  // uses allocator #1 for elements of v
+    std::get<1>(v[0]).resize(10); // uses allocator #2 for innervector_t
+```
+
+### See also
+
+{/* source:cpp-utility-tuple-uses-allocator:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`uses_allocator`](/docs/cpp/library/memory/uses_allocator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the specified type supports uses-allocator construction (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

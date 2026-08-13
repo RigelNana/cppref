@@ -1,0 +1,137 @@
+---
+title: "std::get(std::variant)"
+description: "Reads the value of the variant given the index or the type (if the type is unique), throws on error."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/get"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-get:0000 */}
+<DeclarationDoc>
+Defined in header [`<variant>`](/docs/cpp/library/headers/variant)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< std::size_t I, class... Types >
+constexpr std::variant_alternative_t<I, std::variant<Types...>>&
+
+    get( std::variant<Types...>& v );`} />
+  <Declaration id="1" language="cpp" since="C++17" code={`template< std::size_t I, class... Types >
+constexpr std::variant_alternative_t<I, std::variant<Types...>>&&
+
+    get( std::variant<Types...>&& v );`} />
+  <Declaration id="1" language="cpp" since="C++17" code={`template< std::size_t I, class... Types >
+constexpr const std::variant_alternative_t<I, std::variant<Types...>>&
+
+    get( const std::variant<Types...>& v );`} />
+  <Declaration id="1" language="cpp" since="C++17" code={`template< std::size_t I, class... Types >
+constexpr const std::variant_alternative_t<I, std::variant<Types...>>&&
+
+    get( const std::variant<Types...>&& v );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Types >
+constexpr T& get( std::variant<Types...>& v );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Types >
+constexpr T&& get( std::variant<Types...>&& v );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Types >
+constexpr const T& get( const std::variant<Types...>& v );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T, class... Types >
+constexpr const T&& get( const std::variant<Types...>&& v );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-get:0001 */}
+1) Index-based value accessor: If `v.index() == I`, returns a reference to the value stored in `v`. Otherwise, throws [`std::bad_variant_access`](/docs/cpp/library/utility/variant/bad_variant_access). The call is ill-formed if `I` is not a valid index in the variant.
+
+{/* source:cpp-utility-variant-get:0002 */}
+2) Type-based value accessor: If `v` holds the alternative `T`, returns a reference to the value stored in `v`. Otherwise, throws [`std::bad_variant_access`](/docs/cpp/library/utility/variant/bad_variant_access). The call is ill-formed if `T` is not a unique element of `Types...`.
+
+### Template parameters
+
+{/* source:cpp-utility-variant-get:0003 */}
+<ParameterList>
+  <Parameter name="I">index to look up</Parameter>
+  <Parameter name="T">unique type to look up</Parameter>
+  <Parameter name="Types...">types forming the variant</Parameter>
+</ParameterList>
+
+### Parameters
+
+{/* source:cpp-utility-variant-get:0004 */}
+<ParameterList>
+  <Parameter name="v">a variant</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-variant-get:0005 */}
+Reference to the value stored in the variant.
+
+### Exceptions
+
+{/* source:cpp-utility-variant-get:0006 */}
+1,2) Throws [`std::bad_variant_access`](/docs/cpp/library/utility/variant/bad_variant_access) on errors.
+
+### Example
+
+{/* source:cpp-utility-variant-get:0007 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <variant>
+ 
+int main()
+{
+    std::variant<int, float> v{12}, w;
+    std::cout << std::get<int>(v) << '\n';
+    w = std::get<int>(v);
+    w = std::get<0>(v); // same effect as the previous line
+ 
+//  std::get<double>(v); // error: no double in [int, float]
+//  std::get<3>(v);      // error: valid index values are 0 and 1
+ 
+    try
+    {
+        w = 42.0f;
+        std::cout << std::get<float>(w) << '\n'; // ok, prints 42
+        w = 42;
+        std::cout << std::get<float>(w) << '\n'; // throws
+    }
+    catch (std::bad_variant_access const& ex)
+    {
+        std::cout << ex.what() << ": w contained int, not float\n";
+    }
+}
+```
+Possible output:
+
+```text
+12
+42
+Unexpected index: w contained int, not float
+```
+
+### See also
+
+{/* source:cpp-utility-variant-get:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_if`](/docs/cpp/library/utility/variant/get_if) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains a pointer to the value of a pointed-to `variant` given the index or the type (if unique), returns null on error (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::tuple)`](/docs/cpp/library/utility/tuple/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>tuple accesses specified element (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::array)`](/docs/cpp/library/container/array/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element of an `array` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::pair)`](/docs/cpp/library/utility/pair/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element of a `pair` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::ranges::subrange)`](/docs/cpp/library/ranges/subrange/get) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains iterator or sentinel from a [`std::ranges::subrange`](/docs/cpp/library/ranges/subrange) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::complex)`](/docs/cpp/library/numeric/complex/get) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>obtains a reference to real or imaginary part from a [`std::complex`](/docs/cpp/library/numeric/complex) (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

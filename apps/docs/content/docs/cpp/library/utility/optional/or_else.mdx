@@ -1,0 +1,101 @@
+---
+title: "std::optional<T>::or_else"
+description: "Returns *this if it contains a value. Otherwise, returns the result of f."
+source_url: "https://en.cppreference.com/w/cpp/utility/optional/or_else"
+language: "C++"
+---
+
+{/* source:cpp-utility-optional-or-else:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class F >
+constexpr optional or_else( F&& f ) const&;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class F >
+constexpr optional or_else( F&& f ) &&;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-optional-or-else:0001 */}
+Returns `*this` if it contains a value. Otherwise, returns the result of `f`.
+
+{/* source:cpp-utility-optional-or-else:0002 */}
+The program is ill-formed if `std::remove_cvref_t<std::invoke_result_t<F>>` is not same as `std::optional<T>`.
+
+{/* source:cpp-utility-optional-or-else:0003 */}
+1. 1) Equivalent to `return *this ? *this : std::forward<F>(f)();`. This overload participates in overload resolution only if both `std::copy_constructible<T>` and `std::invocable<F>` are modeled.
+
+{/* source:cpp-utility-optional-or-else:0004 */}
+2. 2) Equivalent to `return *this ? std::move(*this) : std::forward<F>(f)();`. This overload participates in overload resolution only if both `std::move_constructible<T>` and `std::invocable<F>` are modeled.
+
+### Parameters
+
+{/* source:cpp-utility-optional-or-else:0005 */}
+<ParameterList>
+  <Parameter name="f">a function or [*Callable*](/docs/cpp/library/named_req/Callable) object that returns an `std::optional<T>`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-optional-or-else:0006 */}
+`*this` or the result of `f`, as described above.
+
+### Notes
+
+{/* source:cpp-utility-optional-or-else:0007 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_optional`](/docs/cpp/library/feature_test#cpp_lib_optional) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_optional_202110L) | (C++23) | [Monadic operations](/docs/cpp/library/utility/optional#Monadic_operations) in [`std::optional`](/docs/cpp/library/utility/optional) |
+
+### Example
+
+{/* source:cpp-utility-optional-or-else:0008 */}
+```cpp
+#include <iostream>
+#include <optional>
+#include <string>
+ 
+int main()
+{
+    using maybe_int = std::optional<int>;
+ 
+    auto valueless = []
+    {
+        std::cout << "Valueless: ";
+        return maybe_int{0};
+    };
+ 
+    maybe_int x;
+    std::cout << x.or_else(valueless).value() << '\n';
+ 
+    x = 42;
+    std::cout << "Has value: ";
+    std::cout << x.or_else(valueless).value() << '\n';
+ 
+    x.reset();
+    std::cout << x.or_else(valueless).value() << '\n';
+}
+```
+
+Output:
+
+```text
+Valueless: 0
+Has value: 42
+Valueless: 0
+```
+
+### See also
+
+{/* source:cpp-utility-optional-or-else:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`value_or`](/docs/cpp/library/utility/optional/value_or)</DescriptionTerm>
+    <DescriptionBody>returns the contained value if available, another value otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`and_then`](/docs/cpp/library/utility/optional/and_then) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns the result of the given function on the contained value if it exists, or an empty `optional` otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform`](/docs/cpp/library/utility/optional/transform) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns an `optional` containing the transformed contained value if it exists, or an empty `optional` otherwise (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

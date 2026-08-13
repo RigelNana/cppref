@@ -1,0 +1,106 @@
+---
+title: "std::variant<Types...>::swap"
+description: "Swaps two variant objects."
+source_url: "https://en.cppreference.com/w/cpp/utility/variant/swap"
+language: "C++"
+---
+
+{/* source:cpp-utility-variant-swap:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`void swap( variant& rhs ) noexcept(/* see below */);`} />
+  (constexpr since C++20)
+</DeclarationDoc>
+
+{/* source:cpp-utility-variant-swap:0001 */}
+Swaps two [`variant`](/docs/cpp/library/utility/variant) objects.
+
+{/* source:cpp-utility-variant-swap:0002 */}
+- If both `*this` and `rhs` are valueless by exception, does nothing.
+- Otherwise, if both `*this` and `rhs` hold the same alternative, calls `swap(*std::get_if<i>(this), *std::get_if<i>(std::addressof(rhs)))` where `i` is [`index()`](/docs/cpp/library/utility/variant). If an exception is thrown, the state of the values depends on the exception safety of the swap function called.
+- Otherwise, exchanges values of `rhs` and `*this`. If an exception is thrown, the state of `*this` and `rhs` depends on exception safety of variant's move constructor.
+
+{/* source:cpp-utility-variant-swap:0003 */}
+The program is ill-formed unless type `T_i` are [*Swappable*](/docs/cpp/library/named_req/Swappable) and `std::is_move_constructible_v<T_i>` is `true` for all `T_i` in `Types...`.
+
+### Parameters
+
+{/* source:cpp-utility-variant-swap:0004 */}
+<ParameterList>
+  <Parameter name="rhs">a `variant` object to swap with</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-variant-swap:0005 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-utility-variant-swap:0006 */}
+If `this->index() == rhs.index()`, may throw any exception thrown by `swap(*std::get_if<i>(this), *std::get_if<i>(std::addressof(rhs)))` with `i` being `index()`.
+
+{/* source:cpp-utility-variant-swap:0007 */}
+Otherwise, may throw any exception thrown by the move constructors of the alternatives currently held by `*this` and `rhs`.
+
+{/* source:cpp-utility-variant-swap:0008 */}
+[`noexcept`](/docs/cpp/language/exceptions/noexcept_spec) specification:
+
+```cpp
+noexcept(((std::is_nothrow_move_constructible_v<Types> &&
+           std::is_nothrow_swappable_v<Types>) && ...))
+```
+
+### Notes
+
+{/* source:cpp-utility-variant-swap:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_variant`](/docs/cpp/library/feature_test#cpp_lib_variant) | [`202106L`](/docs/cpp/library/compiler_support/20#cpp_lib_variant_202106L) | (C++20) (DR) | Fully `constexpr` `std::variant` |
+
+### Example
+
+{/* source:cpp-utility-variant-swap:0010 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <variant>
+ 
+int main()
+{
+    std::variant<int, std::string> v1{2}, v2{"abc"};
+    std::visit([](auto&& x) { std::cout << x << ' '; }, v1);
+    std::visit([](auto&& x) { std::cout << x << '\n'; }, v2);
+    v1.swap(v2);
+    std::visit([](auto&& x) { std::cout << x << ' '; }, v1);
+    std::visit([](auto&& x) { std::cout << x << '\n'; }, v2);
+}
+```
+Output:
+
+```text
+2 abc
+abc 2
+```
+
+### Defect reports
+
+{/* source:cpp-utility-variant-swap:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-variant-swap:0012 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2231R1" standard="C++20">
+    <PublishedBehavior>`swap` was not `constexpr` while non-trivial destructors can be `constexpr` in C++20</PublishedBehavior>
+    <CorrectedBehavior>made `constexpr`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-variant-swap:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::variant)`](/docs/cpp/library/utility/variant/swap2) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

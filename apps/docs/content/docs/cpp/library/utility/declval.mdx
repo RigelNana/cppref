@@ -1,0 +1,104 @@
+---
+title: "std::declval"
+description: "Helper template for writing expressions that appear in unevaluated contexts, typically the operand of decltype."
+source_url: "https://en.cppreference.com/w/cpp/utility/declval"
+language: "C++"
+---
+
+{/* source:cpp-utility-declval:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration language="cpp" since="C++11" until="C++14" code={`template< class T >
+typename std::add_rvalue_reference<T>::type declval() noexcept;`} />
+  (unevaluated-only)
+  <Declaration language="cpp" since="C++14" code={`template< class T >
+std::add_rvalue_reference_t<T> declval() noexcept;`} />
+  (unevaluated-only)
+</DeclarationDoc>
+
+{/* source:cpp-utility-declval:0001 */}
+Helper template for writing expressions that appear in [unevaluated contexts](/docs/cpp/language/expressions#Potentially-evaluated_expressions), typically the operand of [`decltype`](/docs/cpp/language/declarations/decltype). In unevaluated context, this helper template converts any type `T` (which may be an incomplete type) to an expression of that type, making it possible to use member functions of `T` without the need to go through constructors.
+
+{/* source:cpp-utility-declval:0002 */}
+`std::declval` can only be used in [unevaluated contexts](/docs/cpp/language/expressions#Potentially-evaluated_expressions) and is not required to be defined; it is an error to evaluate an expression that contains this function. Formally, the program is ill-formed if this function is [odr-used](/docs/cpp/language/basic_concepts/definition#ODR-use).
+
+### Parameters
+
+{/* source:cpp-utility-declval:0003 */}
+(none)
+
+### Return value
+
+{/* source:cpp-utility-declval:0004 */}
+Cannot be evaluated and thus never returns a value. The return type is `T&&` (reference collapsing rules apply) unless `T` is (possibly cv-qualified) `void`, in which case the return type is `T`.
+
+### Notes
+
+{/* source:cpp-utility-declval:0005 */}
+`std::declval` is commonly used in templates where acceptable template parameters may have no constructor in common, but have the same member function whose return type is needed.
+
+### Possible implementation
+
+{/* source:cpp-utility-declval:0006 */}
+```cpp
+template<typename T>
+typename std::add_rvalue_reference<T>::type declval() noexcept
+{
+    static_assert(false, "declval not allowed in an evaluated context");
+}
+```
+
+### Example
+
+{/* source:cpp-utility-declval:0007 */}
+```cpp
+#include <iostream>
+#include <utility>
+ 
+struct Default
+{
+    int foo() const { return 1; }
+};
+ 
+struct NonDefault
+{
+    NonDefault() = delete;
+    int foo() const { return 1; }
+};
+ 
+int main()
+{
+    decltype(Default().foo())               n1 = 1;     // type of n1 is int
+    decltype(std::declval<Default>().foo()) n2 = 1;     // same
+ 
+//  decltype(NonDefault().foo())               n3 = n1; // error: no default constructor
+    decltype(std::declval<NonDefault>().foo()) n3 = n1; // type of n3 is int
+ 
+    std::cout << "n1 = " << n1 << '\n'
+              << "n2 = " << n2 << '\n'
+              << "n3 = " << n3 << '\n';
+}
+```
+
+Output:
+
+```text
+n1 = 1
+n2 = 1
+n3 = 1
+```
+
+### See also
+
+{/* source:cpp-utility-declval:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`decltype` specifier](/docs/cpp/language/declarations/decltype) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the type of an expression or an entity</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`result_of` `invoke_result`](/docs/cpp/library/meta/result_of) <InlineRevision since="C++11" /> <InlineRevision removed="C++20" /> <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>deduces the result type of invoking a callable object with a set of arguments (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

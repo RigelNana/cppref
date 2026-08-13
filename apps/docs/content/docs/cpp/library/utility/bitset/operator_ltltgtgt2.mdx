@@ -1,0 +1,107 @@
+---
+title: "operator<<,>>(std::bitset)"
+description: "Inserts or extracts a bitset from a character stream."
+source_url: "https://en.cppreference.com/w/cpp/utility/bitset/operator_ltltgtgt2"
+language: "C++"
+---
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0000 */}
+Defined in header [`<bitset>`](/docs/cpp/library/headers/bitset)
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< class CharT, class Traits, std::size_t N >
+std::basic_ostream<CharT, Traits>&
+
+    operator<<( std::basic_ostream<CharT, Traits>& os, const std::bitset<N>& x );`} />
+  <Declaration id="2" language="cpp" code={`template< class CharT, class Traits, std::size_t N >
+std::basic_istream<CharT, Traits>&
+
+    operator>>( std::basic_istream<CharT, Traits>& is, std::bitset<N>& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0001 */}
+Inserts or extracts a bitset from a character stream.
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0002 */}
+1. 1) Writes the bitset `x` to the character stream `os` as if by first converting it to a `std::basic_string<CharT, Traits>` using [`to_string()`](/docs/cpp/library/utility/bitset/to_string), and then writing it into `os` using the [`operator<<`](/docs/cpp/library/string/basic_string/operator_ltltgtgt) (which is a [FormattedOutputFunction](/docs/cpp/library/named_req/FormattedOutputFunction) for strings). The characters to use for ones and zeroes are obtained from the currently-imbued locale by calling `std::use_facet<std::ctype<CharT>>(os.getloc()).widen()` with `'1'` and `'0'` as arguments.
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0003 */}
+2. 2) Behaves as a [FormattedInputFunction](/docs/cpp/library/named_req/FormattedInputFunction). After constructing and checking the sentry object, which may skip leading whitespace, extracts up to `N` characters from `is` and stores the characters in the bitset `x`. Characters are extracted until either `N` characters have been read, end-of-file occurs in `is`, or the next character is neither `is.widen('0')` nor `is.widen('1')`. If `N > 0` and no characters are extracted, `is.setstate(ios_base::failbit)` is called.
+
+### Parameters
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0004 */}
+<ParameterList>
+  <Parameter name="os">the character stream to write to</Parameter>
+  <Parameter name="is">the character stream to read from</Parameter>
+  <Parameter name="x">the bitset to be read or written</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0005 */}
+1. 1) `os`
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0006 */}
+2. 2) `is`
+
+### Example
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0007 */}
+```cpp
+#include <bitset>
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    std::string bit_string = "001101";
+    std::istringstream bit_stream(bit_string);
+ 
+    std::bitset<3> b1;
+    bit_stream >> b1; // reads "001", stream still holds "101"
+    std::cout << b1 << '\n';
+ 
+    std::bitset<8> b2;
+    bit_stream >> b2; // reads "101", populates the 8-bit set as "00000101"
+    std::cout << b2 << '\n';
+}
+```
+
+Output:
+
+```text
+001
+00000101
+```
+
+### Defect reports
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={303} standard="C++98">
+    <PublishedBehavior>single-byte characters were extracted from<br />`is`, but `CharT` can have multiple bytes</PublishedBehavior>
+    <CorrectedBehavior>extracts `CharT` and compares<br />it with widened `'0'` and `'1'`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={396} standard="C++98">
+    <PublishedBehavior>the content written by `operator<<` was locale-independent</PublishedBehavior>
+    <CorrectedBehavior>writes widened `'0'`s and `'1'`s</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3199} standard="C++98">
+    <PublishedBehavior>extracting a `std::bitset<0>` always sets `failbit`</PublishedBehavior>
+    <CorrectedBehavior>such extraction never sets `failbit`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-bitset-operator-ltltgtgt2:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator<<=` `operator>>=` `operator<<` `operator>>`](/docs/cpp/library/utility/bitset/operator_ltltgtgt)</DescriptionTerm>
+    <DescriptionBody>performs binary shift left and shift right (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

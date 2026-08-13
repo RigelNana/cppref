@@ -1,0 +1,128 @@
+---
+title: "std::function<R(Args...)>::operator="
+description: "Assigns a new target to std::function."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/function/operator_assignment"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-function-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`function& operator=( const function& other );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`function& operator=( function&& other );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`function& operator=( std::nullptr_t ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class F >
+function& operator=( F&& f );`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class F >
+function& operator=( std::reference_wrapper<F> f ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-function-operator:0001 */}
+Assigns a new target to `std::function`.
+
+{/* source:cpp-utility-functional-function-operator:0002 */}
+1. 1) Assigns a copy of target of `other`, as if by executing `function(other).swap(*this);`
+
+{/* source:cpp-utility-functional-function-operator:0003 */}
+2. 2) Moves the target of `other` to `*this`. `other` is in a valid state with an unspecified value.
+
+{/* source:cpp-utility-functional-function-operator:0004 */}
+3. 3) Drops the current target. `*this` is empty after the call.
+
+{/* source:cpp-utility-functional-function-operator:0005 */}
+4. 4) Sets the target of `*this` to the callable `f`, as if by executing `function(std::forward<F>(f)).swap(*this);`. This operator does not participate in overload resolution unless `f` is [*Callable*](/docs/cpp/library/named_req/Callable) for argument types `Args...` and return type `R`.
+
+{/* source:cpp-utility-functional-function-operator:0006 */}
+5. 5) Sets the target of `*this` to a copy of `f`, as if by executing `function(f).swap(*this);`
+
+### Parameters
+
+{/* source:cpp-utility-functional-function-operator:0007 */}
+<ParameterList>
+  <Parameter name="other">another `std::function` object to copy the target of</Parameter>
+  <Parameter name="f">a callable to initialize the target with</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `F` must meet the requirements of [*Callable*](/docs/cpp/library/named_req/Callable).
+
+### Return value
+
+{/* source:cpp-utility-functional-function-operator:0008 */}
+`*this`
+
+### Notes
+
+{/* source:cpp-utility-functional-function-operator:0009 */}
+Even before allocator support was removed from `std::function` in C++17, these assignment operators use the default allocator rather than the allocator of `*this` or the allocator of `other` (see [LWG issue 2386](https://cplusplus.github.io/LWG/issue2386)).
+
+### Example
+
+{/* source:cpp-utility-functional-function-operator:0010 */}
+```cpp
+#include <cassert>
+#include <functional>
+#include <utility>
+ 
+int inc(int n) { return n + 1; }
+ 
+int main()
+{
+    std::function<int(int)> f1;
+    std::function<int(int)> f2(inc);
+    assert(f1 == nullptr and f2 != nullptr);
+ 
+    f1 = f2; // overload (1)
+    assert(f1 != nullptr and f1(1) == 2);
+ 
+    f1 = std::move(f2); // overload (2)
+    assert(f1 != nullptr and f1(1) == 2);
+    // f2 is in valid but unspecified state
+ 
+    f1 = nullptr; // overload (3)
+    assert(f1 == nullptr);
+ 
+    f1 = inc; // overload (4)
+    assert(f1 != nullptr and f1(1) == 2);
+ 
+    f1 = [](int n) { return n + n; }; // overload (4)
+    assert(f1 != nullptr and f1(2) == 4);
+ 
+    std::reference_wrapper<int(int)> ref1 = std::ref(inc);
+    f1 = ref1; // overload (5)
+    assert(f1 != nullptr and f1(1) == 2);
+}
+```
+
+### Defect reports
+
+{/* source:cpp-utility-functional-function-operator:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-functional-function-operator:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2132} standard="C++11">
+    <PublishedBehavior>the overload ([4](/docs/cpp/library/utility/functional/function/operator_assignment#Version_4)) taking a *Callable* object might be ambiguous</PublishedBehavior>
+    <CorrectedBehavior>constrained</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2401} standard="C++11">
+    <PublishedBehavior>assignment operator ([3](/docs/cpp/library/utility/functional/function/operator_assignment#Version_3)) from `std::nullptr_t` not required to be noexcept</PublishedBehavior>
+    <CorrectedBehavior>required</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-functional-function-operator:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/utility/functional/move_only_function/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>replaces or destroys the target (public member function of `std::move_only_function`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/utility/functional/function/assign) (removed in C++17)</DescriptionTerm>
+    <DescriptionBody>assigns a new target (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-functional-function-operator:0014 */}

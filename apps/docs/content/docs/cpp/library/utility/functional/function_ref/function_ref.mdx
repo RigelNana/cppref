@@ -1,0 +1,104 @@
+---
+title: "std::function_ref::function_ref"
+description: "Creates a new std::function_ref."
+source_url: "https://en.cppreference.com/w/cpp/utility/functional/function_ref/function_ref"
+language: "C++"
+---
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`template< class F >
+function_ref( F* f ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`template< class F >
+function_ref( F&& f ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++26" code={`template< auto f >
+function_ref( std::nontype_t<f> ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`template< auto f, class U >
+function_ref( std::nontype_t<f>, U&& obj ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++26" code={`template< auto f, class T >
+function_ref( std::nontype_t<f>, /*cv*/ T* obj ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++26" code={`function_ref( const function_ref& other ) = default;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0001 */}
+Creates a new `std::function_ref`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0002 */}
+1. 1) Initializes [`bound-entity`](/docs/cpp/library/utility/functional/function_ref#bound-entity) with `f`, and [`thunk-ptr`](/docs/cpp/library/utility/functional/function_ref#thunk-ptr) with the address of a function `thunk`. The behavior is undefined if `f` is a null pointer.
+
+   - This overload participates in overload resolution only if both `std::is_function_v<F>` and `/*is-invocable-using*/<F>` are `true`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0003 */}
+2. 2) Initializes `bound-entity` with `std::addressof(f)`, and `thunk-ptr` with the address of a function `thunk`.
+
+   - Let `T` be `std::remove_reference_t<F>`. This overload participates in overload resolution only if:
+     - `std::remove_cvref_t<F>` is not the same type as `function_ref`,
+     - `std::is_member_pointer_v<T>` is `false`, and
+     - `/*is-invocable-using*/</*cv*/ T&>` is `true`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0004 */}
+3. 3) Initializes `bound-entity` with a pointer to an unspecified object or null pointer value, and `thunk-ptr` with the address of a function `thunk`.
+
+   - Let `F` be `decltype(f)`. This overload participates in overload resolution only if `/*is-invocable-using*/<F>` is `true`.
+   - The program is ill-formed if `f != nullptr` is `false` when `std::is_pointer_v<F> || std::is_member_pointer_v<F>` is `true`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0005 */}
+4. 4) Initializes `bound-entity` with `std::addressof(obj)`, and `thunk-ptr` with the address of a function `thunk`.
+
+   - Let `T` be `std::remove_reference_t<U>` and `F` be `decltype(f)`. This overload participates in overload resolution only if:
+     - `std::is_rvalue_reference_v<U&&>` is `false`, and
+     - `/*is-invocable-using*/<F, /*cv*/ T&>` is `true`.
+   - The program is ill-formed if `f != nullptr` is `false` when `std::is_pointer_v<F> || std::is_member_pointer_v<F>` is `true`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0006 */}
+5. 5) Initializes `bound-entity` with `obj`, and `thunk-ptr` with the address of a function `thunk`. The behavior is undefined if `obj` is a null pointer when `std::is_member_pointer_v<F>` is `true`.
+
+   - Let `F` be `decltype(f)`. This overload participates in overload resolution only if `/*is-invocable-using*/<F, /*cv*/ T*>` is `true`.
+   - The program is ill-formed if `f != nullptr` is `false` when `std::is_pointer_v<F> || std::is_member_pointer_v<F>` is `true`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0007 */}
+6. 6) Defaulted copy constructor copies the `bound-entity` and `thunk-ptr` of `other`.
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0008 */}
+The address of a function `thunk` is used to initialize `thunk-ptr` such that a call to `thunk`(`bound-entity`, `call-args`...) is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to:
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0009 */}
+| Overloads | Expression-equivalence |
+| --- | --- |
+| [(1,3)](/docs/cpp/library/utility/functional/function_ref/function_ref#Version_1) | `std::invoke_r<R>(f,` `call-args` `...)` |
+| [(2)](/docs/cpp/library/utility/functional/function_ref/function_ref#Version_2) | `std::invoke_r<R>(static_cast<` `cv` ` T&>(f),` `call-args` `...)` |
+| [(4)](/docs/cpp/library/utility/functional/function_ref/function_ref#Version_4) | `std::invoke_r<R>(f, static_cast<` `cv` ` T&>(obj),` `call-args` `...)` |
+| [(5)](/docs/cpp/library/utility/functional/function_ref/function_ref#Version_5) | `std::invoke_r<R>(f, obj,` `call-args` `...)` |
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0010 */}
+`/*is-invocable-using*/<T...>` is `true` if and only if:
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0011 */}
+- `std::is_nothrow_invocable_r_v<R, T..., Args...>` is `true` if `noex` is `true`, or
+- `std::is_invocable_r_v<R, T..., Args...>` is `true`
+
+### Parameters
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0012 */}
+<ParameterList>
+  <Parameter name="other">another `function_ref` to copy from</Parameter>
+  <Parameter name="f">a function or a [*Callable*](/docs/cpp/library/named_req/Callable) object to wrap</Parameter>
+  <Parameter name="obj">an object or pointer to bound</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0013 */}
+This section is incomplete
+
+Reason: no example
+
+### See also
+
+{/* source:cpp-utility-functional-function-ref-function-ref:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/functional/move_only_function/move_only_function)</DescriptionTerm>
+    <DescriptionBody>constructs a new `std::move_only_function` object (public member function of `std::move_only_function`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

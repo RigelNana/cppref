@@ -1,0 +1,124 @@
+---
+title: "std::make_tuple"
+description: "Creates a tuple object, deducing the target type from the types of arguments."
+source_url: "https://en.cppreference.com/w/cpp/utility/tuple/make_tuple"
+language: "C++"
+---
+
+{/* source:cpp-utility-tuple-make-tuple:0000 */}
+<DeclarationDoc>
+Defined in header [`<tuple>`](/docs/cpp/library/headers/tuple)
+
+  <Declaration language="cpp" since="C++11" code={`template< class... Types >
+std::tuple<VTypes...> make_tuple( Types&&... args );`} />
+(constexpr since C++14)
+</DeclarationDoc>
+
+{/* source:cpp-utility-tuple-make-tuple:0001 */}
+Creates a tuple object, deducing the target type from the types of arguments.
+
+{/* source:cpp-utility-tuple-make-tuple:0002 */}
+For each `Ti` in `Types...`, the corresponding type `Vi` in `VTypes...` is `std::decay<Ti>::type` unless application of [`std::decay`](/docs/cpp/library/meta/decay) results in `std::reference_wrapper<X>` for some type `X`, in which case the deduced type is `X&`.
+
+### Parameters
+
+{/* source:cpp-utility-tuple-make-tuple:0003 */}
+<ParameterList>
+  <Parameter name="args">zero or more arguments to construct the tuple from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-tuple-make-tuple:0004 */}
+A [`std::tuple`](/docs/cpp/library/utility/tuple) object containing the given values, created as if by `std::tuple<VTypes...>(std::forward<Types>(t)...).`
+
+### Possible implementation
+
+{/* source:cpp-utility-tuple-make-tuple:0005 */}
+```cpp
+template <class T>
+struct unwrap_refwrapper
+{
+    using type = T;
+};
+ 
+template <class T>
+struct unwrap_refwrapper<std::reference_wrapper<T>>
+{
+    using type = T&;
+};
+ 
+template <class T>
+using unwrap_decay_t = typename unwrap_refwrapper<typename std::decay<T>::type>::type;
+// or use std::unwrap_ref_decay_t (since C++20)
+ 
+template <class... Types>
+constexpr // since C++14
+std::tuple<unwrap_decay_t<Types>...> make_tuple(Types&&... args)
+{
+    return std::tuple<unwrap_decay_t<Types>...>(std::forward<Types>(args)...);
+}
+```
+
+### Example
+
+{/* source:cpp-utility-tuple-make-tuple:0006 */}
+```cpp
+#include <iostream>
+#include <tuple>
+#include <functional>
+ 
+std::tuple<int, int> f() // this function returns multiple values
+{
+    int x = 5;
+    return std::make_tuple(x, 7); // return {x,7}; in C++17
+}
+ 
+int main()
+{
+    // heterogeneous tuple construction
+    int n = 1;
+    auto t = std::make_tuple(10, "Test", 3.14, std::ref(n), n);
+    n = 7;
+    std::cout << "The value of t is ("
+              << std::get<0>(t) << ", "
+              << std::get<1>(t) << ", "
+              << std::get<2>(t) << ", "
+              << std::get<3>(t) << ", "
+              << std::get<4>(t) << ")\n";
+ 
+    // function returning multiple values
+    int a, b;
+    std::tie(a, b) = f();
+    std::cout << a << ' ' << b << '\n';
+}
+```
+
+Output:
+
+```text
+The value of t is (10, Test, 3.14, 7, 1)
+5 7
+```
+
+### See also
+
+{/* source:cpp-utility-tuple-make-tuple:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`tie`](/docs/cpp/library/utility/tuple/tie) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a [`tuple`](/docs/cpp/library/utility/tuple) of lvalue references or unpacks a tuple into individual objects (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_as_tuple`](/docs/cpp/library/utility/tuple/forward_as_tuple) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a tuple of [forwarding references](/docs/cpp/language/declarations/reference#Forwarding_references) (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple_cat`](/docs/cpp/library/utility/tuple/tuple_cat) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a tuple by concatenating any number of tuples (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`apply`](/docs/cpp/library/utility/apply) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>calls a function with a tuple of arguments (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
