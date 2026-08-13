@@ -1,0 +1,159 @@
+---
+title: "std::ranges::uninitialized_copy_n, std::ranges::uninitialized_copy_n_result"
+description: "Copies N elements from the range beginning at ifirst to an uninitialized memory area [ofirst, olast)."
+source_url: "https://en.cppreference.com/w/cpp/memory/ranges/uninitialized_copy_n"
+language: "C++"
+---
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_iterator I,
+          no-throw-input-iterator O, no-throw-sentinel-for<O> S >
+    requires std::constructible_from<std::iter_value_t<O>,
+                                     std::iter_reference_t<I>>
+uninitialized_copy_n_result<I, O>
+    uninitialized_copy_n( I ifirst, std::iter_difference_t<I> count,
+
+                          O ofirst, S olast );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+
+Helper types
+
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class I, class O >
+using uninitialized_copy_n_result = ranges::in_out_result<I, O>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0001 */}
+Let `N` be `ranges::min(count, ranges::distance(ofirst, olast))`.
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0002 */}
+Copies `N` elements from the range beginning at `ifirst` to an uninitialized memory area [`ofirst`, `olast`) as if by
+
+`auto ret = ranges::uninitialized_copy(std::counted_iterator(std::move(ifirst), count),`<br />`                                      std::default_sentinel, ofirst, olast);`<br />`return {std::move(ret.in).base(), ret.out};`
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0003 */}
+If an exception is thrown during the initialization, the objects already constructed are destroyed in an unspecified order.
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0004 */}
+If [`ofirst`, `olast`) overlaps with `ifirst + [`​0​`, `count`)`, the behavior is undefined.
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0005 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0006 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0007 */}
+<ParameterList>
+  <Parameter name="ifirst">the beginning of the range of elements to copy from</Parameter>
+  <Parameter name="count">the number of elements to copy</Parameter>
+  <Parameter name="ofirst, olast">iterator-sentinel pair denoting the destination range</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0008 */}
+As described above.
+
+### Complexity
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0009 */}
+𝓞(N).
+
+### Exceptions
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0010 */}
+Any exception thrown on construction of the elements in the destination range.
+
+### Notes
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0011 */}
+An implementation may improve the efficiency of the `ranges::uninitialized_copy_n`, by using e.g. [`ranges::copy_n`](/docs/cpp/library/algorithm/ranges/copy_n), if the value type of the output range is [*TrivialType*](/docs/cpp/library/named_req/TrivialType).
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0012 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_raw_memory_algorithms`](/docs/cpp/library/feature_test#cpp_lib_raw_memory_algorithms) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_raw_memory_algorithms_202411L) | (C++26) | `constexpr` for [specialized memory algorithms](/docs/cpp/library/memory#Uninitialized_memory_algorithms), ([1](/docs/cpp/library/memory/ranges/uninitialized_copy_n#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0013 */}
+```cpp
+struct uninitialized_copy_n_fn
+{
+    template<std::input_iterator I, no-throw-input-iterator O, no-throw-sentinel-for<O> S>
+        requires std::constructible_from<std::iter_value_t<O>, std::iter_reference_t<I>>
+    constexpr ranges::uninitialized_copy_n_result<I, O>
+        operator()(I ifirst, std::iter_difference_t<I> count, O ofirst, S olast) const
+    {
+        auto iter = std::counted_iterator(std::move(ifirst), count);
+        auto ret = ranges::uninitialized_copy(iter, std::default_sentinel, ofirst, olast);
+        return {std::move(ret.in).base(), ret.out};
+    }
+};
+ 
+inline constexpr uninitialized_copy_n_fn uninitialized_copy_n{};
+```
+
+### Example
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0014 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <string>
+ 
+int main()
+{
+    const char* stars[]{"Procyon", "Spica", "Pollux", "Deneb", "Polaris"};
+ 
+    constexpr int n{4};
+    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+ 
+    try
+    {
+        auto first{reinterpret_cast<std::string*>(out)};
+        auto last{first + n};
+        auto ret{std::ranges::uninitialized_copy_n(std::begin(stars), n, first, last)};
+ 
+        std::cout << '{';
+        for (auto it{first}; it != ret.out; ++it)
+            std::cout << (it == first ? "" : ", ") << std::quoted(*it);
+        std::cout << "};\n";
+ 
+        std::ranges::destroy(first, last);
+    }
+    catch (...)
+    {
+        std::cout << "uninitialized_copy_n exception\n";
+    }
+}
+```
+
+Output:
+
+```text
+{"Procyon", "Spica", "Pollux", "Deneb"};
+```
+
+### See also
+
+{/* source:cpp-memory-ranges-uninitialized-copy-n:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_copy`](/docs/cpp/library/memory/ranges/uninitialized_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a range of objects to an uninitialized area of memory (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uninitialized_copy_n`](/docs/cpp/library/memory/uninitialized_copy_n) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>copies a number of objects to an uninitialized area of memory (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

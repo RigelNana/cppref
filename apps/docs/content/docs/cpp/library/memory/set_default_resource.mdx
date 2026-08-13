@@ -1,0 +1,182 @@
+---
+title: "std::pmr::set_default_resource"
+description: "If r is not null, sets the default memory resource pointer to r; otherwise, sets the default memory resource pointer to std::pmr::new_delete_resource()."
+source_url: "https://en.cppreference.com/w/cpp/memory/set_default_resource"
+language: "C++"
+---
+
+{/* source:cpp-memory-set-default-resource:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory_resource>`](/docs/cpp/library/headers/memory_resource)
+
+  <Declaration language="cpp" since="C++17" code={`std::pmr::memory_resource* set_default_resource( std::pmr::memory_resource* r ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-set-default-resource:0001 */}
+If `r` is not null, sets the default memory resource pointer to `r`; otherwise, sets the default memory resource pointer to [`std::pmr::new_delete_resource()`](/docs/cpp/library/memory/new_delete_resource).
+
+{/* source:cpp-memory-set-default-resource:0002 */}
+The *default memory resource pointer* is used by certain facilities when an explicit memory resource is not supplied. The initial default memory resource pointer is the return value of [`std::pmr::new_delete_resource`](/docs/cpp/library/memory/new_delete_resource).
+
+{/* source:cpp-memory-set-default-resource:0003 */}
+This function is thread-safe. Every call to `std::pmr::set_default_resource` *synchronizes with* (see [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) the subsequent `std::pmr::set_default_resource` and [`std::pmr::get_default_resource`](/docs/cpp/library/memory/get_default_resource) calls.
+
+### Return value
+
+{/* source:cpp-memory-set-default-resource:0004 */}
+Returns the previous value of the default memory resource pointer.
+
+### Example
+
+{/* source:cpp-memory-set-default-resource:0005 */}
+```cpp
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <iterator>
+#include <memory_resource>
+#include <vector>
+ 
+class noisy_allocator : public std::pmr::memory_resource
+{
+    void* do_allocate(std::size_t bytes, std::size_t alignment) override
+    {
+        std::cout << "+ Allocating " << bytes << " bytes @ ";
+        void* p = std::pmr::new_delete_resource()->allocate(bytes, alignment);
+        std::cout << p << '\n';
+        return p;
+    }
+ 
+    void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override
+    {
+        std::cout << "- Deallocating " << bytes << " bytes @ " << p << '\n';
+        return std::pmr::new_delete_resource()->deallocate(p, bytes, alignment);
+    }
+ 
+    bool do_is_equal(const std::pmr::memory_resource& other) const noexcept override
+    {
+        return std::pmr::new_delete_resource()->is_equal(other);
+    }
+};
+ 
+int main()
+{
+    constexpr int push_back_limit{16};
+    noisy_allocator mem;
+    std::pmr::set_default_resource(&mem);
+ 
+    {
+        std::cout << "Entering scope #1 (without buffer on stack)...\n";
+        std::cout << "Creating vector v...\n";
+        std::pmr::vector<std::uint16_t> v{1, 2, 3, 4};
+        std::cout << "v.data() @ " << v.data() << '\n';
+ 
+        std::cout << "Requesting more...\n";
+        for (int i{0}; i != push_back_limit; ++i)
+        {
+            v.push_back(i);
+            std::cout << "v.size(): " << v.size() << '\n';
+        }
+        std::cout << "Exiting scope #1...\n";
+    }
+ 
+    std::cout << '\n';
+ 
+    {
+        std::cout << "Entering scope #2 (with buffer on stack)...\n";
+ 
+        std::uint8_t buffer[16];
+        std::cout << "Allocating buffer on stack: " << sizeof buffer << " bytes @ "
+                  << static_cast<void*>(buffer) << '\n';
+        std::pmr::monotonic_buffer_resource mem_res{std::data(buffer), std::size(buffer)};
+ 
+        std::cout << "Creating vector v...\n";
+        std::pmr::vector<std::uint16_t> v{{1, 2, 3, 4}, &mem_res};
+        std::cout << "v.data() @ " << v.data() << '\n'; // equals to `buffer` address
+ 
+        std::cout << "Requesting more...\n";
+        for (int i{0}; i != push_back_limit; ++i)
+        {
+            v.push_back(i);
+            std::cout << "v.size(): " << v.size() << '\n';
+        }
+        std::cout << "Exiting scope #2...\n";
+    }
+}
+```
+
+Possible output:
+
+```text
+Entering scope #1 (without buffer on stack)...
+Creating vector v...
++ Allocating 8 bytes @ 0x1f75c30
+v.data() @ 0x1f75c30
+Requesting more...
++ Allocating 16 bytes @ 0x1f75c50
+- Deallocating 8 bytes @ 0x1f75c30
+v.size(): 5
+v.size(): 6
+v.size(): 7
+v.size(): 8
++ Allocating 32 bytes @ 0x1f75c70
+- Deallocating 16 bytes @ 0x1f75c50
+v.size(): 9
+v.size(): 10
+v.size(): 11
+v.size(): 12
+v.size(): 13
+v.size(): 14
+v.size(): 15
+v.size(): 16
++ Allocating 64 bytes @ 0x1f75ca0
+- Deallocating 32 bytes @ 0x1f75c70
+v.size(): 17
+v.size(): 18
+v.size(): 19
+v.size(): 20
+Exiting scope #1...
+- Deallocating 64 bytes @ 0x1f75ca0
+ 
+Entering scope #2 (with buffer on stack)...
+Allocating buffer on stack: 16 bytes @ 0x7fffbe9f8240
+Creating vector v...
+v.data() @ 0x7fffbe9f8240
+Requesting more...
++ Allocating 64 bytes @ 0x1f75ca0
+v.size(): 5
+v.size(): 6
+v.size(): 7
+v.size(): 8
+v.size(): 9
+v.size(): 10
+v.size(): 11
+v.size(): 12
+v.size(): 13
+v.size(): 14
+v.size(): 15
+v.size(): 16
++ Allocating 128 bytes @ 0x1f75cf0
+v.size(): 17
+v.size(): 18
+v.size(): 19
+v.size(): 20
+Exiting scope #2...
+- Deallocating 128 bytes @ 0x1f75cf0
+- Deallocating 64 bytes @ 0x1f75ca0
+```
+
+### See also
+
+{/* source:cpp-memory-set-default-resource:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_default_resource`](/docs/cpp/library/memory/get_default_resource) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>gets the default [`std::pmr::memory_resource`](/docs/cpp/library/memory/memory_resource) (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`new_delete_resource`](/docs/cpp/library/memory/new_delete_resource) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>returns a static program-wide [`std::pmr::memory_resource`](/docs/cpp/library/memory/memory_resource) that uses the global [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete) to allocate and deallocate memory (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

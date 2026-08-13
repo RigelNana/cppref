@@ -1,0 +1,189 @@
+---
+title: "std::uninitialized_fill_n"
+description: "Copies value to an uninitialized memory area first + [0, count) as if by for (; count--; ++first) ::new (voidify(*first)) typename std::iterator_traits< NoThrowForwardIt >::value_type(value); return first;"
+source_url: "https://en.cppreference.com/w/cpp/memory/uninitialized_fill_n"
+language: "C++"
+---
+
+{/* source:cpp-memory-uninitialized-fill-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration id="1" language="cpp" code={`template< class NoThrowForwardIt, class Size, class T >
+NoThrowForwardIt uninitialized_fill_n( NoThrowForwardIt first,
+
+                                       Size count, const T& value );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy,
+          class NoThrowForwardIt, class Size, class T >
+NoThrowForwardIt uninitialized_fill_n( ExecutionPolicy&& policy,
+                                       NoThrowForwardIt first,
+
+                                       Size count, const T& value );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-uninitialized-fill-n:0001 */}
+1. 1) Copies `value` to an uninitialized memory area `first` + [`0`, `count`) as if by
+
+   `for (; count--; ++first)`\
+   `::new (`[`voidify`](/docs/cpp/library/memory/voidify)`(*first))`\
+   `typename std::iterator_traits<NoThrowForwardIt>::value_type(value);`\
+   `return first;`
+
+{/* source:cpp-memory-uninitialized-fill-n:0002 */}
+If an exception is thrown during the initialization, the objects already constructed are destroyed in an unspecified order.
+
+{/* source:cpp-memory-uninitialized-fill-n:0003 */}
+2. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-memory-uninitialized-fill-n:0004 */}
+This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">
+   `std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+   <Revision since="C++20">
+   `std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.
+   </Revision>
+
+### Parameters
+
+{/* source:cpp-memory-uninitialized-fill-n:0005 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of the elements to initialize</Parameter>
+  <Parameter name="count">number of elements to construct</Parameter>
+  <Parameter name="value">the value to construct the elements with</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `NoThrowForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- No increment, assignment, comparison, or indirection through valid instances of `NoThrowForwardIt` may throw exceptions.
+- <InlineRevision until="C++11">Applying `&*` to a `NoThrowForwardIt` value must yield a pointer to its value type.</InlineRevision>
+
+### Return value
+
+{/* source:cpp-memory-uninitialized-fill-n:0006 */}
+As described above.
+
+### Complexity
+
+{/* source:cpp-memory-uninitialized-fill-n:0007 */}
+Linear in `count`.
+
+### Exceptions
+
+{/* source:cpp-memory-uninitialized-fill-n:0008 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-memory-uninitialized-fill-n:0009 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Notes
+
+{/* source:cpp-memory-uninitialized-fill-n:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_raw_memory_algorithms`](/docs/cpp/library/feature_test#cpp_lib_raw_memory_algorithms) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_raw_memory_algorithms_202411L) | (C++26) | `constexpr` for [specialized memory algorithms](/docs/cpp/library/memory#Uninitialized_memory_algorithms), ([1](/docs/cpp/library/memory/uninitialized_fill_n#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-memory-uninitialized-fill-n:0011 */}
+```cpp
+template<class NoThrowForwardIt, class Size, class T>
+constexpr NoThrowForwardIt uninitialized_fill_n(NoThrowForwardIt first,
+                                                Size count, const T& value)
+{
+    using V = typename std::iterator_traits<NoThrowForwardIt>::value_type;
+    NoThrowForwardIt current = first;
+    try
+    {
+        for (; count > 0; ++current, (void) --count)
+            ::new (static_cast<void*>(std::addressof(*current))) V(value);
+        return current;
+    }
+    catch (...)
+    {
+        for (; first != current; ++first)
+            first->~V();
+        throw;
+    }
+    return current;
+}
+```
+
+### Example
+
+{/* source:cpp-memory-uninitialized-fill-n:0012 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
+ 
+int main()
+{
+    std::string* p;
+    std::size_t sz;
+    std::tie(p, sz) = std::get_temporary_buffer<std::string>(4);
+    std::uninitialized_fill_n(p, sz, "Example");
+ 
+    for (std::string* i = p; i != p + sz; ++i)
+    {
+        std::cout << *i << '\n';
+        i->~basic_string<char>();
+    }
+    std::return_temporary_buffer(p);
+}
+```
+
+Output:
+
+```text
+Example
+Example
+Example
+Example
+```
+
+### Defect reports
+
+{/* source:cpp-memory-uninitialized-fill-n:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-uninitialized-fill-n:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={866} standard="C++98">
+    <PublishedBehavior>given `T` as the value type of `NoThrowForwardIt`, if<br />`T::operator new` exists, the program might be ill-formed</PublishedBehavior>
+    <CorrectedBehavior>uses global placement `new` instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1339} standard="C++98">
+    <PublishedBehavior>the location of the first element following the filling range was not returned</PublishedBehavior>
+    <CorrectedBehavior>returned</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2433} standard="C++11">
+    <PublishedBehavior>this algorithm might be hijacked by overloaded `operator&`</PublishedBehavior>
+    <CorrectedBehavior>uses [`std::addressof`](/docs/cpp/library/memory/addressof)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3870} standard="C++20">
+    <PublishedBehavior>this algorithm might create objects on a `const` storage</PublishedBehavior>
+    <CorrectedBehavior>kept disallowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-uninitialized-fill-n:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`uninitialized_fill`](/docs/cpp/library/memory/uninitialized_fill)</DescriptionTerm>
+    <DescriptionBody>copies an object to an uninitialized area of memory, defined by a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_fill_n`](/docs/cpp/library/memory/ranges/uninitialized_fill_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies an object to an uninitialized area of memory, defined by a start and a count (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

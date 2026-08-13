@@ -1,0 +1,186 @@
+---
+title: "std::ranges::uninitialized_fill"
+description: "Copies value to an uninitialized memory area [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/memory/ranges/uninitialized_fill"
+language: "C++"
+---
+{/* source:cpp-memory-ranges-uninitialized-fill:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< no-throw-forward-iterator I, no-throw-sentinel-for<I> S,
+          class T >
+    requires std::constructible_from<std::iter_value_t<I>, const T&>
+
+I uninitialized_fill( I first, S last, const T& value );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++20" code={`template< no-throw-forward-range R, class T >
+    requires std::constructible_from<ranges::range_value_t<R>,
+                                     const T&>
+ranges::borrowed_iterator_t<R> uninitialized_fill( R&& r,
+
+                                                   const T& value );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0001 */}
+1. 1) Copies `value` to an uninitialized memory area [`first`, `last`) as if by
+
+   `for (; first != last; ++first)`<br />
+   `::new (`[`voidify`](/docs/cpp/library/memory/voidify)`(*first)) std::remove_reference_t<std::iter_reference_t<I>>(value);`<br />
+   `return first;`
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0002 */}
+2. If an exception is thrown during the initialization, the objects already constructed are destroyed in an unspecified order.
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0003 */}
+3. 2) Equivalent to `return ranges::uninitialized_fill(ranges::begin(r), ranges::end(r), value);`.
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0004 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0005 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0006 */}
+<ParameterList>
+  <Parameter name="first, last">iterator-sentinel pair denoting the range of elements to initialize</Parameter>
+  <Parameter name="r">the range of the elements to initialize</Parameter>
+  <Parameter name="value">the value to construct the elements with</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0007 */}
+As described above.
+
+### Complexity
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0008 */}
+Linear in the size of the uninitialized memory area.
+
+### Exceptions
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0009 */}
+Any exception thrown on construction of the elements in the destination range.
+
+### Notes
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0010 */}
+An implementation may improve the efficiency of the `ranges::uninitialized_fill`, e.g. by using [`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill), if the value type of the output range is [*TrivialType*](/docs/cpp/library/named_req/TrivialType).
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0011 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_raw_memory_algorithms`](/docs/cpp/library/feature_test#cpp_lib_raw_memory_algorithms) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_raw_memory_algorithms_202411L) | (C++26) | `constexpr` for [specialized memory algorithms](/docs/cpp/library/memory#Uninitialized_memory_algorithms), ([1,2](/docs/cpp/library/memory/ranges/uninitialized_fill#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0012 */}
+```cpp
+struct uninitialized_fill_fn
+{
+    template<no-throw-forward-iterator I, no-throw-sentinel-for<I> S, class T>
+        requires std::constructible_from<std::iter_value_t<I>, const T&>
+    constexpr I operator()(I first, S last, const T& value) const
+    {
+        I rollback{first};
+        try
+        {
+            for (; !(first == last); ++first)
+                ranges::construct_at(std::addressof(*first), value);
+            return first;
+        }
+        catch (...)
+        {   
+            // rollback: destroy constructed elements
+            for (; rollback != first; ++rollback)
+                ranges::destroy_at(std::addressof(*rollback));
+            throw;
+        }
+    }
+ 
+    template<no-throw-forward-range R, class T>
+        requires std::constructible_from<ranges::range_value_t<R>, const T&>
+    constexpr ranges::borrowed_iterator_t<R> operator()(R&& r, const T& value) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r), value);
+    }
+};
+ 
+inline constexpr uninitialized_fill_fn uninitialized_fill{};
+```
+
+### Example
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0013 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <string>
+ 
+int main()
+{
+    constexpr int n{4};
+    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+ 
+    try
+    {
+        auto first{reinterpret_cast<std::string*>(out)};
+        auto last{first + n};
+        std::ranges::uninitialized_fill(first, last, "▄▀▄▀▄▀▄▀");
+ 
+        int count{1};
+        for (auto it{first}; it != last; ++it)
+            std::cout << count++ << ' ' << *it << '\n';
+ 
+        std::ranges::destroy(first, last);
+    }
+    catch(...)
+    {
+        std::cout << "Exception!\n";
+    }
+}
+```
+
+Output:
+
+```text
+1 ▄▀▄▀▄▀▄▀
+2 ▄▀▄▀▄▀▄▀
+3 ▄▀▄▀▄▀▄▀
+4 ▄▀▄▀▄▀▄▀
+```
+
+### Defect reports
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3870} standard="C++20">
+    <PublishedBehavior>this algorithm might create objects on a `const` storage</PublishedBehavior>
+    <CorrectedBehavior>kept disallowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-ranges-uninitialized-fill:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_fill_n`](/docs/cpp/library/memory/ranges/uninitialized_fill_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies an object to an uninitialized area of memory, defined by a start and a count (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uninitialized_fill`](/docs/cpp/library/memory/uninitialized_fill)</DescriptionTerm>
+    <DescriptionBody>copies an object to an uninitialized area of memory, defined by a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

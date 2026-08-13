@@ -1,0 +1,129 @@
+---
+title: "std::unique_ptr<T,Deleter>::reset"
+description: "Replaces the managed object."
+source_url: "https://en.cppreference.com/w/cpp/memory/unique_ptr/reset"
+language: "C++"
+---
+
+{/* source:cpp-memory-unique-ptr-reset:0000 */}
+<DeclarationDoc>
+  members of the primary template, `unique_ptr<T>`
+
+  <Declaration id="1" language="cpp" code={`void reset( pointer ptr = pointer() ) noexcept;`} />
+
+  members of the specialization `unique_ptr<T[]>`
+
+  <Declaration id="2" language="cpp" code={`template< class U >
+void reset( U ptr ) noexcept;`} />
+  <Declaration id="3" language="cpp" code={`void reset( std::nullptr_t = nullptr ) noexcept;`} />
+
+  <InlineRevision since="C++23">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-memory-unique-ptr-reset:0001 */}
+Replaces the managed object.
+
+{/* source:cpp-memory-unique-ptr-reset:0002 */}
+1. 1,2) Equivalent to `auto old_ptr = get();`<br />`/* assigns “ptr” to the stored pointer */`<br />`if (old_ptr)`<br />`    get_deleter()(old_ptr);`.
+
+{/* source:cpp-memory-unique-ptr-reset:0003 */}
+If `get_deleter()(old_ptr)` throws an exception, the behavior is undefined.
+
+{/* source:cpp-memory-unique-ptr-reset:0004 */}
+2. 2) This overload participates in overload resolution only if `U` is the same type as `pointer`, or all following conditions are satisfied:
+   - `pointer` is the same type as `element_type*`.
+   - `U` is a pointer type `V*` such that `V(*)[]` is convertible to `element_type(*)[]`.
+
+{/* source:cpp-memory-unique-ptr-reset:0005 */}
+3. 3) Equivalent to `reset(pointer())`.
+
+### Parameters
+
+{/* source:cpp-memory-unique-ptr-reset:0006 */}
+<ParameterList>
+  <Parameter name="ptr">pointer to a new object to manage</Parameter>
+</ParameterList>
+
+### Notes
+
+{/* source:cpp-memory-unique-ptr-reset:0007 */}
+To replace the managed object while supplying a new deleter as well, move assignment operator may be used.
+
+{/* source:cpp-memory-unique-ptr-reset:0008 */}
+A test for self-reset, i.e. whether `ptr` points to an object already managed by `*this`, is not performed, except where provided as a compiler extension or as a debugging assert. Note that code such as `p.reset(p.release())` does not involve self-reset, only code like `p.reset(p.get())` does.
+
+### Example
+
+{/* source:cpp-memory-unique-ptr-reset:0009 */}
+```cpp
+#include <iostream>
+#include <memory>
+ 
+struct Foo // object to manage
+{
+    Foo() { std::cout << "Foo...\n"; }
+    ~Foo() { std::cout << "~Foo...\n"; }
+};
+ 
+struct D // deleter
+{
+    void operator() (Foo* p)
+    {
+        std::cout << "Calling delete for Foo object... \n";
+        delete p;
+    }
+};
+ 
+int main()
+{
+    std::cout << "Creating new Foo...\n";
+    std::unique_ptr<Foo, D> up(new Foo(), D()); // up owns the Foo pointer (deleter D)
+ 
+    std::cout << "Replace owned Foo with a new Foo...\n";
+    up.reset(new Foo());  // calls deleter for the old one
+ 
+    std::cout << "Release and delete the owned Foo...\n";
+    up.reset(nullptr);      
+}
+```
+
+Output:
+
+```text
+Creating new Foo...
+Foo...
+Replace owned Foo with a new Foo...
+Foo...
+Calling delete for Foo object...
+~Foo...
+Release and delete the owned Foo...
+Calling delete for Foo object...
+~Foo...
+```
+
+### Defect reports
+
+{/* source:cpp-memory-unique-ptr-reset:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-unique-ptr-reset:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2118} standard="C++11">
+    <PublishedBehavior>`unique_ptr<T[]>::reset` rejected qualification conversions</PublishedBehavior>
+    <CorrectedBehavior>accepts</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2169} standard="C++11">
+    <PublishedBehavior>the overload `unique_ptr<T[]>::reset(pointer)` existed</PublishedBehavior>
+    <CorrectedBehavior>removed the overload</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-unique-ptr-reset:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`release`](/docs/cpp/library/memory/unique_ptr/release)</DescriptionTerm>
+    <DescriptionBody>returns a pointer to the managed object and releases the ownership (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

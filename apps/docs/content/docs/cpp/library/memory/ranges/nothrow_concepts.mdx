@@ -1,0 +1,90 @@
+---
+title: "no-throw-input-iterator, no-throw-forward-iterator, no-throw-sentinel-for, no-throw-input-range, no-throw-forward-range"
+description: "Exposition-only concepts that specify that no exceptions are thrown from operations required by algorithms on iterators, sentinels, and ranges."
+source_url: "https://en.cppreference.com/w/cpp/memory/ranges/nothrow_concepts"
+language: "C++"
+---
+{/* source:cpp-memory-ranges-nothrow-concepts:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< class I >
+concept no-throw-input-iterator =
+    std::input_iterator<I> &&
+    std::is_lvalue_reference_v<std::iter_reference_t<I>> &&
+
+    std::same_as<std::remove_cvref_t<std::iter_reference_t<I>>, std::iter_value_t<I>>;`} />
+  (1) (exposition only*)
+  <Declaration id="2" language="cpp" code={`template< class I >
+concept no-throw-forward-iterator =
+    no-throw-input-iterator<I> &&
+    std::forward_iterator<I> &&
+
+    no-throw-sentinel-for<I, I>;`} />
+  (2) (exposition only*)
+  <Declaration id="3" language="cpp" code={`template< class S, class I >
+concept no-throw-sentinel-for = std::sentinel_for<S, I>;`} />
+  (3) (exposition only*)
+  <Declaration id="4" language="cpp" code={`template< class R >
+concept no-throw-input-range =
+    ranges::range<R> &&
+    no-throw-input-iterator<ranges::iterator_t<R>> &&
+
+    no-throw-sentinel-for<ranges::sentinel_t<R>, ranges::iterator_t<R>>;`} />
+  (4) (exposition only*)
+  <Declaration id="5" language="cpp" code={`template< class R >
+concept no-throw-forward-range =
+    no-throw-input-range<R> &&
+
+    no-throw-forward-iterator<ranges::iterator_t<R>>;`} />
+  (5) (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0001 */}
+These exposition-only concepts specify that no exceptions are thrown from operations required by algorithms on iterators, sentinels, and ranges.
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0002 */}
+1. 1) The no-throw-input-iterator concept requires that dereferencing the iterator yields an lvalue, like [contiguous_iterator](/docs/cpp/library/iterator/contiguous_iterator) and [LegacyForwardIterator](/docs/cpp/library/named_req/ForwardIterator).
+
+### Semantic requirements
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0003 */}
+Like all standard concepts, every concept listed here is modeled only if all concepts it subsumes are modeled.
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0004 */}
+1. 1) A type `I` models no-throw-input-iterator only if no exceptions are thrown from increment, copy construction, move construction, copy assignment, move assignment, or indirection through valid iterators.
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0005 */}
+2. 3) Types `S` and `I` model no-throw-sentinel-for only if no exceptions are thrown from copy construction, move construction, copy assignment, move assignment, or comparisons between valid values of type `I` and `S`.
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0006 */}
+3. 4) A type `R` models no-throw-input-range only if no exceptions are thrown from calls to `ranges::begin` and `ranges::end` on an object of type `R`.
+
+### Notes
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0007 */}
+These concepts allow some operations on iterators and sentinels to throw exceptions, e.g. operations on invalid values.
+
+### See also
+
+{/* source:cpp-memory-ranges-nothrow-concepts:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[input_iterator](/docs/cpp/library/iterator/input_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an input iterator, that is, its referenced values can be read and it can be both pre- and post-incremented (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[forward_iterator](/docs/cpp/library/iterator/forward_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an input_iterator is a forward iterator, supporting equality comparison and multi-pass (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[sentinel_for](/docs/cpp/library/iterator/sentinel_for) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies a type is a sentinel for an [input_or_output_iterator](/docs/cpp/library/iterator/input_or_output_iterator) type (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[ranges::input_range](/docs/cpp/library/ranges/input_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies a range whose iterator type satisfies [input_iterator](/docs/cpp/library/iterator/input_iterator) (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[ranges::forward_range](/docs/cpp/library/ranges/forward_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies a range whose iterator type satisfies [forward_iterator](/docs/cpp/library/iterator/forward_iterator) (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

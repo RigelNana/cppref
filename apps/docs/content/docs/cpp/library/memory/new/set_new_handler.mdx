@@ -1,0 +1,113 @@
+---
+title: "std::set_new_handler"
+description: "Makes new_p the new global new-handler function and returns the previously installed new-handler."
+source_url: "https://en.cppreference.com/w/cpp/memory/new/set_new_handler"
+language: "C++"
+---
+{/* source:cpp-memory-new-set-new-handler:0000 */}
+<DeclarationDoc>
+Defined in header [`<new>`](/docs/cpp/library/headers/new)
+
+  <Declaration language="cpp" until="C++11" code={`std::new_handler set_new_handler( std::new_handler new_p ) throw();`} />
+  <Declaration language="cpp" since="C++11" code={`std::new_handler set_new_handler( std::new_handler new_p ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-new-set-new-handler:0001 */}
+Makes `new_p` the new global new-handler function and returns the previously installed new-handler.
+
+{/* source:cpp-memory-new-set-new-handler:0002 */}
+The *new-handler* function is the function called by [allocation functions](/docs/cpp/library/memory/new/operator_new) whenever a memory allocation attempt fails. Its intended purpose is one of three things:
+
+{/* source:cpp-memory-new-set-new-handler:0003 */}
+1. 1) make more memory available,
+
+{/* source:cpp-memory-new-set-new-handler:0004 */}
+2. 2) terminate the program (e.g. by calling [`std::terminate`](/docs/cpp/library/error/terminate)),
+
+{/* source:cpp-memory-new-set-new-handler:0005 */}
+3. 3) throw exception of type [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) or derived from [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc).
+
+{/* source:cpp-memory-new-set-new-handler:0006 */}
+The default implementation throws [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc). The user can install their own *new-handler*, which may offer behavior different than the default one.
+
+{/* source:cpp-memory-new-set-new-handler:0007 */}
+If *new-handler* returns, the allocation function repeats the previously-failed allocation attempt and calls the *new-handler* again if the allocation fails again. To end the loop, *new-handler* may call `std::set_new_handler(nullptr)`: if, after a failed allocation attempt, allocation function finds that [`std::get_new_handler`](/docs/cpp/library/memory/new/get_new_handler) returns a null pointer value, it will throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc).
+
+{/* source:cpp-memory-new-set-new-handler:0008 */}
+At program startup, *new-handler* is a null pointer.
+
+{/* source:cpp-memory-new-set-new-handler:0009 */}
+<Revision since="C++11">
+This function is thread-safe. Every call to `std::set_new_handler` *synchronizes-with* (see [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) the subsequent `std::set_new_handler` and [`std::get_new_handler`](/docs/cpp/library/memory/new/get_new_handler) calls.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-new-set-new-handler:0010 */}
+<ParameterList>
+  <Parameter name="new_p">pointer to function of type [`std::new_handler`](/docs/cpp/library/memory/new/new_handler), or null pointer</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-new-set-new-handler:0011 */}
+The previously-installed new handler, or a null pointer value if none was installed.
+
+### Example
+
+{/* source:cpp-memory-new-set-new-handler:0012 */}
+```cpp
+#include <iostream>
+#include <new>
+ 
+void handler()
+{
+    std::cout << "Memory allocation failed, terminating\n";
+    std::set_new_handler(nullptr);
+}
+ 
+int main()
+{
+    std::set_new_handler(handler);
+    try
+    {
+        while (true)
+        {
+            new int[1000'000'000ul]();
+        }
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+Possible output:
+
+```text
+Memory allocation failed, terminating
+std::bad_alloc
+```
+
+### See also
+
+{/* source:cpp-memory-new-set-new-handler:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator new`, `operator new[]`](/docs/cpp/library/memory/new/operator_new)</DescriptionTerm>
+    <DescriptionBody>allocation functions (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_new_handler`](/docs/cpp/library/memory/new/get_new_handler) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the current new handler (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`new_handler`](/docs/cpp/library/memory/new/new_handler)</DescriptionTerm>
+    <DescriptionBody>function pointer type of the new handler (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bad_alloc`](/docs/cpp/library/memory/new/bad_alloc)</DescriptionTerm>
+    <DescriptionBody>exception thrown when memory allocation fails (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

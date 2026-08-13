@@ -1,0 +1,57 @@
+---
+title: "std::auto_ptr<T>::operator="
+description: "Replaces the managed object with the one managed by r or m."
+source_url: "https://en.cppreference.com/w/cpp/memory/auto_ptr/operator="
+language: "C++"
+---
+
+{/* source:cpp-memory-auto-ptr-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" removed="C++17" code={`auto_ptr& operator=( auto_ptr& r ) throw();`} /> (deprecated in C++11)
+  <Declaration id="2" language="cpp" removed="C++17" code={`template< class Y >
+auto_ptr& operator=( auto_ptr<Y>& r ) throw();`} /> (deprecated in C++11)
+  <Declaration id="3" language="cpp" removed="C++17" code={`auto_ptr& operator=( auto_ptr_ref<T> m ) throw();`} /> (deprecated in C++11)
+</DeclarationDoc>
+
+{/* source:cpp-memory-auto-ptr-operator:0001 */}
+Replaces the managed object with the one managed by `r` or `m`.
+
+{/* source:cpp-memory-auto-ptr-operator:0002 */}
+1. 1) Effectively calls `reset(r.release())`.
+
+{/* source:cpp-memory-auto-ptr-operator:0003 */}
+2. 2) Effectively calls `reset(r.release())`. `Y*` must be implicitly convertible to `T*`.
+
+{/* source:cpp-memory-auto-ptr-operator:0004 */}
+3. 3) Effectively calls `reset(m.release())`. `auto_ptr_ref` is an implementation-defined type that holds a reference to `auto_ptr`. [`std::auto_ptr`](/docs/cpp/library/memory/auto_ptr) is implicitly [convertible to](/docs/cpp/library/memory/auto_ptr/operator_auto_ptr) and [from](/docs/cpp/library/memory/auto_ptr/auto_ptr) this type. The implementation is allowed to provide the template with a different name or implement equivalent functionality in other ways.
+
+### Parameters
+
+{/* source:cpp-memory-auto-ptr-operator:0005 */}
+<ParameterList>
+  <Parameter name="r">another `auto_ptr` to transfer the ownership of the object from</Parameter>
+  <Parameter name="m">an object of implementation-defined type that holds a reference to `auto_ptr`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-auto-ptr-operator:0006 */}
+`*this`.
+
+### Notes
+
+{/* source:cpp-memory-auto-ptr-operator:0007 */}
+The constructor and the copy assignment operator from `auto_ptr_ref` is provided to allow copy-constructing and assigning `std::auto_ptr` from nameless temporaries. Since its copy constructor and copy assignment operator take the argument as non-const reference, they cannot bind rvalue arguments directly. However, a [user-defined conversion](/docs/cpp/library/memory/auto_ptr/operator_auto_ptr) can be executed (which releases the original `auto_ptr`), followed by a call to the constructor or copy-assignment operator that take `auto_ptr_ref` by value. This is an early implementation of [move semantics](/docs/cpp/library/utility/move).
+
+### Defect reports
+
+{/* source:cpp-memory-auto-ptr-operator:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-auto-ptr-operator:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={127} standard="C++98">
+    <PublishedBehavior>`auto_ptr` was not assignable from `auto_ptr_ref`</PublishedBehavior>
+    <CorrectedBehavior>added overload (3)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

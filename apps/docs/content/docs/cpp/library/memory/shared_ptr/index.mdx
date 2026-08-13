@@ -1,0 +1,474 @@
+---
+title: "std::shared_ptr"
+description: "std::shared_ptr is a smart pointer that retains shared ownership of an object through a pointer."
+source_url: "https://en.cppreference.com/w/cpp/memory/shared_ptr"
+language: "C++"
+---
+
+{/* source:cpp-memory-shared-ptr:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T > class shared_ptr;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-shared-ptr:0001 */}
+`std::shared_ptr` is a smart pointer that retains shared ownership of an object through a pointer. Several `shared_ptr` objects may own the same object. The object is destroyed and its memory deallocated when either of the following happens:
+
+{/* source:cpp-memory-shared-ptr:0002 */}
+- the last remaining `shared_ptr` owning the object is destroyed;
+- the last remaining `shared_ptr` owning the object is assigned another pointer via [`operator=`](/docs/cpp/library/memory/shared_ptr/operator_assignment) or [`reset()`](/docs/cpp/library/memory/shared_ptr/reset).
+
+{/* source:cpp-memory-shared-ptr:0003 */}
+The object is destroyed using [delete-expression](/docs/cpp/language/expressions/delete) or a custom deleter that is supplied to `shared_ptr` during construction.
+
+{/* source:cpp-memory-shared-ptr:0004 */}
+A `shared_ptr` can share ownership of an object while storing a pointer to another object. This feature can be used to point to member objects while owning the object they belong to. The stored pointer is the one accessed by [`get()`](/docs/cpp/library/memory/shared_ptr/get), the dereference and the comparison operators. The managed pointer is the one passed to the deleter when use count reaches zero.
+
+{/* source:cpp-memory-shared-ptr:0005 */}
+A `shared_ptr` may also own no objects, in which case it is called *empty* (an empty `shared_ptr` may have a non-null stored pointer if the aliasing constructor was used to create it).
+
+{/* source:cpp-memory-shared-ptr:0006 */}
+All specializations of `shared_ptr` meet the requirements of [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible), [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable), and [*LessThanComparable*](/docs/cpp/library/named_req/LessThanComparable) and are [contextually convertible](/docs/cpp/language/expressions/implicit_cast) to `bool`.
+
+{/* source:cpp-memory-shared-ptr:0007 */}
+All member functions (including copy constructor and copy assignment) can be called by multiple threads on different `shared_ptr` objects without additional synchronization even if these objects are copies and share ownership of the same object. If multiple threads of execution access the same `shared_ptr` object without synchronization and any of those accesses uses a non-const member function of `shared_ptr` then a data race will occur; the [`std::atomic<shared_ptr>`](/docs/cpp/library/memory/shared_ptr/atomic2) can be used to prevent the data race.
+
+### Member types
+
+{/* source:cpp-memory-shared-ptr:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`element_type`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++17">`T`</InlineRevision> <InlineRevision since="C++17">[`std::remove_extent_t<T>`](/docs/cpp/library/meta/remove_extent)</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`weak_type` <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>[`std::weak_ptr<T>`](/docs/cpp/library/memory/weak_ptr)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-memory-shared-ptr:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/memory/shared_ptr/shared_ptr)</DescriptionTerm>
+    <DescriptionBody>constructs new `shared_ptr` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/memory/shared_ptr/~shared_ptr)</DescriptionTerm>
+    <DescriptionBody>destructs the owned object if no more `shared_ptrs` link to it (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/memory/shared_ptr/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns the `shared_ptr` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/memory/shared_ptr/reset)</DescriptionTerm>
+    <DescriptionBody>replaces the managed object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/memory/shared_ptr/swap)</DescriptionTerm>
+    <DescriptionBody>swaps the managed objects (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Observers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get`](/docs/cpp/library/memory/shared_ptr/get)</DescriptionTerm>
+    <DescriptionBody>returns the stored pointer (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*` `operator->`](/docs/cpp/library/memory/shared_ptr/operator_star_)</DescriptionTerm>
+    <DescriptionBody>dereferences the stored pointer (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/memory/shared_ptr/operator_at) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>provides indexed access to the stored array (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`use_count`](/docs/cpp/library/memory/shared_ptr/use_count)</DescriptionTerm>
+    <DescriptionBody>returns the number of `shared_ptr` objects referring to the same managed object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique`](/docs/cpp/library/memory/shared_ptr/unique) <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks whether the managed object is managed only by the current `shared_ptr` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/memory/shared_ptr/operator_bool)</DescriptionTerm>
+    <DescriptionBody>checks if the stored pointer is not null (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`owner_before`](/docs/cpp/library/memory/shared_ptr/owner_before)</DescriptionTerm>
+    <DescriptionBody>provides owner-based ordering of shared pointers (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`owner_hash`](/docs/cpp/library/memory/shared_ptr/owner_hash) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>provides owner-based hashing of shared pointers (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`owner_equal`](/docs/cpp/library/memory/shared_ptr/owner_equal) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>provides owner-based equal comparison of shared pointers (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-memory-shared-ptr:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_shared` `make_shared_for_overwrite`](/docs/cpp/library/memory/shared_ptr/make_shared) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a shared pointer that manages a new object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate_shared` `allocate_shared_for_overwrite`](/docs/cpp/library/memory/shared_ptr/allocate_shared) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a shared pointer that manages a new object allocated using an allocator (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`static_pointer_cast` `dynamic_pointer_cast` `const_pointer_cast` `reinterpret_pointer_cast`](/docs/cpp/library/memory/shared_ptr/pointer_cast) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>applies [`static_cast`](/docs/cpp/language/expressions/static_cast), [`dynamic_cast`](/docs/cpp/language/expressions/dynamic_cast), [`const_cast`](/docs/cpp/language/expressions/const_cast), or [`reinterpret_cast`](/docs/cpp/language/expressions/reinterpret_cast) to the stored pointer (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_deleter`](/docs/cpp/library/memory/shared_ptr/get_deleter)</DescriptionTerm>
+    <DescriptionBody>returns the deleter of specified type, if owned (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==` `operator!=` `operator<` `operator<=` `operator>` `operator>=` `operator<=>`](/docs/cpp/library/memory/shared_ptr/operator_cmp) <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision until="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>compares with another `shared_ptr` or with `nullptr` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator<<(std::shared_ptr)`](/docs/cpp/library/memory/shared_ptr/operator_ltlt)</DescriptionTerm>
+    <DescriptionBody>outputs the value of the stored pointer to an output stream (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::shared_ptr)`](/docs/cpp/library/memory/shared_ptr/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-memory-shared-ptr:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::atomic_is_lock_free(std::shared_ptr)` `std::atomic_load(std::shared_ptr)` `std::atomic_load_explicit(std::shared_ptr)` `std::atomic_store(std::shared_ptr)` `std::atomic_store_explicit(std::shared_ptr)` `std::atomic_exchange(std::shared_ptr)` `std::atomic_exchange_explicit(std::shared_ptr)` `std::atomic_compare_exchange_weak(std::shared_ptr)` `std::atomic_compare_exchange_strong(std::shared_ptr)` `std::atomic_compare_exchange_weak_explicit(std::shared_ptr)` `std::atomic_compare_exchange_strong_explicit(std::shared_ptr)`](/docs/cpp/library/memory/shared_ptr/atomic) (deprecated in C++20) (removed in C++26)</DescriptionTerm>
+    <DescriptionBody>specializes atomic operations for `std::shared_ptr` (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper classes
+
+{/* source:cpp-memory-shared-ptr:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::atomic<std::shared_ptr>`](/docs/cpp/library/memory/shared_ptr/atomic2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>atomic shared pointer (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::hash<std::shared_ptr>`](/docs/cpp/library/memory/shared_ptr/hash) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>hash support for `std::shared_ptr` (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/memory/shared_ptr/deduction_guides)
+
+<InlineRevision since="C++17" />
+
+### Notes
+
+{/* source:cpp-memory-shared-ptr:0013 */}
+The ownership of an object can only be shared with another `shared_ptr` by copy constructing or copy assigning its value to another `shared_ptr`. Constructing a new `shared_ptr` using the raw underlying pointer owned by another `shared_ptr` leads to undefined behavior.
+
+{/* source:cpp-memory-shared-ptr:0014 */}
+`std::shared_ptr` may be used with an [incomplete type](/docs/cpp/language/basic_concepts/incomplete_type) `T`. However, the constructor from a raw pointer (`template<class Y> shared_ptr(Y*)`) and the `template<class Y> void reset(Y*)` member function may only be called with a pointer to a complete type (note that [`std::unique_ptr`](/docs/cpp/library/memory/unique_ptr) may be constructed from a raw pointer to an incomplete type).
+
+{/* source:cpp-memory-shared-ptr:0015 */}
+The `T` in `std::shared_ptr<T>` may be a function type: in this case it manages a pointer to function, rather than an object pointer. This is sometimes used to keep a dynamic library or a plugin loaded as long as any of its functions are referenced:
+
+{/* source:cpp-memory-shared-ptr:0016 */}
+```cpp
+void del(void(*)()) {}
+ 
+void fun() {}
+ 
+int main()
+{
+    std::shared_ptr<void()> ee(fun, del);
+    (*ee)();
+}
+```
+
+### Implementation notes
+
+{/* source:cpp-memory-shared-ptr:0017 */}
+In a typical implementation, `shared_ptr` holds only two pointers:
+
+{/* source:cpp-memory-shared-ptr:0018 */}
+- the stored pointer (one returned by [`get()`](/docs/cpp/library/memory/shared_ptr/get));
+- a pointer to *control block*.
+
+{/* source:cpp-memory-shared-ptr:0019 */}
+The control block is a dynamically-allocated object that holds:
+
+{/* source:cpp-memory-shared-ptr:0020 */}
+- either a pointer to the managed object or the managed object itself;
+- the deleter (type-erased);
+- the allocator (type-erased);
+- the number of `shared_ptrs` that own the managed object;
+- the number of `weak_ptrs` that refer to the managed object.
+
+{/* source:cpp-memory-shared-ptr:0021 */}
+When `shared_ptr` is created by calling [`std::make_shared`](/docs/cpp/library/memory/shared_ptr/make_shared) or [`std::allocate_shared`](/docs/cpp/library/memory/shared_ptr/allocate_shared), the memory for both the control block and the managed object is created with a single allocation. The managed object is constructed in-place in a data member of the control block. When `shared_ptr` is created via one of the `shared_ptr` constructors, the managed object and the control block must be allocated separately. In this case, the control block stores a pointer to the managed object.
+
+{/* source:cpp-memory-shared-ptr:0022 */}
+The pointer held by the `shared_ptr` directly is the one returned by [`get()`](/docs/cpp/library/memory/shared_ptr/get), while the pointer/object held by the control block is the one that will be deleted when the number of shared owners reaches zero. These pointers are not necessarily equal.
+
+{/* source:cpp-memory-shared-ptr:0023 */}
+The destructor of `shared_ptr` decrements the number of shared owners of the control block. If that counter reaches zero, the control block calls the destructor of the managed object. The control block does not deallocate itself until the [`std::weak_ptr`](/docs/cpp/library/memory/weak_ptr) counter reaches zero as well.
+
+{/* source:cpp-memory-shared-ptr:0024 */}
+In existing implementations, the number of weak pointers is incremented ([1](https://stackoverflow.com/questions/43297517/stdshared-ptr-internals-weak-count-more-than-expected), [2](https://www.reddit.com/r/cpp/comments/3eia29/stdshared_ptrs_secret_constructor/ctfeh1p)) if there is a shared pointer to the same control block.
+
+{/* source:cpp-memory-shared-ptr:0025 */}
+To satisfy thread safety requirements, the reference counters are typically incremented using an equivalent of [`std::atomic::fetch_add`](/docs/cpp/library/atomic/atomic/fetch_add) with [`std::memory_order_relaxed`](/docs/cpp/library/atomic/memory_order) (decrementing requires stronger ordering to safely destroy the control block).
+
+### Example
+
+{/* source:cpp-memory-shared-ptr:0026 */}
+```cpp
+#include <chrono>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <thread>
+ 
+using namespace std::chrono_literals;
+ 
+struct Base
+{
+    Base() { std::cout << "Base::Base()\n"; }
+ 
+    // Note: non-virtual destructor is OK here
+    ~Base() { std::cout << "Base::~Base()\n"; }
+};
+ 
+struct Derived : public Base
+{
+    Derived() { std::cout << "Derived::Derived()\n"; }
+ 
+    ~Derived() { std::cout << "Derived::~Derived()\n"; }
+};
+ 
+void print(auto rem, std::shared_ptr<Base> const& sp)
+{
+    std::cout << rem << "\n\tget() = " << sp.get()
+              << ", use_count() = " << sp.use_count() << '\n';
+}
+ 
+void thr(std::shared_ptr<Base> p)
+{
+    std::this_thread::sleep_for(987ms);
+    std::shared_ptr<Base> lp = p; // thread-safe, even though the
+                                  // shared use_count is incremented
+    {
+        static std::mutex io_mutex;
+        std::lock_guard<std::mutex> lk(io_mutex);
+        print("Local pointer in a thread:", lp);
+    }
+}
+ 
+int main()
+{
+    std::shared_ptr<Base> p = std::make_shared<Derived>();
+ 
+    print("Created a shared Derived (as a pointer to Base)", p);
+ 
+    std::thread t1{thr, p}, t2{thr, p}, t3{thr, p};
+    p.reset(); // release ownership from main
+ 
+    print("Shared ownership between 3 threads and released ownership from main:", p);
+ 
+    t1.join();
+    t2.join();
+    t3.join();
+ 
+    std::cout << "All threads completed, the last one deleted Derived.\n";
+}
+```
+
+Possible output:
+
+```text
+Base::Base()
+Derived::Derived()
+Created a shared Derived (as a pointer to Base)
+	get() = 0x118ac30, use_count() = 1
+Shared ownership between 3 threads and released ownership from main:
+	get() = 0, use_count() = 0
+Local pointer in a thread:
+	get() = 0x118ac30, use_count() = 5
+Local pointer in a thread:
+	get() = 0x118ac30, use_count() = 4
+Local pointer in a thread:
+	get() = 0x118ac30, use_count() = 2
+Derived::~Derived()
+Base::~Base()
+All threads completed, the last one deleted Derived.
+```
+
+### Example
+
+{/* source:cpp-memory-shared-ptr:0027 */}
+```cpp
+#include <iostream>
+#include <memory>
+ 
+struct MyObj
+{
+    MyObj() { std::cout << "MyObj constructed\n"; }
+ 
+    ~MyObj() { std::cout << "MyObj destructed\n"; }
+};
+ 
+struct Container : std::enable_shared_from_this<Container> // note: public inheritance
+{
+    std::shared_ptr<MyObj> memberObj;
+ 
+    void CreateMember() { memberObj = std::make_shared<MyObj>(); }
+ 
+    std::shared_ptr<MyObj> GetAsMyObj()
+    {
+        // Use an alias shared ptr for member
+        return std::shared_ptr<MyObj>(shared_from_this(), memberObj.get());
+    }
+};
+ 
+#define COUT(str) std::cout << '\n' << str << '\n'
+ 
+#define DEMO(...) std::cout << #__VA_ARGS__ << " = " << __VA_ARGS__ << '\n'
+ 
+int main()
+{
+    COUT("Creating shared container");
+    std::shared_ptr<Container> cont = std::make_shared<Container>();
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+ 
+    COUT("Creating member");
+    cont->CreateMember();
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+ 
+    COUT("Creating another shared container");
+    std::shared_ptr<Container> cont2 = cont;
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+    DEMO(cont2.use_count());
+    DEMO(cont2->memberObj.use_count());
+ 
+    COUT("GetAsMyObj");
+    std::shared_ptr<MyObj> myobj1 = cont->GetAsMyObj();
+    DEMO(myobj1.use_count());
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+    DEMO(cont2.use_count());
+    DEMO(cont2->memberObj.use_count());
+ 
+    COUT("Copying alias obj");
+    std::shared_ptr<MyObj> myobj2 = myobj1;
+    DEMO(myobj1.use_count());
+    DEMO(myobj2.use_count());
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+    DEMO(cont2.use_count());
+    DEMO(cont2->memberObj.use_count());
+ 
+    COUT("Resetting cont2");
+    cont2.reset();
+    DEMO(myobj1.use_count());
+    DEMO(myobj2.use_count());
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+ 
+    COUT("Resetting myobj2");
+    myobj2.reset();
+    DEMO(myobj1.use_count());
+    DEMO(cont.use_count());
+    DEMO(cont->memberObj.use_count());
+ 
+    COUT("Resetting cont");
+    cont.reset();
+    DEMO(myobj1.use_count());
+    DEMO(cont.use_count());
+}
+```
+
+Output:
+
+```text
+Creating shared container
+cont.use_count() = 1
+cont->memberObj.use_count() = 0
+ 
+Creating member
+MyObj constructed
+cont.use_count() = 1
+cont->memberObj.use_count() = 1
+ 
+Creating another shared container
+cont.use_count() = 2
+cont->memberObj.use_count() = 1
+cont2.use_count() = 2
+cont2->memberObj.use_count() = 1
+ 
+GetAsMyObj
+myobj1.use_count() = 3
+cont.use_count() = 3
+cont->memberObj.use_count() = 1
+cont2.use_count() = 3
+cont2->memberObj.use_count() = 1
+ 
+Copying alias obj
+myobj1.use_count() = 4
+myobj2.use_count() = 4
+cont.use_count() = 4
+cont->memberObj.use_count() = 1
+cont2.use_count() = 4
+cont2->memberObj.use_count() = 1
+ 
+Resetting cont2
+myobj1.use_count() = 3
+myobj2.use_count() = 3
+cont.use_count() = 3
+cont->memberObj.use_count() = 1
+ 
+Resetting myobj2
+myobj1.use_count() = 2
+cont.use_count() = 2
+cont->memberObj.use_count() = 1
+ 
+Resetting cont
+myobj1.use_count() = 1
+cont.use_count() = 0
+MyObj destructed
+```
+
+### See also
+
+{/* source:cpp-memory-shared-ptr:0028 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_ptr`](/docs/cpp/library/memory/unique_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>smart pointer with unique object ownership semantics (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`weak_ptr`](/docs/cpp/library/memory/weak_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>weak reference to an object managed by `std::shared_ptr` (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

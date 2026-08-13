@@ -1,0 +1,136 @@
+---
+title: "std::realloc"
+description: "Reallocates the given area of memory (implicitly creating objects in the destination area)."
+source_url: "https://en.cppreference.com/w/cpp/memory/c/realloc"
+language: "C++"
+---
+
+{/* source:cpp-memory-c-realloc:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration language="cpp" code={`void* realloc( void* ptr, std::size_t new_size );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-c-realloc:0001 */}
+Reallocates the given area of memory ([implicitly creating](/docs/cpp/language/basic_concepts/objects#Object_creation) objects in the destination area). It must be previously allocated by [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::calloc`](/docs/cpp/library/memory/c/calloc) or `std::realloc` and not yet freed with [`std::free`](/docs/cpp/library/memory/c/free), otherwise, the results are undefined.
+
+{/* source:cpp-memory-c-realloc:0002 */}
+The reallocation is done by either:
+
+{/* source:cpp-memory-c-realloc:0003 */}
+- a) expanding or contracting the existing area pointed to by `ptr`, if possible. The contents of the area remain unchanged up to the lesser of the new and old sizes. If the area is expanded, the contents of the new part of the array are undefined.
+
+{/* source:cpp-memory-c-realloc:0004 */}
+- b) allocating a new memory block of size `new_size` bytes, copying memory area with size equal the lesser of the new and the old sizes, and freeing the old block.
+
+{/* source:cpp-memory-c-realloc:0005 */}
+If there is not enough memory, the old memory block is not freed and null pointer is returned.
+
+{/* source:cpp-memory-c-realloc:0006 */}
+If `ptr` is a null pointer, the behavior is the same as calling `std::malloc(new_size)`.
+
+{/* source:cpp-memory-c-realloc:0007 */}
+If `new_size` is zero, the behavior is implementation defined: null pointer may be returned (in which case the old memory block may or may not be freed) or some non-null pointer may be returned that may not be used to access storage. <InlineRevision since="C++20">Such usage is deprecated (via [C DR 400](https://open-std.org/JTC1/SC22/WG14/www/docs/n2396.htm#dr_400)).</InlineRevision>
+
+{/* source:cpp-memory-c-realloc:0008 */}
+<Revision since="C++11">
+The following functions are required to be thread-safe:
+
+- The library versions of [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- User replacement versions of global [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- [`std::calloc`](/docs/cpp/library/memory/c/calloc), [`std::malloc`](/docs/cpp/library/memory/c/malloc), `std::realloc`<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, [`std::free`](/docs/cpp/library/memory/c/free)
+
+Calls to these functions that allocate or deallocate a particular unit of storage occur in a single total order, and each such deallocation call [happens-before](/docs/cpp/library/atomic/memory_order) the next allocation (if any) in this order.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-c-realloc:0009 */}
+<ParameterList>
+  <Parameter name="ptr">pointer to the memory area to be reallocated</Parameter>
+  <Parameter name="new_size">new size of the array</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-c-realloc:0010 */}
+On success, returns a pointer to the beginning of newly allocated memory. To avoid a memory leak, the returned pointer must be deallocated with [`std::free`](/docs/cpp/library/memory/c/free) or `std::realloc`. The original pointer `ptr` is invalidated and any access to it is [undefined behavior](/docs/cpp/language/basic_concepts/ub) (even if reallocation was in-place).
+
+{/* source:cpp-memory-c-realloc:0011 */}
+On failure, returns a null pointer. The original pointer `ptr` remains valid and may need to be deallocated with [`std::free`](/docs/cpp/library/memory/c/free).
+
+### Notes
+
+{/* source:cpp-memory-c-realloc:0012 */}
+Because reallocation may involve bytewise copying (regardless of whether it expands or contracts the area), it is necessary (but not sufficient) for those objects to be of [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable) type.
+
+{/* source:cpp-memory-c-realloc:0013 */}
+Some non-standard libraries define a type trait "BitwiseMovable" or "Relocatable", which describes a type that does not have:
+
+{/* source:cpp-memory-c-realloc:0014 */}
+- external references (e.g. nodes of a list or a tree that holds reference to another element), and
+- internal references (e.g. member pointer which might hold the address of another member).
+
+{/* source:cpp-memory-c-realloc:0015 */}
+Objects of such type can be accessed after their storage is reallocated even if their copy constructors are not trivial.
+
+### Example
+
+{/* source:cpp-memory-c-realloc:0016 */}
+```cpp
+#include <cassert>
+#include <cstdlib>
+#include <new>
+ 
+class MallocDynamicBuffer
+{
+    char* p;
+public:
+    explicit MallocDynamicBuffer(std::size_t initial = 0) : p(nullptr)
+    {
+        resize(initial);
+    }
+ 
+    ~MallocDynamicBuffer() { std::free(p); }
+ 
+    void resize(std::size_t newSize)
+    {
+        if (newSize == 0) // this check is not strictly needed,
+        {
+            std::free(p); // but zero-size realloc is deprecated in C
+            p = nullptr;
+        }
+        else
+        {
+            if (void* mem = std::realloc(p, newSize))
+                p = static_cast<char*>(mem);
+            else
+                throw std::bad_alloc();
+        }
+    }
+ 
+    char& operator[](size_t n) { return p[n]; }
+    char operator[](size_t n) const { return p[n]; }
+};
+ 
+int main()
+{
+    MallocDynamicBuffer buf1(1024);
+    buf1[5] = 'f';
+    buf1.resize(10); // shrink
+    assert(buf1[5] == 'f');
+    buf1.resize(1024); // grow
+    assert(buf1[5] == 'f');
+}
+```
+
+### See also
+
+{/* source:cpp-memory-c-realloc:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`C documentation`](/docs/c/library/memory/realloc)</DescriptionTerm>
+    <DescriptionBody>for `realloc`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

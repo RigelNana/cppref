@@ -1,0 +1,208 @@
+---
+title: "std::enable_shared_from_this"
+description: "std::enable_shared_from_this allows an object t that is currently managed by a std::shared_ptr named pt to safely generate additional std::shared_ptr instances pt1, pt2 etc. that all share ownership of t with pt."
+source_url: "https://en.cppreference.com/w/cpp/memory/enable_shared_from_this"
+language: "C++"
+---
+
+{/* source:cpp-memory-enable-shared-from-this:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+class enable_shared_from_this;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-enable-shared-from-this:0001 */}
+`std::enable_shared_from_this` allows an object `t` that is currently managed by a [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) named `pt` to safely generate additional [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) instances `pt1`, `pt2` etc. that all share ownership of `t` with `pt`.
+
+{/* source:cpp-memory-enable-shared-from-this:0002 */}
+Publicly inheriting from `std::enable_shared_from_this<T>` provides the type `T` with a member function `shared_from_this`. If an object `t` of type `T` is managed by a `std::shared_ptr<T>` named `pt`, then calling `T::shared_from_this` will return a new `std::shared_ptr<T>` that shares ownership of `t` with `pt`.
+
+### Data members
+
+{/* source:cpp-memory-enable-shared-from-this:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`mutable std::weak_ptr<T>` `weak_this`</DescriptionTerm>
+    <DescriptionBody>the object tracking the control block of the first shared owner of `*this` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-memory-enable-shared-from-this:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/memory/enable_shared_from_this/enable_shared_from_this)</DescriptionTerm>
+    <DescriptionBody>constructs an `enable_shared_from_this` object (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/memory/enable_shared_from_this/~enable_shared_from_this)</DescriptionTerm>
+    <DescriptionBody>destroys an `enable_shared_from_this` object (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/memory/enable_shared_from_this/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>returns a reference to `*this` (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_from_this`](/docs/cpp/library/memory/enable_shared_from_this/shared_from_this)</DescriptionTerm>
+    <DescriptionBody>returns a [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) which shares ownership of `*this` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`weak_from_this`](/docs/cpp/library/memory/enable_shared_from_this/weak_from_this) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>returns a [`std::weak_ptr`](/docs/cpp/library/memory/weak_ptr) which shares ownership of `*this` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-memory-enable-shared-from-this:0005 */}
+The constructors of `std::shared_ptr` detect the presence of an unambiguous and accessible (i.e. public inheritance is mandatory) `enable_shared_from_this` base and assign the newly created `std::shared_ptr` to `weak_this` if not already owned by a live `std::shared_ptr`. Constructing a `std::shared_ptr` for an object that is already managed by another `std::shared_ptr` will not consult `weak_this` and thus will lead to undefined behavior.
+
+{/* source:cpp-memory-enable-shared-from-this:0006 */}
+It is permitted to call `shared_from_this` only on a previously shared object, i.e. on an object managed by `std::shared_ptr<T>`. Otherwise, [`std::bad_weak_ptr`](/docs/cpp/library/memory/bad_weak_ptr) is thrown (by the `std::shared_ptr` constructor from a default-constructed `weak_this`).
+
+{/* source:cpp-memory-enable-shared-from-this:0007 */}
+`enable_shared_from_this` provides the safe alternative to an expression like `std::shared_ptr<T>(this)`, which is likely to result in `this` being destructed more than once by multiple owners that are unaware of each other (see example below).
+
+### Example
+
+{/* source:cpp-memory-enable-shared-from-this:0008 */}
+```cpp
+#include <iostream>
+#include <memory>
+ 
+class Good : public std::enable_shared_from_this<Good>
+{
+public:
+    std::shared_ptr<Good> getptr()
+    {
+        return shared_from_this();
+    }
+};
+ 
+class Best : public std::enable_shared_from_this<Best>
+{
+    struct Private{ explicit Private() = default; };
+ 
+public:
+    // Constructor is only usable by this class
+    Best(Private) {}
+ 
+    // Everyone else has to use this factory function
+    // Hence all Best objects will be contained in shared_ptr
+    static std::shared_ptr<Best> create()
+    {
+        return std::make_shared<Best>(Private());
+    }
+ 
+    std::shared_ptr<Best> getptr()
+    {
+        return shared_from_this();
+    }
+};
+ 
+struct Bad
+{
+    std::shared_ptr<Bad> getptr()
+    {
+        return std::shared_ptr<Bad>(this);
+    }
+    ~Bad() { std::cout << "Bad::~Bad() called\n"; }
+};
+ 
+void testGood()
+{
+    // Good: the two shared_ptr's share the same object
+    std::shared_ptr<Good> good0 = std::make_shared<Good>();
+    std::shared_ptr<Good> good1 = good0->getptr();
+    std::cout << "good1.use_count() = " << good1.use_count() << '\n';
+}
+ 
+void misuseGood()
+{
+    // Bad: shared_from_this is called without having std::shared_ptr owning the caller
+    try
+    {
+        Good not_so_good;
+        std::shared_ptr<Good> gp1 = not_so_good.getptr();
+    }
+    catch (std::bad_weak_ptr& e)
+    {
+        // undefined behavior (until C++17) and std::bad_weak_ptr thrown (since C++17)
+        std::cout << e.what() << '\n';
+    }
+}
+ 
+void testBest()
+{
+    // Best: Same but cannot stack-allocate it:
+    std::shared_ptr<Best> best0 = Best::create();
+    std::shared_ptr<Best> best1 = best0->getptr();
+    std::cout << "best1.use_count() = " << best1.use_count() << '\n';
+ 
+    // Best stackBest; // <- Will not compile because Best::Best() is private.
+}
+ 
+void testBad()
+{
+    // Bad, each shared_ptr thinks it is the only owner of the object
+    std::shared_ptr<Bad> bad0 = std::make_shared<Bad>();
+    std::shared_ptr<Bad> bad1 = bad0->getptr();
+    std::cout << "bad1.use_count() = " << bad1.use_count() << '\n';
+} // UB: double-delete of Bad
+ 
+int main()
+{
+    testGood();
+    misuseGood();
+ 
+    testBest();
+ 
+    testBad();
+}
+```
+
+Possible output:
+
+```text
+good1.use_count() = 2
+bad_weak_ptr
+best1.use_count() = 2
+bad1.use_count() = 1
+Bad::~Bad() called
+Bad::~Bad() called
+*** glibc detected *** ./test: double free or corruption
+```
+
+### Defect reports
+
+{/* source:cpp-memory-enable-shared-from-this:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-enable-shared-from-this:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2179} standard="C++11">
+    <PublishedBehavior>given type `T` derived from `enable_shared_from_this`, the behavior of<br />constructing two `std::shared_ptr<T>`s from the same `T*` object was unclear</PublishedBehavior>
+    <CorrectedBehavior>the behavior is<br />undefined in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2529} standard="C++11">
+    <PublishedBehavior>it was unclear how the underlying [`std::weak_ptr`](/docs/cpp/library/memory/weak_ptr) is updated</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-enable-shared-from-this:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_ptr`](/docs/cpp/library/memory/shared_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>smart pointer with shared object ownership semantics (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_shared make_shared_for_overwrite`](/docs/cpp/library/memory/shared_ptr/make_shared) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a shared pointer that manages a new object (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

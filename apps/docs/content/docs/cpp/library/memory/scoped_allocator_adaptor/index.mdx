@@ -1,0 +1,290 @@
+---
+title: "std::scoped_allocator_adaptor"
+description: "The std::scoped_allocator_adaptor class template is an allocator which can be used with multilevel containers (vector of sets of lists of tuples of maps, etc)."
+source_url: "https://en.cppreference.com/w/cpp/memory/scoped_allocator_adaptor"
+language: "C++"
+---
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0000 */}
+<DeclarationDoc>
+Defined in header [`<scoped_allocator>`](/docs/cpp/library/headers/scoped_allocator)
+
+  <Declaration language="cpp" since="C++11" code={`template< class OuterAlloc, class... InnerAllocs >
+class scoped_allocator_adaptor
+
+    : public OuterAlloc;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0001 */}
+The `std::scoped_allocator_adaptor` class template is an allocator which can be used with multilevel containers (vector of sets of lists of tuples of maps, etc). It is instantiated with one outer allocator type `OuterAlloc` and zero or more inner allocator types `InnerAlloc...`. A container constructed directly with a `scoped_allocator_adaptor` uses `OuterAlloc` to allocate its elements, but if an element is itself a container, it uses the first inner allocator. The elements of that container, if they are themselves containers, use the second inner allocator, etc. If there are more levels to the container than there are inner allocators, the last inner allocator is reused for all further nested containers.
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0002 */}
+The purpose of this adaptor is to correctly initialize stateful allocators in nested containers, such as when all levels of a nested container must be placed in the same shared memory segment. The adaptor's constructor takes the arguments for all allocators in the list, and each nested container obtains its allocator's state from the adaptor as needed.
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0003 */}
+For the purpose of `scoped_allocator_adaptor`, if the next inner allocator is `A`, any class `T` for which `std::uses_allocator<T,A>::value == true` participates in the recursion as if it was a container. Additionally, [`std::pair`](/docs/cpp/library/utility/pair) is treated as such a container by specific overloads of [`scoped_allocator_adaptor::construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/construct).
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0004 */}
+Typical implementation holds an instance of a `std::scoped_allocator_adaptor<InnerAllocs...>` as a member object.
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0005 */}
+Note that [`std::pmr::polymorphic_allocators`](/docs/cpp/library/memory/polymorphic_allocator) propagate to nested containers following [uses-allocator construction](/docs/cpp/library/memory/uses_allocator#Uses-allocator_construction) and do not need (and do not work with) `std::scoped_allocator_adaptor`.
+
+### Nested types
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`outer_allocator_type`</DescriptionTerm>
+    <DescriptionBody>`OuterAlloc`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`inner_allocator_type`</DescriptionTerm>
+    <DescriptionBody>
+
+    - `scoped_allocator_adaptor<OuterAlloc>` if `sizeof...(InnerAllocs)` is zero
+    - `scoped_allocator_adaptor<InnerAllocs...>` otherwise
+
+    </DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`size_type`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::size_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::difference_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::const_pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`void_pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::void_pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`const_void_pointer`</DescriptionTerm>
+    <DescriptionBody>`std::allocator_traits<OuterAlloc>::const_void_pointer`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0007 */}
+Given the set of `OuterAlloc` and `InnerAlloc...` as `Allocs`:
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`propagate_on_container_copy_assignment`</DescriptionTerm>
+    <DescriptionBody>
+
+    - [`std::true_type`](/docs/cpp/library/meta/integral_constant) if there exists a type `A` in `Allocs` such that `std::allocator_traits<A>::propagate_on_container_copy_assignment::value` is `true`
+    - [`std::false_type`](/docs/cpp/library/meta/integral_constant) otherwise
+
+    </DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`propagate_on_container_move_assignment`</DescriptionTerm>
+    <DescriptionBody>
+
+    - [`std::true_type`](/docs/cpp/library/meta/integral_constant) if there exists a type `A` in `Allocs` such that `std::allocator_traits<A>::propagate_on_container_move_assignment::value` is `true`
+    - [`std::false_type`](/docs/cpp/library/meta/integral_constant) otherwise
+
+    </DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`propagate_on_container_swap`</DescriptionTerm>
+    <DescriptionBody>
+
+    - [`std::true_type`](/docs/cpp/library/meta/integral_constant) if there exists a type `A` in `Allocs` such that `std::allocator_traits<A>::propagate_on_container_swap::value` is `true`
+    - [`std::false_type`](/docs/cpp/library/meta/integral_constant) otherwise
+
+    </DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`is_always_equal`</DescriptionTerm>
+    <DescriptionBody>
+
+    - [`std::true_type`](/docs/cpp/library/meta/integral_constant) if there exists a type `A` in `Allocs` such that `std::allocator_traits<A>::is_always_equal::value` is `true`
+    - [`std::false_type`](/docs/cpp/library/meta/integral_constant) otherwise
+
+    </DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/memory/scoped_allocator_adaptor/scoped_allocator_adaptor)</DescriptionTerm>
+    <DescriptionBody>creates a new `scoped_allocator_adaptor` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/memory/scoped_allocator_adaptor/~scoped_allocator_adaptor)</DescriptionTerm>
+    <DescriptionBody>destructs a `scoped_allocator_adaptor` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/memory/scoped_allocator_adaptor/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns a `scoped_allocator_adaptor` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inner_allocator`](/docs/cpp/library/memory/scoped_allocator_adaptor/inner_allocator)</DescriptionTerm>
+    <DescriptionBody>obtains an inner_allocator reference (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`outer_allocator`](/docs/cpp/library/memory/scoped_allocator_adaptor/outer_allocator)</DescriptionTerm>
+    <DescriptionBody>obtains an outer_allocator reference (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate`](/docs/cpp/library/memory/scoped_allocator_adaptor/allocate)</DescriptionTerm>
+    <DescriptionBody>allocates uninitialized storage using the outer allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`deallocate`](/docs/cpp/library/memory/scoped_allocator_adaptor/deallocate)</DescriptionTerm>
+    <DescriptionBody>deallocates storage using the outer allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_size`](/docs/cpp/library/memory/scoped_allocator_adaptor/max_size)</DescriptionTerm>
+    <DescriptionBody>returns the largest allocation size supported by the outer allocator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/construct)</DescriptionTerm>
+    <DescriptionBody>constructs an object in allocated storage, passing the inner allocator to its constructor if appropriate (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy`](/docs/cpp/library/memory/scoped_allocator_adaptor/destroy)</DescriptionTerm>
+    <DescriptionBody>destructs an object in allocated storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`select_on_container_copy_construction`](/docs/cpp/library/memory/scoped_allocator_adaptor/select_on_container_copy_construction)</DescriptionTerm>
+    <DescriptionBody>copies the state of `scoped_allocator_adaptor` and all its allocators (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Exposition-only function templates
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`outermost`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers)</DescriptionTerm>
+    <DescriptionBody>obtains the outermost allocator (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`outermost-construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers)</DescriptionTerm>
+    <DescriptionBody>constructs an object using the outermost allocator (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`outermost-destroy`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers)</DescriptionTerm>
+    <DescriptionBody>destroys an object using the outermost allocator (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`, `operator!=`](/docs/cpp/library/memory/scoped_allocator_adaptor/operator_cmp) <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>compares two `scoped_allocator_adaptor` objects (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/memory/scoped_allocator_adaptor/deduction_guides)
+
+<InlineRevision since="C++17" />
+
+### Nested classes
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`rebind`</DescriptionTerm>
+    <DescriptionBody>
+```cpp
+template< class T >
+struct rebind
+{
+    using other = scoped_allocator_adaptor
+                      <std::allocator_traits<OuterAlloc>::template rebind_alloc<T>, 
+                       InnerAllocs...>;
+};
+```
+    </DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0012 */}
+```cpp
+#include <boost/interprocess/allocators/adaptive_pool.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
+#include <scoped_allocator>
+#include <vector>
+ 
+namespace bi = boost::interprocess;
+ 
+template<class T>
+using alloc = bi::adaptive_pool<T, bi::managed_shared_memory::segment_manager>;
+ 
+using ipc_row = std::vector<int, alloc<int>>;
+ 
+using ipc_matrix = std::vector<ipc_row, std::scoped_allocator_adaptor<alloc<ipc_row>>>;
+ 
+int main()
+{
+    bi::managed_shared_memory s(bi::create_only, "Demo", 65536);
+ 
+    // create vector of vectors in shared memory
+    ipc_matrix v(s.get_segment_manager());
+ 
+    // for all these additions, the inner vectors obtain their allocator arguments
+    // from the outer vector's scoped_allocator_adaptor
+    v.resize(1);
+    v[0].push_back(1);
+    v.emplace_back(2);
+    std::vector<int> local_row = {1, 2, 3};
+    v.emplace_back(local_row.begin(), local_row.end());
+ 
+    bi::shared_memory_object::remove("Demo");
+}
+```
+
+### Defect reports
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2108} standard="C++11">
+    <PublishedBehavior>there was no way to show if `scoped_allocator_adaptor` is stateless</PublishedBehavior>
+    <CorrectedBehavior>provided `is_always_equal`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-scoped-allocator-adaptor:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocator_traits`](/docs/cpp/library/memory/allocator_traits) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides information about allocator types (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uses_allocator`](/docs/cpp/library/memory/uses_allocator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the specified type supports uses-allocator construction (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocator`](/docs/cpp/library/memory/allocator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>the default allocator (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

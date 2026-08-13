@@ -1,0 +1,91 @@
+---
+title: "std::unique_ptr<T,Deleter>::release"
+description: "Releases the ownership of the managed object, if any."
+source_url: "https://en.cppreference.com/w/cpp/memory/unique_ptr/release"
+language: "C++"
+---
+
+{/* source:cpp-memory-unique-ptr-release:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`pointer release() noexcept;`} />
+  <InlineRevision since="C++23">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-memory-unique-ptr-release:0001 */}
+Releases the ownership of the managed object, if any.
+
+{/* source:cpp-memory-unique-ptr-release:0002 */}
+[`get()`](/docs/cpp/library/memory/unique_ptr/get) returns `nullptr` after the call.
+
+{/* source:cpp-memory-unique-ptr-release:0003 */}
+The caller is responsible for cleaning up the object (e.g. by use of [`get_deleter()`](/docs/cpp/library/memory/unique_ptr/get_deleter)).
+
+### Parameters
+
+{/* source:cpp-memory-unique-ptr-release:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-memory-unique-ptr-release:0005 */}
+Pointer to the managed object or `nullptr` if there was no managed object, i.e. the value which would be returned by [`get()`](/docs/cpp/library/memory/unique_ptr/get) before the call.
+
+### Example
+
+{/* source:cpp-memory-unique-ptr-release:0006 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <memory>
+ 
+struct Foo
+{
+    Foo() { std::cout << "Foo\n"; }
+    ~Foo() { std::cout << "~Foo\n"; }
+};
+ 
+// Ownership of the Foo resource is transferred when calling this function
+void legacy_api(Foo* owning_foo)
+{
+    std::cout << __func__ << '\n';
+    // [legacy code that no one understands or dares touch anymore]
+    // [...]
+    delete owning_foo;
+}
+ 
+int main()
+{
+    std::unique_ptr<Foo> managed_foo(new Foo);
+    // [code that might return or throw or some such]
+    // [...]
+    legacy_api(managed_foo.release());
+ 
+    assert(managed_foo == nullptr);
+}
+```
+
+Output:
+
+```text
+Foo
+legacy_api
+~Foo
+```
+
+### See also
+
+{/* source:cpp-memory-unique-ptr-release:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get`](/docs/cpp/library/memory/unique_ptr/get)</DescriptionTerm>
+    <DescriptionBody>returns a pointer to the managed object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_deleter`](/docs/cpp/library/memory/unique_ptr/get_deleter)</DescriptionTerm>
+    <DescriptionBody>returns the deleter that is used for destruction of the managed object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/memory/unique_ptr/reset)</DescriptionTerm>
+    <DescriptionBody>replaces the managed object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

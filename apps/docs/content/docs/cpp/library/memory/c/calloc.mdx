@@ -1,0 +1,113 @@
+---
+title: "std::calloc"
+description: "Allocates memory for an array of num objects of size size, initializes it to all bits zero."
+source_url: "https://en.cppreference.com/w/cpp/memory/c/calloc"
+language: "C++"
+---
+
+{/* source:cpp-memory-c-calloc:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration language="cpp" code={`void* calloc( std::size_t num, std::size_t size );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-c-calloc:0001 */}
+Allocates memory for an array of `num` objects of size `size`, initializes it to all bits zero ([implicitly creating](/docs/cpp/language/basic_concepts/objects#Object_creation) objects in the destination area).
+
+{/* source:cpp-memory-c-calloc:0002 */}
+If allocation succeeds, returns a pointer to the lowest (first) byte in the allocated memory block that is suitably aligned for any object type.
+
+{/* source:cpp-memory-c-calloc:0003 */}
+If `size` is zero, the behavior is implementation defined (null pointer may be returned, or some non-null pointer may be returned that may not be used to access storage).
+
+{/* source:cpp-memory-c-calloc:0004 */}
+<Revision since="C++11">
+The following functions are required to be thread-safe:
+
+- The library versions of [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- User replacement versions of global [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- `std::calloc`, [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::realloc`](/docs/cpp/library/memory/c/realloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, [`std::free`](/docs/cpp/library/memory/c/free)
+
+Calls to these functions that allocate or deallocate a particular unit of storage occur in a single total order, and each such deallocation call [happens-before](/docs/cpp/library/atomic/memory_order) the next allocation (if any) in this order.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-c-calloc:0005 */}
+<ParameterList>
+  <Parameter name="num">number of objects</Parameter>
+  <Parameter name="size">size of each object</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-c-calloc:0006 */}
+On success, returns the pointer to the beginning of newly allocated memory. To avoid a memory leak, the returned pointer must be deallocated with [`std::free()`](/docs/cpp/library/memory/c/free) or [`std::realloc()`](/docs/cpp/library/memory/c/realloc).
+
+{/* source:cpp-memory-c-calloc:0007 */}
+On failure, returns a null pointer.
+
+### Notes
+
+{/* source:cpp-memory-c-calloc:0008 */}
+Due to the alignment requirements, the number of allocated bytes is not necessarily equal to `num * size`.
+
+{/* source:cpp-memory-c-calloc:0009 */}
+Initialization to all bits zero does not guarantee that a floating-point or a pointer would be initialized to 0.0 and the null pointer value, respectively (although that is true on all common platforms).
+
+{/* source:cpp-memory-c-calloc:0010 */}
+Originally (in C89), support for zero size was added to accommodate code such as
+
+{/* source:cpp-memory-c-calloc:0011 */}
+```cpp
+OBJ *p = calloc(0, sizeof(OBJ)); // "zero-length" placeholder
+...
+while (1)
+{ 
+    p = realloc(p, c * sizeof(OBJ)); // reallocations until size settles
+    ... // code that may change c or break out of loop
+}
+```
+
+### Example
+
+{/* source:cpp-memory-c-calloc:0012 */}
+```cpp
+#include <cstdlib>
+#include <iostream>
+ 
+int main()
+{
+    int* p1 = (int*)std::calloc(4, sizeof(int)); // allocate and zero out an array of 4 int
+    int* p2 = (int*)std::calloc(1, sizeof(int[4])); // same, naming the array type directly
+    int* p3 = (int*)std::calloc(4, sizeof *p3); // same, without repeating the type name
+ 
+    if (p2)
+        for (int n = 0; n < 4; ++n) // print the array
+            std::cout << "p2[" << n << "] == " << p2[n] << '\n';
+ 
+    std::free(p1);
+    std::free(p2);
+    std::free(p3);
+}
+```
+
+Output:
+
+```text
+p2[0] == 0
+p2[1] == 0
+p2[2] == 0
+p2[3] == 0
+```
+
+### See also
+
+{/* source:cpp-memory-c-calloc:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`C documentation`](/docs/c/library/memory/calloc)</DescriptionTerm>
+    <DescriptionBody>for `calloc`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

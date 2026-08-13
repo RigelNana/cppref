@@ -1,0 +1,207 @@
+---
+title: "std::pointer_traits"
+description: "The pointer_traits class template provides the standardized way to access certain properties of pointer-like types (fancy pointers, such as boost::interprocess::offset_ptr)."
+source_url: "https://en.cppreference.com/w/cpp/memory/pointer_traits"
+language: "C++"
+---
+
+{/* source:cpp-memory-pointer-traits:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class Ptr >
+struct pointer_traits;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+struct pointer_traits<T*>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-pointer-traits:0001 */}
+The `pointer_traits` class template provides the standardized way to access certain properties of pointer-like types ([fancy pointers](/docs/cpp/library/named_req/Allocator#Fancy_pointers), such as [`boost::interprocess::offset_ptr`](https://www.boost.org/doc/libs/release/doc/html/interprocess/offset_ptr.html)). The standard template [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits) relies on `pointer_traits` to determine the defaults for various typedefs required by [Allocator](/docs/cpp/library/named_req/Allocator).
+
+{/* source:cpp-memory-pointer-traits:0002 */}
+1. 1) The non-specialized `pointer_traits` conditionally declares the following members:
+
+Let `/*element-type-of*/<Ptr>` be
+
+- `Ptr::element_type` if present;
+- otherwise, `T` if `Ptr` is a class template specialization `Template<T, Args...>`, where `Args...` is zero or more type arguments;
+- otherwise, not defined.
+
+If `/*element-type-of*/<Ptr>` is not defined, the primary template has no members specified in this page.
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`Ptr`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`element_type`</DescriptionTerm>
+    <DescriptionBody>`/*element-type-of*/<Ptr>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`Ptr::difference_type` if present, otherwise [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member alias templates
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`template< class U > using rebind`</DescriptionTerm>
+    <DescriptionBody>`Ptr::rebind<U>` if exists, otherwise `Template<U, Args...>` if `Ptr` is a template specialization `Template<T, Args...>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pointer_to`](/docs/cpp/library/memory/pointer_traits/pointer_to)</DescriptionTerm>
+    <DescriptionBody>obtains a dereferenceable pointer to its argument (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-memory-pointer-traits:0003 */}
+2. 2) A specialization is provided for pointer types, `T*`, which declares the following members:
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`T*`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`element_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>[`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member alias templates
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`template< class U > using rebind`</DescriptionTerm>
+    <DescriptionBody>`U*`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pointer_to`](/docs/cpp/library/memory/pointer_traits/pointer_to)</DescriptionTerm>
+    <DescriptionBody>obtains a dereferenceable pointer to its argument (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Optional member functions of program-defined specializations
+
+{/* source:cpp-memory-pointer-traits:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_address`](/docs/cpp/library/memory/pointer_traits/to_address) (optional) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains a raw pointer from a fancy pointer (inverse of `pointer_to`) (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-memory-pointer-traits:0005 */}
+The `rebind` member template alias makes it possible, given a pointer-like type that points to `T`, to obtain the same pointer-like type that points to `U`. For example,
+
+{/* source:cpp-memory-pointer-traits:0006 */}
+```cpp
+using another_pointer = std::pointer_traits<std::shared_ptr<int>>::rebind<double>;
+static_assert(std::is_same<another_pointer, std::shared_ptr<double>>::value);
+```
+
+{/* source:cpp-memory-pointer-traits:0007 */}
+<Revision since="C++20">
+A specialization for user-defined fancy pointer types may provide an additional static member function `to_address` to customize the behavior of `std::to_address`.
+</Revision>
+
+{/* source:cpp-memory-pointer-traits:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_constexpr_memory`](/docs/cpp/library/feature_test#cpp_lib_constexpr_memory) | [`201811L`](/docs/cpp/library/compiler_support/20#cpp_lib_constexpr_memory_201811L) | (C++20) | `constexpr` in `std::pointer_traits` |
+
+### Example
+
+{/* source:cpp-memory-pointer-traits:0009 */}
+```cpp
+#include <iostream>
+#include <memory>
+ 
+template<class Ptr>
+struct BlockList
+{
+    // Predefine a memory block
+    struct block;
+ 
+    // Define a pointer to a memory block from the kind of pointer Ptr s
+    // If Ptr is any kind of T*, block_ptr_t is block*
+    // If Ptr is smart_ptr<T>, block_ptr_t is smart_ptr<block>
+    using block_ptr_t = typename std::pointer_traits<Ptr>::template rebind<block>;
+ 
+    struct block
+    {
+        std::size_t size{};
+        block_ptr_t next_block{};
+    };
+ 
+    block_ptr_t free_blocks;
+};
+ 
+int main()
+{
+    [[maybe_unused]]
+    BlockList<int*> bl1;
+    // The type of bl1.free_blocks is BlockList<int*>:: block*
+ 
+    BlockList<std::shared_ptr<char>> bl2;
+    // The type of bl2.free_blocks is
+    // std::shared_ptr<BlockList<std::shared_ptr<char>>::block>
+    std::cout << bl2.free_blocks.use_count() << '\n';
+}
+```
+
+Output:
+
+```text
+​0​
+```
+
+### Defect reports
+
+{/* source:cpp-memory-pointer-traits:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-pointer-traits:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3545} standard="C++11">
+    <PublishedBehavior>primary template caused hard error when `element_type` is invalid</PublishedBehavior>
+    <CorrectedBehavior>made SFINAE-friendly</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-pointer-traits:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocator_traits`](/docs/cpp/library/memory/allocator_traits) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides information about allocator types (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`addressof`](/docs/cpp/library/memory/addressof) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains actual address of an object, even if the `&` operator is overloaded (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

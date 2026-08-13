@@ -1,0 +1,129 @@
+---
+title: "std::ranges::destroy_n"
+description: "Destroys the n objects in the range starting at first, equivalent to return std::ranges::destroy(std::counted_iterator(first, n), std::default_sentinel).base();"
+source_url: "https://en.cppreference.com/w/cpp/memory/ranges/destroy_n"
+language: "C++"
+---
+{/* source:cpp-memory-ranges-destroy-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< no-throw-input-iterator I >
+    requires std::destructible<std::iter_value_t<I>>
+
+constexpr I destroy_n( I first, std::iter_difference_t<I> n ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-ranges-destroy-n:0001 */}
+Destroys the `n` objects in the range starting at `first`, equivalent to
+
+{/* source:cpp-memory-ranges-destroy-n:0002 */}
+`return std::ranges::destroy(std::counted_iterator(first, n), std::default_sentinel).base();`
+
+{/* source:cpp-memory-ranges-destroy-n:0003 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-memory-ranges-destroy-n:0004 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-memory-ranges-destroy-n:0005 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of elements to destroy</Parameter>
+  <Parameter name="n">the number of elements to destroy</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-ranges-destroy-n:0006 */}
+The end of the range of objects that has been destroyed.
+
+### Complexity
+
+{/* source:cpp-memory-ranges-destroy-n:0007 */}
+Linear in `n`.
+
+### Possible implementation
+
+{/* source:cpp-memory-ranges-destroy-n:0008 */}
+```cpp
+struct destroy_n_fn
+{
+    template<no-throw-input-iterator I>
+        requires std::destructible<std::iter_value_t<I>>
+    constexpr I operator()(I first, std::iter_difference_t<I> n) const noexcept
+    {
+        for (; n != 0; (void)++first, --n)
+            std::ranges::destroy_at(std::addressof(*first));
+        return first;
+    }
+};
+ 
+inline constexpr destroy_n_fn destroy_n{};
+```
+
+### Example
+
+{/* source:cpp-memory-ranges-destroy-n:0009 */}
+The following example demonstrates how to use `ranges::destroy_n` to destroy a contiguous sequence of elements.
+
+{/* source:cpp-memory-ranges-destroy-n:0010 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <new>
+ 
+struct Tracer
+{
+    int value;
+    ~Tracer() { std::cout << value << " destructed\n"; }
+};
+ 
+int main()
+{
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+ 
+    for (int i = 0; i < 8; ++i)
+        new(buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+ 
+    auto ptr = std::launder(reinterpret_cast<Tracer*>(buffer));
+ 
+    std::ranges::destroy_n(ptr, 8);
+}
+```
+
+Output:
+
+```text
+0 destructed
+1 destructed
+2 destructed
+3 destructed
+4 destructed
+5 destructed
+6 destructed
+7 destructed
+```
+
+### See also
+
+{/* source:cpp-memory-ranges-destroy-n:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::destroy_at`](/docs/cpp/library/memory/ranges/destroy_at) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>destroys an object at a given address (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::destroy`](/docs/cpp/library/memory/ranges/destroy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>destroys a range of objects (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy_n`](/docs/cpp/library/memory/destroy_n) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>destroys a number of objects in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

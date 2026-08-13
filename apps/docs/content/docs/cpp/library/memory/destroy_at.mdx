@@ -1,0 +1,127 @@
+---
+title: "std::destroy_at"
+description: "Calls the destructor of the object pointed to by p."
+source_url: "https://en.cppreference.com/w/cpp/memory/destroy_at"
+language: "C++"
+---
+
+{/* source:cpp-memory-destroy-at:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" since="C++17" until="C++20" code={`template< class T >
+void destroy_at( T* p );`} />
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+constexpr void destroy_at( T* p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-destroy-at:0001 */}
+If `T` is not an array type, calls the destructor of the object pointed to by `p`, as if by `p->~T()`.
+
+{/* source:cpp-memory-destroy-at:0002 */}
+If `T` is an array type, <InlineRevision until="C++20">the program is ill-formed</InlineRevision><InlineRevision since="C++20">recursively destroys elements of `*p` in order, as if by calling `std::destroy(std::begin(*p), std::end(*p))`</InlineRevision>.
+
+### Parameters
+
+{/* source:cpp-memory-destroy-at:0003 */}
+<ParameterList>
+  <Parameter name="p">a pointer to the object to be destroyed</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-destroy-at:0004 */}
+(none)
+
+### Possible implementation
+
+{/* source:cpp-memory-destroy-at:0005 */}
+```cpp
+template<class T>
+constexpr void destroy_at(T* p) 
+{
+    if constexpr (std::is_array_v<T>)
+        for (auto &elem : *p)
+            (destroy_at)(std::addressof(elem));
+    else
+        p->~T(); 
+}
+// C++17 version:
+// template<class T> void destroy_at(T* p) { p->~T(); }
+```
+
+### Notes
+
+{/* source:cpp-memory-destroy-at:0006 */}
+`destroy_at` deduces the type of object to be destroyed and hence avoids writing it explicitly in the destructor call.
+
+{/* source:cpp-memory-destroy-at:0007 */}
+<Revision since="C++20">
+When `destroy_at` is called in the evaluation of some [constant expression](/docs/cpp/language/expressions/constant_expression) `e`, the argument `p` must point to an object whose lifetime began within the evaluation of `e`.
+</Revision>
+
+### Example
+
+{/* source:cpp-memory-destroy-at:0008 */}
+The following example demonstrates how to use `destroy_at` to destroy a contiguous sequence of elements.
+
+{/* source:cpp-memory-destroy-at:0009 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <new>
+ 
+struct Tracer
+{
+    int value;
+    ~Tracer() { std::cout << value << " destructed\n"; }
+};
+ 
+int main()
+{
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+ 
+    for (int i = 0; i < 8; ++i)
+        new(buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+ 
+    auto ptr = std::launder(reinterpret_cast<Tracer*>(buffer));
+ 
+    for (int i = 0; i < 8; ++i)
+        std::destroy_at(ptr + i);
+}
+```
+
+Output:
+
+```text
+0 destructed
+1 destructed
+2 destructed
+3 destructed
+4 destructed
+5 destructed
+6 destructed
+7 destructed
+```
+
+### See also
+
+{/* source:cpp-memory-destroy-at:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy`](/docs/cpp/library/memory/destroy) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>destroys a range of objects (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy_n`](/docs/cpp/library/memory/destroy_n) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>destroys a number of objects in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct_at`](/docs/cpp/library/memory/construct_at) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates an object at a given address (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::destroy_at`](/docs/cpp/library/memory/ranges/destroy_at) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>destroys an object at a given address (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

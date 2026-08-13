@@ -1,0 +1,499 @@
+---
+title: "operator delete, operator delete[]"
+description: "Deallocates storage previously allocated by a matching operator new."
+source_url: "https://en.cppreference.com/w/cpp/memory/new/operator_delete"
+language: "C++"
+---
+{/* source:cpp-memory-new-operator-delete:0000 */}
+<DeclarationDoc>
+Defined in header [`<new>`](/docs/cpp/library/headers/new)
+
+replaceable usual deallocation functions
+
+  <Declaration id="1" language="cpp" until="C++11" code={`void operator delete  ( void* ptr ) throw();`} />
+  <Declaration id="1" language="cpp" since="C++11" code={`void operator delete  ( void* ptr ) noexcept;`} />
+  <Declaration id="2" language="cpp" until="C++11" code={`void operator delete[]( void* ptr ) throw();`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`void operator delete[]( void* ptr ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`void operator delete  ( void* ptr, std::align_val_t al ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`void operator delete[]( void* ptr, std::align_val_t al ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++14" code={`void operator delete  ( void* ptr, std::size_t sz ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++14" code={`void operator delete[]( void* ptr, std::size_t sz ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++17" code={`void operator delete  ( void* ptr, std::size_t sz,
+                        std::align_val_t al ) noexcept;`} />
+  <Declaration id="8" language="cpp" since="C++17" code={`void operator delete[]( void* ptr, std::size_t sz,
+                        std::align_val_t al ) noexcept;`} />
+
+replaceable placement deallocation functions
+
+  <Declaration id="9" language="cpp" until="C++11" code={`void operator delete  ( void* ptr, const std::nothrow_t& tag ) throw();`} />
+  <Declaration id="9" language="cpp" since="C++11" code={`void operator delete  ( void* ptr, const std::nothrow_t& tag ) noexcept;`} />
+  <Declaration id="10" language="cpp" until="C++11" code={`void operator delete[]( void* ptr, const std::nothrow_t& tag ) throw();`} />
+  <Declaration id="10" language="cpp" since="C++11" code={`void operator delete[]( void* ptr, const std::nothrow_t& tag ) noexcept;`} />
+  <Declaration id="11" language="cpp" since="C++17" code={`void operator delete  ( void* ptr, std::align_val_t al,
+                        const std::nothrow_t& tag ) noexcept;`} />
+  <Declaration id="12" language="cpp" since="C++17" code={`void operator delete[]( void* ptr, std::align_val_t al,
+                        const std::nothrow_t& tag ) noexcept;`} />
+
+non-allocating placement deallocation functions
+
+  <Declaration id="13" language="cpp" until="C++11" code={`void operator delete  ( void* ptr, void* place ) throw();`} />
+  <Declaration id="13" language="cpp" since="C++11" code={`void operator delete  ( void* ptr, void* place ) noexcept;`} />
+  <Declaration id="14" language="cpp" until="C++11" code={`void operator delete[]( void* ptr, void* place ) throw();`} />
+  <Declaration id="14" language="cpp" since="C++11" code={`void operator delete[]( void* ptr, void* place ) noexcept;`} />
+
+user-defined placement deallocation functions
+
+  <Declaration id="15" language="cpp" code={`void operator delete  ( void* ptr, args... );`} />
+  <Declaration id="16" language="cpp" code={`void operator delete[]( void* ptr, args... );`} />
+
+class-specific usual deallocation functions
+
+  <Declaration id="17" language="cpp" code={`void T::operator delete  ( void* ptr );`} />
+  <Declaration id="18" language="cpp" code={`void T::operator delete[]( void* ptr );`} />
+  <Declaration id="19" language="cpp" since="C++17" code={`void T::operator delete  ( void* ptr, std::align_val_t al );`} />
+  <Declaration id="20" language="cpp" since="C++17" code={`void T::operator delete[]( void* ptr, std::align_val_t al );`} />
+  <Declaration id="21" language="cpp" code={`void T::operator delete  ( void* ptr, std::size_t sz );`} />
+  <Declaration id="22" language="cpp" code={`void T::operator delete[]( void* ptr, std::size_t sz );`} />
+  <Declaration id="23" language="cpp" since="C++17" code={`void T::operator delete  ( void* ptr, std::size_t sz, std::align_val_t al );`} />
+  <Declaration id="24" language="cpp" since="C++17" code={`void T::operator delete[]( void* ptr, std::size_t sz, std::align_val_t al );`} />
+
+class-specific placement deallocation functions
+
+  <Declaration id="25" language="cpp" code={`void T::operator delete  ( void* ptr, args... );`} />
+  <Declaration id="26" language="cpp" code={`void T::operator delete[]( void* ptr, args... );`} />
+
+class-specific usual destroying deallocation functions
+
+  <Declaration id="27" language="cpp" since="C++20" code={`void T::operator delete( T* ptr, std::destroying_delete_t );`} />
+  <Declaration id="28" language="cpp" since="C++20" code={`void T::operator delete( T* ptr, std::destroying_delete_t,
+                         std::align_val_t al );`} />
+  <Declaration id="29" language="cpp" since="C++20" code={`void T::operator delete( T* ptr, std::destroying_delete_t, std::size_t sz );`} />
+  <Declaration id="30" language="cpp" since="C++20" code={`void T::operator delete( T* ptr, std::destroying_delete_t,
+                         std::size_t sz, std::align_val_t al );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-new-operator-delete:0001 */}
+Deallocates storage previously allocated by a matching [`operator new`](/docs/cpp/library/memory/new/operator_new). These deallocation functions are called by [`delete-expressions`](/docs/cpp/language/expressions/delete) and by [`new-expressions`](/docs/cpp/language/expressions/new) to deallocate memory after destructing (or failing to construct) objects with dynamic storage duration. They may also be called using regular function call syntax.
+
+{/* source:cpp-memory-new-operator-delete:0002 */}
+1. 1) Called by [`delete-expressions`](/docs/cpp/language/expressions/delete) to deallocate storage previously allocated for a single object.
+
+{/* source:cpp-memory-new-operator-delete:0003 */}
+2. The behavior of the standard library implementation of this function is undefined unless `ptr` is a null pointer or is a pointer previously obtained from the standard library implementation of `operator new(std::size_t)` or `operator new(std::size_t, std::nothrow_t)`.
+
+{/* source:cpp-memory-new-operator-delete:0004 */}
+3. 2) Called by [`delete[]-expressions`](/docs/cpp/language/expressions/delete) to deallocate storage previously allocated for an array of objects.
+
+{/* source:cpp-memory-new-operator-delete:0005 */}
+4. The behavior of the standard library implementation of this function is undefined unless `ptr` is a null pointer or is a pointer previously obtained from the standard library implementation of `operator new[](std::size_t)` or `operator new[](std::size_t, std::nothrow_t)`.
+
+{/* source:cpp-memory-new-operator-delete:0006 */}
+5. 3,4) Same as (1,2), except called if the alignment requirement exceeds `__STDCPP_DEFAULT_NEW_ALIGNMENT__`.
+
+{/* source:cpp-memory-new-operator-delete:0007 */}
+6. 5,6) Called instead of (1,2) if a user-defined replacement is provided, except that it's unspecified whether (1,2) or (5,6) is called when deleting objects of incomplete type and arrays of non-class and trivially-destructible class types. A memory allocator can use the given size to be more efficient.
+
+{/* source:cpp-memory-new-operator-delete:0008 */}
+7. The standard library implementations are identical to (1,2).
+
+{/* source:cpp-memory-new-operator-delete:0009 */}
+8. 7,8) Same as (5,6), except called if the alignment requirement exceeds `__STDCPP_DEFAULT_NEW_ALIGNMENT__`.
+
+{/* source:cpp-memory-new-operator-delete:0010 */}
+9. 9) Called by the non-throwing single-object [`new-expressions`](/docs/cpp/language/expressions/new) if a constructor of the object throws an exception.
+
+{/* source:cpp-memory-new-operator-delete:0011 */}
+10. The standard library implementation behaves the same as (1).
+
+{/* source:cpp-memory-new-operator-delete:0012 */}
+11. 10) Called by the non-throwing array [`new[]-expressions`](/docs/cpp/language/expressions/new) if a constructor of any object throws an exception (after executing the destructors of all objects in the array that were successfully constructed).
+
+{/* source:cpp-memory-new-operator-delete:0013 */}
+12. The standard library implementation behaves the same as (2).
+
+{/* source:cpp-memory-new-operator-delete:0014 */}
+13. 11,12) Same as (9,10), except called if the alignment requirement exceeds `__STDCPP_DEFAULT_NEW_ALIGNMENT__`.
+
+{/* source:cpp-memory-new-operator-delete:0015 */}
+14. 13) Called by the standard single-object [placement new](/docs/cpp/language/expressions/new) expression if the object's constructor throws an exception.
+
+{/* source:cpp-memory-new-operator-delete:0016 */}
+15. The standard library implementation of this function does nothing.
+
+{/* source:cpp-memory-new-operator-delete:0017 */}
+16. 14) Called by the standard array form of the [placement new[]](/docs/cpp/language/expressions/new) expression if any of the objects' constructors throws an exception (after executing the destructors of all objects that were constructed successfully).
+
+{/* source:cpp-memory-new-operator-delete:0018 */}
+17. The standard library implementation of this function does nothing.
+
+{/* source:cpp-memory-new-operator-delete:0019 */}
+18. 15) If defined, called by the custom single-object [placement new](/docs/cpp/language/expressions/new) expression with the matching signature if the object's constructor throws an exception.
+
+{/* source:cpp-memory-new-operator-delete:0020 */}
+19. If a class-specific version (25) is defined, it is called in preference to (9).
+
+{/* source:cpp-memory-new-operator-delete:0021 */}
+20. If neither (25) nor (15) is provided by the user, no deallocation function is called.
+
+{/* source:cpp-memory-new-operator-delete:0022 */}
+21. 16) If defined, called by the custom array form of [placement new[]](/docs/cpp/language/expressions/new) expression with the matching signature if any of the objects' constructors throws an exception (after executing the destructors for all objects that were constructed successfully).
+
+{/* source:cpp-memory-new-operator-delete:0023 */}
+22. If a class-specific version (26) is defined, it is called in preference to (10).
+
+{/* source:cpp-memory-new-operator-delete:0024 */}
+23. If neither (26) nor (16) is provided by the user, no deallocation function is called.
+
+{/* source:cpp-memory-new-operator-delete:0025 */}
+24. 17) If defined, called by the usual single-object [`delete-expressions`](/docs/cpp/language/expressions/delete) if deallocating an object of type `T`.
+
+{/* source:cpp-memory-new-operator-delete:0026 */}
+25. 18) If defined, called by the usual array [`delete[]-expressions`](/docs/cpp/language/expressions/delete) if deallocating an array of objects of type `T`.
+
+{/* source:cpp-memory-new-operator-delete:0027 */}
+26. 19,20) If defined, called in preference to (17,18) if the alignment requirement exceeds `__STDCPP_DEFAULT_NEW_ALIGNMENT__`.
+
+{/* source:cpp-memory-new-operator-delete:0028 */}
+27. 21) If defined, and if (17) is not defined, called by the usual single-object [`delete-expressions`](/docs/cpp/language/expressions/delete) if deallocating an object of type `T`.
+
+{/* source:cpp-memory-new-operator-delete:0029 */}
+28. 22) If defined, and if (18) is not defined, called by the usual array [`delete[]-expressions`](/docs/cpp/language/expressions/delete) if deallocating an array of objects of type `T`.
+
+{/* source:cpp-memory-new-operator-delete:0030 */}
+29. 23,24) If defined, and if (19,20) are not defined, called in preference to allocator-unaware members if the alignment requirement exceeds `__STDCPP_DEFAULT_NEW_ALIGNMENT__`.
+
+{/* source:cpp-memory-new-operator-delete:0031 */}
+30. 25) If defined, called by the custom single-object [placement new](/docs/cpp/language/expressions/new) expression with the matching signature if the object's constructor throws an exception.
+
+{/* source:cpp-memory-new-operator-delete:0032 */}
+31. If this function is not provided, and a matching (15) is not provided either, no deallocation function is called.
+
+{/* source:cpp-memory-new-operator-delete:0033 */}
+32. 26) If defined, called by the custom array form of [placement new[]](/docs/cpp/language/expressions/new) expression with the matching signature if any of the objects' constructors throws an exception (after executing the destructors for all objects that were constructed successfully).
+
+{/* source:cpp-memory-new-operator-delete:0034 */}
+33. If this function is not provided, and a matching (16) is not provided either, no deallocation function is called.
+
+{/* source:cpp-memory-new-operator-delete:0035 */}
+34. 27-30) If defined, [`delete-expressions`](/docs/cpp/language/expressions/delete) does not execute the destructor for `*p` before placing a call to `operator delete`. Instead, direct invocation of the destructor such as by `p->~T();` becomes the responsibility of this user-defined `operator delete`.
+
+{/* source:cpp-memory-new-operator-delete:0036 */}
+<Revision since="C++17">
+See [delete-expression](/docs/cpp/language/expressions/delete) for exact details on the overload resolution rules between alignment-aware and alignment-unaware overloads of usual (non-placement) deallocation functions.
+</Revision>
+
+{/* source:cpp-memory-new-operator-delete:0037 */}
+In all cases, if `ptr` is a null pointer, the standard library deallocation functions do nothing. If the pointer passed to the standard library deallocation function was not obtained from the corresponding standard library allocation function, the behavior is undefined.
+
+{/* source:cpp-memory-new-operator-delete:0038 */}
+After the standard library deallocation function returns, all pointers referring to any part of the deallocated storage become invalid.
+
+{/* source:cpp-memory-new-operator-delete:0039 */}
+Indirection through a pointer that became invalid in this manner and passing it to a deallocation function (double-delete) is undefined behavior. Any other use is implementation-defined.
+
+### Parameters
+
+{/* source:cpp-memory-new-operator-delete:0040 */}
+<ParameterList>
+  <Parameter name="ptr">pointer to a memory block to deallocate or a null pointer</Parameter>
+  <Parameter name="sz">the size that was passed to the matching allocation function</Parameter>
+  <Parameter name="place">pointer used as the placement parameter in the matching placement new</Parameter>
+  <Parameter name="tag">overload disambiguation tag matching the tag used by non-throwing `operator new`</Parameter>
+  <Parameter name="al">alignment of the object or array element that was allocated</Parameter>
+  <Parameter name="args">arbitrary parameters matching a placement allocation function (may include [`std::size_t`](/docs/cpp/library/utility/types/size_t) and [`std::align_val_t`](/docs/cpp/library/memory/new/align_val_t))</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-new-operator-delete:0041 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-memory-new-operator-delete:0042 */}
+<Revision since="C++11">
+All deallocation functions are `noexcept(true)` unless specified otherwise in the declaration.
+</Revision>
+
+{/* source:cpp-memory-new-operator-delete:0043 */}
+If a deallocation function terminates by throwing an exception, the behavior is undefined<InlineRevision since="C++11">, even if it is declared with `noexcept(false)`</InlineRevision>.
+
+### Global replacements
+
+{/* source:cpp-memory-new-operator-delete:0044 */}
+The replaceable deallocation functions ([1-12](/docs/cpp/library/memory/new/operator_delete#Version_1)) are implicitly declared in each translation unit even if the [`<new>`](/docs/cpp/library/headers/new) header is not included. These functions are replaceable: a user-provided non-member function with the same signature defined anywhere in the program, in any source file, replaces the corresponding implicit version for the entire program. Its declaration does not need to be visible.
+
+{/* source:cpp-memory-new-operator-delete:0045 */}
+The program is ill-formed, no diagnostic required if more than one replacement is provided in the program or if a replacement is declared with the [`inline`](/docs/cpp/language/declarations/inline) specifier. The program is ill-formed if a replacement is defined in namespace other than global namespace, or if it is defined as a static non-member function at global scope.
+
+{/* source:cpp-memory-new-operator-delete:0046 */}
+The standard library implementations of the nothrow versions ([9,10](/docs/cpp/library/memory/new/operator_delete#Version_9)) directly call the corresponding throwing versions ([1,2](/docs/cpp/library/memory/new/operator_delete#Version_1)). The standard library implementations of the size-aware deallocation functions ([5-8](/docs/cpp/library/memory/new/operator_delete#Version_5)) directly call the corresponding size-unaware deallocation functions ([1-4](/docs/cpp/library/memory/new/operator_delete#Version_1)). The standard library implementations of size-unaware throwing array forms ([2,4](/docs/cpp/library/memory/new/operator_delete#Version_2)) directly calls the corresponding single-object forms ([1,3](/docs/cpp/library/memory/new/operator_delete#Version_1)). Thus, replacing the throwing single object deallocation functions ([1,3](/docs/cpp/library/memory/new/operator_delete#Version_1)) is sufficient to handle all deallocations.
+
+{/* source:cpp-memory-new-operator-delete:0047 */}
+Global operators `new`/`delete` replacement:
+
+```cpp
+#include <cstdio>
+#include <cstdlib>
+#include <new>
+ 
+// no inline, required by [replacement.functions]/3
+void* operator new(std::size_t sz)
+{
+    std::printf("1) new(size_t), size = %zu\n", sz);
+    if (sz == 0)
+        ++sz; // avoid std::malloc(0) which may return nullptr on success
+ 
+    if (void *ptr = std::malloc(sz))
+        return ptr;
+ 
+    throw std::bad_alloc{}; // required by [new.delete.single]/3
+}
+ 
+// no inline, required by [replacement.functions]/3
+void* operator new[](std::size_t sz)
+{
+    std::printf("2) new[](size_t), size = %zu\n", sz);
+    if (sz == 0)
+        ++sz; // avoid std::malloc(0) which may return nullptr on success
+ 
+    if (void *ptr = std::malloc(sz))
+        return ptr;
+ 
+    throw std::bad_alloc{}; // required by [new.delete.single]/3
+}
+ 
+void operator delete(void* ptr) noexcept
+{
+    std::puts("3) delete(void*)");
+    std::free(ptr);
+}
+ 
+void operator delete(void* ptr, std::size_t size) noexcept
+{
+    std::printf("4) delete(void*, size_t), size = %zu\n", size);
+    std::free(ptr);
+}
+ 
+void operator delete[](void* ptr) noexcept
+{
+    std::puts("5) delete[](void* ptr)");
+    std::free(ptr);
+}
+ 
+void operator delete[](void* ptr, std::size_t size) noexcept
+{
+    std::printf("6) delete[](void*, size_t), size = %zu\n", size);
+    std::free(ptr);
+}
+ 
+int main()
+{
+    int* p1 = new int;
+    delete p1;
+ 
+    int* p2 = new int[10]; // guaranteed to call the replacement in C++11
+    delete[] p2;
+}
+```
+
+Possible output:
+
+```text
+// Compiled with GCC-5 in C++17 mode to obtain the following:
+1) op new(size_t), size = 4
+4) op delete(void*, size_t), size = 4
+2) op new[](size_t), size = 40
+5) op delete[](void* ptr)
+```
+
+{/* source:cpp-memory-new-operator-delete:0048 */}
+Overloads of `operator delete` and `operator delete[]` with additional user-defined parameters ("placement forms", ([15,16](/docs/cpp/library/memory/new/operator_delete#Version_15))) may be declared at global scope as usual, and are called by the matching placement forms of new-expressions if a constructor of the object that is being allocated throws an exception.
+
+{/* source:cpp-memory-new-operator-delete:0049 */}
+The standard library placement forms of `operator delete` ([13,14](/docs/cpp/library/memory/new/operator_delete#Version_13)) cannot be replaced and can only be customized if the placement new-expression did not use the `::new` syntax, by providing a class-specific placement delete ([25,26](/docs/cpp/library/memory/new/operator_delete#Version_25)) with matching signature: `void T::operator delete(void*, void*)` or `void T::operator delete[](void*, void*)`.
+
+### Class-specific overloads
+
+{/* source:cpp-memory-new-operator-delete:0050 */}
+Deallocation functions ([17-24](/docs/cpp/library/memory/new/operator_delete#Version_17)) may be defined as static member functions of a class. These deallocation functions, if provided, are called by [`delete-expressions`](/docs/cpp/language/expressions/delete) when deleting objects ([17,19,21](/docs/cpp/library/memory/new/operator_delete#Version_17)) and arrays ([18,20,22](/docs/cpp/library/memory/new/operator_delete#Version_18)) of this class, unless the delete expression used the form `::delete` which bypasses class-scope lookup. The keyword `static` is optional for these function declarations: whether the keyword is used or not, the deallocation function is always a static member function.
+
+{/* source:cpp-memory-new-operator-delete:0051 */}
+The delete expression looks for appropriate deallocation function's name starting from the class scope (array form looks in the scope of the array element class) and proceeds to the global scope if no members are found as usual. Note, that as per [name lookup rules](/docs/cpp/language/basic_concepts/lookup), any deallocation functions declared in class scope hides all global deallocation functions.
+
+{/* source:cpp-memory-new-operator-delete:0052 */}
+If the static type of the object that is being deleted differs from its dynamic type (such as when deleting a [polymorphic](/docs/cpp/language/basic_concepts/objects) object through a pointer to base), and if the destructor in the static type is virtual, the single object form of delete begins lookup of the deallocation function's name starting from the point of definition of the final overrider of its virtual destructor. Regardless of which deallocation function would be executed at run time, the statically visible version of `operator delete` must be accessible in order to compile. In other cases, when deleting an array through a pointer to base, or when deleting through pointer to base with non-virtual destructor, the behavior is undefined.
+
+{/* source:cpp-memory-new-operator-delete:0053 */}
+If the single-argument overload ([17,18](/docs/cpp/library/memory/new/operator_delete#Version_17)) is not provided, but the size-aware overload taking [`std::size_t`](/docs/cpp/library/utility/types/size_t) as the second parameter ([21,22](/docs/cpp/library/memory/new/operator_delete#Version_21)) is provided, the size-aware form is called for normal deallocation, and the C++ runtime passes the size of the object to be deallocated as the second argument. If both forms are defined, the size-unaware version is called.
+
+{/* source:cpp-memory-new-operator-delete:0054 */}
+```cpp
+#include <cstddef>
+#include <iostream>
+ 
+// sized class-specific deallocation functions
+struct X
+{
+    static void operator delete(void* ptr, std::size_t sz)
+    {
+        std::cout << "custom delete for size " << sz << '\n';
+        ::operator delete(ptr);
+    }
+ 
+    static void operator delete[](void* ptr, std::size_t sz)
+    {
+        std::cout << "custom delete for size " << sz << '\n';
+        ::operator delete[](ptr);
+    }
+};
+ 
+int main()
+{
+    X* p1 = new X;
+    delete p1;
+ 
+    X* p2 = new X[10];
+    delete[] p2;
+}
+```
+
+Possible output:
+
+```text
+custom delete for size 1
+custom delete for size 18
+```
+
+{/* source:cpp-memory-new-operator-delete:0055 */}
+Overloads of `operator delete` and `operator delete[]` with additional user-defined parameters ("placement forms", ([25,26](/docs/cpp/library/memory/new/operator_delete#Version_25))) may also be defined as class members. When the failed placement new expression looks for the corresponding placement delete function to call, it begins lookup at class scope before examining the global scope, and looks for the function with the signature matching the placement new:
+
+{/* source:cpp-memory-new-operator-delete:0056 */}
+```cpp
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+ 
+struct X
+{
+    X() { throw std::runtime_error("X(): std::runtime_error"); }
+ 
+    // custom placement new
+    static void* operator new(std::size_t sz, bool b)
+    {
+        std::cout << "custom placement new called, b = " << b << '\n';
+        return ::operator new(sz);
+    }
+ 
+    // custom placement delete
+    static void operator delete(void* ptr, bool b)
+    {
+        std::cout << "custom placement delete called, b = " << b << '\n';
+        ::operator delete(ptr);
+    }
+};
+ 
+int main()
+{
+    try
+    {
+        [[maybe_unused]] X* p1 = new (true) X;
+    }
+    catch (const std::exception& ex)
+    {
+        std::cout << ex.what() << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+custom placement new called, b = 1
+custom placement delete called, b = 1
+X(): std::runtime_error
+```
+
+{/* source:cpp-memory-new-operator-delete:0057 */}
+If class-level `operator delete` is a template function, it must have the return type of `void`, the first argument `void*`, and it must have two or more parameters. In other words, only placement forms can be templates. A template instance is never a usual deallocation function, regardless of its signature. The specialization of the template `operator delete` is chosen with [template argument deduction](/docs/cpp/language/templates/template_argument_deduction).
+
+### Notes
+
+{/* source:cpp-memory-new-operator-delete:0058 */}
+The call to the class-specific `T::operator delete` on a polymorphic class is the only case where a static member function is called through dynamic dispatch.
+
+{/* source:cpp-memory-new-operator-delete:0059 */}
+If the behavior of a deallocation function does not satisfy the default constraints, the behavior is undefined.
+
+{/* source:cpp-memory-new-operator-delete:0060 */}
+<Revision since="C++11">
+The following functions are required to be thread-safe:
+
+- The library versions of [`operator new`](/docs/cpp/library/memory/new/operator_new) and `operator delete`
+- User replacement versions of global [`operator new`](/docs/cpp/library/memory/new/operator_new) and `operator delete`
+- [`std::calloc`](/docs/cpp/library/memory/c/calloc), [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::realloc`](/docs/cpp/library/memory/c/realloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, [`std::free`](/docs/cpp/library/memory/c/free)
+
+Calls to these functions that allocate or deallocate a particular unit of storage occur in a single total order, and each such deallocation call [happens-before](/docs/cpp/library/atomic/memory_order) the next allocation (if any) in this order.
+</Revision>
+
+{/* source:cpp-memory-new-operator-delete:0061 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_sized_deallocation`](/docs/cpp/library/feature_test#cpp_sized_deallocation) | [`201309L`](/docs/cpp/library/compiler_support/14#cpp_sized_deallocation_201309L) | (C++14) | Sized deallocation |
+| [`__cpp_impl_destroying_delete`](/docs/cpp/library/feature_test#cpp_impl_destroying_delete) | [`201806L`](/docs/cpp/library/compiler_support/20#cpp_impl_destroying_delete_201806L) | (C++20) | Destroying operator delete (compiler support) |
+| [`__cpp_lib_destroying_delete`](/docs/cpp/library/feature_test#cpp_lib_destroying_delete) | [`201806L`](/docs/cpp/library/compiler_support/20#cpp_lib_destroying_delete_201806L) | (C++20) | Destroying operator delete (library support) |
+
+### Defect reports
+
+{/* source:cpp-memory-new-operator-delete:0062 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-new-operator-delete:0063 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={220} standard="C++98">
+    <PublishedBehavior>user-defined deallocation functions were permitted to throw</PublishedBehavior>
+    <CorrectedBehavior>throwing from a deallocation function<br />results in undefined behavior</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="cwg" id={1438} standard="C++98">
+    <PublishedBehavior>any use of an invalid pointer value was undefined behavior</PublishedBehavior>
+    <CorrectedBehavior>only indirection and deallocation are</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={206} standard="C++98">
+    <PublishedBehavior>replacing (2) did not affect the default behavior of (10)</PublishedBehavior>
+    <CorrectedBehavior>the default behavior changes accordingly</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={298} standard="C++98">
+    <PublishedBehavior>replacing (1) did not affect the default behavior of (9)</PublishedBehavior>
+    <CorrectedBehavior>the default behavior changes accordingly</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={404} standard="C++98">
+    <PublishedBehavior>replacements of the replaceable deallocation<br />functions could be declared `inline`</PublishedBehavior>
+    <CorrectedBehavior>prohibited, no diagnostic required</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2458} standard="C++14">
+    <PublishedBehavior>overloads taking `(void*, std::size_t, const`<br />`std::nothrow_t&)` were specified, but could never be called</PublishedBehavior>
+    <CorrectedBehavior>removed spurious overloads</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-new-operator-delete:0064 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator delete`](/docs/cpp/library/ranges/generator/promise_type/operator_delete) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>deallocates memory previously obtained from `operator new` (public static member function of `std::generator<Ref,V,Allocator>::promise_type`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator new`, `operator new[]`](/docs/cpp/library/memory/new/operator_new)</DescriptionTerm>
+    <DescriptionBody>allocation functions (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`return_temporary_buffer`](/docs/cpp/library/memory/return_temporary_buffer) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>frees uninitialized storage (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`free`](/docs/cpp/library/memory/c/free)</DescriptionTerm>
+    <DescriptionBody>deallocates previously allocated memory (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

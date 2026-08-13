@@ -1,0 +1,116 @@
+---
+title: "std::allocator<T>::deallocate"
+description: "std::allocator<T>::deallocate deallocates the storage referenced by the pointer p."
+source_url: "https://en.cppreference.com/w/cpp/memory/apps/docs/content/docs/cpp/library/memory/allocator/deallocate"
+language: "C++"
+---
+
+{/* source:cpp-memory-allocator-deallocate:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`void deallocate( T* p, std::size_t n );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-memory-allocator-deallocate:0001 */}
+Deallocates the storage referenced by the pointer `p`, which must be a pointer obtained by an earlier call to [`allocate()`](/docs/cpp/library/memory/allocator/allocate)<InlineRevision since="C++23"> or [`allocate_at_least()`](/docs/cpp/library/memory/allocator/allocate_at_least)</InlineRevision>.
+
+{/* source:cpp-memory-allocator-deallocate:0002 */}
+The argument `n` must be equal to the first argument of the call to [`allocate()`](/docs/cpp/library/memory/allocator/allocate) that originally produced `p`<InlineRevision since="C++23">, or in the range `[m, count]` if `p` is obtained from a call to `allocate_at_least(m)` which returned `{p, count}`</InlineRevision>; otherwise, the behavior is undefined.
+
+{/* source:cpp-memory-allocator-deallocate:0003 */}
+Calls `::operator delete(void*)` <InlineRevision since="C++17">or `::operator delete(void*, std::align_val_t)`</InlineRevision>, but it is unspecified when and how it is called.
+
+{/* source:cpp-memory-allocator-deallocate:0004 */}
+<Revision since="C++20">
+In evaluation of a constant expression, this function must deallocate storage allocated within the evaluation of the same expression.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-allocator-deallocate:0005 */}
+<ParameterList>
+  <Parameter name="p">pointer obtained from [`allocate()`](/docs/cpp/library/memory/allocator/allocate)<InlineRevision since="C++23"> or [`allocate_at_least()`](/docs/cpp/library/memory/allocator/allocate_at_least)</InlineRevision></Parameter>
+  <Parameter name="n">number of objects earlier passed to [`allocate()`](/docs/cpp/library/memory/allocator/allocate)<InlineRevision since="C++23">, or a number between requested and actually allocated number of objects via [`allocate_at_least()`](/docs/cpp/library/memory/allocator/allocate_at_least) (may be equal to either bound)</InlineRevision></Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-allocator-deallocate:0006 */}
+(none)
+
+### Example
+
+{/* source:cpp-memory-allocator-deallocate:0007 */}
+```cpp
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
+#include <memory>
+#include <string>
+ 
+class S
+{
+    inline static int n{1};
+    int m{};
+    void pre() const { std::cout << "#" << m << std::string(m, ' '); }
+public:
+    S(int x) : m{n++} { pre(); std::cout << "S::S(" << x << ");\n"; }
+    ~S() { pre(); std::cout << "S::~S();\n"; }
+    void id() const { pre(); std::cout << "S::id();\n"; }
+};
+ 
+int main()
+{
+    constexpr std::size_t n{4};
+    std::allocator<S> allocator;
+    try
+    {
+        S* s = allocator.allocate(n); // may throw
+        for (std::size_t i{}; i != n; ++i)
+        {
+        //  allocator.construct(&s[i], i + 42); // removed in C++20
+            std::construct_at(&s[i], i + 42);   // since C++20
+        }
+        std::for_each_n(s, n, [](const auto& e) { e.id(); });
+        std::destroy_n(s, n);
+        allocator.deallocate(s, n);
+    }
+    catch (std::bad_array_new_length const& ex) { std::cout << ex.what() << '\n'; }
+    catch (std::bad_alloc const& ex) { std::cout << ex.what() << '\n'; }
+}
+```
+
+Output:
+
+```text
+#1 S::S(42);
+#2  S::S(43);
+#3   S::S(44);
+#4    S::S(45);
+#1 S::id();
+#2  S::id();
+#3   S::id();
+#4    S::id();
+#1 S::~S();
+#2  S::~S();
+#3   S::~S();
+#4    S::~S();
+```
+
+### See also
+
+{/* source:cpp-memory-allocator-deallocate:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate`](/docs/cpp/library/memory/allocator/allocate)</DescriptionTerm>
+    <DescriptionBody>allocates uninitialized storage (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate_at_least`](/docs/cpp/library/memory/allocator/allocate_at_least) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>allocates uninitialized storage at least as large as requested size (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`deallocate`](/docs/cpp/library/memory/allocator_traits/deallocate)</DescriptionTerm>
+    <DescriptionBody>deallocates storage using the allocator (public static member function of `std::allocator_traits<Alloc>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

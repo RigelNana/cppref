@@ -1,0 +1,151 @@
+---
+title: "std::scoped_allocator_adaptor<OuterAlloc,InnerAlloc...>::construct"
+description: "Constructs an object in allocated, but not initialized storage pointed to by p using the outer allocator and the provided constructor arguments."
+source_url: "https://en.cppreference.com/w/cpp/memory/scoped_allocator_adaptor/construct"
+language: "C++"
+---
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0000 */}
+<DeclarationDoc>
+Defined in header [`<scoped_allocator>`](/docs/cpp/library/headers/scoped_allocator)
+
+  <Declaration id="1" language="cpp" code={`template< class T, class... Args >
+void construct( T* p, Args&&... args );`} />
+  <Declaration id="2" language="cpp" until="C++20" code={`template< class T1, class T2, class... Args1, class... Args2 >
+void construct( std::pair<T1, T2>* p, std::piecewise_construct_t,
+
+                std::tuple<Args1...> x, std::tuple<Args2...> y );`} />
+  <Declaration id="3" language="cpp" until="C++20" code={`template< class T1, class T2 >
+void construct( std::pair<T1, T2>* p );`} />
+  <Declaration id="4" language="cpp" until="C++20" code={`template< class T1, class T2, class U, class V >
+void construct( std::pair<T1, T2>* p, U&& x, V&& y );`} />
+  <Declaration id="5" language="cpp" until="C++20" code={`template< class T1, class T2, class U, class V >
+void construct( std::pair<T1, T2>* p, const std::pair<U, V>& xy );`} />
+  <Declaration id="6" language="cpp" until="C++20" code={`template< class T1, class T2, class U, class V >
+void construct( std::pair<T1, T2>* p, std::pair<U, V>&& xy );`} />
+Helper function templates
+  <Declaration id="7" language="cpp" until="C++20" code={`template < class T, class... Args >
+std::tuple</* see below */> /*concat-args*/( std::tuple<Args...>&& tup );`} /> (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0001 */}
+Constructs an object in allocated, but not initialized storage pointed to by `p` using the outer allocator and the provided constructor arguments. If the object is of a type that itself uses allocators<InlineRevision until="C++20">, or if it is [`std::pair`](/docs/cpp/library/utility/pair)</InlineRevision>, passes the inner allocator down to the constructed object.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0002 */}
+1. Constructs an object of type `T` by [uses-allocator construction](/docs/cpp/library/memory/uses_allocator#Uses-allocator_construction) at the uninitialized memory location indicated by `p` using the outermost allocator.
+
+<Revision until="C++20">
+
+Given `std::uses_allocator<T, inner_allocator_type>::value` as `uses_inner`:
+
+- If `uses_inner` is `false` and `std::is_constructible<T, Args...>::value` is `true`, calls [`outermost-construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers#outermost-construct) `(p, std::forward<Args>(args)...)`.
+- Otherwise, if `uses_inner` and `std::is_constructible<T, std::allocator_arg_t, inner_allocator_type&, Args...>::value` are both `true`, calls [`outermost-construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers#outermost-construct) `(p, std::allocator_arg, inner_allocator(), std::forward<Args>(args)...)`.
+- Otherwise, if `uses_inner` and `std::is_constructible<T, Args..., inner_allocator_type&>::value` are both `true`, calls [`outermost-construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers#outermost-construct) `(p, std::forward<Args>(args)..., inner_allocator())`.
+- Otherwise, the program is ill-formed.
+
+This overload participates in overload resolution only if `T` is not a specialization of [`std::pair`](/docs/cpp/library/utility/pair).
+
+</Revision>
+
+<Revision since="C++20">
+
+Equivalent to
+
+```cpp
+std::apply
+(
+    [p, this](auto&&... newargs)
+    {
+        outermost-construct(p, std::forward<decltype(newargs)>(newargs)...);
+    },
+    std::uses_allocator_construction_args
+        (inner_allocator(), std::forward<Args>(args)...)
+);
+```
+
+</Revision>
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0003 */}
+2-6. Constructs a [`std::pair`](/docs/cpp/library/utility/pair) object by [uses-allocator construction](/docs/cpp/library/memory/uses_allocator#Uses-allocator_construction) at the uninitialized memory location indicated by `p` using the outermost allocator.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0004 */}
+2. Let `xprime` be `concat-args` `<T1>(std::move(x))`, `yprime` be `concat-args` `<T2>(std::move(y))`, calls [`outermost-construct`](/docs/cpp/library/memory/scoped_allocator_adaptor/helpers#outermost-construct) `(p, std::piecewise_construct, std::move(xprime), std::move(yprime))`.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0005 */}
+3. Equivalent to `construct(p, std::piecewise_construct, std::tuple<>(), std::tuple<>());`.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0006 */}
+4-6. Equivalent to `construct(p, std::piecewise_construct, std::forward_as_tuple(xarg), std::forward_as_tuple(yarg));`, where `xarg` and `yarg` are defined as follows:
+
+| Overload | xarg | yarg |
+| --- | --- | --- |
+| (4) | `std::forward<U>(x)` | `std::forward<V>(y)` |
+| (5) | `xy.first` | `xy.second` |
+| (6) | `std::forward<U>(xy.first)` | `std::forward<V>(xy.second)` |
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0007 */}
+7. Merges the arguments contained in `tup` and additional arguments required by [uses-allocator construction](/docs/cpp/library/memory/uses_allocator#Uses-allocator_construction) of an object of type `T`.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0008 */}
+Given `std::uses_allocator<T, inner_allocator_type>::value` as `uses_inner`:
+
+- If `uses_inner` is `false` and `std::is_constructible<T, Args...>::value` is `true`, returns `std::tuple<Args&&...>(std::move(tup))`.
+- Otherwise, if `uses_inner` and `std::is_constructible<T, std::allocator_arg_t, inner_allocator_type&, Args...>::value` are both `true`, returns `std::tuple_cat(std::tuple<std::allocator_arg_t, inner_allocator_type&>(std::allocator_arg, inner_allocator()), std::tuple<Args&&...>(std::move(tup)))`.
+- Otherwise, if `uses_inner` and `std::is_constructible<T, Args..., inner_allocator_type&>::value` are both `true`, returns `std::tuple_cat(std::tuple<Args&&...>(std::move(tup)), std::tuple<inner_allocator_type&>(inner_allocator()))`.
+- Otherwise, the program is ill-formed.
+
+## Parameters
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0009 */}
+<ParameterList>
+  <Parameter name="p">pointer to allocated, but not initialized storage</Parameter>
+  <Parameter name="args">the constructor arguments to pass to the constructor of `T`</Parameter>
+  <Parameter name="x">the constructor arguments to pass to the constructor of `T1`</Parameter>
+  <Parameter name="y">the constructor arguments to pass to the constructor of `T2`</Parameter>
+  <Parameter name="xy">the pair whose two members are the constructor arguments for `T1` and `T2`</Parameter>
+  <Parameter name="tup">the arguments to be merged</Parameter>
+</ParameterList>
+
+## Notes
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0010 */}
+This function is called (through [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits)) by any allocator-aware object, such as [`std::vector`](/docs/cpp/library/container/vector), that was given a [`std::scoped_allocator_adaptor`](/docs/cpp/library/memory/scoped_allocator_adaptor) as the allocator to use. Since `inner_allocator_type` is itself a specialization of [`std::scoped_allocator_adaptor`](/docs/cpp/library/memory/scoped_allocator_adaptor), this function will also be called when the allocator-aware objects constructed through this function start constructing their own members.
+
+## Defect reports
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2203} standard="C++11">
+    <PublishedBehavior>inner allocators were obtained by value-initializing<br />an `inner_allocator_type` object</PublishedBehavior>
+    <CorrectedBehavior>obtained by calling [`inner_allocator()`](/docs/cpp/library/memory/scoped_allocator_adaptor/inner_allocator)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2511} standard="C++11">
+    <PublishedBehavior>`concat-args` might copy elements of [`std::tuples`](/docs/cpp/library/utility/tuple)</PublishedBehavior>
+    <CorrectedBehavior>eliminated all element copy operations</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2586} standard="C++11">
+    <PublishedBehavior>only constructions from<br />`inner_allocator_type` rvalues were checked</PublishedBehavior>
+    <CorrectedBehavior>checks constructions from non-const<br />`inner_allocator_type` lvalues instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2975} standard="C++11">
+    <PublishedBehavior>overload (1) was not constrained</PublishedBehavior>
+    <CorrectedBehavior>constrained to refuse [`std::pair`](/docs/cpp/library/utility/pair)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-memory-scoped-allocator-adaptor-construct:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct`](/docs/cpp/library/memory/allocator_traits/construct)</DescriptionTerm>
+    <DescriptionBody>constructs an object in the allocated storage (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct`](/docs/cpp/library/memory/allocator/construct) <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs an object in allocated storage (public member function of `std::allocator<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

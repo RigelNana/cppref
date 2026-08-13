@@ -1,0 +1,111 @@
+---
+title: "std::malloc"
+description: "Allocates size bytes of uninitialized storage."
+source_url: "https://en.cppreference.com/w/cpp/memory/c/malloc"
+language: "C++"
+---
+
+{/* source:cpp-memory-c-malloc:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration language="cpp" code={`void* malloc( std::size_t size );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-c-malloc:0001 */}
+Allocates `size` bytes of uninitialized storage.
+
+{/* source:cpp-memory-c-malloc:0002 */}
+If allocation succeeds, returns a pointer to the lowest (first) byte in the allocated memory block that is suitably aligned for any scalar type (at least as strictly as [`std::max_align_t`](/docs/cpp/library/utility/types/max_align_t)) ([implicitly creating](/docs/cpp/language/basic_concepts/objects#Object_creation) objects in the destination area).
+
+{/* source:cpp-memory-c-malloc:0003 */}
+If `size` is zero, the behavior is implementation defined (null pointer may be returned, or some non-null pointer may be returned that may not be used to access storage, but has to be passed to [`std::free`](/docs/cpp/library/memory/c/free)).
+
+{/* source:cpp-memory-c-malloc:0004 */}
+<Revision since="C++11">
+The following functions are required to be thread-safe:
+
+- The library versions of [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- User replacement versions of global [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- [`std::calloc`](/docs/cpp/library/memory/c/calloc), `std::malloc`, [`std::realloc`](/docs/cpp/library/memory/c/realloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, [`std::free`](/docs/cpp/library/memory/c/free)
+
+Calls to these functions that allocate or deallocate a particular unit of storage occur in a single total order, and each such deallocation call [happens-before](/docs/cpp/library/atomic/memory_order) the next allocation (if any) in this order.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-c-malloc:0005 */}
+<ParameterList>
+  <Parameter name="size">number of bytes to allocate</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-c-malloc:0006 */}
+On success, returns the pointer to the beginning of newly allocated memory. To avoid a memory leak, the returned pointer must be deallocated with [`std::free()`](/docs/cpp/library/memory/c/free) or [`std::realloc()`](/docs/cpp/library/memory/c/realloc).
+
+{/* source:cpp-memory-c-malloc:0007 */}
+On failure, returns a null pointer.
+
+### Notes
+
+{/* source:cpp-memory-c-malloc:0008 */}
+This function does not call constructors or initialize memory in any way. There are no ready-to-use smart pointers that could guarantee that the matching deallocation function is called. The preferred method of memory allocation in C++ is using RAII-ready functions [`std::make_unique`](/docs/cpp/library/memory/unique_ptr/make_unique), [`std::make_shared`](/docs/cpp/library/memory/shared_ptr/make_shared), container constructors, etc, and, in low-level library code, [new-expression](/docs/cpp/language/expressions/new).
+
+{/* source:cpp-memory-c-malloc:0009 */}
+For loading a large file, file mapping via OS-specific functions, e.g. [`mmap`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html) on POSIX or `CreateFileMapping`([`A`](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga)/[`W`](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-createfilemappingw)) along with [`MapViewOfFile`](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile) on Windows, is preferable to allocating a buffer for file reading.
+
+### Example
+
+{/* source:cpp-memory-c-malloc:0010 */}
+```cpp
+#include <cstdlib> 
+#include <iostream>   
+#include <memory>
+#include <string>
+ 
+int main() 
+{
+    constexpr std::size_t size = 4;
+    if (auto ptr = reinterpret_cast<std::string*>(std::malloc(size * sizeof(std::string))))
+    {
+        try
+        {
+            for (std::size_t i = 0; i < size; ++i)
+                std::construct_at(ptr + i, 5, 'a' + i);
+            for (std::size_t i = 0; i < size; ++i)
+                std::cout << "ptr[" << i << "] == " << ptr[i] << '\n';
+            std::destroy_n(ptr, size);
+        }
+        catch (...) {}
+        std::free(ptr);
+    }
+}
+```
+
+Output:
+
+```text
+p[0] == aaaaa
+p[1] == bbbbb
+p[2] == ccccc
+p[3] == ddddd
+```
+
+### See also
+
+{/* source:cpp-memory-c-malloc:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator new operator new[]`](/docs/cpp/library/memory/new/operator_new)</DescriptionTerm>
+    <DescriptionBody>allocation functions (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_temporary_buffer`](/docs/cpp/library/memory/get_temporary_buffer) (deprecated in C++17) <InlineRevision removed="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains uninitialized storage (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`C documentation`](/docs/c/library/memory/malloc)</DescriptionTerm>
+    <DescriptionBody>for `malloc`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

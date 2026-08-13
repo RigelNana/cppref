@@ -1,0 +1,67 @@
+---
+title: "std::scoped_allocator_adaptor<OuterAlloc,InnerAlloc...>::outermost, outermost-construct, outermost-destroy"
+description: "These exposition-only helper member function templates are used in member functions construct() and destroy()."
+source_url: "https://en.cppreference.com/w/cpp/memory/scoped_allocator_adaptor/helpers"
+language: "C++"
+---
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< class Alloc >
+/* unspecified */ /*outermost*/( Alloc&& alloc = *this );`} />
+  (exposition only*)
+  <Declaration id="2" language="cpp" code={`template< class T, class... Args >
+void /*outermost-construct*/( T* p, Args&&... args );`} />
+  (exposition only*)
+  <Declaration id="3" language="cpp" code={`template< class T >
+void /*outermost-destroy*/( T* p );`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0001 */}
+These exposition-only helper member function templates are used in member functions [`construct()`](/docs/cpp/library/memory/scoped_allocator_adaptor/construct) and [`destroy()`](/docs/cpp/library/memory/scoped_allocator_adaptor/destroy).
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0002 */}
+1. Obtains the outermost allocator of `alloc`.
+
+- If the expression `alloc.outer_allocator()` is valid, returns `outermost` `(alloc.outer_allocator())`.
+- Otherwise, returns `alloc`.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0003 */}
+2,3. Constructs or destroys an object using the outermost allocator of `*this`.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0004 */}
+Given the type `std::allocator_traits<std::remove_reference_t<decltype(`outermost`())>>` as `outermost_traits`:
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0005 */}
+2. Equivalent to `outermost_traits::construct(outermost(), p, std::forward<Args>(args)...);`.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0006 */}
+3. Equivalent to `outermost_traits::destroy(outermost(), p);`.
+
+## Defect reports
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3116} standard="C++11">
+    <PublishedBehavior>the recursion condition for `outermost` was "`alloc`<br />has the member function `outer_allocator()`"</PublishedBehavior>
+    <CorrectedBehavior>changed to "the expression<br />`alloc.outer_allocator()` is valid"</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+## See also
+
+{/* source:cpp-memory-scoped-allocator-adaptor-helpers:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct`](/docs/cpp/library/memory/allocator_traits/construct)</DescriptionTerm>
+    <DescriptionBody>constructs an object in the allocated storage (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy`](/docs/cpp/library/memory/allocator_traits/destroy)</DescriptionTerm>
+    <DescriptionBody>destructs an object stored in the allocated storage (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

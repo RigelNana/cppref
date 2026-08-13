@@ -1,0 +1,210 @@
+---
+title: "std::ranges::uninitialized_value_construct"
+description: "Constructs objects of type std::iter_value_t<I> in the uninitialized memory area [first, last) by value-initialization."
+source_url: "https://en.cppreference.com/w/cpp/memory/ranges/uninitialized_value_construct"
+language: "C++"
+---
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< no-throw-forward-iterator I, no-throw-sentinel-for<I> S >
+    requires std::default_initializable<std::iter_value_t<I>>
+
+I uninitialized_value_construct( I first, S last );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++20" code={`template< no-throw-forward-range R >
+    requires std::default_initializable<ranges::range_value_t<R>>
+ranges::borrowed_iterator_t<R>
+
+    uninitialized_value_construct( R&& r );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0001 */}
+1. 1) Constructs objects of type `std::iter_value_t<I>` in the uninitialized memory area [`first`, `last`) by [value-initialization](/docs/cpp/language/initialization/value_initialization), as if by
+
+   `for (; first != last; ++first)`<br />
+   `::new (`[`voidify`](/docs/cpp/library/memory/voidify)`(*first)) std::remove_reference_t<std::iter_reference_t<I>>();`<br />
+   `return first;`
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0002 */}
+2. If an exception is thrown during the initialization, the objects already constructed are destroyed in an unspecified order.
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0003 */}
+3. 2) Equivalent to `ranges::uninitialized_value_construct(ranges::begin(r), ranges::end(r))`.
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0004 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0005 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0006 */}
+<ParameterList>
+  <Parameter name="first, last">iterator-sentinel pair denoting the range of elements to value-initialize</Parameter>
+  <Parameter name="r">the range of the elements to value-initialize</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0007 */}
+As described above.
+
+### Complexity
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0008 */}
+Linear in the distance between `first` and `last`.
+
+### Exceptions
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0009 */}
+Any exception thrown on construction of the elements in the destination range.
+
+### Notes
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0010 */}
+An implementation may improve the efficiency of the `ranges::uninitialized_value_construct`, e.g. by using [`ranges::fill`](/docs/cpp/library/algorithm/ranges/fill), if the value type of the range is a [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable) [*TrivialType*](/docs/cpp/library/named_req/TrivialType).
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0011 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_raw_memory_algorithms`](/docs/cpp/library/feature_test#cpp_lib_raw_memory_algorithms) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_raw_memory_algorithms_202411L) | (C++26) | `constexpr` for [specialized memory algorithms](/docs/cpp/library/memory#Uninitialized_memory_algorithms), ([1,2](/docs/cpp/library/memory/ranges/uninitialized_value_construct#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0012 */}
+```cpp
+struct uninitialized_value_construct_fn
+{
+    template<no-throw-forward-iterator I, no-throw-sentinel-for<I> S>
+        requires std::value_initializable<std::iter_value_t<I>>
+    constexpr I operator()(I first, S last) const
+    {
+        using ValueType = std::remove_reference_t<std::iter_reference_t<I>>;
+        if constexpr (std::is_trivially_default_constructible_v<ValueType>)
+            return ranges::fill(first, last, ValueType());
+        I rollback{first};
+        try
+        {
+            for (; !(first == last); ++first)
+                ::new (static_cast<void*>(std::addressof(*first))) ValueType();
+            return first;
+        }
+        catch (...) // rollback: destroy constructed elements
+        {
+            for (; rollback != first; ++rollback)
+                ranges::destroy_at(std::addressof(*rollback));
+            throw;
+        }
+    }
+ 
+    template<no-throw-forward-range R>
+        requires std::default_initializable<ranges::range_value_t<R>>
+    constexpr ranges::borrowed_iterator_t<R> operator()(R&& r) const
+    {
+        return (*this)(ranges::begin(r), ranges::end(r));
+    }
+};
+ 
+inline constexpr uninitialized_value_construct_fn uninitialized_value_construct{};
+```
+
+### Example
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0013 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <string>
+ 
+int main()
+{
+    struct S { std::string m{"▄▀▄▀▄▀▄▀"}; };
+ 
+    constexpr int n{4};
+    alignas(alignof(S)) char out[n * sizeof(S)];
+ 
+    try
+    {
+        auto first{reinterpret_cast<S*>(out)};
+        auto last{first + n};
+ 
+        std::ranges::uninitialized_value_construct(first, last);
+ 
+        auto count{1};
+        for (auto it{first}; it != last; ++it)
+            std::cout << count++ << ' ' << it->m << '\n';
+ 
+        std::ranges::destroy(first, last);
+    }
+    catch (...)
+    {
+        std::cout << "Exception!\n";
+    }
+ 
+    // For scalar types, uninitialized_value_construct
+    // zero-fills the given uninitialized memory area.
+    int v[]{0, 1, 2, 3};
+    std::cout << ' ';
+    for (const int i : v)
+        std::cout << ' ' << static_cast<char>(i + 'A');
+    std::cout << "\n ";
+    std::ranges::uninitialized_value_construct(std::begin(v), std::end(v));
+    for (const int i : v)
+        std::cout << ' ' << static_cast<char>(i + 'A');
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1 ▄▀▄▀▄▀▄▀
+2 ▄▀▄▀▄▀▄▀
+3 ▄▀▄▀▄▀▄▀
+4 ▄▀▄▀▄▀▄▀
+  A B C D
+  A A A A
+```
+
+### Defect reports
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3870} standard="C++20">
+    <PublishedBehavior>this algorithm might create objects on a `const` storage</PublishedBehavior>
+    <CorrectedBehavior>kept disallowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-ranges-uninitialized-value-construct:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_value_construct_n`](/docs/cpp/library/memory/ranges/uninitialized_value_construct_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs objects by [value-initialization](/docs/cpp/language/initialization/value_initialization) in an uninitialized area of memory, defined by a start and a count (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_default_construct`](/docs/cpp/library/memory/ranges/uninitialized_default_construct) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs objects by [default-initialization](/docs/cpp/language/initialization/default_initialization) in an uninitialized area of memory, defined by a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_default_construct_n`](/docs/cpp/library/memory/ranges/uninitialized_default_construct_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs objects by [default-initialization](/docs/cpp/language/initialization/default_initialization) in an uninitialized area of memory, defined by a start and count (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uninitialized_value_construct`](/docs/cpp/library/memory/uninitialized_value_construct) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>constructs objects by [value-initialization](/docs/cpp/language/initialization/value_initialization) in an uninitialized area of memory, defined by a range (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,87 @@
+---
+title: "std::hash<std::unique_ptr>"
+description: "The template specialization of std::hash for std::unique_ptr<T, Deleter> allows users to obtain hashes of objects of type std::unique_ptr<T, Deleter>."
+source_url: "https://en.cppreference.com/w/cpp/memory/unique_ptr/hash"
+language: "C++"
+---
+
+{/* source:cpp-memory-unique-ptr-hash:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T, class Deleter >
+struct hash<std::unique_ptr<T, Deleter>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-unique-ptr-hash:0001 */}
+The template specialization of [`std::hash`](/docs/cpp/library/utility/hash) for `std::unique_ptr<T, Deleter>` allows users to obtain hashes of objects of type `std::unique_ptr<T, Deleter>`.
+
+{/* source:cpp-memory-unique-ptr-hash:0002 */}
+The specialization `std::hash<std::unique_ptr<T,D>>` is enabled (see [`std::hash`](/docs/cpp/library/utility/hash)) if `std::hash<typename std::unique_ptr<T,D>::pointer>` is enabled, and is disabled otherwise.
+
+{/* source:cpp-memory-unique-ptr-hash:0003 */}
+When enabled, for a given `std::unique_ptr<T, D> p`, this specialization ensures that `std::hash<std::unique_ptr<T, D>>()(p) == std::hash<typename std::unique_ptr<T, D>::pointer>()(p.get())`.
+
+{/* source:cpp-memory-unique-ptr-hash:0004 */}
+The member functions of this specialization are not guaranteed to be noexcept because the pointer may be a fancy pointer and its hash might throw.
+
+### Example
+
+{/* source:cpp-memory-unique-ptr-hash:0005 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <memory>
+ 
+struct Foo
+{
+    Foo(int num) : nr(num) { std::cout << "Foo(" << nr << ")\n"; }
+ 
+    ~Foo() { std::cout << "~Foo()\n"; }
+ 
+    bool operator==(const Foo &other) const { return nr == other.nr; };
+ 
+    int nr;
+};
+ 
+int main()
+{
+    std::cout << std::boolalpha << std::hex;
+ 
+    Foo* foo = new Foo(5);
+    std::unique_ptr<Foo> up(foo); 
+    std::cout << "hash(up):    " << std::hash<std::unique_ptr<Foo>>()(up) << '\n'
+              << "hash(foo):   " << std::hash<Foo*>()(foo) << '\n'
+              << "*up==*foo:   " << (*up == *foo) << "\n\n";
+ 
+    std::unique_ptr<Foo> other = std::make_unique<Foo>(5);
+    std::cout << "hash(up):    " << std::hash<std::unique_ptr<Foo>>()(up) << '\n'
+              << "hash(other): " << std::hash<std::unique_ptr<Foo>>()(other) << '\n'
+              << "*up==*other: " <<(*up == *other) << "\n\n";
+}
+```
+
+Possible output:
+
+```text
+Foo(5)
+hash(up):    acac20
+hash(foo):   acac20
+*up==*foo:   true
+ 
+Foo(5)
+hash(up):    acac20
+hash(other): acbc50
+*up==*other: true
+ 
+~Foo()
+~Foo()
+```
+
+### See also
+
+{/* source:cpp-memory-unique-ptr-hash:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`hash`](/docs/cpp/library/utility/hash) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>hash function object (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

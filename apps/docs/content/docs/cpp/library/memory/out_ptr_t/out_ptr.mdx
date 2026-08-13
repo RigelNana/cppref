@@ -1,0 +1,102 @@
+---
+title: "std::out_ptr"
+description: "Returns an std::out_ptr_t with deduced template arguments that captures arguments for resetting by reference."
+source_url: "https://en.cppreference.com/w/cpp/memory/out_ptr_t/out_ptr"
+language: "C++"
+---
+{/* source:cpp-memory-out-ptr-t-out-ptr:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" since="C++23" code={`template< class Pointer = void, class Smart, class... Args >
+auto out_ptr( Smart& s, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0001 */}
+Returns an [`std::out_ptr_t`](/docs/cpp/library/memory/out_ptr_t) with deduced template arguments that captures arguments for resetting by reference.
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0002 */}
+The program is ill-formed if construction of the return value (see below) is ill-formed.
+
+### Parameters
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0003 */}
+<ParameterList>
+  <Parameter name="s">the object (typically a smart pointer) to adapt</Parameter>
+  <Parameter name="args...">the arguments for resetting to capture</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0004 */}
+`std::out_ptr_t<Smart, P, Args&&>(s, std::forward<Args>(args)...)`, where `P` is
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0005 */}
+- `Pointer`, if `Pointer` is not same as `void`. Otherwise,
+- `Smart::pointer`, if it is valid and denotes a type. Otherwise,
+- `Smart::element_type*`, if `Smart::element_type` is valid and denotes a type. Otherwise,
+- `std::pointer_traits<Smart>::element_type*`.
+
+### Notes
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0006 */}
+Users may specify the template argument for the template parameter `Pointer`, in order to interoperate with foreign functions that take a `Pointer*`.
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0007 */}
+As all arguments for resetting are captured by reference, the returned `out_ptr_t` should be a temporary object destroyed at the end of the full-expression containing the call to the foreign function, in order to avoid dangling references.
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_out_ptr`](/docs/cpp/library/feature_test#cpp_lib_out_ptr) | [`202106L`](/docs/cpp/library/compiler_support/23#cpp_lib_out_ptr_202106L) | (C++23) | `std::out_ptr`, `std::inout_ptr` |
+| [`__cpp_lib_out_ptr`](/docs/cpp/library/feature_test#cpp_lib_out_ptr) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_out_ptr_202311L) | (C++26) | freestanding `std::out_ptr` and `std::inout_ptr` |
+
+### Example
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0009 */}
+Use `std::out_ptr` to adapt a smart pointer for [`sqlite3_open`](https://www.sqlite.org/c3ref/open.html), which expects a `sqlite3**` as an out parameter.
+
+```cpp
+#include <memory>
+#include <sqlite3.h>
+ 
+int main()
+{
+    auto close_db = [](sqlite3* db) { sqlite3_close(db); };
+ 
+    {
+        // open an in-memory database, and manage its lifetime with std::unique_ptr
+        std::unique_ptr<sqlite3, decltype(close_db)> up;
+        sqlite3_open(":memory:", std::out_ptr(up));
+ 
+        sqlite3* db = up.get();
+        // do something with db ...
+    }
+    {
+        // same as above, but use a std::shared_ptr
+        std::shared_ptr<sqlite3> sp;
+        sqlite3_open(":memory:", std::out_ptr(sp, close_db));
+ 
+        sqlite3* db = sp.get();
+        // do something with db ...
+    }
+}
+```
+
+### See also
+
+{/* source:cpp-memory-out-ptr-t-out-ptr:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`inout_ptr`](/docs/cpp/library/memory/inout_ptr_t/inout_ptr) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>creates an `inout_ptr_t` with an associated smart pointer and resetting arguments (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_unique`, `make_unique_for_overwrite`](/docs/cpp/library/memory/unique_ptr/make_unique) <InlineRevision since="C++14" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a unique pointer that manages a new object (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_shared`, `make_shared_for_overwrite`](/docs/cpp/library/memory/shared_ptr/make_shared) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a shared pointer that manages a new object (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,135 @@
+---
+title: "std::get_temporary_buffer"
+description: "Requests to allocate uninitialized contiguous storage for count adjacent objects of type T."
+source_url: "https://en.cppreference.com/w/cpp/memory/get_temporary_buffer"
+language: "C++"
+---
+
+{/* source:cpp-memory-get-temporary-buffer:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" until="C++11" code={`template< class T >
+std::pair<T*, std::ptrdiff_t>
+
+    get_temporary_buffer( std::ptrdiff_t count );`} />
+  <Declaration language="cpp" since="C++11" removed="C++20" code={`template< class T >
+std::pair<T*, std::ptrdiff_t>
+
+    get_temporary_buffer( std::ptrdiff_t count ) noexcept;`} />
+  (deprecated in C++17)
+</DeclarationDoc>
+
+{/* source:cpp-memory-get-temporary-buffer:0001 */}
+If `count` is negative or zero, does nothing.
+
+{/* source:cpp-memory-get-temporary-buffer:0002 */}
+Otherwise, requests to allocate uninitialized contiguous storage for `count` adjacent objects of type `T`. The request is non-binding, and the implementation may instead allocate the storage for any other number of (including zero) adjacent objects of type `T`.
+
+{/* source:cpp-memory-get-temporary-buffer:0003 */}
+<Revision since="C++11">
+It is implementation-defined whether [over-aligned](/docs/cpp/language#object.23Alignment) types are supported.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-get-temporary-buffer:0004 */}
+<ParameterList>
+  <Parameter name="count">the desired number of objects</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-get-temporary-buffer:0005 */}
+A [`std::pair`](/docs/cpp/library/utility/pair), the member `first` is a pointer to the beginning of the allocated storage and the member `second` is the number of objects that fit in the storage that was actually allocated.
+
+{/* source:cpp-memory-get-temporary-buffer:0006 */}
+If `count <= 0` or allocated storage is not enough to store a single element of type `T`, the member `first` of the result is a null pointer and the member `second` is zero.
+
+### Notes
+
+{/* source:cpp-memory-get-temporary-buffer:0007 */}
+This API was originally designed with the intent of providing a more efficient implementation than the general-purpose `operator new`, but no such implementation was created and the API was deprecated and removed.
+
+### Example
+
+{/* source:cpp-memory-get-temporary-buffer:0008 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <memory>
+#include <string>
+ 
+int main()
+{
+    const std::string s[] = {"string", "1", "test", "..."};
+    const auto p = std::get_temporary_buffer<std::string>(4);
+    // requires that p.first is passed to return_temporary_buffer
+    // (beware of early exit points and exceptions), or better use:
+    std::unique_ptr<std::string, void(*)(std::string*)> on_exit(p.first,
+    [](std::string* p)
+    {
+        std::cout << "returning temporary buffer...\n";
+        std::return_temporary_buffer(p);
+    });
+ 
+    std::copy(s, s + p.second,
+              std::raw_storage_iterator<std::string*, std::string>(p.first));
+    // has same effect as: std::uninitialized_copy(s, s + p.second, p.first);
+    // requires that each string in p is individually destroyed
+    // (beware of early exit points and exceptions)
+ 
+    std::copy(p.first, p.first + p.second,
+              std::ostream_iterator<std::string>{std::cout, "\n"});
+ 
+    std::for_each(p.first, p.first + p.second, [](std::string& e)
+    {
+        e.~basic_string<char>();
+    }); // same as: std::destroy(p.first, p.first + p.second);
+ 
+    // manually reclaim memory if unique_ptr-like technique is not used:
+    // std::return_temporary_buffer(p.first);
+}
+```
+
+Output:
+
+```text
+string
+1
+test
+...
+returning temporary buffer...
+```
+
+### Defect reports
+
+{/* source:cpp-memory-get-temporary-buffer:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-get-temporary-buffer:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={425} standard="C++98">
+    <PublishedBehavior>the behavior when `count <= 0` was unclear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2072} standard="C++98">
+    <PublishedBehavior>it was not allowed to allocate insufficient memory</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-get-temporary-buffer:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`return_temporary_buffer`](/docs/cpp/library/memory/return_temporary_buffer) (deprecated in C++17) <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>frees uninitialized storage (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate_at_least`](/docs/cpp/library/memory/allocator_traits/allocate_at_least) [static] <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>allocates storage at least as large as the requested size via an allocator (public static member function of `std::allocator_traits<Alloc>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

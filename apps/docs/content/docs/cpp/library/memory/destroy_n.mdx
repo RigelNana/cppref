@@ -1,0 +1,141 @@
+---
+title: "std::destroy_n"
+description: "Destroys the n objects in the range starting at first."
+source_url: "https://en.cppreference.com/w/cpp/memory/destroy_n"
+language: "C++"
+---
+
+{/* source:cpp-memory-destroy-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration id="1" language="cpp" since="C++17" until="C++20" code={`template< class ForwardIt, class Size >
+ForwardIt destroy_n( ForwardIt first, Size n );`} />
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class ForwardIt, class Size >
+constexpr ForwardIt destroy_n( ForwardIt first, Size n );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt, class Size >
+ForwardIt destroy_n( ExecutionPolicy&& policy, ForwardIt first, Size n );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-destroy-n:0001 */}
+1. 1) Destroys the `n` objects in the range starting at `first`, as if by
+
+   ```cpp
+   for (; n > 0; (void) ++first, --n)
+       std::destroy_at(std::addressof(*first));
+   ```
+
+{/* source:cpp-memory-destroy-n:0002 */}
+2. 2) Same as (1), but executed according to `policy`. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>` is `true`.</Revision>
+
+   <Revision since="C++20">`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>` is `true`.</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-destroy-n:0003 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of elements to destroy</Parameter>
+  <Parameter name="n">the number of elements to destroy</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- No increment, assignment, comparison, or indirection through valid instances of `ForwardIt` may throw exceptions.
+
+### Return value
+
+{/* source:cpp-memory-destroy-n:0004 */}
+The end of the range of objects that has been destroyed (i.e., `std::next(first, n)`).
+
+### Complexity
+
+{/* source:cpp-memory-destroy-n:0005 */}
+Linear in `n`.
+
+### Exceptions
+
+{/* source:cpp-memory-destroy-n:0006 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-memory-destroy-n:0007 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Possible implementation
+
+{/* source:cpp-memory-destroy-n:0008 */}
+```cpp
+template<class ForwardIt, class Size>
+constexpr // since C++20
+ForwardIt destroy_n(ForwardIt first, Size n)
+{
+    for (; n > 0; (void) ++first, --n)
+        std::destroy_at(std::addressof(*first));
+    return first;
+}
+```
+
+### Example
+
+{/* source:cpp-memory-destroy-n:0009 */}
+The following example demonstrates how to use `destroy_n` to destroy a contiguous sequence of elements.
+
+{/* source:cpp-memory-destroy-n:0010 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <new>
+ 
+struct Tracer
+{
+    int value;
+    ~Tracer() { std::cout << value << " destructed\n"; }
+};
+ 
+int main()
+{
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+ 
+    for (int i = 0; i < 8; ++i)
+        new(buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+ 
+    auto ptr = std::launder(reinterpret_cast<Tracer*>(buffer));
+ 
+    std::destroy_n(ptr, 8);
+}
+```
+
+Output:
+
+```text
+0 destructed
+1 destructed
+2 destructed
+3 destructed
+4 destructed
+5 destructed
+6 destructed
+7 destructed
+```
+
+### See also
+
+{/* source:cpp-memory-destroy-n:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy`](/docs/cpp/library/memory/destroy) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>destroys a range of objects (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy_at`](/docs/cpp/library/memory/destroy_at) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>destroys an object at a given address (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::destroy_n`](/docs/cpp/library/memory/ranges/destroy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>destroys a number of objects in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

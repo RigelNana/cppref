@@ -1,0 +1,101 @@
+---
+title: "std::allocator<T>::allocate_at_least"
+description: "std::allocator<T>::allocate_at_least allocates count * sizeof(T) bytes of uninitialized storage, where count is an unspecified integer value not less than n."
+source_url: "https://en.cppreference.com/w/cpp/memory/apps/docs/content/docs/cpp/library/memory/allocator/allocate_at_least"
+language: "C++"
+---
+
+{/* source:cpp-memory-allocator-allocate-at-least:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`constexpr std::allocation_result<T*, std::size_t>
+    allocate_at_least( std::size_t n );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-allocator-allocate-at-least:0001 */}
+Allocates `count * sizeof(T)` bytes of uninitialized storage, where `count` is an unspecified integer value not less than `n`, by calling `::operator new` (possibly with an additional [`std::align_val_t`](/docs/cpp/library/memory/new/align_val_t) argument), but it is unspecified when and how this function is called.
+
+{/* source:cpp-memory-allocator-allocate-at-least:0002 */}
+Then, this function creates an array of type `T[count]` in the storage and starts its lifetime, but does not start lifetime of any of its elements.
+
+{/* source:cpp-memory-allocator-allocate-at-least:0003 */}
+In order to use this function in a constant expression, the allocated storage must be deallocated within the evaluation of the same expression.
+
+{/* source:cpp-memory-allocator-allocate-at-least:0004 */}
+Use of this function is ill-formed if `T` is an [incomplete type](/docs/cpp/language/basic_concepts/type-id#Incomplete_type).
+
+### Parameters
+
+{/* source:cpp-memory-allocator-allocate-at-least:0005 */}
+<ParameterList>
+  <Parameter name="n">the lower bound of number of objects to allocate storage for</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-allocator-allocate-at-least:0006 */}
+`std::allocation_result<T*>{p, count}`, where `p` points to the first element of an array of `count` objects of type `T` whose elements have not been constructed yet.
+
+### Exceptions
+
+{/* source:cpp-memory-allocator-allocate-at-least:0007 */}
+Throws [`std::bad_array_new_length`](/docs/cpp/library/memory/new/bad_array_new_length) if `std::numeric_limits<std::size_t>::max() / sizeof(T) < n`, or [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if allocation fails.
+
+### Notes
+
+{/* source:cpp-memory-allocator-allocate-at-least:0008 */}
+`allocate_at_least` is mainly provided for contiguous containers, e.g. [`std::vector`](/docs/cpp/library/container/vector) and [`std::basic_string`](/docs/cpp/library/string/basic_string), in order to reduce reallocation by making their capacity match the actually allocated size when possible.
+
+{/* source:cpp-memory-allocator-allocate-at-least:0009 */}
+The "unspecified when and how" wording makes it possible to [combine or optimize away heap allocations](/docs/cpp/language/expressions/new#Allocation) made by the standard library containers, even though such optimizations are disallowed for direct calls to `::operator new`. For example, this is implemented by libc++ ([1](https://github.com/llvm-mirror/libcxx/blob/master@%7B2017-02-09%7D/include/memory#L1766-L1772) and [2](https://github.com/llvm-mirror/libcxx/blob/master@%7B2017-02-09%7D/include/new#L211-L217)).
+
+{/* source:cpp-memory-allocator-allocate-at-least:0010 */}
+After calling [`allocate_at_least`](/docs/cpp/library/memory/allocator/allocate_at_least#top) and before construction of elements, pointer arithmetic of `T*` is well-defined within the allocated array, but the behavior is undefined if elements are accessed.
+
+{/* source:cpp-memory-allocator-allocate-at-least:0011 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_allocate_at_least`](/docs/cpp/library/feature_test#cpp_lib_allocate_at_least) | [`202302L`](/docs/cpp/library/compiler_support/23#cpp_lib_allocate_at_least_202302L) | (C++23) | `allocate_at_least` etc. |
+
+### Example
+
+{/* source:cpp-memory-allocator-allocate-at-least:0012 */}
+```cpp
+#include <memory>
+#include <print>
+ 
+int main()
+{
+    const std::size_t count{69};
+    std::allocator<int> alloc;
+    std::allocation_result res{alloc.allocate_at_least(count)};
+    std::print("count: {}\n"
+               "res.ptr: {}\n"
+               "res.count: {}\n", count, res.ptr, res.count);
+ 
+    /* construct, use, then destroy elements */
+ 
+    alloc.deallocate(res.ptr, res.count);
+}
+```
+
+Possible output:
+
+```text
+count: 69
+res.ptr: 0x555a486a0960
+res.count: 96
+```
+
+### See also
+
+{/* source:cpp-memory-allocator-allocate-at-least:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocation_result`](/docs/cpp/library/memory/allocation_result) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>records the address and the actual size of storage allocated by `allocate_at_least` (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate_at_least`](/docs/cpp/library/memory/allocator_traits/allocate_at_least) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>allocates storage at least as large as the requested size via an allocator (public static member function of `std::allocator_traits<Alloc>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

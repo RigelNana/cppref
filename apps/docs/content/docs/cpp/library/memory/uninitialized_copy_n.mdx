@@ -1,0 +1,183 @@
+---
+title: "std::uninitialized_copy_n"
+description: "Copies count elements from a range beginning at first to an uninitialized memory area beginning at d_first."
+source_url: "https://en.cppreference.com/w/cpp/memory/uninitialized_copy_n"
+language: "C++"
+---
+
+{/* source:cpp-memory-uninitialized-copy-n:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class InputIt, class Size, class NoThrowForwardIt >
+NoThrowForwardIt uninitialized_copy_n( InputIt first, Size count,
+
+                                       NoThrowForwardIt d_first );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class ExecutionPolicy, class ForwardIt,
+          class Size, class NoThrowForwardIt >
+NoThrowForwardIt uninitialized_copy_n( ExecutionPolicy&& policy,
+                                       ForwardIt first, Size count,
+
+                                       NoThrowForwardIt d_first );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-uninitialized-copy-n:0001 */}
+1. 1) Copies `count` elements from a range beginning at `first` to an uninitialized memory area beginning at `d_first` as if by `for (; count > 0; ++d_first, (void) ++first, --count)` `::new (`[`voidify`](/docs/cpp/library/memory/voidify)`(*d_first))` `typename std::iterator_traits<NoThrowForwardIt>::value_type(*first);`
+
+{/* source:cpp-memory-uninitialized-copy-n:0002 */}
+2. If an exception is thrown during the initialization, the objects already constructed are destroyed in an unspecified order.
+
+{/* source:cpp-memory-uninitialized-copy-n:0003 */}
+3. 2) Same as (1), but executed according to `policy`.
+
+{/* source:cpp-memory-uninitialized-copy-n:0004 */}
+4. This overload participates in overload resolution only if all following conditions are satisfied:
+
+   <Revision until="C++20">[`std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+   <Revision since="C++20">[`std::is_execution_policy_v<std::remove_cvref_t<ExecutionPolicy>>`](/docs/cpp/library/algorithm/is_execution_policy) is `true`.</Revision>
+
+{/* source:cpp-memory-uninitialized-copy-n:0005 */}
+<Revision since="C++20">If `d_first` + [`0`, `count`) overlaps with `first` + [`0`, `count`), the behavior is undefined.</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-uninitialized-copy-n:0006 */}
+<ParameterList>
+  <Parameter name="first">the beginning of the range of the elements to copy</Parameter>
+  <Parameter name="count">the number of elements to copy</Parameter>
+  <Parameter name="d_first">the beginning of the destination range</Parameter>
+  <Parameter name="policy">the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) to use</Parameter>
+</ParameterList>
+
+**Type requirements**
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `ForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- `NoThrowForwardIt` must meet the requirements of [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator).
+- No increment, assignment, comparison, or indirection through valid instances of `NoThrowForwardIt` may throw exceptions.
+
+### Return value
+
+{/* source:cpp-memory-uninitialized-copy-n:0007 */}
+Iterator to the element past the last element copied.
+
+### Complexity
+
+{/* source:cpp-memory-uninitialized-copy-n:0008 */}
+Linear in `count`.
+
+### Exceptions
+
+{/* source:cpp-memory-uninitialized-copy-n:0009 */}
+The overload with a template parameter named `ExecutionPolicy` reports errors as follows:
+
+{/* source:cpp-memory-uninitialized-copy-n:0010 */}
+- If execution of a function invoked as part of the algorithm throws an exception and `ExecutionPolicy` is one of the [standard policies](/docs/cpp/library/algorithm/execution_policy_tag_t), [`std::terminate`](/docs/cpp/library/error/terminate) is called. For any other `ExecutionPolicy`, the behavior is implementation-defined.
+- If the algorithm fails to allocate memory, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) is thrown.
+
+### Notes
+
+{/* source:cpp-memory-uninitialized-copy-n:0011 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_raw_memory_algorithms`](/docs/cpp/library/feature_test#cpp_lib_raw_memory_algorithms) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_raw_memory_algorithms_202411L) | (C++26) | `constexpr` for [specialized memory algorithms](/docs/cpp/library/memory#Uninitialized_memory_algorithms), ([1](/docs/cpp/library/memory/uninitialized_copy_n#Version_1)) |
+
+### Possible implementation
+
+{/* source:cpp-memory-uninitialized-copy-n:0012 */}
+[`uninitialized_copy_n (1)`](/docs/cpp/library/memory/uninitialized_copy_n#Version_1)
+
+```cpp
+template<class InputIt, class Size, class NoThrowForwardIt>
+constexpr NoThrowForwardIt uninitialized_copy_n(InputIt first, Size count,
+                                                NoThrowForwardIt d_first)
+{
+    using T = typename std::iterator_traits<NoThrowForwardIt>::value_type;
+    NoThrowForwardIt current = d_first;
+    try
+    {
+        for (; count > 0; ++first, (void) ++current, --count)
+            ::new (static_cast<void*>(std::addressof(*current))) T(*first);
+    }
+    catch (...)
+    {
+        for (; d_first != current; ++d_first)
+            d_first->~T();
+        throw;
+    }
+    return current;
+}```
+
+### Example
+
+{/* source:cpp-memory-uninitialized-copy-n:0013 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
+ 
+int main()
+{
+    std::vector<std::string> v = {"This", "is", "an", "example"};
+ 
+    std::string* p;
+    std::size_t sz;
+    std::tie(p, sz) = std::get_temporary_buffer<std::string>(v.size());
+    sz = std::min(sz, v.size());
+ 
+    std::uninitialized_copy_n(v.begin(), sz, p);
+ 
+    for (std::string* i = p; i != p + sz; ++i)
+    {
+        std::cout << *i << ' ';
+        i->~basic_string<char>();
+    }
+    std::cout << '\n';
+ 
+    std::return_temporary_buffer(p);
+}```
+
+Possible output:
+
+```text
+This is an example```
+
+### Defect reports
+
+{/* source:cpp-memory-uninitialized-copy-n:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-uninitialized-copy-n:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2133} standard="C++98">
+    <PublishedBehavior>the effect description used a `for` loop with the iteration<br />expression `++d_first, ++first, --count`, which<br />results in argument-dependent lookups of `operator,`</PublishedBehavior>
+    <CorrectedBehavior>discards the value<br />of one operand to<br />disable those ADLs</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2433} standard="C++11">
+    <PublishedBehavior>this algorithm might be hijacked by overloaded `operator&`</PublishedBehavior>
+    <CorrectedBehavior>uses [`std::addressof`](/docs/cpp/library/memory/addressof)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3870} standard="C++20">
+    <PublishedBehavior>this algorithm might create objects on a `const` storage</PublishedBehavior>
+    <CorrectedBehavior>kept disallowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-uninitialized-copy-n:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`uninitialized_copy`](/docs/cpp/library/memory/uninitialized_copy)</DescriptionTerm>
+    <DescriptionBody>copies a range of objects to an uninitialized area of memory (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::uninitialized_copy_n`](/docs/cpp/library/memory/ranges/uninitialized_copy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a number of objects to an uninitialized area of memory (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,97 @@
+---
+title: "std::unique_ptr<T,Deleter>::get_deleter"
+description: "Returns the deleter object which would be used for destruction of the managed object."
+source_url: "https://en.cppreference.com/w/cpp/memory/unique_ptr/get_deleter"
+language: "C++"
+---
+
+{/* source:cpp-memory-unique-ptr-get-deleter:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`Deleter& get_deleter() noexcept;`} />
+  <InlineRevision since="C++23">constexpr</InlineRevision>
+  <Declaration id="2" language="cpp" since="C++11" code={`const Deleter& get_deleter() const noexcept;`} />
+  <InlineRevision since="C++23">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-memory-unique-ptr-get-deleter:0001 */}
+Returns the deleter object which would be used for destruction of the managed object.
+
+### Parameters
+
+{/* source:cpp-memory-unique-ptr-get-deleter:0002 */}
+(none)
+
+### Return value
+
+{/* source:cpp-memory-unique-ptr-get-deleter:0003 */}
+The stored deleter object.
+
+### Example
+
+{/* source:cpp-memory-unique-ptr-get-deleter:0004 */}
+```cpp
+#include <iostream>
+#include <memory>
+ 
+struct Foo
+{
+    Foo() { std::cout << "Foo() 0x" << std::hex << (void*)this << '\n'; }
+    ~Foo() { std::cout << "~Foo() 0x" << std::hex << (void*)this << '\n'; }
+};
+ 
+struct D
+{
+    int number;
+ 
+    void bar()
+    {
+        std::cout << "call D::bar(), my number is: " << std::dec << number << '\n';
+    }
+ 
+    void operator()(Foo* p) const
+    {
+        std::cout << "call deleter for Foo object 0x" << std::hex << (void*)p << '\n';
+        delete p;
+    }
+};
+ 
+int main()
+{
+    std::cout << "main start\n";
+ 
+    std::unique_ptr<Foo, D> up1(new Foo(), D(42));
+    D& del1 = up1.get_deleter();
+    del1.bar();
+ 
+    std::unique_ptr<Foo, D> up2(new Foo(), D(43));
+    D& del2 = up2.get_deleter();
+    auto* released = up2.release();
+    del2(released);
+ 
+    std::cout << "main end\n";
+}
+```
+
+Output:
+
+```text
+main start
+Foo() 0x0x90cc30
+call D::bar(), my number is: 42
+Foo() 0x0x90cc50
+call deleter for Foo object 0x0x90cc50
+~Foo() 0x0x90cc50
+main end
+call deleter for Foo object 0x0x90cc30
+~Foo() 0x0x90cc30
+```
+
+### See also
+
+{/* source:cpp-memory-unique-ptr-get-deleter:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_deleter`](/docs/cpp/library/memory/shared_ptr/get_deleter)</DescriptionTerm>
+    <DescriptionBody>returns the deleter of specified type, if owned (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

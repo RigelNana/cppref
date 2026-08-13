@@ -1,0 +1,144 @@
+---
+title: "std::align"
+description: "Given a pointer ptr to a buffer of size space, std::align returns a pointer aligned by the specified alignment for size number of bytes and decreases the space argument by the number of bytes used for alignment."
+source_url: "https://en.cppreference.com/w/cpp/memory/align"
+language: "C++"
+---
+
+{/* source:cpp-memory-align:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" since="C++11" code={`void* align( std::size_t alignment,
+             std::size_t size,
+             void*& ptr,
+
+             std::size_t& space );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-align:0001 */}
+Given a pointer `ptr` to a buffer of size `space`, returns a pointer aligned by the specified `alignment` for `size` number of bytes and decreases `space` argument by the number of bytes used for alignment. The first aligned address is returned.
+
+{/* source:cpp-memory-align:0002 */}
+The function modifies the pointer only if it would be possible to fit the wanted number of bytes aligned by the given alignment into the buffer. If the buffer is too small, the function does nothing and returns `nullptr`.
+
+{/* source:cpp-memory-align:0003 */}
+The behavior is undefined if `alignment` is not a power of two.
+
+### Parameters
+
+{/* source:cpp-memory-align:0004 */}
+<ParameterList>
+  <Parameter name="alignment">the desired alignment</Parameter>
+  <Parameter name="size">the size of the storage to be aligned</Parameter>
+  <Parameter name="ptr">pointer to contiguous storage (a buffer) of at least `space` bytes</Parameter>
+  <Parameter name="space">the size of the buffer in which to operate</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-align:0005 */}
+The adjusted value of `ptr`, or null pointer value if the space provided is too small.
+
+### Example
+
+{/* source:cpp-memory-align:0006 */}
+Demonstrates the use of `std::align` to place objects of different type in memory.
+
+```cpp
+#include <iostream>
+#include <memory>
+ 
+template<std::size_t N>
+struct MyAllocator
+{
+    char data[N];
+    void* p;
+    std::size_t sz;
+    MyAllocator() : p(data), sz(N) {}
+    template<typename T>
+    T* aligned_alloc(std::size_t a = alignof(T))
+    {
+        if (std::align(a, sizeof(T), p, sz))
+        {
+            T* result = reinterpret_cast<T*>(p);
+            p = (char*)p + sizeof(T);
+            sz -= sizeof(T);
+            return result;
+        }
+        return nullptr;
+    }
+};
+ 
+int main()
+{
+    MyAllocator<64> a;
+    std::cout << "allocated a.data at " << (void*)a.data
+              << " (" << sizeof a.data << " bytes)\n";
+ 
+    // allocate a char
+    if (char* p = a.aligned_alloc<char>())
+    {
+        *p = 'a';
+        std::cout << "allocated a char at " << (void*)p << '\n';
+    }
+ 
+    // allocate an int
+    if (int* p = a.aligned_alloc<int>())
+    {
+        *p = 1;
+        std::cout << "allocated an int at " << (void*)p << '\n';
+    }
+ 
+    // allocate an int, aligned at 32-byte boundary
+    if (int* p = a.aligned_alloc<int>(32))
+    {
+        *p = 2;
+        std::cout << "allocated an int at " << (void*)p << " (32 byte alignment)\n";
+    }
+}
+```
+
+Possible output:
+
+```text
+allocated a.data at 0x7ffd0b331f80 (64 bytes)
+allocated a char at 0x7ffd0b331f80
+allocated an int at 0x7ffd0b331f84
+allocated an int at 0x7ffd0b331fa0 (32 byte alignment)
+```
+
+### Defect reports
+
+{/* source:cpp-memory-align:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-align:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2377} standard="C++11">
+    <PublishedBehavior>`alignment` required to be a fundamental or supported extended alignment value</PublishedBehavior>
+    <CorrectedBehavior>only need to be a power of two</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-align:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`alignof`](/docs/cpp/language/expressions/alignof) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>queries alignment requirements of a type (operator)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`alignas`](/docs/cpp/language/declarations/alignas) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies that the storage for the variable should be aligned by specific amount (specifier)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`aligned_storage`](/docs/cpp/library/meta/aligned_storage) <InlineRevision since="C++11" /> (deprecated in C++23)</DescriptionTerm>
+    <DescriptionBody>defines the type suitable for use as uninitialized storage for types of given size (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`assume_aligned`](/docs/cpp/library/memory/assume_aligned) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>informs the compiler that a pointer is aligned (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,85 @@
+---
+title: "std::free"
+description: "Deallocates the space previously allocated by std::malloc, std::calloc, std::aligned_alloc, or std::realloc."
+source_url: "https://en.cppreference.com/w/cpp/memory/c/free"
+language: "C++"
+---
+
+{/* source:cpp-memory-c-free:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+
+  <Declaration language="cpp" code={`void free( void* ptr );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-c-free:0001 */}
+Deallocates the space previously allocated by [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::calloc`](/docs/cpp/library/memory/c/calloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, or [`std::realloc`](/docs/cpp/library/memory/c/realloc).
+
+{/* source:cpp-memory-c-free:0002 */}
+If `ptr` is a null pointer, the function does nothing.
+
+{/* source:cpp-memory-c-free:0003 */}
+The behavior is undefined if the value of `ptr` does not equal a value returned earlier by [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::calloc`](/docs/cpp/library/memory/c/calloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, or [`std::realloc`](/docs/cpp/library/memory/c/realloc).
+
+{/* source:cpp-memory-c-free:0004 */}
+The behavior is undefined if the memory area referred to by `ptr` has already been deallocated, that is, `std::free` or [`std::realloc`](/docs/cpp/library/memory/c/realloc) has already been called with `ptr` as the argument and no calls to [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::calloc`](/docs/cpp/library/memory/c/calloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, or [`std::realloc`](/docs/cpp/library/memory/c/realloc) resulted in a pointer equal to `ptr` afterwards.
+
+{/* source:cpp-memory-c-free:0005 */}
+The behavior is undefined if after `std::free` returns, an access is made through the pointer `ptr` (unless another allocation function happened to result in a pointer value equal to `ptr`).
+
+{/* source:cpp-memory-c-free:0006 */}
+<Revision since="C++11">
+The following functions are required to be thread-safe:
+
+- The library versions of [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- User replacement versions of global [`operator new`](/docs/cpp/library/memory/new/operator_new) and [`operator delete`](/docs/cpp/library/memory/new/operator_delete)
+- [`std::calloc`](/docs/cpp/library/memory/c/calloc), [`std::malloc`](/docs/cpp/library/memory/c/malloc), [`std::realloc`](/docs/cpp/library/memory/c/realloc)<InlineRevision since="C++17">, [`std::aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)</InlineRevision>, `std::free`
+
+Calls to these functions that allocate or deallocate a particular unit of storage occur in a single total order, and each such deallocation call [happens-before](/docs/cpp/library/atomic/memory_order) the next allocation (if any) in this order.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-c-free:0007 */}
+<ParameterList>
+  <Parameter name="ptr">pointer to the memory to deallocate</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-c-free:0008 */}
+(none)
+
+### Notes
+
+{/* source:cpp-memory-c-free:0009 */}
+The function accepts (and does nothing with) the null pointer to reduce the amount of special-casing. Whether allocation succeeds or not, the pointer returned by an allocation function can be passed to `std::free`.
+
+### Example
+
+{/* source:cpp-memory-c-free:0010 */}
+```cpp
+#include <cstdlib>
+ 
+int main()
+{
+    int* p1 = (int*)std::malloc(10 * sizeof *p1);
+    std::free(p1); // every allocated pointer must be freed
+ 
+    int* p2 = (int*)std::calloc(10, sizeof *p2);
+    int* p3 = (int*)std::realloc(p2, 1000 * sizeof *p3);
+    if (!p3) // p3 null means realloc failed and p2 must be freed.
+        std::free(p2);
+    std::free(p3); // p3 can be freed whether or not it is null.
+}
+```
+
+### See also
+
+{/* source:cpp-memory-c-free:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`C documentation`](/docs/c/library/memory/free)</DescriptionTerm>
+    <DescriptionBody>for `free`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

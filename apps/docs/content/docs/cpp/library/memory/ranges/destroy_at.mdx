@@ -1,0 +1,133 @@
+---
+title: "std::ranges::destroy_at"
+description: "If T is not an array type, calls the destructor of the object pointed to by p, as if by p->~T(). Otherwise, recursively destroys elements of *p in order, as if by calling std::destroy(std::begin(*p), std::end(*p))."
+source_url: "https://en.cppreference.com/w/cpp/memory/ranges/destroy_at"
+language: "C++"
+---
+
+{/* source:cpp-memory-ranges-destroy-at:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< std::destructible T >
+constexpr void destroy_at( T* p ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-ranges-destroy-at:0001 */}
+If `T` is not an array type, calls the destructor of the object pointed to by `p`, as if by `p->~T()`. Otherwise, recursively destroys elements of `*p` in order, as if by calling `std::destroy(std::begin(*p), std::end(*p))`.
+
+{/* source:cpp-memory-ranges-destroy-at:0002 */}
+The function-like entities described on this page are [*algorithm function objects*](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-memory-ranges-destroy-at:0003 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [`argument-dependent lookup`](/docs/cpp/language/functions/adl).
+- When any of them are found by [`normal unqualified lookup`](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [`argument-dependent lookup`](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-memory-ranges-destroy-at:0004 */}
+<ParameterList>
+  <Parameter name="p">a pointer to the object to be destroyed</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-ranges-destroy-at:0005 */}
+(none)
+
+### Possible implementation
+
+{/* source:cpp-memory-ranges-destroy-at:0006 */}
+```cpp
+struct destroy_at_fn
+{
+    template<std::destructible T>
+    constexpr void operator()(T *p) const noexcept
+    {
+        if constexpr (std::is_array_v<T>)
+            for (auto &elem : *p)
+                operator()(std::addressof(elem));
+        else
+            p->~T();
+    }
+};
+ 
+inline constexpr destroy_at_fn destroy_at{};
+```
+
+### Notes
+
+{/* source:cpp-memory-ranges-destroy-at:0007 */}
+`destroy_at` deduces the type of object to be destroyed and hence avoids writing it explicitly in the destructor call.
+
+{/* source:cpp-memory-ranges-destroy-at:0008 */}
+When `destroy_at` is called in the evaluation of some [`constant expression`](/docs/cpp/language/expressions/constant_expression) `e`, the argument `p` must point to an object whose lifetime began within the evaluation of `e`.
+
+### Example
+
+{/* source:cpp-memory-ranges-destroy-at:0009 */}
+The following example demonstrates how to use `ranges::destroy_at` to destroy a contiguous sequence of elements.
+
+{/* source:cpp-memory-ranges-destroy-at:0010 */}
+```cpp
+#include <iostream>
+#include <memory>
+#include <new>
+ 
+struct Tracer
+{
+    int value;
+    ~Tracer() { std::cout << value << " destructed\n"; }
+};
+ 
+int main()
+{
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+ 
+    for (int i = 0; i < 8; ++i)
+        new(buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+ 
+    auto ptr = std::launder(reinterpret_cast<Tracer*>(buffer));
+ 
+    for (int i = 0; i < 8; ++i)
+        std::ranges::destroy_at(ptr + i);
+}
+```
+
+Output:
+
+```text
+0 destructed
+1 destructed
+2 destructed
+3 destructed
+4 destructed
+5 destructed
+6 destructed
+7 destructed
+```
+
+### See also
+
+{/* source:cpp-memory-ranges-destroy-at:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::destroy`](/docs/cpp/library/memory/ranges/destroy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>destroys a range of objects (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::destroy_n`](/docs/cpp/library/memory/ranges/destroy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>destroys a number of objects in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::construct_at`](/docs/cpp/library/memory/ranges/construct_at) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates an object at a given address (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`destroy_at`](/docs/cpp/library/memory/destroy_at) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>destroys an object at a given address (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

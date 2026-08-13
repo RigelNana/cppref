@@ -1,0 +1,202 @@
+---
+title: "std::static_pointer_cast, std::dynamic_pointer_cast, std::const_pointer_cast, std::reinterpret_pointer_cast"
+description: "Creates a new instance of std::shared_ptr whose stored pointer is obtained from r's stored pointer using a cast expression."
+source_url: "https://en.cppreference.com/w/cpp/memory/shared_ptr/pointer_cast"
+language: "C++"
+---
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T, class U >
+std::shared_ptr<T> static_pointer_cast( const std::shared_ptr<U>& r ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T, class U >
+std::shared_ptr<T> static_pointer_cast( std::shared_ptr<U>&& r ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T, class U >
+std::shared_ptr<T> dynamic_pointer_cast( const std::shared_ptr<U>& r ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class T, class U >
+std::shared_ptr<T> dynamic_pointer_cast( std::shared_ptr<U>&& r ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`template< class T, class U >
+std::shared_ptr<T> const_pointer_cast( const std::shared_ptr<U>& r ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class T, class U >
+std::shared_ptr<T> const_pointer_cast( std::shared_ptr<U>&& r ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++17" code={`template< class T, class U >
+std::shared_ptr<T> reinterpret_pointer_cast( const std::shared_ptr<U>& r ) noexcept;`} />
+  <Declaration id="8" language="cpp" since="C++20" code={`template< class T, class U >
+std::shared_ptr<T> reinterpret_pointer_cast( std::shared_ptr<U>&& r ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0001 */}
+Creates a new instance of [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) whose stored pointer is obtained from `r`'s stored pointer using a cast expression.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0002 */}
+If `r` is empty, so is the new `shared_ptr` (but its stored pointer is not necessarily null). Otherwise, the new `shared_ptr` will share ownership with the initial value of `r`, except that it is empty if the `dynamic_cast` performed by `dynamic_pointer_cast` returns a null pointer.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0003 */}
+Let `Y` be `typename std::shared_ptr<T>::element_type`, then the resulting [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr)'s stored pointer will be obtained by evaluating, respectively:
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0004 */}
+1. 1,2) `static_cast<Y*>(r.get())`
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0005 */}
+2. 3,4) `dynamic_cast<Y*>(r.get())`. If the result of the `dynamic_cast` is a null pointer value, the returned `shared_ptr` will be empty.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0006 */}
+3. 5,6) `const_cast<Y*>(r.get())`
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0007 */}
+4. 7,8) `reinterpret_cast<Y*>(r.get())`
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0008 */}
+The behavior of these functions is undefined unless the corresponding cast from `U*` to `T*` is well formed:
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0009 */}
+1. 1,2) The behavior is undefined unless `static_cast<T*>((U*)nullptr)` is well formed.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0010 */}
+2. 3,4) The behavior is undefined unless `dynamic_cast<T*>((U*)nullptr)` is well formed.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0011 */}
+3. 5,6) The behavior is undefined unless `const_cast<T*>((U*)nullptr)` is well formed.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0012 */}
+4. 7,8) The behavior is undefined unless `reinterpret_cast<T*>((U*)nullptr)` is well formed.
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0013 */}
+<Revision since="C++20">
+After calling the rvalue overloads (2,4,6,8), `r` is empty and `r.get() == nullptr`, except that `r` is not modified for `dynamic_pointer_cast` (4) if the `dynamic_cast` fails.
+</Revision>
+
+## Parameters
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0014 */}
+<ParameterList>
+  <Parameter name="r">the pointer to convert</Parameter>
+</ParameterList>
+
+## Notes
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0015 */}
+The expressions `std::shared_ptr<T>(static_cast<T*>(r.get()))`, `std::shared_ptr<T>(dynamic_cast<T*>(r.get()))` and `std::shared_ptr<T>(const_cast<T*>(r.get()))` might seem to have the same effect, but they all will likely result in undefined behavior, attempting to delete the same object twice!
+
+## Possible implementation
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0016 */}
+[`static_pointer_cast`](/docs/cpp/library/memory/shared_ptr/pointer_cast#Version_1)
+
+```cpp
+template<class T, class U>
+std::shared_ptr<T> static_pointer_cast(const std::shared_ptr<U>& r) noexcept
+{
+    auto p = static_cast<typename std::shared_ptr<T>::element_type*>(r.get());
+    return std::shared_ptr<T>{r, p};
+}
+```
+
+[`dynamic_pointer_cast`](/docs/cpp/library/memory/shared_ptr/pointer_cast#Version_3)
+
+```cpp
+template<class T, class U>
+std::shared_ptr<T> dynamic_pointer_cast(const std::shared_ptr<U>& r) noexcept
+{
+    if (auto p = dynamic_cast<typename std::shared_ptr<T>::element_type*>(r.get()))
+        return std::shared_ptr<T>{r, p};
+    else
+        return std::shared_ptr<T>{};
+}
+```
+
+[`const_pointer_cast`](/docs/cpp/library/memory/shared_ptr/pointer_cast#Version_5)
+
+```cpp
+template<class T, class U>
+std::shared_ptr<T> const_pointer_cast(const std::shared_ptr<U>& r) noexcept
+{
+    auto p = const_cast<typename std::shared_ptr<T>::element_type*>(r.get());
+    return std::shared_ptr<T>{r, p};
+}
+```
+
+[`reinterpret_pointer_cast`](/docs/cpp/library/memory/shared_ptr/pointer_cast#Version_7)
+
+```cpp
+template<class T, class U>
+std::shared_ptr<T> reinterpret_pointer_cast(const std::shared_ptr<U>& r) noexcept
+{
+    auto p = reinterpret_cast<typename std::shared_ptr<T>::element_type*>(r.get());
+    return std::shared_ptr<T>{r, p};
+}
+```
+
+## Example
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0017 */}
+```cpp
+#include <iostream>
+#include <memory>
+ 
+class Base
+{
+public:
+    int a;
+    virtual void f() const { std::cout << "I am base!\n"; }
+    virtual ~Base() {}
+};
+ 
+class Derived : public Base
+{
+public:
+    void f() const override { std::cout << "I am derived!\n"; }
+    ~Derived() {}
+};
+ 
+int main()
+{
+    auto basePtr = std::make_shared<Base>();
+    std::cout << "Base pointer says: ";
+    basePtr->f();
+ 
+    auto derivedPtr = std::make_shared<Derived>();
+    std::cout << "Derived pointer says: ";
+    derivedPtr->f();
+ 
+    // static_pointer_cast to go up class hierarchy
+    basePtr = std::static_pointer_cast<Base>(derivedPtr);
+    std::cout << "Base pointer to derived says: ";
+    basePtr->f();
+ 
+    // dynamic_pointer_cast to go down/across class hierarchy
+    auto downcastedPtr = std::dynamic_pointer_cast<Derived>(basePtr);
+    if (downcastedPtr)
+    {
+        std::cout << "Downcasted pointer says: ";
+        downcastedPtr->f();
+    }
+ 
+    // All pointers to derived share ownership
+    std::cout << "Pointers to underlying derived: "
+              << derivedPtr.use_count()
+              << '\n';
+}
+```
+
+Output:
+
+```text
+Base pointer says: I am base!
+Derived pointer says: I am derived!
+Base pointer to derived says: I am derived!
+Downcasted pointer says: I am derived!
+Pointers to underlying derived: 3
+```
+
+## See also
+
+{/* source:cpp-memory-shared-ptr-pointer-cast:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/memory/shared_ptr/shared_ptr)</DescriptionTerm>
+    <DescriptionBody>constructs new `shared_ptr` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,91 @@
+---
+title: "std::pmr::polymorphic_allocator<T>::new_object"
+description: "Allocates and constructs an object of type U."
+source_url: "https://en.cppreference.com/w/cpp/memory/polymorphic_allocator/new_object"
+language: "C++"
+---
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class U, class... CtorArgs >
+U* new_object( CtorArgs&&... ctor_args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0001 */}
+Allocates and constructs an object of type `U`.
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0002 */}
+Given `alloc` is a `std::pmr::polymorphic_allocator<T>`:
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0003 */}
+```cpp
+U* p = alloc.new_object<U>(std::forward<CtorArgs>(ctor_args)...);
+```
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0004 */}
+is equivalent to
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0005 */}
+```cpp
+U* p = alloc.allocate_object<U>();
+try
+{
+    alloc.construct(p, std::forward<CtorArgs>(ctor_args)...);
+}
+catch (...)
+{
+    alloc.deallocate_object(p);
+    throw;
+}
+```
+
+### Parameters
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0006 */}
+<ParameterList>
+  <Parameter name="ctor_args">the arguments to forward to the constructor of `U`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0007 */}
+A pointer to the allocated and constructed object.
+
+### Notes
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0008 */}
+This function was introduced for use with the fully-specialized allocator `std::pmr::polymorphic_allocator<>`, but it may be useful in any specialization as a shortcut to avoid having to rebind from `std::pmr::polymorphic_allocator<T>` to `std::pmr::polymorphic_allocator<U>`, and having to call `allocate`, `construct`, and `deallocate` individually.
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0009 */}
+Since `U` is not deduced, it must be provided as a template argument when calling this function.
+
+### Exceptions
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0010 */}
+May throw any exceptions thrown by the call to `allocate_object` or the constructor of `U`.
+
+### See also
+
+{/* source:cpp-memory-polymorphic-allocator-new-object:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate_bytes`](/docs/cpp/library/memory/polymorphic_allocator/allocate_bytes)</DescriptionTerm>
+    <DescriptionBody>allocate raw aligned memory from the underlying resource (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate_object`](/docs/cpp/library/memory/polymorphic_allocator/allocate_object)</DescriptionTerm>
+    <DescriptionBody>allocates raw memory suitable for an object or an array (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate`](/docs/cpp/library/memory/polymorphic_allocator/allocate)</DescriptionTerm>
+    <DescriptionBody>allocate memory (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate`](/docs/cpp/library/memory/allocator_traits/allocate)</DescriptionTerm>
+    <DescriptionBody>allocates uninitialized storage using the allocator (public static member function of `std::allocator_traits<Alloc>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`allocate`](/docs/cpp/library/memory/memory_resource/allocate)</DescriptionTerm>
+    <DescriptionBody>allocates memory (public member function of `std::pmr::memory_resource`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

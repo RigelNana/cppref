@@ -1,0 +1,142 @@
+---
+title: "std::pmr::polymorphic_allocator<T>::construct"
+description: "Constructs an object in allocated, but not initialized storage pointed to by p the provided constructor arguments."
+source_url: "https://en.cppreference.com/w/cpp/memory/polymorphic_allocator/construct"
+language: "C++"
+---
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class U, class... Args >
+void construct( U* p, Args&&... args );`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++20" code={`template< class T1, class T2, class... Args1, class... Args2 >
+void construct( std::pair<T1, T2>* p,
+                std::piecewise_construct_t,
+                std::tuple<Args1...> x,
+
+                std::tuple<Args2...> y );`} />
+  <Declaration id="3" language="cpp" since="C++17" until="C++20" code={`template< class T1, class T2 >
+void construct( std::pair<T1, T2>* p );`} />
+  <Declaration id="4" language="cpp" since="C++17" until="C++20" code={`template< class T1, class T2, class U, class V >
+void construct( std::pair<T1, T2>* p, U&& x, V&& y );`} />
+  <Declaration id="5" language="cpp" since="C++17" until="C++20" code={`template< class T1, class T2, class U, class V >
+void construct( std::pair<T1, T2>* p, const std::pair<U, V>& xy );`} />
+  <Declaration id="6" language="cpp" since="C++17" until="C++20" code={`template< class T1, class T2, class U, class V >
+void construct( std::pair<T1, T2>* p, std::pair<U, V>&& xy );`} />
+  <Declaration id="7" language="cpp" since="C++17" until="C++20" code={`template< class T1, class T2, class NonPair >
+void construct( std::pair<T1, T2>* p, NonPair&& non_pair );`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0001 */}
+Constructs an object in allocated, but not initialized storage pointed to by `p` the provided constructor arguments. If the object is of type that itself uses allocators, or if it is `std::pair`, passes `*this` down to the constructed object.
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0002 */}
+1. 1) Creates an object of the given type `U` by means of [uses-allocator construction](/docs/cpp/library/memory/uses_allocator#Uses-allocator_construction) at the uninitialized memory location indicated by `p`, using `*this` as the allocator. <InlineRevision until="C++20">This overload participates in overload resolution only if `U` is not a specialization of [`std::pair`](/docs/cpp/library/utility/pair).</InlineRevision>
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0003 */}
+<Revision until="C++20">
+
+2. 2) First, if either `T1` or `T2` is allocator-aware, modifies the tuples `x` and `y` to include `this->resource()`, resulting in the two new tuples `xprime` and `yprime`, according to the following three rules:
+   - 2a) if `T1` is not allocator-aware (`std::uses_allocator<T1, polymorphic_allocator>::value==false`) and `std::is_constructible<T1, Args1...>::value==true`, then `xprime` is `x`, unmodified.
+   - 2b) if `T1` is allocator-aware (`std::uses_allocator<T1, polymorphic_allocator>::value==true`), and its constructor takes an allocator tag (`std::is_constructible<T1, std::allocator_arg_t, polymorphic_allocator, Args1...>::value==true`, then `xprime` is `std::tuple_cat(std::make_tuple(std::allocator_arg, *this), std::move(x))`.
+   - 2c) if `T1` is allocator-aware (`std::uses_allocator<T1, polymorphic_allocator>::value==true`), and its constructor takes the allocator as the last argument (`std::is_constructible<T1, Args1..., polymorphic_allocator>::value==true`), then `xprime` is `std::tuple_cat(std::move(x), std::make_tuple(*this))`.
+   - 2d) Otherwise, the program is ill-formed.
+
+   Same rules apply to `T2` and the replacement of `y` with `yprime`.
+
+   Once `xprime` and `yprime` are constructed, constructs the pair `p` in allocated storage as if by `::new((void *) p) pair<T1, T2>(std::piecewise_construct, std::move(xprime), std::move(yprime));`.
+
+3. 3) Equivalent to `construct(p, std::piecewise_construct, std::tuple<>(), std::tuple<>())`, that is, passes the memory resource on to the pair's member types if they accept them.
+
+4. 4) Equivalent to
+
+```cpp
+construct(p, std::piecewise_construct, std::forward_as_tuple(std::forward<U>(x)),
+                                       std::forward_as_tuple(std::forward<V>(y)))
+```
+
+5. 5) Equivalent to
+
+```cpp
+construct(p, std::piecewise_construct, std::forward_as_tuple(xy.first),
+                                       std::forward_as_tuple(xy.second))
+```
+
+6. 6) Equivalent to
+
+```cpp
+construct(p, std::piecewise_construct, std::forward_as_tuple(std::forward<U>(xy.first)),
+                                       std::forward_as_tuple(std::forward<V>(xy.second)))
+```
+
+7. 7) This overload participates in overload resolution only if given the exposition-only function template
+
+```cpp
+template< class A, class B >
+void /*deduce-as-pair*/( const std::pair<A, B>& );
+```
+
+, `/*deduce-as-pair*/(non_pair)` is ill-formed when considered as an unevaluated operand. Equivalent to
+
+```cpp
+construct<T1, T2, T1, T2>(p, std::forward<NonPair>(non_pair));
+```
+
+</Revision>
+
+### Parameters
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0004 */}
+<ParameterList>
+  <Parameter name="p">pointer to allocated, but not initialized storage</Parameter>
+  <Parameter name="args...">the constructor arguments to pass to the constructor of `T`</Parameter>
+  <Parameter name="x">the constructor arguments to pass to the constructor of `T1`</Parameter>
+  <Parameter name="y">the constructor arguments to pass to the constructor of `T2`</Parameter>
+  <Parameter name="xy">the pair whose two members are the constructor arguments for `T1` and `T2`</Parameter>
+  <Parameter name="non_pair">non-`pair` argument to convert to `pair` for further construction</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0005 */}
+(none)
+
+### Notes
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0006 */}
+This function is called (through [`std::allocator_traits`](/docs/cpp/library/memory/allocator_traits)) by any allocator-aware object, such as [`std::pmr::vector`](/docs/cpp/library/container/vector) (or another [`std::vector`](/docs/cpp/library/container/vector) that was given a `std::pmr::polymorphic_allocator` as the allocator to use).
+
+### Defect reports
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2969} standard="C++17">
+    <PublishedBehavior>uses-allocator construction passed `resource()`</PublishedBehavior>
+    <CorrectedBehavior>passes `*this`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2975} standard="C++17">
+    <PublishedBehavior>first overload is mistakenly used for pair construction in some cases</PublishedBehavior>
+    <CorrectedBehavior>constrained to not accept pairs</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3525} standard="C++17">
+    <PublishedBehavior>no overload could handle non-`pair` types convertible to `pair`</PublishedBehavior>
+    <CorrectedBehavior>reconstructing overload added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-polymorphic-allocator-construct:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct`](/docs/cpp/library/memory/allocator_traits/construct)</DescriptionTerm>
+    <DescriptionBody>constructs an object in the allocated storage (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`construct`](/docs/cpp/library/memory/allocator/construct) <InlineRevision until="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs an object in allocated storage (public member function of `std::allocator<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

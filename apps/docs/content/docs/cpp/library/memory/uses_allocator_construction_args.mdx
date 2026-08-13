@@ -1,0 +1,227 @@
+---
+title: "std::uses_allocator_construction_args"
+description: "Prepares the argument list needed to create an object of the given type T by means of uses-allocator construction."
+source_url: "https://en.cppreference.com/w/cpp/memory/uses_allocator_construction_args"
+language: "C++"
+---
+
+{/* source:cpp-memory-uses-allocator-construction-args:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+`T` is not a specialization of [`std::pair`](/docs/cpp/library/utility/pair)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T, class Alloc, class... Args >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    Args&&... args ) noexcept;`} />
+
+`T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair)
+
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T, class Alloc, class Tuple1, class Tuple2 >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    std::piecewise_construct_t, Tuple1&& x, Tuple2&& y ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class T, class Alloc >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class T, class Alloc, class U, class V >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    U&& u, V&& v ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class T, class Alloc, class U, class V >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    std::pair<U, V>& pr ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< class T, class Alloc, class U, class V >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    const std::pair<U, V>& pr ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class T, class Alloc, class U, class V >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    std::pair<U, V>&& pr ) noexcept;`} />
+  <Declaration id="8" language="cpp" since="C++23" code={`template< class T, class Alloc, class U, class V >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    const std::pair<U, V>&& pr ) noexcept;`} />
+  <Declaration id="9" language="cpp" since="C++20" code={`template< class T, class Alloc, class NonPair >
+constexpr auto uses_allocator_construction_args( const Alloc& alloc,
+
+    NonPair&& non_pair ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-uses-allocator-construction-args:0001 */}
+Prepares the argument list needed to create an object of the given type `T` by means of [uses-allocator construction](/docs/cpp/library/memory/uses_allocator).
+
+{/* source:cpp-memory-uses-allocator-construction-args:0002 */}
+1. 1) This overload participates in overload resolution only if `T` is not a specialization of [`std::pair`](/docs/cpp/library/utility/pair). Returns [`std::tuple`](/docs/cpp/library/utility/tuple) determined as follows:
+
+   - If `std::uses_allocator_v<T, Alloc>` is `false` and `std::is_constructible_v<T, Args...>` is `true`, returns `std::forward_as_tuple(std::forward<Args>(args)...)`.
+   - Otherwise, if `std::uses_allocator_v<T, Alloc>` is `true` and `std::is_constructible_v<T, std::allocator_arg_t, const Alloc&, Args...>` is `true`, returns `std::tuple<std::allocator_arg_t, const Alloc&, Args&&...>(std::allocator_arg, alloc,`<br />`                                                          std::forward<Args>(args)...)`.
+   - Otherwise, if `std::uses_allocator_v<T, Alloc>` is `true` and `std::is_constructible_v<T, Args..., const Alloc&>` is `true`, returns `std::forward_as_tuple(std::forward<Args>(args)..., alloc)`.
+   - Otherwise, the program is ill-formed.
+
+{/* source:cpp-memory-uses-allocator-construction-args:0003 */}
+2. 2) This overload participates in overload resolution only if `T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair). For `T` that is `std::pair<T1, T2>`, equivalent to
+
+   ```cpp
+   return std::make_tuple(std::piecewise_construct,
+       std::apply([&alloc](auto&&... args1)
+           {
+               return std::uses_allocator_construction_args<T1>(alloc,
+                          std::forward<decltype(args1)>(args1)...);
+           }, std::forward<Tuple1>(x)
+       ),
+       std::apply([&alloc](auto&&... args2)
+           {
+               return std::uses_allocator_construction_args<T2>(alloc,
+                          std::forward<decltype(args2)>(args2)...);
+           }, std::forward<Tuple2>(y)
+       )
+   );
+   ```
+
+{/* source:cpp-memory-uses-allocator-construction-args:0004 */}
+3. 3) This overload participates in overload resolution only if `T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair). Equivalent to
+
+   ```cpp
+   return std::uses_allocator_construction_args<T>(alloc,
+       std::piecewise_construct, std::tuple<>{}, std::tuple<>{}
+   );
+   ```
+
+{/* source:cpp-memory-uses-allocator-construction-args:0005 */}
+4. 4) This overload participates in overload resolution only if `T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair). Equivalent to
+
+   ```cpp
+   return std::uses_allocator_construction_args<T>(alloc,
+       std::piecewise_construct,
+       std::forward_as_tuple(std::forward<U>(u)),
+       std::forward_as_tuple(std::forward<V>(v))
+   );
+   ```
+
+{/* source:cpp-memory-uses-allocator-construction-args:0006 */}
+5. 5,6) This overload participates in overload resolution only if `T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair). Equivalent to
+
+   ```cpp
+   return std::uses_allocator_construction_args<T>(alloc,
+       std::piecewise_construct,
+       std::forward_as_tuple(pr.first),
+       std::forward_as_tuple(pr.second)
+   );
+   ```
+
+{/* source:cpp-memory-uses-allocator-construction-args:0007 */}
+6. 7,8) This overload participates in overload resolution only if `T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair). Equivalent to
+
+   ```cpp
+   return std::uses_allocator_construction_args<T>(alloc,
+       std::piecewise_construct,
+       std::forward_as_tuple(std::get<0>(std::move(pr))),
+       std::forward_as_tuple(std::get<1>(std::move(pr)))
+   );
+   ```
+
+{/* source:cpp-memory-uses-allocator-construction-args:0008 */}
+7. 9) This overload participates in overload resolution only if `T` is a specialization of [`std::pair`](/docs/cpp/library/utility/pair), and given the exposition-only function template
+
+   ```cpp
+   template<class A, class B>
+   void /*deduce-as-pair*/(const std::pair<A, B>&);
+   ```
+
+   , `/*deduce-as-pair*/(non_pair)` is ill-formed when considered as an unevaluated operand.
+
+   Let the exposition-only class *pair-constructor* be defined as
+
+   ```cpp
+   class /*pair-constructor*/
+   {
+       const Alloc& alloc_; // exposition only
+       NonPair&     u_;     // exposition only
+    
+       constexpr reconstruct(const std::remove_cv<T>& p) const // exposition only
+       {
+           return std::make_obj_using_allocator<std::remove_cv<T>>(alloc_, p);
+       }
+    
+       constexpr reconstruct(std::remove_cv<T>&& p) const // exposition only
+       {
+           return std::make_obj_using_allocator<std::remove_cv<T>>(alloc_, std::move(p));
+       }
+    
+   public:
+       constexpr operator std::remove_cv<T>() const
+       {
+           return reconstruct(std::forward<NonPair>(u_));
+       }
+   };
+   ```
+
+   This overload is equivalent to `return std::make_tuple(pair_construction);`, where `pair_construction` is a value of type *pair-constructor* whose `alloc_` and `u_` members are `alloc` and `non_pair` respectively.
+
+### Parameters
+
+{/* source:cpp-memory-uses-allocator-construction-args:0009 */}
+<ParameterList>
+  <Parameter name="alloc">the allocator to use</Parameter>
+  <Parameter name="args">the arguments to pass to `T`'s constructor</Parameter>
+  <Parameter name="x">tuple of arguments to pass to the constructors of `T`'s `first` data member</Parameter>
+  <Parameter name="y">tuple of arguments to pass to the constructors of `T`'s `second` data member</Parameter>
+  <Parameter name="u">single argument to pass to the constructor of `T`'s `first` data member</Parameter>
+  <Parameter name="v">single argument to pass to the constructor of `T`'s `second` data member</Parameter>
+  <Parameter name="pr">a pair whose `first` data member will be passed to the constructor of `T`'s `first` data member and `second` data member will be passed to the constructor of `T`'s `second` data member</Parameter>
+  <Parameter name="non_pair">single argument to convert to a [`std::pair`](/docs/cpp/library/utility/pair) for further construction</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-uses-allocator-construction-args:0010 */}
+[`std::tuple`](/docs/cpp/library/utility/tuple) of arguments suitable for passing to the constructor of `T`.
+
+### Notes
+
+{/* source:cpp-memory-uses-allocator-construction-args:0011 */}
+The overloads (2-9) provide allocator propagation into [`std::pair`](/docs/cpp/library/utility/pair), which supports neither leading-allocator nor trailing-allocator calling conventions (unlike, e.g. [`std::tuple`](/docs/cpp/library/utility/tuple), which uses leading-allocator convention).
+
+{/* source:cpp-memory-uses-allocator-construction-args:0012 */}
+When used in uses-allocator construction, the conversion function of *pair-constructor* converts the provided argument to [`std::pair`](/docs/cpp/library/utility/pair) at first, and then constructs the result from that [`std::pair`](/docs/cpp/library/utility/pair) by uses-allocator construction.
+
+### Example
+
+{/* source:cpp-memory-uses-allocator-construction-args:0013 */}
+This section is incomplete
+
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-memory-uses-allocator-construction-args:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-memory-uses-allocator-construction-args:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3525} standard="C++20">
+    <PublishedBehavior>no overload could handle non-`pair` types convertible to `pair`</PublishedBehavior>
+    <CorrectedBehavior>reconstructing overload added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-memory-uses-allocator-construction-args:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`uses_allocator`](/docs/cpp/library/memory/uses_allocator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the specified type supports uses-allocator construction (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_obj_using_allocator`](/docs/cpp/library/memory/make_obj_using_allocator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates an object of the given type by means of uses-allocator construction (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uninitialized_construct_using_allocator`](/docs/cpp/library/memory/uninitialized_construct_using_allocator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates an object of the given type at specified memory location by means of uses-allocator construction (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

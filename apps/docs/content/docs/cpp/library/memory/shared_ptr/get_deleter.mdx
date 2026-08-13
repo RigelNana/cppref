@@ -1,0 +1,96 @@
+---
+title: "std::get_deleter"
+description: "Access to the p's deleter."
+source_url: "https://en.cppreference.com/w/cpp/memory/shared_ptr/get_deleter"
+language: "C++"
+---
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0000 */}
+<DeclarationDoc>
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration language="cpp" since="C++11" code={`template< class Deleter, class T >
+Deleter* get_deleter( const std::shared_ptr<T>& p ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0001 */}
+Access to the `p`'s deleter. If the shared pointer `p` owns a deleter of type cv-unqualified `Deleter` (e.g. if it was created with one of the constructors that take a deleter as a parameter), then returns a pointer to the deleter. Otherwise, returns a null pointer.
+
+### Parameters
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0002 */}
+<ParameterList>
+  <Parameter name="p">a shared pointer whose deleter needs to be accessed</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0003 */}
+A pointer to the owned deleter or [`nullptr`](/docs/cpp/language/expressions/nullptr). The returned pointer is valid at least as long as there remains at least one [`shared_ptr`](/docs/cpp/library/memory/shared_ptr) instance that owns it.
+
+### Notes
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0004 */}
+The returned pointer may outlive the last [`shared_ptr`](/docs/cpp/library/memory/shared_ptr) if, for example, [`std::weak_ptrs`](/docs/cpp/library/memory/weak_ptr) remain and the implementation doesn't destroy the deleter until the entire control block is destroyed.
+
+### Example
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0005 */}
+Demonstrates that [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) deleter is independent of the [`shared_ptr`](/docs/cpp/library/memory/shared_ptr)'s type.
+
+```cpp
+#include <iostream>
+#include <memory>
+ 
+struct Foo { int i; };
+void foo_deleter(Foo* p)
+{
+    std::cout << "foo_deleter called!\n";
+    delete p;
+}
+ 
+int main()
+{
+    std::shared_ptr<int> aptr;
+ 
+    {
+        // create a shared_ptr that owns a Foo and a deleter
+        auto foo_p = new Foo;
+        std::shared_ptr<Foo> r(foo_p, foo_deleter);
+        aptr = std::shared_ptr<int>(r, &r->i); // aliasing ctor
+        // aptr is now pointing to an int, but managing the whole Foo
+    } // r gets destroyed (deleter not called)
+ 
+    // obtain pointer to the deleter:
+    if (auto del_p = std::get_deleter<void(*)(Foo*)>(aptr))
+    {
+        std::cout << "shared_ptr<int> owns a deleter\n";
+        if (*del_p == foo_deleter)
+            std::cout << "...and it equals &foo_deleter\n";
+    }
+    else
+        std::cout << "The deleter of shared_ptr<int> is null!\n";
+} // deleter called here
+```
+
+Output:
+
+```text
+shared_ptr<int> owns a deleter
+...and it equals &foo_deleter
+foo_deleter called!
+```
+
+### See also
+
+{/* source:cpp-memory-shared-ptr-get-deleter:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/memory/shared_ptr/shared_ptr)</DescriptionTerm>
+    <DescriptionBody>[`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) constructors (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_deleter`](/docs/cpp/library/memory/unique_ptr/get_deleter)</DescriptionTerm>
+    <DescriptionBody>returns the deleter that is used for destruction of the managed object (public member function of `std::unique_ptr<T,Deleter>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
