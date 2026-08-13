@@ -5,13 +5,13 @@ const destinations = [
   {
     title: "C++ reference",
     description: "Language rules and standard library documentation.",
-    href: "/docs/cpp/language/default-arguments",
+    href: "/docs/cpp/language",
     icon: FileCode2,
   },
   {
     title: "C reference",
     description: "Language and library facilities for C.",
-    href: "/docs/c/string/byte/memcpy",
+    href: "/docs/c",
     icon: Languages,
   },
 ] as const;
