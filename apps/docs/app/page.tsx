@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Braces, FileCode2, GitCompareArrows, Languages } from "lucide-react";
+import { ArrowRight, Braces, FileCode2, Languages } from "lucide-react";
 
 const destinations = [
   {
@@ -26,10 +26,6 @@ export default function HomePage() {
         </Link>
         <nav aria-label="Primary" className="flex items-center gap-5 text-sm">
           <Link className="text-fd-muted-foreground transition-colors hover:text-fd-foreground" href="/docs">Documentation</Link>
-          <Link className="inline-flex items-center gap-1.5 text-fd-muted-foreground transition-colors hover:text-fd-foreground" href="/review">
-            <GitCompareArrows aria-hidden="true" className="size-4" />
-            Review
-          </Link>
         </nav>
       </header>
 
