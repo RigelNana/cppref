@@ -1,75 +1,39 @@
 ---
 import { ClientRouter } from "astro:transitions";
 import { ArrowRight, Braces, Moon, Sun } from "lucide-astro";
+import referenceDirectory from "@/lib/reference-directory.json";
 import { withBase } from "@/lib/urls";
 import "@/styles/global.css";
 
-type LinkItem = readonly [label: string, href: string];
-type TableCell = { links: readonly LinkItem[]; title: string };
+interface DirectoryLink {
+  href?: string;
+  label: string;
+  revision?: string;
+}
 
-const cppLanguage: TableCell = {
-  title: "Language",
-  links: [
-    ["Preprocessor", "/docs/cpp/language/preprocessor"],
-    ["Keywords", "/docs/cpp/language/keywords"],
-    ["ASCII chart", "/docs/cpp/language/ascii"],
-    ["Basic concepts", "/docs/cpp/language/basic_concepts"],
-    ["Comments", "/docs/cpp/language/basic_concepts/comments"],
-    ["Names", "/docs/cpp/language/basic_concepts/name"],
-    ["Types", "/docs/cpp/language/basic_concepts/types"],
-    ["The main function", "/docs/cpp/language/basic_concepts/main_function"],
-    ["Expressions", "/docs/cpp/language/expressions"],
-    ["Statements", "/docs/cpp/language/statements"],
-    ["Declarations", "/docs/cpp/language/declarations"],
-    ["Classes", "/docs/cpp/language/classes"],
-    ["Templates", "/docs/cpp/language/templates"],
-    ["Exceptions", "/docs/cpp/language/exceptions"],
-    ["Initialization", "/docs/cpp/language/initialization"],
-    ["Functions", "/docs/cpp/language/functions"],
-    ["History", "/docs/cpp/language/history"],
-  ],
-};
+interface RequiredDirectoryLink extends DirectoryLink {
+  href: string;
+}
 
-const cppLibrary: TableCell = {
-  title: "Standard library",
-  links: [
-    ["Chrono library", "/docs/cpp/library/chrono"],
-    ["`duration`", "/docs/cpp/library/chrono/duration"],
-    ["`time_point`", "/docs/cpp/library/chrono/time_point"],
-    ["`year_month_day`", "/docs/cpp/library/chrono/year_month_day"],
-    ["`zoned_time`", "/docs/cpp/library/chrono/zoned_time"],
-    ["`<chrono>` header", "/docs/cpp/library/headers/chrono"],
-  ],
-};
+interface DirectoryGroup {
+  heading: DirectoryLink;
+  links?: RequiredDirectoryLink[];
+}
 
-const cppMore: TableCell = {
-  title: "Other",
-  links: [
-    ["Acronyms", "/docs/cpp/language/acronyms"],
-    ["Extending std", "/docs/cpp/language/extending_std"],
-    ["RAII", "/docs/cpp/language/raii"],
-    ["Pimpl", "/docs/cpp/language/pimpl"],
-    ["Rule of three", "/docs/cpp/language/rule_of_three"],
-    ["Zero-overhead principle", "/docs/cpp/language/Zero-overhead_principle"],
-    ["Template metaprogramming", "/docs/cpp/language/template_metaprogramming"],
-  ],
-};
+interface DirectorySection {
+  columns: DirectoryGroup[][];
+  compilerSupport: {
+    standards: RequiredDirectoryLink[];
+    title: RequiredDirectoryLink;
+  };
+  footer: RequiredDirectoryLink[];
+  standards: DirectoryLink[];
+  technical: DirectoryGroup[];
+  technicalTitle: RequiredDirectoryLink;
+  title: RequiredDirectoryLink;
+}
 
-const cLanguage: TableCell = { title: "Language", links: [["C reference", "/docs/c"]] };
-const cString: TableCell = { title: "String library", links: [["memcpy", "/docs/c/string/byte/memcpy"]] };
-const cppStandards = [
-  ["C++11", "/docs/cpp/language/11"],
-  ["C++14", "/docs/cpp/language/14"],
-  ["C++17", "/docs/cpp/language/17"],
-  ["C++20", "/docs/cpp/language/20"],
-  ["C++23", "/docs/cpp/language/23"],
-  ["C++26", "/docs/cpp/language/26"],
-] as const;
-
-const sections = [
-  { cells: [cppLanguage, cppLibrary, cppMore], standards: cppStandards, title: "C++ reference" },
-  { cells: [cLanguage, cString], standards: undefined, title: "C reference" },
-];
+const sections = referenceDirectory as DirectorySection[];
 ---
 
 <!doctype html>
@@ -112,30 +76,90 @@ const sections = [
       <section class="reference-sections" aria-label="Reference">
         {
           sections.map((section) => (
-            <section class="reference-table" aria-label={section.title}>
+            <section class="reference-table" aria-label={section.title.label}>
               <header>
-                <h2>{section.title}</h2>
-                {section.standards && (
+                <h2><a href={withBase(section.title.href)}>{section.title.label}</a></h2>
+                <div class="edition-links">
                   <p>
-                    {section.standards.map(([standard, href], index) => (
+                    {section.standards.map((standard, index) => (
                       <>
                         {index > 0 && <span aria-hidden="true">, </span>}
-                        <a href={withBase(href)}>{standard}</a>
+                        {standard.href
+                          ? <a href={withBase(standard.href)}>{standard.label}</a>
+                          : <span>{standard.label}</span>}
                       </>
                     ))}
                   </p>
-                )}
+                  <span class="edition-divider" aria-hidden="true">·</span>
+                  <p>
+                    <a href={withBase(section.compilerSupport.title.href)}>{section.compilerSupport.title.label}</a>
+                    {section.compilerSupport.standards.length > 0 && <span aria-hidden="true">: </span>}
+                    {section.compilerSupport.standards.map((standard, index) => (
+                      <>
+                        {index > 0 && <span aria-hidden="true">, </span>}
+                        <a href={withBase(standard.href)}>{standard.label}</a>
+                      </>
+                    ))}
+                  </p>
+                </div>
               </header>
+
               <div class="reference-grid">
-                {section.cells.map((cell) => (
-                  <div>
-                    <h3>{cell.title}</h3>
-                    <ul>
-                      {cell.links.map(([label, href]) => <li><a href={withBase(href)}>{label}</a></li>)}
-                    </ul>
+                {section.columns.map((column) => (
+                  <div class="reference-column">
+                    {column.map((group) => (
+                      <section class="reference-group">
+                        <h3>
+                          {group.heading.href
+                            ? <a href={withBase(group.heading.href)}>{group.heading.label}</a>
+                            : group.heading.label}
+                          {group.heading.revision && <span class="revision-label">{group.heading.revision}</span>}
+                        </h3>
+                        {group.links && group.links.length > 0 && (
+                          <ul>
+                            {group.links.map((item) => (
+                              <li>
+                                <a href={withBase(item.href)}>{item.label}</a>
+                                {item.revision && <span class="revision-label">{item.revision}</span>}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </section>
+                    ))}
                   </div>
                 ))}
               </div>
+
+              <section class="technical-directory">
+                <h3><a href={withBase(section.technicalTitle.href)}>{section.technicalTitle.label}</a></h3>
+                <div>
+                  {section.technical.map((group) => (
+                    <p>
+                      {group.heading.href
+                        ? <a href={withBase(group.heading.href)}>{group.heading.label}</a>
+                        : group.heading.label}
+                      {group.heading.revision && <span class="revision-label">{group.heading.revision}</span>}
+                      {group.links?.map((item) => (
+                        <>
+                          <span aria-hidden="true"> · </span>
+                          <a href={withBase(item.href)}>{item.label}</a>
+                          {item.revision && <span class="revision-label">{item.revision}</span>}
+                        </>
+                      ))}
+                    </p>
+                  ))}
+                </div>
+              </section>
+
+              <footer>
+                {section.footer.map((item, index) => (
+                  <>
+                    {index > 0 && <span aria-hidden="true"> · </span>}
+                    <a href={withBase(item.href)}>{item.label}</a>
+                  </>
+                ))}
+              </footer>
             </section>
           ))
         }
@@ -256,7 +280,8 @@ const sections = [
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.35rem 1rem;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
     padding: 1rem 1.3rem;
     border-bottom: 1px solid var(--line);
   }
@@ -266,10 +291,26 @@ const sections = [
     font-size: 0.95rem;
   }
 
+  .reference-table h2 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .edition-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.55rem;
+  }
+
   .reference-table header p {
     margin: 0;
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.76rem;
+  }
+
+  .edition-divider {
+    color: var(--line-strong);
   }
 
   .reference-table a {
@@ -285,39 +326,88 @@ const sections = [
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .reference-grid > div {
+  .reference-column {
+    display: grid;
+    align-content: start;
+    gap: 1.35rem;
     padding: 1.25rem 1.3rem;
   }
 
-  .reference-grid > div + div {
+  .reference-column + .reference-column {
     border-left: 1px solid var(--line);
   }
 
-  .reference-grid h3 {
+  .reference-group h3,
+  .technical-directory h3 {
     margin: 0;
     color: var(--muted);
     font-size: 0.68rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
-  .reference-grid ul {
+  .reference-group h3 a,
+  .technical-directory h3 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .reference-group ul {
     display: grid;
-    gap: 0.3rem;
-    margin: 0.8rem 0 0;
+    gap: 0.26rem;
+    margin: 0.6rem 0 0;
     padding: 0;
     list-style: none;
   }
 
-  .reference-grid li,
-  .reference-grid a {
-    font-size: 0.82rem;
+  .reference-group li,
+  .reference-group a,
+  .technical-directory p,
+  .reference-table footer {
+    font-size: 0.8rem;
     line-height: 1.45;
   }
 
-  .reference-grid a {
+  .reference-group li > a,
+  .technical-directory p > a {
     text-decoration: none;
+  }
+
+  .revision-label {
+    margin-left: 0.32rem;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .technical-directory {
+    padding: 1rem 1.3rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .technical-directory > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 1.5rem;
+    margin-top: 0.65rem;
+  }
+
+  .technical-directory p {
+    margin: 0;
+  }
+
+  .reference-table footer {
+    padding: 0.8rem 1.3rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+  }
+
+  .reference-table footer a {
+    color: inherit;
   }
 
   @media (max-width: 700px) {
@@ -325,11 +415,12 @@ const sections = [
       padding-block: 4rem;
     }
 
-    .reference-grid {
+    .reference-grid,
+    .technical-directory > div {
       grid-template-columns: 1fr;
     }
 
-    .reference-grid > div + div {
+    .reference-column + .reference-column {
       border-top: 1px solid var(--line);
       border-left: 0;
     }
