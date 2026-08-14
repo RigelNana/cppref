@@ -1,0 +1,108 @@
+---
+title: "std::ranges::iter_swap"
+description: "Swaps values denoted by two iterators."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ranges/iter_swap"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ranges-iter-swap:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" since="C++20" code={`namespace ranges {
+    inline namespace /* unspecified */ {
+        inline constexpr /* unspecified */
+            iter_swap = /* unspecified */;
+    }
+
+}`} />
+
+(customization point object)
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< class I1, class I2 >
+constexpr void iter_swap( I1&& i1, I2&& i2 ) noexcept(/* see below */);`} />
+
+Helper function
+
+  <Declaration language="cpp" code={`template< class X, class Y >
+constexpr std::iter_value_t<X>
+    iter-exchange-move( X&& x, Y&& y )
+    noexcept(noexcept(std::iter_value_t<X>(std::ranges::iter_move(x))) &&
+
+             noexcept(*x = std::ranges::iter_move(y)));`} />
+
+(exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ranges-iter-swap:0001 */}
+Swaps values denoted by two iterators.
+
+{/* source:cpp-iterator-ranges-iter-swap:0002 */}
+The effect of the exposition-only helper function `iter-exchange-move` is equivalent to
+
+{/* source:cpp-iterator-ranges-iter-swap:0003 */}
+```cpp
+std::iter_value_t<X> old(std::ranges::iter_move(x));
+*x = std::ranges::iter_move(y);
+return old;
+```
+
+{/* source:cpp-iterator-ranges-iter-swap:0004 */}
+`ranges::iter_swap(i1, i2)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to:
+
+{/* source:cpp-iterator-ranges-iter-swap:0005 */}
+1. `(void)iter_swap(i1, i2)`, if `i1` or `i2` has a class or enumeration type and the expression is well-formed, where the [overload resolution](/docs/cpp/language/functions/overload_resolution) of `iter_swap` is performed with the additional candidate `void iter_swap(auto, auto) = delete;`[^1], excluding `std::ranges::iter_swap` itself.
+   - If the selected overload does not exchange the value denoted by `i1` and `i2`, the program is ill-formed, no diagnostic required.
+2. Otherwise, `ranges::swap(*i1, *i2)` if both `I1` and `I2` model [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) and if `std::iter_reference_t<I1>` and `std::iter_reference_t<I2>` model [`swappable_with`](/docs/cpp/library/concepts/swappable).
+3. Otherwise, `(void)(*i1 = iter-exchange-move(i2, i1))`, if `std::indirectly_movable_storable<I1, I2>` and `std::indirectly_movable_storable<I2, I1>` are both modeled, except that `i1` is only evaluated once.
+4. Otherwise, `ranges::iter_swap(i1, i2)` is ill-formed, which can result in [substitution failure](/docs/cpp/language/templates/sfinae) when `ranges::iter_swap(i1, i2)` appears in the immediate context of a template instantiation.
+
+{/* source:cpp-iterator-ranges-iter-swap:0006 */}
+[^1]: ↑ This precludes calling unconstrained [`std::iter_swap`](/docs/cpp/library/algorithm/iter_swap).
+
+### Customization point objects
+
+{/* source:cpp-iterator-ranges-iter-swap:0007 */}
+The name `ranges::iter_swap` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__iter_swap_fn`.
+
+{/* source:cpp-iterator-ranges-iter-swap:0008 */}
+All instances of `__iter_swap_fn` are equal. The effects of invoking different instances of type `__iter_swap_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `ranges::iter_swap` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-iterator-ranges-iter-swap:0009 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `ranges::iter_swap` above, `__iter_swap_fn` models
+
+{/* source:cpp-iterator-ranges-iter-swap:0010 */}
+- `std::invocable<__iter_swap_fn, Args...>`,
+- `std::invocable<const __iter_swap_fn, Args...>`,
+- `std::invocable<__iter_swap_fn&, Args...>`, and
+- `std::invocable<const __iter_swap_fn&, Args...>`.
+
+{/* source:cpp-iterator-ranges-iter-swap:0011 */}
+Otherwise, no function call operator of `__iter_swap_fn` participates in overload resolution.
+
+### Example
+
+{/* source:cpp-iterator-ranges-iter-swap:0012 */}
+This section is incomplete
+
+Reason: no example
+
+### See also
+
+{/* source:cpp-iterator-ranges-iter-swap:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/iterator/reverse_iterator/iter_swap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>swaps the objects pointed to by two adjusted underlying iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/iterator/move_iterator/iter_swap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>swaps the objects pointed to by two underlying iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/algorithm/iter_swap)</DescriptionTerm>
+    <DescriptionBody>swaps the elements pointed to by two iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

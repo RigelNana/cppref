@@ -1,0 +1,121 @@
+---
+title: "std::inserter"
+description: "inserter is a convenience function template that constructs a std::insert_iterator for the container c and its iterator i with the type deduced from the type of the argument."
+source_url: "https://en.cppreference.com/w/cpp/iterator/inserter"
+language: "C++"
+---
+
+{/* source:cpp-iterator-inserter:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" until="C++20" code={`template< class Container >
+std::insert_iterator<Container>
+
+    inserter( Container& c, typename Container::iterator i );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class Container >
+constexpr std::insert_iterator<Container>
+
+    inserter( Container& c, ranges::iterator_t<Container> i );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-inserter:0001 */}
+    1. `inserter` is a convenience function template that constructs a [`std::insert_iterator`](/docs/cpp/library/iterator/insert_iterator) for the container `c` and its iterator `i` with the type deduced from the type of the argument.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-iterator-inserter:0002 */}
+<ParameterList>
+  <Parameter name="c">container that supports an `insert` operation</Parameter>
+  <Parameter name="i">iterator in `c` indicating the insertion position</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-inserter:0003 */}
+A [`std::insert_iterator`](/docs/cpp/library/iterator/insert_iterator) which can be used to insert elements into the container `c` at the position indicated by `i`.
+
+### Possible implementation
+
+{/* source:cpp-iterator-inserter:0004 */}
+```cpp
+template<class Container>
+std::insert_iterator<Container> inserter(Container& c, typename Container::iterator i)
+{
+    return std::insert_iterator<Container>(c, i);
+}
+```
+
+### Example
+
+{/* source:cpp-iterator-inserter:0005 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <set>
+#include <vector>
+ 
+int main()
+{
+    std::multiset<int> s{1, 2, 3};
+ 
+    // std::inserter is commonly used with multi-sets
+    std::fill_n(std::inserter(s, s.end()), 5, 2);
+ 
+    for (int n : s)
+        std::cout << n << ' ';
+    std::cout << '\n';
+ 
+    std::vector<int> d{100, 200, 300};
+    std::vector<int> v{1, 2, 3, 4, 5};
+ 
+    // when inserting in a sequence container, insertion point advances
+    // because each std::insert_iterator::operator= updates the target iterator
+    std::copy(d.begin(), d.end(), std::inserter(v, std::next(v.begin())));
+ 
+    for (int n : v)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1 2 2 2 2 2 2 3 
+1 100 200 300 2 3 4 5
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-inserter:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-inserter:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={561} standard="C++98">
+    <PublishedBehavior>the type of `i` was independent of `Container`</PublishedBehavior>
+    <CorrectedBehavior>it is the iterator type of `Container`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-inserter:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_iterator`](/docs/cpp/library/iterator/insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion into a container (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back_inserter`](/docs/cpp/library/iterator/back_inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front_inserter`](/docs/cpp/library/iterator/front_inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::front_insert_iterator`](/docs/cpp/library/iterator/front_insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

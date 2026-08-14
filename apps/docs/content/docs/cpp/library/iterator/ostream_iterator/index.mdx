@@ -1,0 +1,135 @@
+---
+title: "std::ostream_iterator"
+description: "std::ostream_iterator is a single-pass LegacyOutputIterator that writes successive objects of type T into the std::basic_ostream object for which it was constructed, using operator<<."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ostream_iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ostream-iterator:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+  <Declaration id="1" language="cpp" until="C++17" code={`template< class T,
+          class CharT = char,
+          class Traits = std::char_traits<CharT> >
+class ostream_iterator
+
+    : public std::iterator<std::output_iterator_tag, void, void, void, void>`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class T,
+          class CharT = char,
+          class Traits = std::char_traits<CharT> >
+
+class ostream_iterator;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ostream-iterator:0001 */}
+`std::ostream_iterator` is a single-pass [`LegacyOutputIterator`](/docs/cpp/library/named_req/OutputIterator) that writes successive objects of type `T` into the [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) object for which it was constructed, using `operator<<`. Optional delimiter string is written to the output stream after every write operation. The write operation is performed when the iterator (whether dereferenced or not) is assigned to. Incrementing the `std::ostream_iterator` is a no-op.
+
+{/* source:cpp-iterator-ostream-iterator:0002 */}
+In a typical implementation, the only data members of `std::ostream_iterator` are a pointer to the associated `std::basic_ostream` and a pointer to the first character in the delimiter string.
+
+{/* source:cpp-iterator-ostream-iterator:0003 */}
+When writing characters, [`std::ostreambuf_iterator`](/docs/cpp/library/iterator/ostreambuf_iterator) is more efficient, since it avoids the overhead of constructing and destructing the sentry object once per character.
+
+{/* source:cpp-iterator-ostream-iterator:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>[`std::output_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody><Revision until="C++20">`void`</Revision>
+<Revision since="C++20">[`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</Revision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`char_type`</DescriptionTerm>
+    <DescriptionBody>`CharT`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`traits_type`</DescriptionTerm>
+    <DescriptionBody>`Traits`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`ostream_type`</DescriptionTerm>
+    <DescriptionBody>`std::basic_ostream<CharT, Traits>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-iterator-ostream-iterator:0005 */}
+<Revision until="C++17">Member types `iterator_category`, `value_type`, `difference_type`, `pointer` and `reference` are required to be obtained by inheriting from `std::iterator<std::output_iterator_tag, void, void, void, void>`.</Revision>
+
+{/* source:cpp-iterator-ostream-iterator:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/iterator/ostream_iterator/ostream_iterator)</DescriptionTerm>
+    <DescriptionBody>constructs a new `ostream_iterator` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/iterator/ostream_iterator/~ostream_iterator)</DescriptionTerm>
+    <DescriptionBody>destructs an `ostream_iterator` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/iterator/ostream_iterator/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>writes an object to the associated output sequence (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/iterator/ostream_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`](/docs/cpp/library/iterator/ostream_iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>no-op (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-iterator-ostream-iterator:0007 */}
+```cpp
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <sstream>
+ 
+int main()
+{
+    std::istringstream str("0.11 0.22 0.33 0.44");
+ 
+    std::partial_sum(std::istream_iterator<double>(str),
+                     std::istream_iterator<double>(),
+                     std::ostream_iterator<double>(std::cout, ", "));
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+0.11, 0.33, 0.66, 1.1,
+```
+
+{/* source:cpp-iterator-ostream-iterator:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostreambuf_iterator`](/docs/cpp/library/iterator/ostreambuf_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`istream_iterator`](/docs/cpp/library/iterator/istream_iterator)</DescriptionTerm>
+    <DescriptionBody>input iterator that reads from [`std::basic_istream`](/docs/cpp/library/io/basic_istream) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::experimental::ostream_joiner`](/docs/cpp/library/experimental/lib_extensions_2/ostream_joiner) <InlineRevision since="Library Fundamentals TS v2" /></DescriptionTerm>
+    <DescriptionBody>an output iterator that writes successive elements into an output stream, separating adjacent elements with a delimiter (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

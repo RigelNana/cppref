@@ -1,0 +1,215 @@
+---
+title: "std::ranges::advance"
+description: "Increments given iterator i for n times, or until i == bound, whichever comes first."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ranges/advance"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ranges-advance:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I >
+constexpr void advance( I& i, std::iter_difference_t<I> n );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+constexpr void advance( I& i, S bound );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+constexpr std::iter_difference_t<I> advance( I& i, std::iter_difference_t<I> n, S bound );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ranges-advance:0001 */}
+1) Increments given iterator `i` for `n` times.
+
+{/* source:cpp-iterator-ranges-advance:0002 */}
+2) Increments given iterator `i` until `i == bound`.
+
+{/* source:cpp-iterator-ranges-advance:0003 */}
+3) Increments given iterator `i` for `n` times, or until `i == bound`, whichever comes first.
+
+{/* source:cpp-iterator-ranges-advance:0004 */}
+If `n` is negative, the iterator is decremented. In this case, `I` must model [`std::bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator), and `S` must be the same type as `I` if `bound` is provided, otherwise the behavior is undefined.
+
+{/* source:cpp-iterator-ranges-advance:0005 */}
+The function-like entities described on this page are [algorithm function objects](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-iterator-ranges-advance:0006 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-iterator-ranges-advance:0007 */}
+<ParameterList>
+  <Parameter name="i">iterator to be advanced</Parameter>
+  <Parameter name="bound">sentinel denoting the end of the range `i` is an iterator to</Parameter>
+  <Parameter name="n">number of maximal increments of `i`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-ranges-advance:0008 */}
+1. 3) The difference between `n` and the actual distance `i` traversed.
+
+### Complexity
+
+{/* source:cpp-iterator-ranges-advance:0009 */}
+Linear.
+
+{/* source:cpp-iterator-ranges-advance:0010 */}
+However, if `I` additionally models [`std::random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator), or `S` models `std::sized_sentinel_for<I>`, or `I` and `S` model `std::assignable_from<I&, S>`, complexity is constant.
+
+### Notes
+
+{/* source:cpp-iterator-ranges-advance:0011 */}
+The behavior is undefined if the specified sequence of increments or decrements would require that a non-incrementable iterator (such as the past-the-end iterator) is incremented, or that a non-decrementable iterator (such as the front iterator or the singular iterator) is decremented.
+
+### Possible implementation
+
+{/* source:cpp-iterator-ranges-advance:0012 */}
+```cpp
+struct advance_fn
+{
+    template<std::input_or_output_iterator I>
+    constexpr void operator()(I& i, std::iter_difference_t<I> n) const
+    {
+        if constexpr (std::random_access_iterator<I>)
+            i += n;
+        else
+        {
+            while (n > 0)
+            {
+                --n;
+                ++i;
+            }
+
+            if constexpr (std::bidirectional_iterator<I>)
+            {
+                while (n < 0)
+                {
+                    ++n;
+                    --i;
+                }
+            }
+        }
+    }
+
+    template<std::input_or_output_iterator I, std::sentinel_for<I> S>
+    constexpr void operator()(I& i, S bound) const
+    {
+        if constexpr (std::assignable_from<I&, S>)
+            i = std::move(bound);
+        else if constexpr (std::sized_sentinel_for<S, I>)
+            (*this)(i, bound - i);
+        else
+            while (i != bound)
+                ++i;
+    }
+
+    template<std::input_or_output_iterator I, std::sentinel_for<I> S>
+    constexpr std::iter_difference_t<I>
+    operator()(I& i, std::iter_difference_t<I> n, S bound) const
+    {
+        if constexpr (std::sized_sentinel_for<S, I>)
+        {
+            // std::abs is not constexpr until C++23
+            auto abs = [](const std::iter_difference_t<I> x) { return x < 0 ? -x : x; };
+
+            if (const auto dist = abs(n) - abs(bound - i); dist < 0)
+            {
+                (*this)(i, bound);
+                return -dist;
+            }
+
+            (*this)(i, n);
+            return 0;
+        }
+        else
+        {
+            while (n > 0 && i != bound)
+            {
+                --n;
+                ++i;
+            }
+
+            if constexpr (std::bidirectional_iterator<I>)
+            {
+                while (n < 0 && i != bound)
+                {
+                    ++n;
+                    --i;
+                }
+            }
+
+            return n;
+        }
+    }
+};
+
+inline constexpr auto advance = advance_fn();
+```
+
+### Example
+
+{/* source:cpp-iterator-ranges-advance:0013 */}
+```cpp
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+int main()
+{
+    std::vector<int> v {3, 1, 4};
+
+    auto vi = v.begin();
+
+    std::ranges::advance(vi, 2);
+    std::cout << "1) value: " << *vi << '\n' << std::boolalpha;
+
+    std::ranges::advance(vi, v.end());
+    std::cout << "2) vi == v.end(): " << (vi == v.end()) << '\n';
+
+    std::ranges::advance(vi, -3);
+    std::cout << "3) value: " << *vi << '\n';
+
+    std::cout << "4) diff: " << std::ranges::advance(vi, 2, v.end())
+              << ", value: " << *vi << '\n';
+
+    std::cout << "5) diff: " << std::ranges::advance(vi, 4, v.end())
+              << ", vi == v.end(): " << (vi == v.end()) << '\n';
+}
+```
+
+Output:
+
+```text
+1) value: 4
+2) vi == v.end(): true
+3) value: 3
+4) diff: 0, value: 4
+5) diff: 3, vi == v.end(): true
+```
+
+### See also
+
+{/* source:cpp-iterator-ranges-advance:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::next`](/docs/cpp/library/iterator/ranges/next) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>increment an iterator by a given distance or to a bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::prev`](/docs/cpp/library/iterator/ranges/prev) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>decrement an iterator by a given distance or to a bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::distance`](/docs/cpp/library/iterator/ranges/distance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the distance between an iterator and a sentinel, or between the beginning and end of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`advance`](/docs/cpp/library/iterator/advance)</DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

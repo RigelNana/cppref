@@ -1,0 +1,96 @@
+---
+title: "std::move_iterator<Iter>::operator*,->"
+description: "Returns an rvalue reference or pointer to the current element."
+source_url: "https://en.cppreference.com/w/cpp/iterator/move_iterator/operator_star_"
+language: "C++"
+---
+
+{/* source:cpp-iterator-move-iterator-operator-star:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`reference operator*() const;`} />
+  (constexpr since C++17)
+  <Declaration id="2" language="cpp" since="C++11" code={`pointer operator->() const;`} />
+  (constexpr since C++17)
+</DeclarationDoc>
+
+{/* source:cpp-iterator-move-iterator-operator-star:0001 */}
+Returns an rvalue reference or pointer to the current element.
+
+### Return value
+
+{/* source:cpp-iterator-move-iterator-operator-star:0002 */}
+1. 1) <InlineRevision until="C++20">`static_cast<reference>(*`[`current`](/docs/cpp/library/iterator/move_iterator#current)`)`</InlineRevision><InlineRevision since="C++20">`ranges::iter_move(`[`current`](/docs/cpp/library/iterator/move_iterator#current)`)`</InlineRevision>
+
+{/* source:cpp-iterator-move-iterator-operator-star:0003 */}
+2. 2) [`current`](/docs/cpp/library/iterator/move_iterator#current)
+
+### Notes
+
+{/* source:cpp-iterator-move-iterator-operator-star:0004 */}
+`operator->` is deprecated because deferencing its result may yield an lvalue. This may lead to unintended behavior.
+
+### Example
+
+{/* source:cpp-iterator-move-iterator-operator-star:0005 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
+
+void print(auto rem, const auto& v)
+{
+    for (std::cout << rem; const auto& e : v)
+        std::cout << std::quoted(e) << ' ';
+    std::cout << '\n';
+}
+
+int main()
+{
+    std::vector<std::string> p{"alpha", "beta", "gamma", "delta"}, q;
+    print("1) p: ", p);
+    for (std::move_iterator it{p.begin()}, end{p.end()}; it != end; ++it)
+    {
+        it->push_back('!'); // calls -> string::push_back(char)
+        q.emplace_back(*it); // *it <- overload (1)
+    }
+    print("2) p: ", p);
+    print("3) q: ", q);
+
+    std::vector v{1, 2, 3};
+    std::move_iterator it{v.begin()};
+    // *it = 13; // error: using rvalue as lvalue
+}
+```
+
+Possible output:
+
+```text
+1) p: "alpha" "beta" "gamma" "delta"
+2) p: "" "" "" ""
+3) q: "alpha!" "beta!" "gamma!" "delta!"
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-move-iterator-operator-star:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-move-iterator-operator-star:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2106} standard="C++11">
+    <PublishedBehavior>`operator*` would return a dangling reference if `*`[`current`](/docs/cpp/library/iterator/move_iterator#current) yields a prvalue</PublishedBehavior>
+    <CorrectedBehavior>returns the object in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-move-iterator-operator-star:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/iterator/move_iterator/operator_at) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element by index (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

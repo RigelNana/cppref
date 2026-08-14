@@ -1,0 +1,103 @@
+---
+title: "operator==,<=>(std::counted_iterator)"
+description: "Compares the underlying lengths (i.e. distances to the end)."
+source_url: "https://en.cppreference.com/w/cpp/iterator/counted_iterator/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::common_with<I> I2 >
+    friend constexpr bool operator==(
+
+        const counted_iterator& x, const counted_iterator<I2>& y );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< std::common_with<I> I2 >
+    friend constexpr strong_ordering operator<=>(
+
+        const counted_iterator& x, const counted_iterator<I2>& y );`} />
+
+  {/* source:cpp-iterator-counted-iterator-operator-cmp:0001 */}
+  Compares the underlying lengths (i.e. distances to the end).
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-counted-iterator-operator-cmp:0002 */}
+    1. 1) Checks if the underlying lengths are equal.
+
+    {/* source:cpp-iterator-counted-iterator-operator-cmp:0003 */}
+    2. 2) Compares the underlying lengths with `operator<=>`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0004 */}
+The behavior is undefined if `x` and `y` do not point to elements of the same sequence. That is, there must exist some `n` such that `std::next(x.base(), x.count() + n)` and `std::next(y.base(), y.count() + n)` refer to the same element.
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0005 */}
+The `\<`, `\<=`, `\>`, `\>=`, and `!=` operators are [`synthesized`](/docs/cpp/language/expressions/operators#Comparison_operators) from `operator<=>` and `operator==` respectively.
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0006 */}
+This function template is not visible to ordinary [`unqualified`](/docs/cpp/language/basic_concepts/unqualified_lookup) or [`qualified lookup`](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [`argument-dependent lookup`](/docs/cpp/language/functions/adl) when `std::counted_iterator<I>` is an associated class of the arguments.
+
+### Parameters
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0007 */}
+<ParameterList>
+  <Parameter name="x, y">iterator adaptors</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0008 */}
+1. 1) `x.count() == y.count()`
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0009 */}
+2. 2) `y.count() <=> x.count()`
+
+### Notes
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0010 */}
+Since the length counts down, not up, the order of the arguments of `operator<=>` in the underlying comparison expression is reversed, i.e. `y` is lhs, `x` is rhs.
+
+### Example
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0011 */}
+```cpp
+#include <initializer_list>
+#include <iterator>
+ 
+int main()
+{
+    static constexpr auto v = {1, 2, 3, 4, 5, 6};
+    constexpr std::counted_iterator<std::initializer_list<int>::iterator>
+        it1{v.begin(), 5},
+        it2{v.begin(), 5},
+        it3{v.begin() + 1, 4},
+        it4{v.begin(), 0};
+    static_assert(it1 == it2);
+    static_assert(it2 != it3);
+    static_assert(it2 <  it3);
+    static_assert(it1 <= it2);
+    static_assert(it3 != std::default_sentinel);
+    static_assert(it4 == std::default_sentinel);
+ 
+//  it2 == std::counted_iterator{v.begin(), 4}; // UB: operands do not refer to
+                                                // elements of the same sequence
+}
+```
+
+### See also
+
+{/* source:cpp-iterator-counted-iterator-operator-cmp:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==(std::default_sentinel)`](/docs/cpp/library/iterator/counted_iterator/operator_cmp2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if the distance to the end is equal to `0` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+`](/docs/cpp/library/iterator/counted_iterator/operator_plus) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances the iterator (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator-`](/docs/cpp/library/iterator/counted_iterator/operator-) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the distance between two iterator adaptors (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

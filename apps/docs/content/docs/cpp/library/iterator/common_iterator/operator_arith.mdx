@@ -1,0 +1,123 @@
+---
+title: "std::common_iterator<I,S>::operator++"
+description: "Increments the underlying iterator."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator/operator_arith"
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr common_iterator& operator++();`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr decltype(auto) operator++( int );`} />
+
+Helper types
+
+  <Declaration id="3" language="cpp" since="C++20" code={`class /*postfix_proxy*/ {
+    std::iter_value_t<I> keep_;
+    constexpr postfix_proxy(std::iter_reference_t<I>&& x)
+        : keep_(std::forward<std::iter_reference_t<I>>(x)) {}
+public:
+    constexpr const std::iter_value_t<I>& operator*() const noexcept {
+        return keep_;
+    }
+
+};`} />
+  (3) (exposition only*)
+
+  {/* source:cpp-iterator-common-iterator-operator-arith:0001 */}
+  Increments the underlying iterator.
+
+  {/* source:cpp-iterator-common-iterator-operator-arith:0002 */}
+  The behavior is undefined if the underlying [`std::variant`](/docs/cpp/library/utility/variant) member object `var` does not hold an object of type `I`, i.e. `std::holds_alternative<I>(var)` is equal to `false`.
+
+  {/* source:cpp-iterator-common-iterator-operator-arith:0003 */}
+  Let `it` denote the iterator of type `I` held by `var`, that is `std::get<I>(var)`.
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-common-iterator-operator-arith:0004 */}
+    1. 1) Pre-increments by one. Equivalent to `++it; return *this;`.
+
+    {/* source:cpp-iterator-common-iterator-operator-arith:0005 */}
+    2. 2) Post-increments by one: Equivalent to: `auto tmp = *this; ++*this; return tmp;`, if `I` models [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator). Equivalent to: `return it++;`, if the variable definition `auto&& ref = *it++;` is well-formed, or either `std::indirectly_readable<I>` or `std::constructible_from<std::iter_value_t<I>, std::iter_reference_t<I>>` or `std::move_constructible<std::iter_value_t<I>>` is `false`. Equivalent to: `postfix_proxy p(**this); ++*this; return p;` otherwise, where `postfix_proxy` is an exposition only helper type (3).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0006 */}
+(none)
+
+### Return value
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0007 */}
+1. 1) `*this`
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0008 */}
+2. 2) A copy of `*this` that was made before the change, or a result of post-increment of the underlying iterator, or a proxy keeping the value of the current element, as described above.
+
+### Example
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0009 */}
+```cpp
+#include <algorithm>
+#include <initializer_list>
+#include <iostream>
+#include <iterator>
+ 
+int main()
+{
+    const auto il = {1, 2, 3, 4, 5, 6};
+ 
+    using CI = std::common_iterator<
+                   std::counted_iterator<std::initializer_list<int>::iterator>,
+                   std::default_sentinel_t
+                   >;
+ 
+    CI first{std::counted_iterator{std::begin(il), std::ssize(il) - 2}};
+ 
+    for (; first != std::default_sentinel; ++first)
+        std::cout << *first << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1 2 3 4
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0011 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2259R1" standard="C++20">
+    <PublishedBehavior>post increment might discard its result in more situations</PublishedBehavior>
+    <CorrectedBehavior>a proxy class is used to keep the result</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3546} standard="C++20">
+    <PublishedBehavior>initialization of the proxy object was sometimes ill-formed</PublishedBehavior>
+    <CorrectedBehavior>situation and definition adjusted</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3574} standard="C++20">
+    <PublishedBehavior>`variant` was fully constexpr (P2231R1) but `common_iterator` was not</PublishedBehavior>
+    <CorrectedBehavior>also made constexpr</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3595} standard="C++20">
+    <PublishedBehavior>functions of the proxy type lacked constexpr and noexcept</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-common-iterator-operator-arith:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator-`](/docs/cpp/library/iterator/common_iterator/operator-)</DescriptionTerm>
+    <DescriptionBody>computes the distance between two iterator adaptors (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

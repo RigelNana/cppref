@@ -1,0 +1,132 @@
+---
+title: "std::counted_iterator<I>::operator++,+,+=,--,-,-="
+description: "Increments or decrements the underlying iterator current and the distance to the end length."
+source_url: "https://en.cppreference.com/w/cpp/iterator/counted_iterator/operator_arith"
+language: "C++"
+---
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr counted_iterator& operator++();`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr decltype(auto) operator++( int );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr counted_iterator operator++( int )
+    requires std::forward_iterator<I>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`constexpr counted_iterator& operator--()
+    requires std::bidirectional_iterator<I>;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`constexpr counted_iterator operator--( int )
+    requires std::bidirectional_iterator<I>;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`constexpr counted_iterator operator+( std::iter_difference_t<I> n ) const
+    requires std::random_access_iterator<I>;`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`constexpr counted_iterator& operator+=( std::iter_difference_t<I> n )
+    requires std::random_access_iterator<I>;`} />
+  <Declaration id="8" language="cpp" since="C++20" code={`constexpr counted_iterator operator-( std::iter_difference_t<I> n ) const
+    requires std::random_access_iterator<I>;`} />
+  <Declaration id="9" language="cpp" since="C++20" code={`constexpr counted_iterator& operator-=( std::iter_difference_t<I> n )
+    requires std::random_access_iterator<I>;`} />
+
+  {/* source:cpp-iterator-counted-iterator-operator-arith:0001 */}
+  Increments or decrements the underlying iterator `current` and the distance to the end `length`.
+
+  {/* source:cpp-iterator-counted-iterator-operator-arith:0002 */}
+  The behavior of these functions is undefined if the length would be set to a minus value.
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0003 */}
+    1. 1) Pre-increments by one. Equivalent to `++current; --length; return *this;`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0004 */}
+    2. 2) Post-increments by one. Equivalent to `--length; try { return current++; } catch(...) { ++length; throw; }`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0005 */}
+    3. 3) Post-increments by one. Equivalent to `counted_iterator temp{*this}; ++*this; return temp;`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0006 */}
+    4. 4) Pre-decrements by one. Equivalent to `--current; ++length; return *this;`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0007 */}
+    5. 5) Post-decrements by one. Equivalent to `counted_iterator temp{*this}; --*this; return temp;`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0008 */}
+    6. 6) Returns an iterator adaptor which is advanced by `n`. Equivalent to `return counted_iterator(current + n, length - n);`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0009 */}
+    7. 7) Advances the iterator adaptor by `n`. Equivalent to `current += n; length -= n; return *this;`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0010 */}
+    8. 8) Returns an iterator adaptor which is advanced by `-n`. Equivalent to `return counted_iterator(current - n, length + n);`.
+
+    {/* source:cpp-iterator-counted-iterator-operator-arith:0011 */}
+    9. 9) Advances the iterator adaptor by `-n`. Equivalent to `current -= n; length += n; return *this;`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0012 */}
+<ParameterList>
+  <Parameter name="n">the number of positions to increment or decrement the iterator adaptor</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0013 */}
+1) `*this`
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0014 */}
+2. 2,3) A copy of `*this` that was made before the change.
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0015 */}
+3. 4) `*this`
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0016 */}
+4. 5) A copy of `*this` that was made before the change.
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0017 */}
+5. 6) An iterator adaptor which is advanced by `n`.
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0018 */}
+6. 7) `*this`
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0019 */}
+7. 8) An iterator adaptor which is advanced by `-n`.
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0020 */}
+8. 9) `*this`
+
+### Example
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0021 */}
+```cpp
+#include <cassert>
+#include <initializer_list>
+#include <iterator>
+ 
+int main()
+{
+    const auto v = {1, 2, 3, 4, 5, 6};
+    std::counted_iterator<std::initializer_list<int>::iterator> it1{v.begin(), 5};
+ 
+    ++it1;              assert(*it1 == 2 && it1.count() == 4); // (1)
+    auto it2 = it1++;   assert(*it2 == 2 && *it1 == 3);        // (3)
+    --it1;              assert(*it1 == 2 && it1.count() == 4); // (4)
+    auto it3 = it1--;   assert(*it3 == 2 && *it1 == 1);        // (5)
+    auto it4 = it1 + 3; assert(*it4 == 4 && it4.count() == 2); // (6)
+    auto it5 = it4 - 3; assert(*it5 == 1 && it5.count() == 5); // (8)
+    it1 += 3;           assert(*it1 == 4 && it1.count() == 2); // (7)
+    it1 -= 3;           assert(*it1 == 1 && it1.count() == 5); // (9)
+}
+```
+
+### See also
+
+{/* source:cpp-iterator-counted-iterator-operator-arith:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+`](/docs/cpp/library/iterator/counted_iterator/operator_plus) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances the iterator (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator-`](/docs/cpp/library/iterator/counted_iterator/operator-) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the distance between two iterator adaptors (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

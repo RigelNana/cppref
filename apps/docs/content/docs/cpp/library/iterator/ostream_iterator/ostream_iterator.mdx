@@ -1,0 +1,78 @@
+---
+title: "std::ostream_iterator<T,CharT,Traits>::ostream_iterator"
+description: "Constructs the iterator with stream as the associated stream, by storing the address of stream."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ostream_iterator/ostream_iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`ostream_iterator( ostream_type& stream, const CharT* delim );`} />
+  <Declaration id="2" language="cpp" code={`ostream_iterator( ostream_type& stream );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0001 */}
+Constructs the iterator with `stream` as the associated stream, by storing the address of `stream`.
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0002 */}
+1. 1) Uses `delim` as the delimiter.
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0003 */}
+2. 2) Uses a null pointer as the delimiter.
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0004 */}
+<ParameterList>
+  <Parameter name="stream">the output stream to be accessed by this iterator</Parameter>
+  <Parameter name="delim">the null-terminated character string to be inserted into the stream after each output</Parameter>
+</ParameterList>
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0005 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+ 
+int main()
+{
+    std::ostream_iterator<char> oo{std::cout};
+    std::ostream_iterator<int> i1{std::cout, ", "};
+    std::fill_n(i1, 5, -1);
+    *oo++ = '\n';
+ 
+    std::ostream_iterator<double> i2{std::cout, "; "};
+    *i2++ = 3.14;
+    *i2++ = 2.71;
+    *oo++ = '\n';
+ 
+    std::common_iterator<std::counted_iterator<std::ostream_iterator<float>>,
+                         std::default_sentinel_t>
+        first{std::counted_iterator{std::ostream_iterator<float>{std::cout," ~ "}, 5}},
+        last{std::default_sentinel};
+    std::iota(first, last, 2.2);
+    *oo++ = '\n';
+}
+```
+
+Output:
+
+```text
+-1, -1, -1, -1, -1,
+3.14; 2.71;
+2.2 ~ 3.2 ~ 4.2 ~ 5.2 ~ 6.2 ~
+```
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-ostream-iterator-ostream-iterator:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={1280} standard="C++98">
+    <PublishedBehavior>`stream` was stored directly</PublishedBehavior>
+    <CorrectedBehavior>stores its address instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2325R3" standard="C++20">
+    <PublishedBehavior>default constructor was provided as C++20 iterators must be [`default_initializable`](/docs/cpp/library/concepts/default_initializable)</PublishedBehavior>
+    <CorrectedBehavior>removed along with the requirement</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

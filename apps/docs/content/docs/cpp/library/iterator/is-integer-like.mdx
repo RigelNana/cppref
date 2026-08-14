@@ -1,0 +1,169 @@
+---
+title: "is-integer-like, is-signed-integer-like"
+description: "The exposition-only variable templates is-integer-like and is-signed-integer-like determine whether a type is an integer-like type or a signed-integer-like type, respectively."
+source_url: "https://en.cppreference.com/w/cpp/iterator/is-integer-like"
+language: "C++"
+---
+
+{/* source:cpp-iterator-is-integer-like:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T >
+constexpr bool /*is-integer-like*/ = /* see description */;`} />
+  (1) (exposition only*)
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T >
+constexpr bool /*is-signed-integer-like*/ = /* see description */;`} />
+  (2) (exposition only*)
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-is-integer-like:0001 */}
+    1. 1) `/*is-integer-like*/<T>` is `true` if and only if `T` is an integer-like type.
+
+    {/* source:cpp-iterator-is-integer-like:0002 */}
+    2. 2) `/*is-signed-integer-like*/<T>` is `true` if and only if `T` is a signed-integer-like type.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Integer-class type
+
+{/* source:cpp-iterator-is-integer-like:0003 */}
+A type `T` is an *integer-class type* if it is in a set of implementation-defined types that behave as [integer types](/docs/cpp/language/basic_concepts/types#Integral_types) do, as defined [below](/docs/cpp/library/iterator/is-integer-like#Required_behaviors). An integer-class type is not necessarily a [class type](/docs/cpp/language/classes).
+
+{/* source:cpp-iterator-is-integer-like:0004 */}
+An integer-class type can represent 2N consecutive integers, where `N`, a positive integer, is called the *width* of the integer-class type.
+
+{/* source:cpp-iterator-is-integer-like:0005 */}
+An integer-class type is either signed or unsigned:
+
+{/* source:cpp-iterator-is-integer-like:0006 */}
+- A *signed integer class type* can represent all integers in [-2N-1, 2N-1-1], where `N` is greater than the width of every signed integral type.
+- An *unsigned integer class type* can represent all integers in [0, 2N-1], where `N` is greater than the width of every unsigned integral type.
+
+{/* source:cpp-iterator-is-integer-like:0007 */}
+All integer-class types model [`regular`](/docs/cpp/library/concepts/regular) and [`three_way_comparable`](/docs/cpp/library/utility/compare/three_way_comparable)`<std::strong_ordering>`.
+
+{/* source:cpp-iterator-is-integer-like:0008 */}
+A [value-initialized](/docs/cpp/language/initialization/value_initialization) object of integer-class type has value `â0â`.
+
+{/* source:cpp-iterator-is-integer-like:0009 */}
+An expression `E` of integer-class type `T` is [contextually convertible](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions) to `bool` as if by `bool(E != T(0))`.
+
+### Integer-like type
+
+{/* source:cpp-iterator-is-integer-like:0010 */}
+A type other than (possibly cv-qualified) `bool` is integer-like if it models [`integral`](/docs/cpp/library/concepts/integral) or if it is an integer-class type.
+
+{/* source:cpp-iterator-is-integer-like:0011 */}
+- An integer-like type is signed-integer-like if it models [`signed_integral`](/docs/cpp/library/concepts/signed_integral) or if it is a signed-integer-class type.
+- An integer-like type is unsigned-integer-like if it models [`unsigned_integral`](/docs/cpp/library/concepts/unsigned_integral) or if it is an unsigned-integer-class type.
+
+### Required behaviors
+
+{/* source:cpp-iterator-is-integer-like:0012 */}
+Expressions of integer-class type are explicitly convertible to any integer-like type, and implicitly convertible to any integer-class type of equal or greater width and the same signedness. Expressions of integral type are both implicitly and explicitly convertible to any integer-class type. Conversions between integral and integer-class types and between two integer-class types do not exit via an exception. The result of such a conversion is the unique value of the destination type that is congruent to the source modulo 2N, where `N` is the width of the destination type.
+
+{/* source:cpp-iterator-is-integer-like:0013 */}
+Let `Int<T>` denote the following type:
+
+{/* source:cpp-iterator-is-integer-like:0014 */}
+- If `T` is an integer-class type, `Int<T>` is a unique hypothetical [extended integer type](/docs/cpp/language/basic_concepts/types#Extended_integer_types) of the same signedness with the same width as `T`.
+- If `T` is an integral type, let `Int<T>` is the same type as `T`.
+
+{/* source:cpp-iterator-is-integer-like:0015 */}
+Given the following types, values and operators:
+
+{/* source:cpp-iterator-is-integer-like:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`IC`</DescriptionTerm>
+    <DescriptionBody>an integer-class type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`IL`</DescriptionTerm>
+    <DescriptionBody>an integer-like type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`a`</DescriptionTerm>
+    <DescriptionBody>an object of type `IC`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`b`</DescriptionTerm>
+    <DescriptionBody>an object of type `IL`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`c`</DescriptionTerm>
+    <DescriptionBody>an lvalue of an integeral type</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`x`</DescriptionTerm>
+    <DescriptionBody>an object of type `Int<IC>` that represent the same value as `a`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`y`</DescriptionTerm>
+    <DescriptionBody>an object of type `Int<IL>` that represent the same value as `b`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`@=`</DescriptionTerm>
+    <DescriptionBody>one of `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=` and `>>=`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`@`</DescriptionTerm>
+    <DescriptionBody>one of `+`, `-`, `*`, `/`, `%`, `&`, `|`, `^`, `<<`, `>>`, `&&`, `||`, `==`, `!=`, `<`, `>`, `<=`, `>=`, `<=>` and `,`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-iterator-is-integer-like:0017 */}
+The following expressions must be well-formed and have their specified result and effects if the specified conditions are satisfied:
+
+{/* source:cpp-iterator-is-integer-like:0018 */}
+| Expression | Condition | Result | Effects |
+| --- | --- | --- | --- |
+| `a++` | No condition | a prvalue of type `IC` whose value is equal to that of `a` prior to the evaluation | modifies the value of `a` by adding `1` to it |
+| `a--` | No condition | a prvalue of type `IC` whose value is equal to that of `a` prior to the evaluation | modifies the value of `a` by subtracting `1` to it |
+| `++a` | | | [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `a += 1` |
+| `--a` | | | expression-equivalent to `a -= 1` |
+| `&a` | | | expression-equivalent to `std::addressof(a)` |
+| `!a` | `!x` is well-formed | same as `!x` | |
+| `+a` | `+x` is well-formed | same as `+x`, but has type `IC` | same as `+x` |
+| `-a` | `-x` is well-formed | same as `-x`, but has type `IC` | same as `-x` |
+| `~a` | `~x` is well-formed | same as `~x`, but has type `IC` | same as `~x` |
+| `c @= a` | `c @= x` is well-formed | an lvalue referring to `c` | same as `c @= x` |
+| `a @= b` | `x @= y` is well-formed | an lvalue referring to `a` | same as `x @= y`, except that the value that would be stored into `x` is stored into `a` |
+| `a @ b` | `x @ y` is well-formed | same as `x @ y`, but the result type is different:<br />- If `x @ y` is of type `Int<IC>`, the result has type `IC`.<br />- If `x @ y` is of type `Int<IL>`, the result has type `IL`.<br />- If `x @ y` is of any other type `T`, the result has type `T`. | same as `x @ y` |
+| `b @ a` | `y @ x` is well-formed | same as `y @ x`, but the result type is different:<br />- If `y @ x` is of type `Int<IC>`, the result has type `IC`.<br />- If `y @ x` is of type `Int<IL>`, the result has type `IL`.<br />- If `y @ x` is of any other type `T`, the result has type `T`. | same as `y @ x` |
+
+### Defect reports
+
+{/* source:cpp-iterator-is-integer-like:0019 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-is-integer-like:0020 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3366} standard="C++20">
+    <PublishedBehavior>the conversion between an integer-class type and its corresponding integer type was not guaranteed to produce a representable value</PublishedBehavior>
+    <CorrectedBehavior>guaranteed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3376} standard="C++20">
+    <PublishedBehavior>integer-class types could only be class types</PublishedBehavior>
+    <CorrectedBehavior>also allowed non-class types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3467} standard="C++20">
+    <PublishedBehavior>`bool` was considered as an integer-like type</PublishedBehavior>
+    <CorrectedBehavior>excluded</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3575} standard="C++20">
+    <PublishedBehavior>integer-class types were not guaranteed to be three-way-comparable</PublishedBehavior>
+    <CorrectedBehavior>guaranteed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-is-integer-like:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`semiregular`](/docs/cpp/library/concepts/semiregular) type can be incremented with pre- and post-increment operators (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

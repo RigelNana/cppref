@@ -1,0 +1,73 @@
+---
+title: "std::ostreambuf_iterator<CharT,Traits>::ostreambuf_iterator"
+description: "Constructs the iterator with the private streambuf_type* member set to buffer and the failed() flag set to false."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ostreambuf_iterator/ostreambuf_iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" until="C++11" code={`ostreambuf_iterator( streambuf_type* buffer ) throw();`} />
+  <Declaration id="1" language="cpp" since="C++11" code={`ostreambuf_iterator( streambuf_type* buffer ) noexcept;`} />
+  <Declaration id="2" language="cpp" until="C++11" code={`ostreambuf_iterator( ostream_type& stream ) throw();`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`ostreambuf_iterator( ostream_type& stream ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0001 */}
+1. 1) Constructs the iterator with the private `streambuf_type*` member set to `buffer` and the [`failed()`](/docs/cpp/library/iterator/ostreambuf_iterator/failed) flag set to `false`. The behavior is undefined if `buffer` is a null pointer.
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0002 */}
+2. 2) Same as `ostreambuf_iterator(stream.rdbuf())`.
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0003 */}
+<ParameterList>
+  <Parameter name="stream">the output stream whose `rdbuf()` will be accessed by this iterator</Parameter>
+  <Parameter name="buffer">the output stream buffer to be accessed by this iterator</Parameter>
+</ParameterList>
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0004 */}
+```cpp
+#include <fstream>
+#include <iostream>
+#include <iterator>
+ 
+int main()
+{
+    const char* file = "test.txt";
+    {
+        std::basic_filebuf<char> f;
+        f.open(file, std::ios::out);
+        std::ostreambuf_iterator<char> out1(&f);
+        *out1 = 'a'; // writes to file via iterator
+    }
+ 
+    // read back from the file
+    char a;
+    std::cout << ((std::ifstream{file} >> a), a) << std::endl;
+ 
+    std::ostreambuf_iterator<wchar_t> out2{std::wcout};
+    *out2 = L'b';
+}
+```
+
+Output:
+
+```text
+a
+b
+```
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-ostreambuf-iterator-ostreambuf-iterator:0006 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={112} standard="C++98">
+    <PublishedBehavior>the requirement "the argument cannot be null" was applied to overload (2)</PublishedBehavior>
+    <CorrectedBehavior>applies to overload (1) instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2325R3" standard="C++20">
+    <PublishedBehavior>default constructor was provided as C++20 iterators must be [`default_initializable`](/docs/cpp/library/concepts/default_initializable)</PublishedBehavior>
+    <CorrectedBehavior>removed along with the requirement</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

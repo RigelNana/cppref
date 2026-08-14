@@ -1,0 +1,68 @@
+---
+title: "std::sized_sentinel_for, std::disable_sized_sentinel_for"
+description: "The sized_sentinel_for concept specifies that an object of the iterator type I and an object of the sentinel type S can be subtracted to compute the distance between them in constant time."
+source_url: "https://en.cppreference.com/w/cpp/iterator/sized_sentinel_for"
+language: "C++"
+---
+
+{/* source:cpp-iterator-sized-sentinel-for:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class S, class I >
+    concept sized_sentinel_for =
+        std::sentinel_for<S, I> &&
+        !std::disable_sized_sentinel_for<std::remove_cv_t<S>,
+                                         std::remove_cv_t<I>> &&
+        requires(const I& i, const S& s) {
+            { s - i } -> std::same_as<std::iter_difference_t<I>>;
+            { i - s } -> std::same_as<std::iter_difference_t<I>>;
+
+        };`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class S, class I >
+    inline constexpr bool disable_sized_sentinel_for = false;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-sized-sentinel-for:0001 */}
+    1. 1) The `sized_sentinel_for` concept specifies that an object of the iterator type `I` and an object of the sentinel type `S` can be subtracted to compute the distance between them in constant time.
+
+    {/* source:cpp-iterator-sized-sentinel-for:0002 */}
+    2. 2) The `disable_sized_sentinel_for` variable template can be used to prevent iterators and sentinels that can be subtracted but do not actually model `sized_sentinel_for` from satisfying the concept.
+
+    {/* source:cpp-iterator-sized-sentinel-for:0003 */}
+    3. A program may specialize `disable_sized_sentinel_for` for cv-unqualified non-array object type `S` and `I`, as long as at least one of which is a [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type). Such specializations are usable in [constant expressions](/docs/cpp/language/expressions/constant_expression) and have type `const bool`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Semantic requirements
+
+{/* source:cpp-iterator-sized-sentinel-for:0004 */}
+Let `i` be an iterator of type `I`, and `s` a sentinel of type `S` such that `[i, s)` denotes a range. Let `n` be the smallest number of applications of `++i` necessary to make `bool(i == s)` be `true`. `I` and `S` model `sized_sentinel_for<S, I>` only if all following conditions are satisfied:
+
+{/* source:cpp-iterator-sized-sentinel-for:0005 */}
+- If `n` is representable by `std::iter_difference_t<I>`, then `s - i` is well-defined and equals `n`.
+- If `-n` is representable by `std::iter_difference_t<I>`, then `i - s` is well-defined and equals `-n`.
+
+### Equality preservation
+
+{/* source:cpp-iterator-sized-sentinel-for:0006 */}
+Expressions declared in [requires expressions](/docs/cpp/language/templates/requires) of the standard library concepts are required to be [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) (except where stated otherwise).
+
+### Implicit expression variations
+
+{/* source:cpp-iterator-sized-sentinel-for:0007 */}
+A [requires expression](/docs/cpp/language/templates/requires) that uses an expression that is non-modifying for some constant lvalue operand also requires [implicit expression variations](/docs/cpp/library/concepts#Implicit_expression_variations).
+
+### See also
+
+{/* source:cpp-iterator-sized-sentinel-for:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sized_range`](/docs/cpp/library/ranges/sized_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a range knows its size in constant time (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::size`](/docs/cpp/library/ranges/size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

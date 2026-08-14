@@ -1,0 +1,94 @@
+---
+title: "operator-(std::common_iterator)"
+description: "Computes the distance between two iterator adaptors."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator/operator-"
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator-operator:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< std::sized_sentinel_for<I> I2, std::sized_sentinel_for<I> S2 >
+    requires std::sized_sentinel_for<S, I2>
+friend constexpr std::iter_difference_t<I2>
+
+    operator-( const common_iterator& x, const std::common_iterator<I2, S2>& y );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-common-iterator-operator:0001 */}
+Computes the distance between two iterator adaptors. Two sentinels are considered equal.
+
+{/* source:cpp-iterator-common-iterator-operator:0002 */}
+Let `var` denote the underlying [`std::variant`](/docs/cpp/library/utility/variant) member object in [`std::common_iterator`](/docs/cpp/library/iterator/common_iterator), the behavior is undefined if either `x` or `y` is invalid, i.e. `x.var.valueless_by_exception() || y.var.valueless_by_exception()` is `true`.
+
+{/* source:cpp-iterator-common-iterator-operator:0003 */}
+This function template is not visible to ordinary [`unqualified`](/docs/cpp/language/basic_concepts/unqualified_lookup) or [`qualified lookup`](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [`argument-dependent lookup`](/docs/cpp/language/functions/adl) when `std::common_iterator<I>` is an associated class of the arguments.
+
+### Parameters
+
+{/* source:cpp-iterator-common-iterator-operator:0004 */}
+<ParameterList>
+  <Parameter name="x, y">iterator adaptors to compute the difference of</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-common-iterator-operator:0005 */}
+- `0` if `x.var` holds an `S` object and `y.var` holds an `S2` object, i.e. both of them hold a sentinel.
+- Otherwise, `alt_x - alt_y`, where `alt_x` and `alt_y` are the alternatives held by `x.var` and `y.var`, respectively (either two iterators or one iterator and one sentinel).
+
+### Example
+
+{/* source:cpp-iterator-common-iterator-operator:0006 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+ 
+int main()
+{
+    int a[]{0, 1, 2, 3, 4, 5};
+ 
+    using CI = std::common_iterator<
+                   std::counted_iterator<int*>,
+                   std::default_sentinel_t
+                   >;
+ 
+    CI i1{std::counted_iterator{a + 1, 2}};
+    CI i2{std::counted_iterator{a, 3}};
+    CI s1{std::default_sentinel};
+    CI s2{std::default_sentinel};
+ 
+    std::cout << (s2 - s1) << ' '
+              << (i2 - i1) << ' '
+              << (i1 - s1) << '\n';
+}
+```
+
+Output:
+
+```text
+0 -1 -2
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-common-iterator-operator:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-common-iterator-operator:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3574} standard="C++20">
+    <PublishedBehavior>`variant` was fully constexpr (P2231R1) but `common_iterator` was not</PublishedBehavior>
+    <CorrectedBehavior>also made constexpr</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-common-iterator-operator:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++ operator++(int)`](/docs/cpp/library/iterator/common_iterator/operator_arith) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances the iterator adaptor (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

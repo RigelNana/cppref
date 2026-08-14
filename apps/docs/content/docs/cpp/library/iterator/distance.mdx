@@ -1,0 +1,189 @@
+---
+title: "std::distance"
+description: "Returns the number of hops from first to last."
+source_url: "https://en.cppreference.com/w/cpp/iterator/distance"
+language: "C++"
+---
+
+{/* source:cpp-iterator-distance:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" code={`template< class InputIt >
+typename std::iterator_traits<InputIt>::difference_type 
+
+    distance( InputIt first, InputIt last );`} />
+  (constexpr since C++17)
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-distance:0001 */}
+    1. Returns the number of hops from `first` to `last`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-iterator-distance:0002 */}
+If `InputIt` is not [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), the behavior is undefined if `last` is not [reachable](/docs/cpp/library/iterator#Ranges) from `first`.
+
+{/* source:cpp-iterator-distance:0003 */}
+If `InputIt` is [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), the behavior is undefined if `first` and `last` are neither reachable from each other.
+
+### Parameters
+
+{/* source:cpp-iterator-distance:0004 */}
+<ParameterList>
+  <Parameter name="first">iterator pointing to the first element</Parameter>
+  <Parameter name="last">iterator pointing to the end of the range</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator). The operation is more efficient if `InputIt` additionally meets the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator).
+
+### Return value
+
+{/* source:cpp-iterator-distance:0005 */}
+The number of increments needed to go from `first` to `last`.
+
+{/* source:cpp-iterator-distance:0006 */}
+<Revision since="C++11">
+The value may be negative if random-access iterators are used and `first` is reachable from `last`.
+</Revision>
+
+### Complexity
+
+{/* source:cpp-iterator-distance:0007 */}
+Linear.
+
+{/* source:cpp-iterator-distance:0008 */}
+However, if `InputIt` additionally meets the requirements of [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), complexity is constant.
+
+### Possible implementation
+
+{/* source:cpp-iterator-distance:0009 */}
+See also the implementations in [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_iterator_base_funcs.h#L135) and [libc++](https://github.com/llvm-mirror/libcxx/blob/a12cb9d211019d99b5875b6d8034617cbc24c2cc/include/iterator#L611).
+
+{/* source:cpp-iterator-distance:0010 */}
+C++98 implementation via tag dispatch, with constexpr removed
+
+```cpp
+namespace detail
+{
+    template<class It>
+    constexpr // required since C++17
+    typename std::iterator_traits<It>::difference_type 
+        do_distance(It first, It last, std::input_iterator_tag)
+    {
+        typename std::iterator_traits<It>::difference_type result = 0;
+        while (first != last)
+        {
+            ++first;
+            ++result;
+        }
+        return result;
+    }
+ 
+    template<class It>
+    constexpr // required since C++17
+    typename std::iterator_traits<It>::difference_type 
+        do_distance(It first, It last, std::random_access_iterator_tag)
+    {
+        return last - first;
+    }
+} // namespace detail
+ 
+template<class It>
+constexpr // since C++17
+typename std::iterator_traits<It>::difference_type 
+    distance(It first, It last)
+{
+    return detail::do_distance(first, last,
+                               typename std::iterator_traits<It>::iterator_category());
+}
+```
+
+C++17 implementation via if constexpr
+
+```cpp
+template<class It>
+constexpr typename std::iterator_traits<It>::difference_type
+    distance(It first, It last)
+{
+    using category = typename std::iterator_traits<It>::iterator_category;
+    static_assert(std::is_base_of_v<std::input_iterator_tag, category>);
+ 
+    if constexpr (std::is_base_of_v<std::random_access_iterator_tag, category>)
+        return last - first;
+    else
+    {
+        typename std::iterator_traits<It>::difference_type result = 0;
+        while (first != last)
+        {
+            ++first;
+            ++result;
+        }
+        return result;
+    }
+}
+```
+
+### Example
+
+{/* source:cpp-iterator-distance:0011 */}
+```cpp
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+int main() 
+{
+    std::vector<int> v{3, 1, 4};
+    std::cout << "distance(first, last) = "
+              << std::distance(v.begin(), v.end()) << '\n'
+              << "distance(last, first) = "
+              << std::distance(v.end(), v.begin()) << '\n';
+              // the behavior is undefined (until LWG940)
+ 
+    static constexpr auto il = {3, 1, 4};
+    // Since C++17 `distance` can be used in constexpr context.
+    static_assert(std::distance(il.begin(), il.end()) == 3);
+    static_assert(std::distance(il.end(), il.begin()) == -3);
+}
+```
+
+Output:
+
+```text
+distance(first, last) = 3
+distance(last, first) = -3
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-distance:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-distance:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={940} standard="C++98">
+    <PublishedBehavior>the wording was unclear for the case where `first` is reachable from `last`</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-distance:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`advance`](/docs/cpp/library/iterator/advance)</DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count`, `count_if`](/docs/cpp/library/algorithm/count)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements satisfying specific criteria (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::distance`](/docs/cpp/library/iterator/ranges/distance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the distance between an iterator and a sentinel, or between the beginning and end of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

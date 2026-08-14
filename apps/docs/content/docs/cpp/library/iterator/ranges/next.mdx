@@ -1,0 +1,160 @@
+---
+title: "std::ranges::next"
+description: "Return the nth successor of iterator i."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ranges/next"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ranges-next:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I >
+constexpr I next( I i );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I >
+constexpr I next( I i, std::iter_difference_t<I> n );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+constexpr I next( I i, S bound );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+constexpr I next( I i, std::iter_difference_t<I> n, S bound );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ranges-next:0001 */}
+Return the `n`th successor of iterator `i`.
+
+{/* source:cpp-iterator-ranges-next:0002 */}
+The function-like entities described on this page are [algorithm function objects](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-iterator-ranges-next:0003 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-iterator-ranges-next:0004 */}
+<ParameterList>
+  <Parameter name="i">an iterator</Parameter>
+  <Parameter name="n">number of elements to advance</Parameter>
+  <Parameter name="bound">sentinel denoting the end of the range `i` points to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-ranges-next:0005 */}
+1) The successor of iterator `i`.
+
+{/* source:cpp-iterator-ranges-next:0006 */}
+2) The `n`th successor of iterator `i`.
+
+{/* source:cpp-iterator-ranges-next:0007 */}
+3) The first iterator equivalent to `bound`.
+
+{/* source:cpp-iterator-ranges-next:0008 */}
+4) The `n`th successor of iterator `i`, or the first iterator equivalent to `bound`, whichever is first.
+
+### Complexity
+
+{/* source:cpp-iterator-ranges-next:0009 */}
+1) Constant.
+
+{/* source:cpp-iterator-ranges-next:0010 */}
+2) Constant if `I` models [`std::random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator); otherwise linear.
+
+{/* source:cpp-iterator-ranges-next:0011 */}
+3) Constant if `I` and `S` models both `std::random_access_iterator<I>` and `std::sized_sentinel_for<S, I>`, or if `I` and `S` models `std::assignable_from<I&, S>`; otherwise linear.
+
+{/* source:cpp-iterator-ranges-next:0012 */}
+4) Constant if `I` and `S` models both `std::random_access_iterator<I>` and `std::sized_sentinel_for<S, I>`; otherwise linear.
+
+### Possible implementation
+
+{/* source:cpp-iterator-ranges-next:0013 */}
+```cpp
+struct next_fn
+{
+    template<std::input_or_output_iterator I>
+    constexpr I operator()(I i) const
+    {
+        ++i;
+        return i;
+    }
+
+    template<std::input_or_output_iterator I>
+    constexpr I operator()(I i, std::iter_difference_t<I> n) const
+    {
+        ranges::advance(i, n);
+        return i;
+    }
+
+    template<std::input_or_output_iterator I, std::sentinel_for<I> S>
+    constexpr I operator()(I i, S bound) const
+    {
+        ranges::advance(i, bound);
+        return i;
+    }
+
+    template<std::input_or_output_iterator I, std::sentinel_for<I> S>
+    constexpr I operator()(I i, std::iter_difference_t<I> n, S bound) const
+    {
+        ranges::advance(i, n, bound);
+        return i;
+    }
+};
+
+inline constexpr auto next = next_fn();
+```
+
+### Notes
+
+{/* source:cpp-iterator-ranges-next:0014 */}
+Although the expression `++x.begin()` often compiles, it is not guaranteed to do so: `x.begin()` is an rvalue expression, and there is no requirement that specifies that increment of an rvalue is guaranteed to work. In particular, when iterators are implemented as pointers or its `operator++` is lvalue-ref-qualified, `++x.begin()` does not compile, while `ranges::next(x.begin())` does.
+
+### Example
+
+{/* source:cpp-iterator-ranges-next:0015 */}
+```cpp
+#include <cassert>
+#include <iterator>
+
+int main() 
+{
+    auto v = {3, 1, 4};
+    {
+        auto n = std::ranges::next(v.begin());
+        assert(*n == 1);
+    }
+    {
+        auto n = std::ranges::next(v.begin(), 2);
+        assert(*n == 4);
+    }
+    {
+        auto n = std::ranges::next(v.begin(), v.end());
+        assert(n == v.end());
+    }
+    {
+        auto n = std::ranges::next(v.begin(), 42, v.end());
+        assert(n == v.end());
+    }
+}
+```
+
+### See also
+
+{/* source:cpp-iterator-ranges-next:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::prev`](/docs/cpp/library/iterator/ranges/prev) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>decrement an iterator by a given distance or to a bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::advance`](/docs/cpp/library/iterator/ranges/advance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance or to a given bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`next`](/docs/cpp/library/iterator/next) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>increment an iterator (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,88 @@
+---
+title: "std::incrementable_traits"
+description: "Computes the associated difference type of the type I, if any."
+source_url: "https://en.cppreference.com/w/cpp/iterator/incrementable_traits"
+language: "C++"
+---
+
+{/* source:cpp-iterator-incrementable-traits:0000 */}
+<DeclarationDoc since="C++20">
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" code={`template< class I >
+struct incrementable_traits {};`} />
+  <Declaration id="2" language="cpp" code={`template< class T >
+    requires std::is_object_v<T>
+
+struct incrementable_traits<T*>;`} />
+  <Declaration id="3" language="cpp" code={`template< class T >
+struct incrementable_traits<const T>
+
+    : incrementable_traits<T> {};`} />
+  <Declaration id="4" language="cpp" code={`template< class T >
+    requires requires { typename T::difference_type; }
+
+struct incrementable_traits<T>;`} />
+  <Declaration id="5" language="cpp" code={`template< class T >
+    requires (!requires { typename T::difference_type; }) &&
+             requires(const T& a, const T& b) { { a - b } -> std::integral; }
+
+struct incrementable_traits<T>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-incrementable-traits:0001 */}
+Computes the associated difference type of the type `I`, if any. A program may specialize `incrementable_traits` for a [program-defined type](/docs/cpp/language/basic_concepts/type-id#Program-defined_type).
+
+{/* source:cpp-iterator-incrementable-traits:0002 */}
+1. 1) Primary template is an empty struct.
+
+{/* source:cpp-iterator-incrementable-traits:0003 */}
+2. 2) Specialization for pointers.
+
+{/* source:cpp-iterator-incrementable-traits:0004 */}
+Provides a member type `difference_type` same as [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t).
+
+{/* source:cpp-iterator-incrementable-traits:0005 */}
+3. 3) Specialization for const-qualified types.
+
+{/* source:cpp-iterator-incrementable-traits:0006 */}
+4. 4) Specialization for types that define a public and accessible member type `difference_type`.
+
+{/* source:cpp-iterator-incrementable-traits:0007 */}
+Provides a member type `difference_type` same as `T::difference_type`.
+
+{/* source:cpp-iterator-incrementable-traits:0008 */}
+5. 5) Specialization for types that do not define a public and accessible member type `difference_type` but do support subtraction.
+
+{/* source:cpp-iterator-incrementable-traits:0009 */}
+Provides a member type `difference_type` same as `std::make_signed_t<decltype(std::declval<T>() - std::declval<T>())>`. The implicit expression variations rule (see below) applies to the expression `a - b`.
+
+### Implicit expression variations
+
+{/* source:cpp-iterator-incrementable-traits:0010 */}
+A [`requires` expression](/docs/cpp/language/templates/requires) that uses an expression that is non-modifying for some constant lvalue operand also requires [implicit expression variations](/docs/cpp/library/concepts#Implicit_expression_variations).
+
+### Example
+
+{/* source:cpp-iterator-incrementable-traits:0011 */}
+This section is incomplete
+
+Reason: no example
+
+### See also
+
+{/* source:cpp-iterator-incrementable-traits:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [semiregular](/docs/cpp/library/concepts/semiregular) type can be incremented with pre- and post-increment operators (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_value_t`, `iter_reference_t`, `iter_const_reference_t`, `iter_difference_t`, `iter_rvalue_reference_t`, `iter_common_reference_t`](/docs/cpp/library/iterator/iter_t) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++23" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the associated types of an iterator (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator_traits`](/docs/cpp/library/iterator/iterator_traits)</DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of an iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

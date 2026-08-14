@@ -1,0 +1,144 @@
+---
+title: "operator==,!=,<,<=,>,>=,<=>(std::reverse_iterator)"
+description: "Compares the underlying iterators of lhs and rhs."
+source_url: "https://en.cppreference.com/w/cpp/iterator/reverse_iterator/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class Iter1, class Iter2 >
+bool operator==( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class Iter1, class Iter2 >
+bool operator!=( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class Iter1, class Iter2 >
+bool operator< ( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class Iter1, class Iter2 >
+bool operator<=( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+  <Declaration id="5" language="cpp" since="C++17" code={`template< class Iter1, class Iter2 >
+bool operator> ( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+  <Declaration id="6" language="cpp" since="C++17" code={`template< class Iter1, class Iter2 >
+bool operator>=( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`template< class Iter1, std::three_way_comparable_with<Iter1> Iter2 >
+constexpr std::compare_three_way_result_t<Iter1, Iter2>
+    operator<=>( const std::reverse_iterator<Iter1>& lhs,
+                 const std::reverse_iterator<Iter2>& rhs );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0001 */}
+Compares the underlying iterators of `lhs` and `rhs`.
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0002 */}
+- The result of equality comparisons are preserved (i.e. equal underlying iterators imply equal reverse iterators).
+- The result of relational comparisons are reversed (i.e. a greater underlying iterator implies a lesser reverse iterator).
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0003 */}
+<Revision since="C++20">
+
+1) This overload participates in overload resolution only if `lhs.base() == rhs.base()` is well-formed and convertible to `bool`.
+
+2) This overload participates in overload resolution only if `lhs.base() != rhs.base()` is well-formed and convertible to `bool`.
+
+3) This overload participates in overload resolution only if `lhs.base() > rhs.base()` is well-formed and convertible to `bool`.
+
+4) This overload participates in overload resolution only if `lhs.base() >= rhs.base()` is well-formed and convertible to `bool`.
+
+5) This overload participates in overload resolution only if `lhs.base() < rhs.base()` is well-formed and convertible to `bool`.
+
+6) This overload participates in overload resolution only if `lhs.base() <= rhs.base()` is well-formed and convertible to `bool`.
+
+</Revision>
+
+### Parameters
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0004 */}
+<ParameterList>
+  <Parameter name="lhs, rhs">iterator adaptors to compare</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0005 */}
+1. 1) `lhs.base() == rhs.base()`
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0006 */}
+2. 2) `lhs.base() != rhs.base()`
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0007 */}
+3. 3) `lhs.base() > rhs.base()`
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0008 */}
+4. 4) `lhs.base() >= rhs.base()`
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0009 */}
+5. 5) `lhs.base() < rhs.base()`
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0010 */}
+6. 6) `lhs.base() <= rhs.base()`
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0011 */}
+7. 7) `rhs.base() <=> lhs.base()`
+
+### Notes
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0012 */}
+`operator<=>` returns `rhs.base() <=> lhs.base()` rather than `lhs.base() <=> rhs.base()` because this is a reverse iterator.
+
+### Example
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0013 */}
+```cpp
+#include <cassert>
+#include <iterator>
+
+int main()
+{
+    int a[]{0, 1, 2, 3};
+    //            ↑  └───── x, y
+    //            └──────── z
+    // “x” and “y” are equal, but “x” is less than “z” (reversely)
+    std::reverse_iterator<int*>
+        x{std::rend(a) - std::size(a)},
+        y{std::rend(a) - std::size(a)},
+        z{std::rbegin(a) + 1};
+
+    // two-way comparisons
+    assert(  x == y );
+    assert(!(x != y));
+    assert(!(x <  y));
+    assert(  x <= y );
+    assert(!(x == z));
+    assert(  x != z );
+    assert(  x <  z );
+    assert(  x <= z );
+
+    // three-way comparisons
+    assert(  x <=> y == 0 );
+    assert(!(x <=> y <  0));
+    assert(!(x <=> y >  0));
+    assert(!(x <=> z == 0));
+    assert(  x <=> z <  0 );
+    assert(!(x <=> z >  0));
+}
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-reverse-iterator-operator-cmp:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={280} standard="C++98">
+    <PublishedBehavior>heterogeneous assignment was not allowed</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

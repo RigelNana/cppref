@@ -1,0 +1,91 @@
+---
+title: "std::reverse_iterator<Iter>::operator*,->"
+description: "Returns a reference or pointer to the element previous to current."
+source_url: "https://en.cppreference.com/w/cpp/iterator/reverse_iterator/operator_star_"
+language: "C++"
+---
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`reference operator*() const;`} />
+  <Declaration id="2" language="cpp" since="C++17" until="C++20" code={`pointer operator->() const;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr pointer operator->() const
+    requires (std::is_pointer_v<Iter> ||
+              requires (const Iter i) { i.operator->(); });`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0001 */}
+Returns a reference or pointer to the element previous to [`current`](/docs/cpp/library/iterator/reverse_iterator#current).
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0002 */}
+| Member function | Equivalent to |
+| --- | --- |
+| `operator*` | `Iter tmp = current; return *--tmp;` |
+| `operator->` | <Revision until="C++11">`return &(operator*());`</Revision> <Revision since="C++11" until="C++20">`return std::addressof(operator*());`</Revision> <Revision since="C++20">`return current - 1;` if `Iter` is a pointer type `return std::prev(current).operator->();` otherwise</Revision> |
+
+### Return value
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0003 */}
+As described above.
+
+### Example
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0004 */}
+```cpp
+#include <complex>
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+int main()
+{
+    using RI0 = std::reverse_iterator<int*>;
+    int a[]{0, 1, 2, 3};
+    RI0 r0{std::rbegin(a)};
+    std::cout << "*r0 = " << *r0 << '\n';
+    *r0 = 42;
+    std::cout << "a[3] = " << a[3] << '\n';
+
+    using RI1 = std::reverse_iterator<std::vector<int>::iterator>;
+    std::vector<int> vi{0, 1, 2, 3};
+    RI1 r1{vi.rend() - 2};
+    std::cout << "*r1 = " << *r1 << '\n';
+
+    using RI2 = std::reverse_iterator<std::vector<std::complex<double>>::iterator>;
+    std::vector<std::complex<double>> vc{{1, 2}, {3, 4}, {5, 6}, {7, 8}};
+    RI2 r2{vc.rbegin() + 1};
+    std::cout << "vc[2] = (" << r2->real() << ',' << r2->imag() << ")\n";
+}
+```
+
+Output:
+
+```text
+*r0 = 3
+a[3] = 42
+*r1 = 1
+vc[2] = (5,6)
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0006 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2188} standard="C++11">
+    <PublishedBehavior>`operator->` used `&` to take address</PublishedBehavior>
+    <CorrectedBehavior>uses [`std::addressof`](/docs/cpp/library/memory/addressof) instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-reverse-iterator-operator-star:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/iterator/reverse_iterator/operator_at)</DescriptionTerm>
+    <DescriptionBody>accesses an element by index (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

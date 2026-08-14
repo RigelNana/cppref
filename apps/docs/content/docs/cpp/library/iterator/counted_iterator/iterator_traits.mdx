@@ -1,0 +1,80 @@
+---
+title: "std::iterator_traits<std::counted_iterator>"
+description: "Inherits the properties from customized std::iterator_traits<I>, with the member type pointer adjusted, where I models input_iterator."
+source_url: "https://en.cppreference.com/w/cpp/iterator/counted_iterator/iterator_traits"
+language: "C++"
+---
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" since="C++20" code={`template< std::input_iterator I >
+    requires /* see below */
+struct iterator_traits<std::counted_iterator<I>> : std::iterator_traits<I> {
+    using pointer = std::conditional_t<std::contiguous_iterator<I>,
+                                       std::add_pointer_t<std::iter_reference_t<I>>,
+                                       void>;
+
+};`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0001 */}
+Inherits the properties from customized (generated from either a standard partial specialization or a program-defined specialization) `std::iterator_traits<I>`, with the member type `pointer` adjusted, where `I` models [`input_iterator`](/docs/cpp/library/iterator/input_iterator).
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0002 */}
+Notably, the `iterator_concept` (if present) and `iterator_category` are inherited from `std::iterator_traits<I>`.
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0003 */}
+The condition in the requires-clause is `true` if and only if `std::iterator_traits<I>` is not generated from the primary template.
+
+### Note
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0004 */}
+Before [P2259R1](https://wg21.link/P2259R1), this specialization is used even if `std::iterator_traits<I>` is generated from the primary template. As a result, when testing `std::counted_iterator<I>` against an iterator concept (e.g. [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator)), the determination of `/*ITER_CONCEPT*/` does not take `I::iterator_concept` into account, and thus `std::counted_iterator<I>` sometimes erroneously behaves as if it cannot model that concept. This incorrect behavior is implemented in libstdc++ prior to 10.4, and in MSVC STL prior to VS 2022 17.0 Preview 3.
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0005 */}
+The standard library provides partial specializations of [`std::iterator_traits`](/docs/cpp/library/iterator/iterator_traits) for pointer types, [`std::counted_iterator`](/docs/cpp/library/iterator/counted_iterator), and [`std::common_iterator`](/docs/cpp/library/iterator/common_iterator).
+
+### Example
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0006 */}
+```cpp
+#include <iterator>
+#include <list>
+#include <type_traits>
+#include <vector>
+ 
+int main()
+{
+    std::vector v{1, 2, 3, 4};
+    std::list l{1, 2, 3, 4};
+    std::counted_iterator iv{v.begin(), 3};
+    std::counted_iterator il{l.begin(), 3};
+    static_assert(std::is_same<int*, std::iterator_traits<decltype(iv)>::pointer>());
+    static_assert(std::is_same<void, std::iterator_traits<decltype(il)>::pointer>());
+}
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0008 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2259R1" standard="C++20">
+    <PublishedBehavior>there's no requires-clause `pointer` is unconditionally defined as `void`</PublishedBehavior>
+    <CorrectedBehavior>constraint added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-counted-iterator-iterator-traits:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator_traits`](/docs/cpp/library/iterator/iterator_traits)</DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of an iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

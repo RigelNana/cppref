@@ -1,0 +1,129 @@
+---
+title: "std::iterator_traits<std::common_iterator>"
+description: "Provides the uniform interface to the properties of the std::common_iterator type."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator/iterator_traits"
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" since="C++20" code={`template< std::input_iterator I, class S >
+struct iterator_traits<std::common_iterator<I, S>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0001 */}
+Provides the uniform interface to the properties of the [`std::common_iterator`](/docs/cpp/library/iterator/common_iterator) type.
+
+### Member types
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_concept`</DescriptionTerm>
+    <DescriptionBody>
+
+    - [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags), if `I` models [`std::forward_iterator`](/docs/cpp/library/iterator/forward_iterator).
+    - [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) otherwise.
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category` (conditionally present)</DescriptionTerm>
+    <DescriptionBody>
+
+    - Not defined, if `std::iter_difference_t<I>` is not an integral type.
+    - [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) otherwise, if `std::iterator_traits<I>::iterator_category` is valid and denotes a type that models `std::derived_from<std::forward_iterator_tag>`.
+    - [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) otherwise.
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`std::iter_value_t<I>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`std::iter_difference_t<I>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>
+
+    - `decltype(c.operator->())`, if it is well-formed (where `c` is an lvalue of type `const std::common_iterator<I, S>`).
+    - `void` otherwise.
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`std::iter_reference_t<I>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0003 */}
+```cpp
+#include <iterator>
+#include <type_traits>
+#include <vector>
+ 
+int main()
+{
+    std::vector v{1, 2, 3, 4};
+    using CV = std::common_iterator<
+                    std::counted_iterator<std::vector<int>::iterator>,
+                    std::default_sentinel_t>;
+    CV i{std::counted_iterator{v.begin(), 3}};
+    using TRCV = std::iterator_traits<decltype(i)>;
+    static_assert(std::is_same<TRCV::iterator_concept, std::forward_iterator_tag>());
+    static_assert(std::is_same<TRCV::iterator_category, std::forward_iterator_tag>());
+    static_assert(std::is_same<TRCV::value_type, int>());
+    static_assert(std::is_same<TRCV::difference_type,
+                  std::vector<int>::difference_type>());
+    static_assert(std::is_same<TRCV::pointer, decltype(i.operator->())>());
+    static_assert(std::is_same<TRCV::reference, int&>());
+ 
+    CV s{std::default_sentinel};
+    using TRCS = std::iterator_traits<decltype(s)>;
+    static_assert(std::is_same<TRCS::iterator_concept, std::forward_iterator_tag>());
+    static_assert(std::is_same<TRCS::iterator_category, std::forward_iterator_tag>());
+    static_assert(std::is_same<TRCS::value_type, int>());
+    static_assert(std::is_same<TRCS::difference_type,
+                  std::vector<int>::difference_type>());
+    static_assert(std::is_same<TRCS::pointer, decltype(s.operator->())>());
+    static_assert(std::is_same<TRCS::reference, int&>());
+}
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0004 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0005 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3749} standard="C++20">
+    <PublishedBehavior>if `std::iter_difference_t<I>` is not an integer type, `iterator_category` was [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</PublishedBehavior>
+    <CorrectedBehavior>`iterator_category` is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-common-iterator-iterator-traits:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator_traits`](/docs/cpp/library/iterator/iterator_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of an iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::incrementable_traits<std::common_iterator>`](/docs/cpp/library/iterator/common_iterator/incrementable_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the associated difference type of the [`std::common_iterator`](/docs/cpp/library/iterator/common_iterator) type (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

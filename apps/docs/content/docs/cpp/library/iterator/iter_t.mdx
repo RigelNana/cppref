@@ -1,0 +1,128 @@
+---
+title: "std::iter_value_t, std::iter_reference_t, std::iter_const_reference_t, std::iter_difference_t, std::iter_rvalue_reference_t, std::iter_common_reference_t"
+description: "Compute the associated types of an iterator."
+source_url: "https://en.cppreference.com/w/cpp/iterator/iter_t"
+language: "C++"
+---
+
+{/* source:cpp-iterator-iter-t:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T >
+using iter_value_t = /* see below */;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< /*dereferenceable*/ T >
+using iter_reference_t = decltype(*std::declval<T&>());`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< std::indirectly_readable T >
+using iter_const_reference_t =
+    std::common_reference_t<const std::iter_value_t<T>&&,
+
+                            std::iter_reference_t<T>>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class T >
+using iter_difference_t = /* see below */;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template< /*dereferenceable*/ T>
+    requires /* see below */
+using iter_rvalue_reference_t =
+
+    decltype(ranges::iter_move(std::declval<T&>()));`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`template< std::indirectly_readable T >
+using iter_common_reference_t =
+    std::common_reference_t<std::iter_reference_t<T>,
+
+                            /*indirect-value-t*/<T>>;`} />
+
+Helper templates
+
+  <Declaration id="7" language="cpp" code={`template< class T >
+concept /*dereferenceable*/ = /* see below */;`} />
+  (7) (exposition only*)
+  <Declaration id="8" language="cpp" code={`template< std::indirectly_readable T >
+using /*indirect-value-t*/ = /* see below */;`} />
+  (8) (exposition only*)
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-iter-t:0001 */}
+    Compute the associated types of an iterator.
+
+    {/* source:cpp-iterator-iter-t:0002 */}
+    1. 1) Computes the [value type](/docs/cpp/library/iterator#Types_and_writability) of `T`.
+    - If `std::iterator_traits<std::remove_cvref_t<T>>` is not specialized, then `std::iter_value_t<T>` is `std::indirectly_readable_traits<std::remove_cvref_t<T>>::value_type`.
+    - Otherwise, it is `std::iterator_traits<std::remove_cvref_t<T>>::value_type`.
+
+    {/* source:cpp-iterator-iter-t:0003 */}
+    2. 2) Computes the *reference type* of `T`.
+
+    {/* source:cpp-iterator-iter-t:0004 */}
+    3. 3) Computes the *const reference type* of `T`.
+
+    {/* source:cpp-iterator-iter-t:0005 */}
+    4. 4) Computes the [difference type](/docs/cpp/library/iterator#Types_and_writability) of `T`.
+    - If `std::iterator_traits<std::remove_cvref_t<T>>` is not specialized, then `std::iter_difference_t<T>` is `std::incrementable_traits<std::remove_cvref_t<T>>::difference_type`.
+    - Otherwise, it is `std::iterator_traits<std::remove_cvref_t<T>>::difference_type`.
+
+    {/* source:cpp-iterator-iter-t:0006 */}
+    5. 5) Computes the *rvalue reference type* of `T`. The constraint on this alias template is satisfied if and only if the expression `ranges::iter_move(std::declval<T&>())` is valid and has a referenceable type.
+
+    {/* source:cpp-iterator-iter-t:0007 */}
+    6. 6) Computes the *common reference type* of `T`. This is the common reference type between its reference type and an lvalue reference to its value type.
+
+    {/* source:cpp-iterator-iter-t:0008 */}
+    7. 7) The exposition-only concept *dereferenceable* is satisfied if and only if the expression `*std::declval<T&>()` is valid and has a [referenceable type](/docs/cpp/library/meta#Definitions).
+
+    {/* source:cpp-iterator-iter-t:0009 */}
+    8. 8) The exposition-only alias template *indirect-value-t* denotes the following:
+    - `std::invoke_result_t<Proj&, /*indirect-value-t*/<I>>` if `T` is the same as `std::projected<I, Proj>` for some types `I` and `Proj`.
+    - Otherwise, `std::iter_value_t<T>&`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Defect reports
+
+{/* source:cpp-iterator-iter-t:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-iter-t:0011 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2609R3" standard="C++20">
+    <PublishedBehavior>`std::iter_common_reference_t` was defined in terms of `std::iter_value_t<T>&` which incorrectly handled [`std::projected`](/docs/cpp/library/iterator/projected) types that project into rvalue reference types</PublishedBehavior>
+    <CorrectedBehavior>defined in terms of `/*indirect-value-t*/<T>` to handle such cases</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-iter-t:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is indirectly readable by applying `operator *` (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`semiregular`](/docs/cpp/library/concepts/semiregular) type can be incremented with pre- and post-increment operators (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_readable_traits`](/docs/cpp/library/iterator/indirectly_readable_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the value type of an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`incrementable_traits`](/docs/cpp/library/iterator/incrementable_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the difference type of a [`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator_traits`](/docs/cpp/library/iterator/iterator_traits)</DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of an iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::iterator_t`, `ranges::const_iterator_t`, `ranges::sentinel_t`, `ranges::const_sentinel_t`](/docs/cpp/library/ranges/iterator_t) <InlineRevision since="C++20" /> <InlineRevision since="C++23" /> <InlineRevision since="C++20" /> <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>obtains iterator and sentinel types of a range (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::range_reference_t`, `ranges::range_const_reference_t`, `ranges::range_rvalue_reference_t`, `ranges::range_common_reference_t`](/docs/cpp/library/ranges/range_reference_t) <InlineRevision since="C++20" /> <InlineRevision since="C++23" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains reference types of a range (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::range_difference_t`, `ranges::range_size_t`, `ranges::range_value_t`](/docs/cpp/library/ranges/range_size_t) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains size, difference, and value types of a range (alias template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

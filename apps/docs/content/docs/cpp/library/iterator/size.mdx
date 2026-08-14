@@ -1,0 +1,216 @@
+---
+title: "std::size, std::ssize"
+description: "Returns the size of the given range."
+source_url: "https://en.cppreference.com/w/cpp/iterator/size"
+language: "C++"
+---
+
+{/* source:cpp-iterator-size:0000 */}
+<DeclarationDoc>
+Defined in header [`<array>`](/docs/cpp/library/headers/array)
+Defined in header [`<deque>`](/docs/cpp/library/headers/deque)
+Defined in header [`<flat_map>`](/docs/cpp/library/headers/flat_map)
+Defined in header [`<flat_set>`](/docs/cpp/library/headers/flat_set)
+Defined in header [`<forward_list>`](/docs/cpp/library/headers/forward_list)
+Defined in header [`<inplace_vector>`](/docs/cpp/library/headers/inplace_vector)
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+Defined in header [`<list>`](/docs/cpp/library/headers/list)
+Defined in header [`<map>`](/docs/cpp/library/headers/map)
+Defined in header [`<regex>`](/docs/cpp/library/headers/regex)
+Defined in header [`<set>`](/docs/cpp/library/headers/set)
+Defined in header [`<span>`](/docs/cpp/library/headers/span)
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+Defined in header [`<string_view>`](/docs/cpp/library/headers/string_view)
+Defined in header [`<unordered_map>`](/docs/cpp/library/headers/unordered_map)
+Defined in header [`<unordered_set>`](/docs/cpp/library/headers/unordered_set)
+Defined in header [`<vector>`](/docs/cpp/library/headers/vector)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class C >
+constexpr auto size( const C& c ) -> decltype(c.size());`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class C >
+constexpr auto ssize( const C& c )
+    -> std::common_type_t<std::ptrdiff_t,
+
+                          std::make_signed_t<decltype(c.size())>>;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class T, std::size_t N >
+constexpr std::size_t size( const T (&array)[N] ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class T, std::ptrdiff_t N >
+constexpr std::ptrdiff_t ssize( const T (&array)[N] ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-size:0001 */}
+Returns the size of the given range.
+
+{/* source:cpp-iterator-size:0002 */}
+1,2) Returns `c.size()`, converted to the return type if necessary.
+
+{/* source:cpp-iterator-size:0003 */}
+3,4) Returns `N`.
+
+### Parameters
+
+{/* source:cpp-iterator-size:0004 */}
+<ParameterList>
+  <Parameter name="c">a container or view with a size member function</Parameter>
+  <Parameter name="array">an array of arbitrary type</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-size:0005 */}
+1) `c.size()`
+
+{/* source:cpp-iterator-size:0006 */}
+2) `static_cast<std::common_type_t<std::ptrdiff_t, std::make_signed_t<decltype(c.size())>>>(c.size())`
+
+{/* source:cpp-iterator-size:0007 */}
+3,4) `N`
+
+### Exceptions
+
+{/* source:cpp-iterator-size:0008 */}
+1,2) May throw implementation-defined exceptions.
+
+### Overloads
+
+{/* source:cpp-iterator-size:0009 */}
+Custom overloads of `size` may be provided for classes and enumerations that do not expose a suitable `size()` member function, yet can be detected.
+
+{/* source:cpp-iterator-size:0010 */}
+<Revision since="C++20">
+Overloads of `size` found by [argument-dependent lookup](/docs/cpp/language/functions/adl) can be used to customize the behavior of `std::ranges::size`, `std::ranges::ssize`, and `std::ranges::empty`.
+</Revision>
+
+### Possible implementation
+
+{/* source:cpp-iterator-size:0011 */}
+[`size (1)`](/docs/cpp/library/iterator/size#Version_1)
+
+```cpp
+template<class C>
+constexpr auto size(const C& c) -> decltype(c.size())
+{
+    return c.size();
+}
+```
+
+[`ssize (2)`](/docs/cpp/library/iterator/size#Version_2)
+
+```cpp
+template<class C>
+constexpr auto ssize(const C& c)
+    -> std::common_type_t<std::ptrdiff_t,
+                          std::make_signed_t<decltype(c.size())>>
+{
+    using R = std::common_type_t<std::ptrdiff_t,
+                                 std::make_signed_t<decltype(c.size())>>;
+    return static_cast<R>(c.size());
+}
+```
+
+[`size (3)`](/docs/cpp/library/iterator/size#Version_3)
+
+```cpp
+template<class T, std::size_t N>
+constexpr std::size_t size(const T (&array)[N]) noexcept
+{
+    return N;
+}
+```
+
+[`ssize (4)`](/docs/cpp/library/iterator/size#Version_4)
+
+```cpp
+template<class T, std::ptrdiff_t N>
+constexpr std::ptrdiff_t ssize(const T (&array)[N]) noexcept
+{
+    return N;
+}
+```
+
+### Notes
+
+{/* source:cpp-iterator-size:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_nonmember_container_access`](/docs/cpp/library/feature_test#cpp_lib_nonmember_container_access) | [`201411L`](/docs/cpp/library/compiler_support/17#cpp_lib_nonmember_container_access_201411L) | (C++17) | `std::size()`, [`std::data`](/docs/cpp/library/iterator/data) and [`std::empty`](/docs/cpp/library/iterator/empty) |
+| [`__cpp_lib_ssize`](/docs/cpp/library/feature_test#cpp_lib_ssize) | [`201902L`](/docs/cpp/library/compiler_support/20#cpp_lib_ssize_201902L) | (C++20) | `std::ssize()` [`2,4`](/docs/cpp/library/iterator/size#Version_2) and unsigned [`std::span::size()`](/docs/cpp/library/container/span/size) |
+
+### Example
+
+{/* source:cpp-iterator-size:0013 */}
+```cpp
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    // Works with containers
+    std::vector<int> v{3, 1, 4};
+    assert(std::size(v) == 3);
+ 
+    // And works with built-in arrays too
+    int a[]{-5, 10, 15};
+    // Returns the number of elements (not bytes) as opposed to sizeof
+    assert(std::size(a) == 3);
+    std::cout << "size of a[]: " << sizeof a << '\n'; // 12, if sizeof(int) == 4
+ 
+    // Provides a safe way (compared to sizeof) of getting string buffer size
+    const char str[] = "12345";
+    // These are fine and give the correct result
+    assert(std::size(str) == 6);
+    assert(sizeof(str) == 6);
+ 
+    // But use of sizeof here is a common source of bugs
+    const char* str_decayed = "12345";
+    // std::cout << std::size(str_decayed) << '\n'; // Usefully fails to compile
+    std::cout << sizeof(str_decayed) << '\n'; // Prints the size of the pointer!
+ 
+    // Since C++20 the signed size (std::ssize) is available
+    auto i = std::ssize(v);
+    for (--i; i != -1; --i)
+        std::cout << v[i] << (i ? ' ' : '\n');
+    assert(i == -1);
+ 
+    // Note that the string literal includes the ending null character, which
+    // will be part of the constructed characters array. This makes std::size
+    // behave differently from std::strlen and std::string::size:
+    constexpr char symbols[] = "0123456789";
+ 
+    static_assert(std::size(symbols) == 11);
+    static_assert(std::string(symbols).size() == 10);
+    assert(std::strlen(symbols) == 10);
+}
+```
+
+Possible output:
+
+```text
+size of a[]: 12
+8
+4 1 3
+```
+
+### See also
+
+{/* source:cpp-iterator-size:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</DescriptionTerm>
+    <DescriptionBody>signed integer type returned when subtracting two pointers (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size_t`](/docs/cpp/library/utility/types/size_t)</DescriptionTerm>
+    <DescriptionBody>unsigned integer type returned by the [`sizeof`](/docs/cpp/language/expressions/sizeof) operator (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::size`](/docs/cpp/library/ranges/size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::ssize`](/docs/cpp/library/ranges/ssize) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a signed integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

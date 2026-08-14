@@ -1,0 +1,98 @@
+---
+title: "std::common_iterator<I,S>::operator="
+description: "Assigns the underlying std::variant member object var from that of x."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator/operator="
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator-operator:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class I2, class S2 >
+requires std::convertible_to<const I2&, I> &&
+         std::convertible_to<const S2&, S> &&
+         std::assignable_from<I&, const I2&> &&
+         std::assignable_from<S&, const S2&>
+
+constexpr common_iterator& operator=( const common_iterator<I2, S2>& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-common-iterator-operator:0001 */}
+Assigns the underlying [`std::variant`](/docs/cpp/library/utility/variant) member object `var` from that of `x`.
+
+{/* source:cpp-iterator-common-iterator-operator:0002 */}
+Let `i` is `x.var.index()`. Then, this assignment is equivalent to:
+
+{/* source:cpp-iterator-common-iterator-operator:0003 */}
+- `std::get<i>(var) = std::get<i>(x.var)`, if `var.index() == i`,
+- `var.emplace<i>(std::get<i>(x.var))` otherwise.
+
+{/* source:cpp-iterator-common-iterator-operator:0004 */}
+The behavior is undefined if `x` is in an invalid state, that is, `x.var.valueless_by_exception()` is equal to `true`.
+
+### Parameters
+
+{/* source:cpp-iterator-common-iterator-operator:0005 */}
+<ParameterList>
+  <Parameter name="x">iterator adaptor to assign from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-common-iterator-operator:0006 */}
+`*this`
+
+### Example
+
+{/* source:cpp-iterator-common-iterator-operator:0007 */}
+```cpp
+#include <algorithm>
+#include <initializer_list>
+#include <iostream>
+#include <iterator>
+ 
+int main()
+{
+    const auto il = {1, 2, 3, 4, 5, 6};
+    using CI = std::common_iterator<
+                   std::counted_iterator<std::initializer_list<int>::iterator>,
+                   std::default_sentinel_t>;
+    CI first{std::counted_iterator{std::next(begin(il), 1), ssize(il) - 1}};
+    const CI first2{std::counted_iterator{std::next(begin(il), 2), ssize(il) - 2}};
+    const CI last{std::default_sentinel};
+    std::copy(first, last, std::ostream_iterator<int>{std::cout, " "});
+    std::cout << '\n';
+    first = first2;
+    std::copy(first, last, std::ostream_iterator<int>{std::cout, " "});
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+2 3 4 5 6
+3 4 5 6
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-common-iterator-operator:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-common-iterator-operator:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3574} standard="C++20">
+    <PublishedBehavior>`variant` was fully constexpr (P2231R1) but `common_iterator` was not</PublishedBehavior>
+    <CorrectedBehavior>also made constexpr</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-common-iterator-operator:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/iterator/common_iterator/common_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs a new iterator adaptor (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

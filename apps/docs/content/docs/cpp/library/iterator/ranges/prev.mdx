@@ -1,0 +1,142 @@
+---
+title: "std::ranges::prev"
+description: "Return the nth predecessor of iterator i."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ranges/prev"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ranges-prev:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::bidirectional_iterator I >
+constexpr I prev( I i );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< std::bidirectional_iterator I >
+constexpr I prev( I i, std::iter_difference_t<I> n );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< std::bidirectional_iterator I >
+constexpr I prev( I i, std::iter_difference_t<I> n, I bound );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ranges-prev:0001 */}
+Return the `n`th predecessor of iterator `i`.
+
+{/* source:cpp-iterator-ranges-prev:0002 */}
+The function-like entities described on this page are [algorithm function objects](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-iterator-ranges-prev:0003 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-iterator-ranges-prev:0004 */}
+<ParameterList>
+  <Parameter name="i">an iterator</Parameter>
+  <Parameter name="n">number of elements `i` should be descended</Parameter>
+  <Parameter name="bound">iterator denoting the beginning of the range `i` points to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-ranges-prev:0005 */}
+1) The predecessor of `i`.
+
+{/* source:cpp-iterator-ranges-prev:0006 */}
+2) The `n`th predecessor of iterator `i`.
+
+{/* source:cpp-iterator-ranges-prev:0007 */}
+3) The `n`th predecessor of iterator `i`, or the first iterator that compares equal to `bound`, whichever is first.
+
+### Complexity
+
+{/* source:cpp-iterator-ranges-prev:0008 */}
+1) Constant.
+
+{/* source:cpp-iterator-ranges-prev:0009 */}
+2. 2,3) Constant if `I` models `std::random_access_iterator<I>`; otherwise linear.
+
+### Possible implementation
+
+{/* source:cpp-iterator-ranges-prev:0010 */}
+```cpp
+struct prev_fn
+{
+    template<std::bidirectional_iterator I>
+    constexpr I operator()(I i) const
+    {
+        --i;
+        return i;
+    }
+
+    template<std::bidirectional_iterator I>
+    constexpr I operator()(I i, std::iter_difference_t<I> n) const
+    {
+        ranges::advance(i, -n);
+        return i;
+    }
+
+    template<std::bidirectional_iterator I>
+    constexpr I operator()(I i, std::iter_difference_t<I> n, I bound) const
+    {
+        ranges::advance(i, -n, bound);
+        return i;
+    }
+};
+
+inline constexpr auto prev = prev_fn();
+```
+
+### Notes
+
+{/* source:cpp-iterator-ranges-prev:0011 */}
+Although the expression `--r.end()` often compiles for containers, it is not guaranteed to do so: `r.end()` is an rvalue expression, and there is no iterator requirement that specifies that decrement of an rvalue is guaranteed to work. In particular, when iterators are implemented as pointers or its `operator--` is lvalue-ref-qualified, `--r.end()` does not compile, while `ranges::prev(r.end())` does.
+
+{/* source:cpp-iterator-ranges-prev:0012 */}
+This is further exacerbated by ranges that do not model `ranges::common_range`. For example, for some underlying ranges, `ranges::transform_view::end` doesn't have the same return type as `ranges::transform_view::begin`, and so `--r.end()` won't compile. This isn't something that `ranges::prev` can aid with, but there are workarounds.
+
+### Example
+
+{/* source:cpp-iterator-ranges-prev:0013 */}
+```cpp
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+int main() 
+{
+    std::vector<int> v{3, 1, 4};
+    auto pv = std::ranges::prev(v.end(), 2);
+    std::cout << *pv << '\n';
+
+    pv = std::ranges::prev(pv, 42, v.begin());
+    std::cout << *pv << '\n';
+}
+```
+
+Output:
+
+```text
+1
+3
+```
+
+### See also
+
+{/* source:cpp-iterator-ranges-prev:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::next`](/docs/cpp/library/iterator/ranges/next) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>increment an iterator by a given distance or to a bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::advance`](/docs/cpp/library/iterator/ranges/advance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance or to a given bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prev`](/docs/cpp/library/iterator/prev) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>decrement an iterator (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

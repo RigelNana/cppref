@@ -1,0 +1,102 @@
+---
+title: "std::reverse_iterator<Iter>::operator[]"
+description: "Returns a reference to the element at specified relative location."
+source_url: "https://en.cppreference.com/w/cpp/iterator/reverse_iterator/operator_at"
+language: "C++"
+---
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`/* unspecified */ operator[]( difference_type n ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0001 */}
+Returns a reference to the element at specified relative location.
+
+### Parameters
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0002 */}
+<ParameterList>
+  <Parameter name="n">position relative to current location</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0003 */}
+[`current`](/docs/cpp/library/iterator/reverse_iterator#current)`[-n - 1]`
+
+### Notes
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0004 */}
+The return type was changed by [LWG issue 386](https://cplusplus.github.io/LWG/issue386) to be unspecified because the return type of the underlying iterator's `operator[]` was also unspecified at the time.
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0005 */}
+However, as of [N3066](https://wg21.link/N3066), the return type of a [`LegacyRandomAccessIterator`](/docs/cpp/library/named_req/RandomAccessIterator)'s `operator[]` is required to be convertible to `reference`. In all common implementations, the return type is declared to be `reference`. See also [LWG issue 2595](https://cplusplus.github.io/LWG/issue2595).
+
+### Example
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0006 */}
+```cpp
+#include <array>
+#include <cstddef>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <vector>
+
+int main()
+{
+    int a[]{0, 1, 2, 3};
+    std::reverse_iterator<int*> iter1{std::rbegin(a)};
+    for (std::size_t i{}; i != std::size(a); ++i)
+        std::cout << iter1[i] << ' '; // decltype(iter1[i]) is int&
+    std::cout << '\n';
+
+    std::vector v{0, 1, 2, 3};
+    std::reverse_iterator<std::vector<int>::iterator> iter2{std::rbegin(v)};
+    for (std::size_t i{}; i != std::size(v); ++i)
+        std::cout << iter2[i] << ' '; // decltype(iter2[i]) is int&
+    std::cout << '\n';
+
+    // constexpr context
+    constexpr static std::array<int, 4> z{0, 1, 2, 3};
+    constexpr std::reverse_iterator<decltype(z)::const_iterator> iter3{std::crbegin(z)};
+    static_assert(iter3[1] == 2);
+
+    std::list li{0, 1, 2, 3};
+    std::reverse_iterator<std::list<int>::iterator> iter4{std::rbegin(li)};
+    *iter4 = 42;   // OK
+//  iter4[0] = 13; // Compilation error: the underlying iterator
+                   // does not model the random access iterator
+}
+```
+
+Output:
+
+```text
+3 2 1 0
+3 2 1 0
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={386} standard="C++98">
+    <PublishedBehavior>the return type was `reference`</PublishedBehavior>
+    <CorrectedBehavior>made unspecified</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-reverse-iterator-operator-at:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/iterator/reverse_iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the pointed-to element (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

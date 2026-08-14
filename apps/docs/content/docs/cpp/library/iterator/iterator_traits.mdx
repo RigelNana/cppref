@@ -1,0 +1,335 @@
+---
+title: "std::iterator_traits"
+description: "std::iterator_traits is the type trait class that provides uniform interface to the properties of LegacyIterator types."
+source_url: "https://en.cppreference.com/w/cpp/iterator/iterator_traits"
+language: "C++"
+---
+
+{/* source:cpp-iterator-iterator-traits:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" code={`template< class Iter >
+struct iterator_traits;`} />
+  <Declaration id="2" language="cpp" code={`template< class T >
+struct iterator_traits<T*>;`} />
+  <Declaration id="3" language="cpp" removed="C++20" code={`template< class T >
+struct iterator_traits<const T*>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-iterator-traits:0001 */}
+`std::iterator_traits` is the type trait class that provides uniform interface to the properties of [`LegacyIterator`](/docs/cpp/library/named_req/Iterator) types. This makes it possible to implement algorithms only in terms of iterators.
+
+{/* source:cpp-iterator-iterator-traits:0002 */}
+The template can be specialized for user-defined iterators so that the information about the iterator can be retrieved even if the type does not provide the usual typedefs.
+
+{/* source:cpp-iterator-iterator-traits:0003 */}
+<Revision since="C++20">
+User specializations may define the nested type `iterator_concept` to one of [iterator category tags](/docs/cpp/library/iterator/iterator_tags), to indicate conformance to the iterator concepts.
+</Revision>
+
+### Template parameters
+
+{/* source:cpp-iterator-iterator-traits:0004 */}
+<ParameterList>
+  <Parameter name="Iter">the iterator type to retrieve properties for</Parameter>
+</ParameterList>
+
+### Member types
+
+{/* source:cpp-iterator-iterator-traits:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`Iter::difference_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`Iter::value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`Iter::pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`Iter::reference`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>`Iter::iterator_category`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-iterator-iterator-traits:0006 */}
+<Revision since="C++17" until="C++20">
+If `Iter` does not have any of the five nested types above, then this template has no members by any of those names (`std::iterator_traits` is SFINAE-friendly).
+</Revision>
+
+<Revision since="C++20">
+If `Iter` does not have `pointer`, but has all four remaining nested types, then these four nested types are declared as follows:
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`Iter::difference_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`Iter::value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`Iter::reference`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>`Iter::iterator_category`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Otherwise, if `Iter` satisfies the exposition-only concept [`__LegacyInputIterator`](/docs/cpp/library/named_req/InputIterator#Concept), the nested types are declared as follows:
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`std::incrementable_traits<Iter>::difference_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`std::indirectly_readable_traits<Iter>::value_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>
+
+    - `Iter::pointer` if valid.
+    - Otherwise `decltype(std::declval<Iter&>().operator->())` if valid.
+    - Otherwise `void`.
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>
+
+    - `Iter::reference` if valid.
+    - Otherwise `std::iter_reference_t<Iter>`.
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>
+
+    - `Iter::iterator_category` if valid.
+    - Otherwise, [`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) if `Iter` satisfies [`__LegacyRandomAccessIterator`](/docs/cpp/library/named_req/RandomAccessIterator#Concept).
+    - Otherwise, [`std::bidirectional_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) if `Iter` satisfies [`__LegacyBidirectionalIterator`](/docs/cpp/library/named_req/BidirectionalIterator#Concept).
+    - Otherwise, [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) if `Iter` satisfies [`__LegacyForwardIterator`](/docs/cpp/library/named_req/ForwardIterator#Concept).
+    - Otherwise, [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Otherwise, if `Iter` satisfies the exposition-only concept [`__LegacyIterator`](/docs/cpp/library/named_req/Iterator#Concept), the nested types are declared as follows:
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>
+
+    - `std::incrementable_traits<Iter>::difference_type` if valid.
+    - Otherwise `void`.
+        
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`void`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>[`std::output_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+Otherwise, this template has no members by any of those names (`std::iterator_traits` is SFINAE-friendly).
+</Revision>
+
+### Specializations
+
+{/* source:cpp-iterator-iterator-traits:0007 */}
+This type trait may be specialized for user-provided types that may be used as iterators. The standard library provides partial specializations for pointer types `T*`, which makes it possible to use all iterator-based algorithms with raw pointers.
+
+{/* source:cpp-iterator-iterator-traits:0008 */}
+<Revision since="C++20">
+The standard library also provides partial specializations for some standard iterator adaptors.
+</Revision>
+
+#### T* specialization nested types
+
+{/* source:cpp-iterator-iterator-traits:0009 */}
+<Revision since="C++20">
+Only specialized if `std::is_object_v<T>` is `true`.
+</Revision>
+
+{/* source:cpp-iterator-iterator-traits:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>[`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody><InlineRevision until="C++20">`T`</InlineRevision> <InlineRevision since="C++20">`std::remove_cv_t<T>`</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`T*`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`T&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>[`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_concept` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>[`std::contiguous_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-iterator-iterator-traits:0011 */}
+<Revision until="C++20">
+#### `const T*` specialization nested types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>[`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`const T*`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`const T&`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>[`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+</Revision>
+
+#### Specializations for library types
+
+{/* source:cpp-iterator-iterator-traits:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::iterator_traits<std::common_iterator>`](/docs/cpp/library/iterator/common_iterator/iterator_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of the [`std::common_iterator`](/docs/cpp/library/iterator/common_iterator) type (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::iterator_traits<std::counted_iterator>`](/docs/cpp/library/iterator/counted_iterator/iterator_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of the [`std::counted_iterator`](/docs/cpp/library/iterator/counted_iterator) type (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-iterator-iterator-traits:0013 */}
+Shows a general-purpose `std::reverse()` implementation for bidirectional iterators.
+
+```cpp
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <vector>
+
+template<class BidirIt>
+void my_reverse(BidirIt first, BidirIt last)
+{
+    typename std::iterator_traits<BidirIt>::difference_type n = std::distance(first, last);
+    for (--n; n > 0; n -= 2)
+    {
+        typename std::iterator_traits<BidirIt>::value_type tmp = *first;
+        *first++ = *--last;
+        *last = tmp;
+    }
+}
+
+int main()
+{
+    std::vector<int> v{1, 2, 3, 4, 5};
+    my_reverse(v.begin(), v.end());
+    for (int n : v)
+        std::cout << n << ' ';
+    std::cout << '\n';
+
+    std::list<int> l{1, 2, 3, 4, 5};
+    my_reverse(l.begin(), l.end());
+    for (int n : l)
+        std::cout << n << ' ';
+    std::cout << '\n';
+
+    int a[]{1, 2, 3, 4, 5};
+    my_reverse(a, a + std::size(a));
+    for (int n : a)
+        std::cout << n << ' ';
+    std::cout << '\n';
+
+//  std::istreambuf_iterator<char> i1(std::cin), i2;
+//  my_reverse(i1, i2); // compilation error: i1, i2 are input iterators
+}
+```
+
+Output:
+
+```text
+5 4 3 2 1
+5 4 3 2 1
+5 4 3 2 1
+```
+
+### See also
+
+{/* source:cpp-iterator-iterator-traits:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/iterator/iterator) (deprecated in C++17)</DescriptionTerm>
+    <DescriptionBody>base class to ease the definition of required types for simple iterators (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`input_iterator_tag`, `output_iterator_tag`, `forward_iterator_tag`, `bidirectional_iterator_tag`, `random_access_iterator_tag`, `contiguous_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>empty class types used to indicate iterator categories (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_value_t`, `iter_reference_t`, `iter_const_reference_t`, `iter_difference_t`, `iter_rvalue_reference_t`, `iter_common_reference_t`](/docs/cpp/library/iterator/iter_t) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++23" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the associated types of an iterator (alias template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

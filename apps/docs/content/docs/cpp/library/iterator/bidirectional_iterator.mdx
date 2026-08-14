@@ -1,0 +1,122 @@
+---
+title: "std::bidirectional_iterator"
+description: "The concept bidirectional_iterator refines forward_iterator by adding the ability to move an iterator backward."
+source_url: "https://en.cppreference.com/w/cpp/iterator/bidirectional_iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator-bidirectional-iterator:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" since="C++20" code={`template< class I >
+    concept bidirectional_iterator =
+        std::forward_iterator<I> &&
+        std::derived_from</*ITER_CONCEPT*/<I>, std::bidirectional_iterator_tag> &&
+        requires(I i) {
+            { --i } -> std::same_as<I&>;
+            { i-- } -> std::same_as<I>;
+
+        };
+`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-bidirectional-iterator:0001 */}
+The concept `bidirectional_iterator` refines [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) by adding the ability to move an iterator backward.
+
+### Iterator concept determination
+
+{/* source:cpp-iterator-bidirectional-iterator:0002 */}
+Definition of this concept is specified via an exposition-only alias template `/*ITER_CONCEPT*/`.
+
+{/* source:cpp-iterator-bidirectional-iterator:0003 */}
+In order to determine `/*ITER_CONCEPT*/<I>`, let `ITER_TRAITS<I>` denote `I` if the specialization `std::iterator_traits<I>` is generated from the primary template, or `std::iterator_traits<I>` otherwise:
+
+{/* source:cpp-iterator-bidirectional-iterator:0004 */}
+- If `ITER_TRAITS<I>::iterator_concept` is valid and names a type, `/*ITER_CONCEPT*/<I>` denotes the type.
+- Otherwise, if `ITER_TRAITS<I>::iterator_category` is valid and names a type, `/*ITER_CONCEPT*/<I>` denotes the type.
+- Otherwise, if `std::iterator_traits<I>` is generated from the primary template, `/*ITER_CONCEPT*/<I>` denotes [`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, `/*ITER_CONCEPT*/<I>` does not denote a type and results in a substitution failure.
+
+### Semantic requirements
+
+{/* source:cpp-iterator-bidirectional-iterator:0005 */}
+A bidirectional iterator `r` is said to be *decrementable* if and only if there exists some `s` such that `++s == r`.
+
+{/* source:cpp-iterator-bidirectional-iterator:0006 */}
+`std::bidirectional_iterator<I>` is modeled only if all the concepts it subsumes are modeled, and given two objects `a` and `b` of type `I`:
+
+{/* source:cpp-iterator-bidirectional-iterator:0007 */}
+- If `a` is decrementable, `a` is in the domain of the expressions `--a` and `a--`.
+- Pre-decrement yields an lvalue that refers to the operand: `std::addressof(--a) == std::addressof(a)`.
+- Post-decrement yields the previous value of the operand: if `bool(a == b)`, then `bool(a-- == b)`.
+- Post-decrement and pre-decrement perform the same modification on its operand: If `bool(a == b)`, then after evaluating both `a--` and `--b`, `bool(a == b)` still holds.
+- Increment and decrement are inverses of each other:
+  {/* source:cpp-iterator-bidirectional-iterator:0008 */}
+  - If `a` is incrementable and `bool(a == b)`, then `bool(--(++a) == b)`.
+  - If `a` is decrementable and `bool(a == b)`, then `bool(++(--a) == b)`.
+
+### Equality preservation
+
+{/* source:cpp-iterator-bidirectional-iterator:0009 */}
+Expressions declared in [requires expressions](/docs/cpp/language/templates/requires) of the standard library concepts are required to be [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) (except where stated otherwise).
+
+### Notes
+
+{/* source:cpp-iterator-bidirectional-iterator:0010 */}
+Unlike the [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator) requirements, the `bidirectional_iterator` concept does not require dereference to return an lvalue.
+
+### Example
+
+{/* source:cpp-iterator-bidirectional-iterator:0011 */}
+A minimum bidirectional iterator.
+
+{/* source:cpp-iterator-bidirectional-iterator:0012 */}
+```cpp
+#include <cstddef>
+#include <iterator>
+
+struct SimpleBidiIterator
+{
+    using difference_type = std::ptrdiff_t;
+    using value_type = int;
+
+    int operator*() const;
+
+    SimpleBidiIterator& operator++();
+
+    SimpleBidiIterator operator++(int)
+    {
+        auto tmp = *this;
+        ++*this;
+        return tmp;
+    }
+
+    SimpleBidiIterator& operator--();
+
+    SimpleBidiIterator operator--(int)
+    {
+        auto tmp = *this;
+        --*this;
+        return tmp;
+    }
+
+    bool operator==(const SimpleBidiIterator&) const;
+};
+
+static_assert(std::bidirectional_iterator<SimpleBidiIterator>);
+```
+
+### See also
+
+{/* source:cpp-iterator-bidirectional-iterator:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an [`input_iterator`](/docs/cpp/library/iterator/input_iterator) is a forward iterator, supporting equality comparison and multi-pass (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a `bidirectional_iterator` is a random-access iterator, supporting advancement in constant time and subscripting (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

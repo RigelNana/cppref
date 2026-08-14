@@ -1,0 +1,110 @@
+---
+title: "operator==(std::common_iterator)"
+description: "Compares the iterators and/or sentinels held by underlying std::variant member objects var."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template <class I2, std::sentinel_for<I> S2>
+    requires std::sentinel_for<S, I2>
+friend constexpr bool operator==( const common_iterator& x, 
+
+                                  const std::common_iterator<I2, S2>& y );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template <class I2, std::sentinel_for<I> S2>
+    requires std::sentinel_for<S, I2> && std::equality_comparable_with<I, I2>
+friend constexpr bool operator==( const common_iterator& x, 
+
+                                  const std::common_iterator<I2, S2>& y );`} />
+
+  {/* source:cpp-iterator-common-iterator-operator-cmp:0001 */}
+  Compares the iterators and/or sentinels held by underlying [`std::variant`](/docs/cpp/library/utility/variant) member objects `var`. Two incomparable iterators or two sentinels are considered equal.
+
+  {/* source:cpp-iterator-common-iterator-operator-cmp:0002 */}
+  The behavior is undefined if either `x` or `y` is in an invalid state, i.e. `x.var.valueless_by_exception() || y.var.valueless_by_exception()` is equal to `true`.
+
+  {/* source:cpp-iterator-common-iterator-operator-cmp:0003 */}
+  Let `i` be `x.var.index()` and `j` be `y.var.index()`.
+
+  <DeclarationDescription>
+    {/* source:cpp-iterator-common-iterator-operator-cmp:0004 */}
+    1. 1) If `i == j` (i.e. both `x` and `y` hold iterators or both hold sentinels), returns `true`, otherwise returns `std::get<i>(x.var) == std::get<j>(y.var)`.
+
+    {/* source:cpp-iterator-common-iterator-operator-cmp:0005 */}
+    2. 2) If `i == 1 && j == 1` (i.e. both `x` and `y` hold sentinels), returns `true`, otherwise returns `std::get<i>(x.var) == std::get<j>(y.var)`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0006 */}
+The `!=` operator is [`synthesized`](/docs/cpp/language/expressions/default_comparisons#Other_defaulted_comparison_operators) from `operator==`.
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0007 */}
+These function templates are not visible to ordinary [`unqualified`](/docs/cpp/language/basic_concepts/unqualified_lookup) or [`qualified lookup`](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [`argument-dependent lookup`](/docs/cpp/language/functions/adl) when `std::common_iterator<I>` is an associated class of the arguments.
+
+### Parameters
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0008 */}
+<ParameterList>
+  <Parameter name="x, y">iterator adaptors to compare</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0009 */}
+`true` if underlying iterators and/or sentinels are equal.
+
+### Example
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0010 */}
+```cpp
+#include <cassert>
+#include <iterator>
+ 
+int main()
+{
+    int a[]{0, 1, 2, 3};
+ 
+    using CI = std::common_iterator<
+                   std::counted_iterator<int*>,
+                   std::default_sentinel_t
+                   >;
+ 
+    CI i1{std::counted_iterator{a + 0, 2}};
+    CI i2{std::counted_iterator{a + 1, 2}};
+    CI i3{std::counted_iterator{a + 0, 3}};
+    CI i4{std::counted_iterator{a + 0, 0}};
+    CI s1{std::default_sentinel};
+    CI s2{std::default_sentinel};
+ 
+    assert((i1 == i2) == true);
+    assert((i1 == i3) == false);
+    assert((i2 == i3) == false);
+    assert((s1 == s2) == true);
+    assert((i1 == s1) == false);
+    assert((i4 == s1) == true);
+}
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3574} standard="C++20">
+    <PublishedBehavior>`variant` was fully constexpr (P2231R1) but `common_iterator` was not</PublishedBehavior>
+    <CorrectedBehavior>also made constexpr</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-common-iterator-operator-cmp:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator-`](/docs/cpp/library/iterator/common_iterator/operator-) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the distance between two iterator adaptors (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

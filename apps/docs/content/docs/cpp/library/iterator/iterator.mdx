@@ -1,0 +1,129 @@
+---
+title: "std::iterator"
+description: "std::iterator is the base class provided to simplify definitions of the required types for iterators."
+source_url: "https://en.cppreference.com/w/cpp/iterator/iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator-iterator:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" code={`template<
+    class Category,
+    class T,
+    class Distance = std::ptrdiff_t,
+    class Pointer = T*,
+    class Reference = T&
+> struct iterator;`} />
+  (deprecated in C++17)
+</DeclarationDoc>
+
+{/* source:cpp-iterator-iterator:0001 */}
+`std::iterator` is the base class provided to simplify definitions of the required types for iterators.
+
+### Template parameters
+
+{/* source:cpp-iterator-iterator:0002 */}
+<ParameterList>
+  <Parameter name="Category">the category of the iterator. Must be one of [iterator category tags](/docs/cpp/library/iterator/iterator_tags).</Parameter>
+  <Parameter name="T">the type of the values that can be obtained by dereferencing the iterator. This type should be `void` for output iterators.</Parameter>
+  <Parameter name="Distance">a type that can be used to identify distance between iterators</Parameter>
+  <Parameter name="Pointer">defines a pointer to the type iterated over (`T`)</Parameter>
+  <Parameter name="Reference">defines a reference to the type iterated over (`T`)</Parameter>
+</ParameterList>
+
+### Member types
+
+{/* source:cpp-iterator-iterator:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category`</DescriptionTerm>
+    <DescriptionBody>`Category`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`Distance`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pointer`</DescriptionTerm>
+    <DescriptionBody>`Pointer`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference`</DescriptionTerm>
+    <DescriptionBody>`Reference`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-iterator-iterator:0004 */}
+The following example shows how to implement an [input iterator](/docs/cpp/library/named_req/InputIterator) by inheriting from `std::iterator`
+
+```cpp
+#include <algorithm>
+#include <iostream>
+
+template<long FROM, long TO>
+class Range
+{
+public:
+    // member typedefs provided through inheriting from std::iterator
+    class iterator : public std::iterator<
+                                std::input_iterator_tag, // iterator_category
+                                long,                    // value_type
+                                long,                    // difference_type
+                                const long*,             // pointer
+                                long                     // reference
+                            > {
+        long num = FROM;
+    public:
+        explicit iterator(long _num = 0) : num(_num) {}
+        iterator& operator++() { num = TO >= FROM ? num + 1: num - 1; return *this; }
+        iterator operator++(int) { iterator retval = *this; ++(*this); return retval; }
+        bool operator==(iterator other) const { return num == other.num; }
+        bool operator!=(iterator other) const { return !(*this == other); }
+        reference operator*() const { return num; }
+    };
+    iterator begin() { return iterator(FROM); }
+    iterator end() { return iterator(TO >= FROM? TO + 1 : TO - 1); }
+};
+
+int main()
+{
+    // std::find requires an input iterator
+    auto range = Range<15, 25>();
+    auto itr = std::find(range.begin(), range.end(), 18);
+    std::cout << *itr << '\n'; // 18
+
+    // Range::iterator also satisfies range-based for requirements
+    for (long l : Range<3, 5>())
+        std::cout << l << ' '; // 3 4 5
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+18
+3 4 5
+```
+
+### See also
+
+{/* source:cpp-iterator-iterator:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator_traits`](/docs/cpp/library/iterator/iterator_traits)</DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of an iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`input_iterator_tag`, `output_iterator_tag`, `forward_iterator_tag`, `bidirectional_iterator_tag`, `random_access_iterator_tag`, `contiguous_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>empty class types used to indicate iterator categories (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

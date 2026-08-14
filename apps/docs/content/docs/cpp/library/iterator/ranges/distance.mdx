@@ -1,0 +1,168 @@
+---
+title: "std::ranges::distance"
+description: "Returns the number of hops from first to last, or the size of r as a signed integer."
+source_url: "https://en.cppreference.com/w/cpp/iterator/ranges/distance"
+language: "C++"
+---
+
+{/* source:cpp-iterator-ranges-distance:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+Call signature
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class I, std::sentinel_for<I> S >
+    requires (!std::sized_sentinel_for<S, I>)
+constexpr std::iter_difference_t<I>
+
+    distance( I first, S last );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class I, std::sized_sentinel_for<std::decay_t<I>> S >
+constexpr std::iter_difference_t<std::decay_t<I>>
+
+    distance( I&& first, S last );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< ranges::range R >
+constexpr ranges::range_difference_t<R>
+
+    distance( R&& r );`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-ranges-distance:0001 */}
+1. 1,2) Returns the number of hops from `first` to `last`.
+
+{/* source:cpp-iterator-ranges-distance:0002 */}
+2. 3) Returns the size of `r` as a signed integer.
+
+{/* source:cpp-iterator-ranges-distance:0003 */}
+The function-like entities described on this page are [algorithm function objects](/docs/cpp/library/algorithm/ranges#Algorithm_function_objects) (informally known as *niebloids*), that is:
+
+{/* source:cpp-iterator-ranges-distance:0004 */}
+- Explicit template argument lists cannot be specified when calling any of them.
+- None of them are visible to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+- When any of them are found by [normal unqualified lookup](/docs/cpp/language/basic_concepts/unqualified_lookup) as the name to the left of the function-call operator, [argument-dependent lookup](/docs/cpp/language/functions/adl) is inhibited.
+
+### Parameters
+
+{/* source:cpp-iterator-ranges-distance:0005 */}
+<ParameterList>
+  <Parameter name="first">iterator pointing to the first element</Parameter>
+  <Parameter name="last">sentinel denoting the end of the range `first` is an iterator to</Parameter>
+  <Parameter name="r">range to calculate the distance of</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-ranges-distance:0006 */}
+1) The number of increments needed to go from `first` to `last`.
+
+{/* source:cpp-iterator-ranges-distance:0007 */}
+2) `last - static_cast<const std::decay_t<I>&>(first)`.
+
+{/* source:cpp-iterator-ranges-distance:0008 */}
+3) If `R` models `ranges::sized_range`, returns `ranges::size(r)`; otherwise `ranges::distance(ranges::begin(r), ranges::end(r))`.
+
+### Complexity
+
+{/* source:cpp-iterator-ranges-distance:0009 */}
+1) Linear.
+
+{/* source:cpp-iterator-ranges-distance:0010 */}
+2) Constant.
+
+{/* source:cpp-iterator-ranges-distance:0011 */}
+3) If `R` models `ranges::sized_range` or if `std::sized_sentinel_for<ranges::sentinel_t<R>, ranges::iterator_t<R>>` is modeled, complexity is constant; otherwise linear.
+
+### Possible implementation
+
+{/* source:cpp-iterator-ranges-distance:0012 */}
+```cpp
+struct distance_fn
+{
+    template<class I, std::sentinel_for<I> S>
+        requires (!std::sized_sentinel_for<S, I>)
+    constexpr std::iter_difference_t<I> operator()(I first, S last) const
+    {
+        std::iter_difference_t<I> result = 0;
+        while (first != last)
+        {
+            ++first;
+            ++result;
+        }
+        return result;
+    }
+
+    template<class I, std::sized_sentinel_for<std::decay<I>> S>
+    constexpr std::iter_difference_t<I> operator()(const I& first, S last) const
+    {
+        return last - first;
+    }
+
+    template<ranges::range R>
+    constexpr ranges::range_difference_t<R> operator()(R&& r) const
+    {
+        if constexpr (ranges::sized_range<std::remove_cvref_t<R>>)
+            return static_cast<ranges::range_difference_t<R>>(ranges::size(r));
+        else
+            return (*this)(ranges::begin(r), ranges::end(r));
+    }
+};
+
+inline constexpr auto distance = distance_fn{};
+```
+
+### Example
+
+{/* source:cpp-iterator-ranges-distance:0013 */}
+```cpp
+#include <cassert>
+#include <forward_list>
+#include <iterator>
+#include <vector>
+
+int main() 
+{
+    std::vector<int> v{3, 1, 4};
+    assert(std::ranges::distance(v.begin(), v.end()) == 3);
+    assert(std::ranges::distance(v.end(), v.begin()) == -3);
+    assert(std::ranges::distance(v) == 3);
+
+    std::forward_list<int> l{2, 7, 1};
+    // auto size = std::ranges::size(l); // error: not a sizable range
+    auto size = std::ranges::distance(l); // OK, but aware O(N) complexity
+    assert(size == 3);
+}
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-ranges-distance:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-ranges-distance:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3392} standard="C++20">
+    <PublishedBehavior>overload `(1)` takes iterator by value, thus move-only iterator lvalue with a sized sentinel was rejected</PublishedBehavior>
+    <CorrectedBehavior>added overload `(2)`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3664} standard="C++20">
+    <PublishedBehavior>the resolution of [LWG issue 3392](https://cplusplus.github.io/LWG/issue3392) made `ranges::distance` reject array arguments</PublishedBehavior>
+    <CorrectedBehavior>accepts them</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-ranges-distance:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::advance`](/docs/cpp/library/iterator/ranges/advance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance or to a given bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::count` `ranges::count_if`](/docs/cpp/library/algorithm/ranges/count) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the number of elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`distance`](/docs/cpp/library/iterator/distance)</DescriptionTerm>
+    <DescriptionBody>returns the distance between two iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

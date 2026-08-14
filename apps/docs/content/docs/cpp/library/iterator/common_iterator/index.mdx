@@ -1,0 +1,149 @@
+---
+title: "std::common_iterator"
+description: "std::common_iterator is an iterator I / sentinel S adaptor that may represent a non-common range (where the types of I and S differ) as a common_range, by containing either an iterator or a sentinel, and defining the appropriate equality comparison operators operator==."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator:0000 */}
+<DeclarationDoc>
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+    requires ( !std::same_as<I, S> && std::copyable<I> )
+
+class common_iterator;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-common-iterator:0001 */}
+`std::common_iterator` is an iterator `I` / sentinel `S` adaptor that may represent a non-common range (where the types of `I` and `S` differ) as a [`common_range`](/docs/cpp/library/ranges/common_range), by containing either an iterator or a sentinel, and defining the appropriate equality comparison operators `operator==`.
+
+{/* source:cpp-iterator-common-iterator:0002 */}
+`std::common_iterator` can be used as a "bridge" between sequences represented by iterator/sentinel pair and legacy functions that expect [`common_range`](/docs/cpp/library/ranges/common_range)-like sequences.
+
+### Data members
+
+{/* source:cpp-iterator-common-iterator:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`var`</DescriptionTerm>
+    <DescriptionBody>an object of type [`std::variant<I, S>`](/docs/cpp/library/utility/variant) (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-iterator-common-iterator:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/iterator/common_iterator/common_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>constructs a new iterator adaptor (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/iterator/common_iterator/operator_assignment) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>assigns another iterator adaptor (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator* operator->`](/docs/cpp/library/iterator/common_iterator/operator_star_) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>accesses the pointed-to element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++ operator++(int)`](/docs/cpp/library/iterator/common_iterator/operator_arith) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances the iterator adaptor (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-iterator-common-iterator:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`](/docs/cpp/library/iterator/common_iterator/operator_cmp) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>compares the underlying iterators or sentinels (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator-`](/docs/cpp/library/iterator/common_iterator/operator-) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the distance between two iterator adaptors (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_move`](/docs/cpp/library/iterator/common_iterator/iter_move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>casts the result of dereferencing the underlying iterator to its associated rvalue reference type (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/iterator/common_iterator/iter_swap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>swaps the objects pointed to by two underlying iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper classes
+
+{/* source:cpp-iterator-common-iterator:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::incrementable_traits<std::common_iterator>`](/docs/cpp/library/iterator/common_iterator/incrementable_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the associated difference type of the `std::common_iterator` type (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::iterator_traits<std::common_iterator>`](/docs/cpp/library/iterator/common_iterator/iterator_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of the `std::common_iterator` type (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-iterator-common-iterator:0007 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <string>
+ 
+template<class ForwardIter>
+void fire(ForwardIter first, ForwardIter last)
+{
+    std::copy(first, last, std::ostream_iterator<std::string>{std::cout, " "});    
+}
+ 
+int main()
+{
+    std::list<std::string> stars{"Pollux", "Arcturus", "Mira", "Aldebaran", "Sun"};
+ 
+    using IT = std::common_iterator<
+                   std::counted_iterator<std::list<std::string>::iterator>,
+                   std::default_sentinel_t>;
+ 
+    fire(IT(std::counted_iterator(stars.begin(), stars.size() - 1)),
+         IT(std::default_sentinel));
+}
+```
+
+Output:
+
+```text
+Pollux Arcturus Mira Aldebaran
+```
+
+### References
+
+{/* source:cpp-iterator-common-iterator:0008 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 23.5.5 Common iterators [iterators.common]
+
+{/* source:cpp-iterator-common-iterator:0009 */}
+- C++20 standard (ISO/IEC 14882:2020):
+  - 23.5.4 Common iterators [iterators.common]
+
+### See also
+
+{/* source:cpp-iterator-common-iterator:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::common_range`](/docs/cpp/library/ranges/common_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a range has identical iterator and sentinel types (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::common_view views::common`](/docs/cpp/library/ranges/common_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>converts a [`view`](/docs/cpp/library/ranges/view) into a [`common_range`](/docs/cpp/library/ranges/common_range) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

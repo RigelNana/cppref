@@ -1,0 +1,135 @@
+---
+title: "iter_move(std::common_iterator)"
+description: "Casts the result of dereferencing the underlying iterator to its associated rvalue reference type."
+source_url: "https://en.cppreference.com/w/cpp/iterator/common_iterator/iter_move"
+language: "C++"
+---
+
+{/* source:cpp-iterator-common-iterator-iter-move:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`friend constexpr decltype(auto) iter_move( const std::common_iterator& i )
+    noexcept(noexcept(ranges::iter_move(std::declval<const I&>()))
+
+        requires std::input_iterator<I>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-iterator-common-iterator-iter-move:0001 */}
+Casts the result of dereferencing the underlying iterator to its associated rvalue reference type.
+
+{/* source:cpp-iterator-common-iterator-iter-move:0002 */}
+The function body is equivalent to: `return std::ranges::iter_move(std::get<I>(i.var));`
+
+{/* source:cpp-iterator-common-iterator-iter-move:0003 */}
+This function is not visible to ordinary [`unqualified`](/docs/cpp/language/basic_concepts/unqualified_lookup) or [`qualified lookup`](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [`argument-dependent lookup`](/docs/cpp/language/functions/adl) when `std::common_iterator<I, S>` is an associated class of the arguments.
+
+{/* source:cpp-iterator-common-iterator-iter-move:0004 */}
+If `i.var` does not hold an `I` object (i.e. an iterator), the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-iterator-common-iterator-iter-move:0005 */}
+<ParameterList>
+  <Parameter name="i">a source iterator adaptor</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-iterator-common-iterator-iter-move:0006 */}
+An rvalue reference or a prvalue temporary.
+
+### Complexity
+
+{/* source:cpp-iterator-common-iterator-iter-move:0007 */}
+Constant.
+
+### Example
+
+{/* source:cpp-iterator-common-iterator-iter-move:0008 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
+ 
+void print(auto const& rem, auto const& v)
+{
+    std::cout << rem << '[' << size(v) << "] { ";
+    for (int o{}; auto const& s : v)
+        std::cout << (o++ ? ", " : "") << std::quoted(s);
+    std::cout << " }\n";
+}
+ 
+int main()
+{
+    std::vector<std::string> p{"Andromeda", "Cassiopeia", "Phoenix"}, q;
+    print("p", p);
+    print("q", q);
+ 
+    using CTI = std::counted_iterator<std::vector<std::string>::iterator>;
+    using CI = std::common_iterator<CTI, std::default_sentinel_t>;
+    CI last{std::default_sentinel};
+ 
+    for (CI first{{p.begin(), 2}}; first != last; ++first)
+        q.emplace_back(/* ADL */ iter_move(first));
+ 
+    print("p", p);
+    print("q", q);
+}
+```
+
+Possible output:
+
+```text
+p[3] { "Andromeda", "Cassiopeia", "Phoenix" }
+q[0] {  }
+p[3] { "", "", "Phoenix" }
+q[2] { "Andromeda", "Cassiopeia" }
+```
+
+### Defect reports
+
+{/* source:cpp-iterator-common-iterator-iter-move:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator-common-iterator-iter-move:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3953} standard="C++20">
+    <PublishedBehavior>the return type was `std::iter_rvalue_reference_t<I>`</PublishedBehavior>
+    <CorrectedBehavior>changed to `decltype(auto)`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-iterator-common-iterator-iter-move:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_move`](/docs/cpp/library/iterator/ranges/iter_move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>casts the result of dereferencing an object to its associated rvalue reference type (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_move`](/docs/cpp/library/iterator/counted_iterator/iter_move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>casts the result of dereferencing the underlying iterator to its associated rvalue reference type (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move`](/docs/cpp/library/utility/move) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts the argument to an xvalue (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_if_noexcept`](/docs/cpp/library/utility/move_if_noexcept) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts the argument to an xvalue if the move constructor does not throw (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward`](/docs/cpp/library/utility/forward) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>forwards a function argument and use the type template argument to preserve its value category (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::move`](/docs/cpp/library/algorithm/ranges/move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::move_backward`](/docs/cpp/library/algorithm/ranges/move_backward) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>moves a range of elements to a new location in backwards order (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

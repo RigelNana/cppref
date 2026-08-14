@@ -1,0 +1,610 @@
+---
+title: "Iterator library"
+description: "The iterator library provides definitions for iterators, as well as iterator traits, adaptors, and utility functions."
+source_url: "https://en.cppreference.com/w/cpp/iterator"
+language: "C++"
+---
+
+{/* source:cpp-iterator:0000 */}
+Iterators are a generalization of [`pointers`](/docs/cpp/language/declarations/pointer) that allow a C++ program to work with different data structures (for example, [`containers`](/docs/cpp/library/container)<InlineRevision since="C++20"> and [`ranges`](/docs/cpp/library/ranges)</InlineRevision>) in a uniform manner. The iterator library provides definitions for iterators, as well as iterator traits, adaptors, and utility functions.
+
+{/* source:cpp-iterator:0001 */}
+Since iterators are an abstraction of pointers, their semantics are a generalization of most of the semantics of pointers in C++. This ensures that every [`function template`](/docs/cpp/language/templates/function_template) that takes iterators works as well with regular pointers.
+
+### Iterator categories
+
+{/* source:cpp-iterator:0002 */}
+There are <InlineRevision until="C++17">five</InlineRevision><InlineRevision since="C++17">six</InlineRevision> kinds of iterators: [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator), [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator), [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator), [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator), [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator)<InlineRevision since="C++17">, and [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator)</InlineRevision>. (See also [*LegacyIterator*](/docs/cpp/library/named_req/Iterator) for the most basic kind of iterator.)
+
+{/* source:cpp-iterator:0003 */}
+Instead of being defined by specific types, each category of iterator is defined by the operations that can be performed on it. This definition means that any type that supports the necessary operations can be used as an iterator -- for example, a pointer supports all of the operations required by [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator), so a pointer can be used anywhere a [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator) is expected.
+
+{/* source:cpp-iterator:0004 */}
+All of the iterator categories (except [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator)) can be organized into a hierarchy, where more powerful iterator categories (e.g. [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator)) support the operations of less powerful categories (e.g. [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator)). If an iterator falls into one of these categories and also satisfies the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator), then it is called a mutable iterator and supports both input and output. Non-mutable iterators are called constant iterators.
+
+{/* source:cpp-iterator:0005 */}
+<Revision since="C++20">
+Iterators are called *constexpr iterators* if all operations provided to meet iterator category requirements are [`constexpr functions`](/docs/cpp/language/declarations/constexpr#constexpr_function).
+</Revision>
+
+{/* source:cpp-iterator:0006 */}
+| Iterator category | Operations and storage requirement | | | | | | |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| | write | read | increment without multiple passes | increment with multiple passes | decrement | random access | contiguous storage |
+| [*LegacyIterator*](/docs/cpp/library/named_req/Iterator) | | | Required | | | | |
+| [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator) | Required | | Required | | | | |
+| [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator) (mutable if supports write operation) | | Required | Required | | | | |
+| [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator) (also satisfies [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator)) | | Required | Required | Required | | | |
+| [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator) (also satisfies [*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator)) | | Required | Required | Required | Required | | |
+| [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator) (also satisfies [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator)) | | Required | Required | Required | Required | Required | |
+| [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) [1] (also satisfies [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator)) | | Required | Required | Required | Required | Required | Required |
+
+{/* source:cpp-iterator:0007 */}
+1. ↑ [*LegacyContiguousIterator*](/docs/cpp/library/named_req/ContiguousIterator) category was only formally specified in C++17, but the iterators of [`std::vector`](/docs/cpp/library/container/vector), [`std::basic_string`](/docs/cpp/library/string/basic_string), [`std::array`](/docs/cpp/library/container/array), and [`std::valarray`](/docs/cpp/library/numeric/valarray), as well as pointers into C arrays are often treated as a separate category in pre-C++17 code.
+
+{/* source:cpp-iterator:0008 */}
+Note: A type supporting the required operations in a row of the table above does not necessarily fall into the corresponding category, see the category page for the complete list of requirements.
+
+### Definitions
+
+#### Types and writability
+
+{/* source:cpp-iterator:0009 */}
+An input iterator `i` supports the expression `*i`, resulting in a value of some [object type](/docs/cpp/language/basic_concepts/type-id) `T`, called the value type of the iterator.
+
+{/* source:cpp-iterator:0010 */}
+An output iterator `i` has a non-empty set of types that are <InlineRevision until="C++20">*writable*</InlineRevision><InlineRevision since="C++20">[`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable)</InlineRevision> to the iterator; for each such type `T`, the expression `*i = o` is valid where `o` is a value of type `T`.
+
+{/* source:cpp-iterator:0011 */}
+For every iterator type `X` <InlineRevision until="C++20">for which equality is defined</InlineRevision>, there is a corresponding signed <InlineRevision until="C++20">[`integer`](/docs/cpp/language/basic_concepts/types#Signed_and_unsigned_integer_types)</InlineRevision><InlineRevision since="C++20">[`integer-like`](/docs/cpp/library/iterator/is-integer-like)</InlineRevision> type called the *difference type* of the iterator.
+
+#### Dereferenceability and validity
+
+{/* source:cpp-iterator:0012 */}
+Just as a regular pointer to an [array](/docs/cpp/language/declarations/array) guarantees that there is a pointer value pointing past the last element of the array, so for any iterator type there is an iterator value that points past the last element of a corresponding sequence. Such a value is called a past-the-end value.
+
+{/* source:cpp-iterator:0013 */}
+Values of an iterator `i` for which the expression `*i` is defined are called dereferenceable. The [standard library](/docs/cpp/library/standard_library) never assumes that past-the-end values are dereferenceable.
+
+{/* source:cpp-iterator:0014 */}
+Iterators can also have singular values that are not associated with any sequence. Results of most expressions are undefined for singular values; the only exceptions are
+
+{/* source:cpp-iterator:0015 */}
+- the assignment of a non-singular value to an iterator that holds a singular value,
+- destroying an iterator that holds a singular value, and,
+- for iterators that meet the [*DefaultConstructible*](/docs/cpp/library/named_req/DefaultConstructible) requirements, using a [value-initialized](/docs/cpp/language/initialization/value_initialization) iterator as the source of a copy <InlineRevision since="C++11">or move</InlineRevision> operation.
+
+{/* source:cpp-iterator:0016 */}
+In these cases the singular value is overwritten the same way as any other value. Dereferenceable values are always non-singular.
+
+{/* source:cpp-iterator:0017 */}
+An invalid iterator is an iterator that may be singular.
+
+#### Ranges
+
+{/* source:cpp-iterator:0018 */}
+Most of the standard library's algorithmic templates that operate on data structures have interfaces that use ranges.
+
+{/* source:cpp-iterator:0019 */}
+<Revision until="C++20">
+An iterator `j` is called *reachable* from an iterator `i` if and only if there is a finite sequence of applications of the expression `++i` that makes `i == j`. If `j` is reachable from `i`, they refer to elements of the same sequence.
+
+A *range* is a pair of iterators that designate the beginning and end of the computation. A range `[i, i)` is an empty range; in general, a range `[i, j)` refers to the elements in the data structure starting with the element pointed to by `i` and up to but not including the element pointed to by `j`.
+
+Range `[i, j)` is *valid* if and only if `j` is reachable from `i`.
+</Revision>
+<Revision since="C++20">
+
+    A *range* can be denoted by either
+
+    - `[i, s)`, with an iterator `i` and a *sentinel* `s` that designate the beginning and end of the computation (`i` and `s` can have different types), or
+    - `i + [0, n)`, with an iterator `i` and a count `n` that designate the beginning and the number of elements to which the computation is to be applied.
+
+    ##### Iterator-sentinel range
+
+    An iterator and a sentinel denoting a range are comparable. `[i, s)` is empty if `i == s`; otherwise, `[i, s)` refers to the elements in the data structure starting with the element pointed to by `i` and up to but not including the element, if any, pointed to by the first iterator `j` such that `j == s`.
+
+    A sentinel `s` is called *reachable* from an iterator `i` if and only if there is a finite sequence of applications of the expression `++i` that makes `i == s`.
+
+    If `s` is reachable from `i`, `[i, s)` denotes a *valid* range.
+
+    ##### Counted range
+
+    A *counted range* `i + [0, n)` is empty if `n == 0`; otherwise, `i + [0, n)` refers to the n elements in the data structure starting with the element pointed to by `i` and up to but not including the element, if any, pointed to by the result of `n` applications of `++i`.
+
+    A counted range `i + [0, n)` is *valid* if and only if
+
+    - `n == 0`; or
+    - all of the following conditions are satisfied:
+      - `n` is positive,
+      - `i` is dereferenceable, and
+      - `++i + [0, --n)` is valid.
+
+</Revision>
+
+{/* source:cpp-iterator:0020 */}
+The result of the application of functions in the standard library to invalid ranges is undefined.
+
+### Iterator concepts (since C++20)
+
+{/* source:cpp-iterator:0021 */}
+A new system of iterators based on [concepts](/docs/cpp/language/templates/constraints) that are different from C++17 iterators. While the basic taxonomy remains similar, the requirements for individual iterator categories are somewhat different.
+
+{/* source:cpp-iterator:0022 */}
+Defined in namespace `std`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is indirectly readable by applying `operator *` (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a value can be written to an iterator's referenced object (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`semiregular`](/docs/cpp/library/concepts/semiregular) type can be incremented with pre- and post-increment operators (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`incrementable`](/docs/cpp/library/iterator/incrementable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that the increment operation on a [`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) type is [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) and that the type is [`equality_comparable`](/docs/cpp/library/concepts/equality_comparable) (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is-integer-like`, `is-signed-integer-like`](/docs/cpp/library/iterator/is-integer-like) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type behaves as a (signed) integer type (exposition-only concept*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`input_or_output_iterator`](/docs/cpp/library/iterator/input_or_output_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that objects of a type can be incremented and dereferenced (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sentinel_for`](/docs/cpp/library/iterator/sentinel_for) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies a type is a sentinel for an [`input_or_output_iterator`](/docs/cpp/library/iterator/input_or_output_iterator) type (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that the `-` operator can be applied to an iterator and a sentinel to calculate their difference in constant time (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`input_iterator`](/docs/cpp/library/iterator/input_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an input iterator, that is, its referenced values can be read and it can be both pre- and post-incremented (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`output_iterator`](/docs/cpp/library/iterator/output_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an output iterator for a given value type, that is, values of that type can be written to it and it can be both pre- and post-incremented (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an [`input_iterator`](/docs/cpp/library/iterator/input_iterator) is a forward iterator, supporting equality comparison and multi-pass (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) is a bidirectional iterator, supporting movement backwards (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator) is a random-access iterator, supporting advancement in constant time and subscripting (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) is a contiguous iterator, referring to elements that are contiguous in memory (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Iterator associated types (since C++20)
+
+{/* source:cpp-iterator:0023 */}
+Defined in namespace `std`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`incrementable_traits`](/docs/cpp/library/iterator/incrementable_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the difference type of a [`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_readable_traits`](/docs/cpp/library/iterator/indirectly_readable_traits) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the value type of an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_value_t`, `iter_reference_t`, `iter_const_reference_t`, `iter_difference_t`, `iter_rvalue_reference_t`, `iter_common_reference_t`](/docs/cpp/library/iterator/iter_t) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++23" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the associated types of an iterator (alias template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Iterator primitives
+
+{/* source:cpp-iterator:0024 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator_traits`](/docs/cpp/library/iterator/iterator_traits)</DescriptionTerm>
+    <DescriptionBody>provides uniform interface to the properties of an iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`input_iterator_tag`, `output_iterator_tag`, `forward_iterator_tag`, `bidirectional_iterator_tag`, `random_access_iterator_tag`, `contiguous_iterator_tag`](/docs/cpp/library/iterator/iterator_tags) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>empty class types used to indicate iterator categories (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/iterator/iterator) (deprecated in C++17)</DescriptionTerm>
+    <DescriptionBody>base class to ease the definition of required types for simple iterators (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Iterator customization points (since C++20)
+
+{/* source:cpp-iterator:0025 */}
+Defined in namespace `std::ranges`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_move`](/docs/cpp/library/iterator/ranges/iter_move) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>casts the result of dereferencing an object to its associated rvalue reference type (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/iterator/ranges/iter_swap) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>swaps the values referenced by two dereferenceable objects (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Algorithm concepts and utilities (since C++20)
+
+{/* source:cpp-iterator:0026 */}
+A set of concepts and related utility templates designed to ease constraining common algorithm operations.
+
+{/* source:cpp-iterator:0027 */}
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+Defined in namespace `std`
+
+#### Indirect callable concepts
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_unary_invocable`, `indirectly_regular_unary_invocable`](/docs/cpp/library/iterator/indirectly_unary_invocable) <InlineRevision since="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type can be invoked with the result of dereferencing an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirect_unary_predicate`](/docs/cpp/library/iterator/indirect_unary_predicate) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type, when invoked with the result of dereferencing an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type, satisfies [`predicate`](/docs/cpp/library/concepts/predicate) (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirect_binary_predicate`](/docs/cpp/library/iterator/indirect_binary_predicate) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type, when invoked with the result of dereferencing two [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) types, satisfies [`predicate`](/docs/cpp/library/concepts/predicate) (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirect_equivalence_relation`](/docs/cpp/library/iterator/indirect_equivalence_relation) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type, when invoked with the result of dereferencing two [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) types, satisfies [`equivalence_relation`](/docs/cpp/library/concepts/equivalence_relation) (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirect_strict_weak_order`](/docs/cpp/library/iterator/indirect_strict_weak_order) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type, when invoked with the result of dereferencing two [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) types, satisfies [`strict_weak_order`](/docs/cpp/library/concepts/strict_weak_order) (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Common algorithm requirements
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_movable`](/docs/cpp/library/iterator/indirectly_movable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that values may be moved from an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type to an [`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable) type (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_movable_storable`](/docs/cpp/library/iterator/indirectly_movable_storable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that values may be moved from an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type to an [`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable) type and that the move may be performed via an intermediate object (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_copyable`](/docs/cpp/library/iterator/indirectly_copyable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that values may be copied from an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type to an [`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable) type (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_copyable_storable`](/docs/cpp/library/iterator/indirectly_copyable_storable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that values may be copied from an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type to an [`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable) type and that the copy may be performed via an intermediate object (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_swappable`](/docs/cpp/library/iterator/indirectly_swappable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that the values referenced by two [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) types can be swapped (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirectly_comparable`](/docs/cpp/library/iterator/indirectly_comparable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that the values referenced by two [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) types can be compared (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`permutable`](/docs/cpp/library/iterator/permutable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies the common requirements of algorithms that reorder elements in place (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mergeable`](/docs/cpp/library/iterator/mergeable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies the requirements of algorithms that merge sorted sequences into an output sequence by copying elements (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sortable`](/docs/cpp/library/iterator/sortable) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies the common requirements of algorithms that permute sequences into ordered sequences (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Utilities
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`indirect_result_t`](/docs/cpp/library/iterator/indirect_result_t) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>computes the result of invoking a callable object on the result of dereferencing some set of [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) types (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`projected`](/docs/cpp/library/iterator/projected) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>helper template for specifying the constraints on algorithms that accept projections (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`projected_value_t`](/docs/cpp/library/iterator/projected_value_t) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>computes the value type of an [`indirectly_readable`](/docs/cpp/library/iterator/indirectly_readable) type by projection (alias template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Iterator adaptors
+
+{/* source:cpp-iterator:0028 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reverse_iterator`](/docs/cpp/library/iterator/reverse_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for reverse-order traversal (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_reverse_iterator`](/docs/cpp/library/iterator/make_reverse_iterator) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>creates a [`std::reverse_iterator`](/docs/cpp/library/iterator/reverse_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion at the end of a container (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back_inserter`](/docs/cpp/library/iterator/back_inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::back_insert_iterator`](/docs/cpp/library/iterator/back_insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front_insert_iterator`](/docs/cpp/library/iterator/front_insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion at the front of a container (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front_inserter`](/docs/cpp/library/iterator/front_inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::front_insert_iterator`](/docs/cpp/library/iterator/front_insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`insert_iterator`](/docs/cpp/library/iterator/insert_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for insertion into a container (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inserter`](/docs/cpp/library/iterator/inserter)</DescriptionTerm>
+    <DescriptionBody>creates a [`std::insert_iterator`](/docs/cpp/library/iterator/insert_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_const_iterator`](/docs/cpp/library/iterator/basic_const_iterator) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>iterator adaptor that converts an iterator into a constant iterator (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`const_iterator`](/docs/cpp/library/iterator/const_iterator#Helper_alias_templates) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>computes a constant iterator type for a given type (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`const_sentinel`](/docs/cpp/library/iterator/const_sentinel#Helper_alias_templates) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>computes a sentinel type to be used with constant iterators (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_const_iterator`](/docs/cpp/library/iterator/make_const_iterator#Helper_function_templates) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>creates a [`std::const_iterator`](/docs/cpp/library/iterator/const_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_const_sentinel`](/docs/cpp/library/iterator/make_const_sentinel#Helper_function_templates) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>creates a [`std::const_sentinel`](/docs/cpp/library/iterator/const_sentinel) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_iterator`](/docs/cpp/library/iterator/move_iterator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>iterator adaptor which dereferences to an rvalue (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_sentinel`](/docs/cpp/library/iterator/move_sentinel) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sentinel adaptor for [`std::move_iterator`](/docs/cpp/library/iterator/move_iterator) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_move_iterator`](/docs/cpp/library/iterator/make_move_iterator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates a [`std::move_iterator`](/docs/cpp/library/iterator/move_iterator) of type inferred from the argument (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`common_iterator`](/docs/cpp/library/iterator/common_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>adapts an iterator type and its sentinel into a common iterator type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`default_sentinel_t`](/docs/cpp/library/iterator/default_sentinel) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>default sentinel for use with iterators that know the bound of their range (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`counted_iterator`](/docs/cpp/library/iterator/counted_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>iterator adaptor that tracks the distance to the end of the range (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unreachable_sentinel_t`](/docs/cpp/library/iterator/unreachable_sentinel_t) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>sentinel that always compares unequal to any [`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) type (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Stream iterators
+
+{/* source:cpp-iterator:0029 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`istream_iterator`](/docs/cpp/library/iterator/istream_iterator)</DescriptionTerm>
+    <DescriptionBody>input iterator that reads from [`std::basic_istream`](/docs/cpp/library/io/basic_istream) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostream_iterator`](/docs/cpp/library/iterator/ostream_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`istreambuf_iterator`](/docs/cpp/library/iterator/istreambuf_iterator)</DescriptionTerm>
+    <DescriptionBody>input iterator that reads from [`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ostreambuf_iterator`](/docs/cpp/library/iterator/ostreambuf_iterator)</DescriptionTerm>
+    <DescriptionBody>output iterator that writes to [`std::basic_streambuf`](/docs/cpp/library/io/basic_streambuf) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Iterator operations
+
+{/* source:cpp-iterator:0030 */}
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`advance`](/docs/cpp/library/iterator/advance)</DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`distance`](/docs/cpp/library/iterator/distance)</DescriptionTerm>
+    <DescriptionBody>returns the distance between two iterators (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`next`](/docs/cpp/library/iterator/next) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>increment an iterator (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prev`](/docs/cpp/library/iterator/prev) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>decrement an iterator (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::advance`](/docs/cpp/library/iterator/ranges/advance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>advances an iterator by given distance or to a given bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::distance`](/docs/cpp/library/iterator/ranges/distance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the distance between an iterator and a sentinel, or between the beginning and end of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::next`](/docs/cpp/library/iterator/ranges/next) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>increment an iterator by a given distance or to a bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::prev`](/docs/cpp/library/iterator/ranges/prev) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>decrement an iterator by a given distance or to a bound (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Range access (since C++11)
+
+{/* source:cpp-iterator:0031 */}
+These non-member function templates provide a generic interface for containers, plain arrays, and [`std::initializer_list`](/docs/cpp/library/utility/initializer_list).
+
+{/* source:cpp-iterator:0032 */}
+Defined in header [`<array>`](/docs/cpp/library/headers/array)
+
+Defined in header [`<deque>`](/docs/cpp/library/headers/deque)
+
+Defined in header [`<flat_map>`](/docs/cpp/library/headers/flat_map)
+
+Defined in header [`<flat_set>`](/docs/cpp/library/headers/flat_set)
+
+Defined in header [`<forward_list>`](/docs/cpp/library/headers/forward_list)
+
+Defined in header [`<inplace_vector>`](/docs/cpp/library/headers/inplace_vector)
+
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+Defined in header [`<list>`](/docs/cpp/library/headers/list)
+
+Defined in header [`<map>`](/docs/cpp/library/headers/map)
+
+Defined in header [`<regex>`](/docs/cpp/library/headers/regex)
+
+Defined in header [`<set>`](/docs/cpp/library/headers/set)
+
+Defined in header [`<span>`](/docs/cpp/library/headers/span)
+
+Defined in header [`<string>`](/docs/cpp/library/headers/string)
+
+Defined in header [`<string_view>`](/docs/cpp/library/headers/string_view)
+
+Defined in header [`<unordered_map>`](/docs/cpp/library/headers/unordered_map)
+
+Defined in header [`<unordered_set>`](/docs/cpp/library/headers/unordered_set)
+
+Defined in header [`<vector>`](/docs/cpp/library/headers/vector)
+
+Defined in namespace `std`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`, `cbegin`](/docs/cpp/library/iterator/begin) <InlineRevision since="C++11" /> <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning of a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`, `cend`](/docs/cpp/library/iterator/end) <InlineRevision since="C++11" /> <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the end of a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rbegin`, `crbegin`](/docs/cpp/library/iterator/rbegin) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns a reverse iterator to the beginning of a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rend`, `crend`](/docs/cpp/library/iterator/rend) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns a reverse end iterator for a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`, `ssize`](/docs/cpp/library/iterator/size) <InlineRevision since="C++17" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the size of a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/iterator/empty) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/iterator/data) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains the pointer to the underlying array (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Defect reports
+
+{/* source:cpp-iterator:0033 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-iterator:0034 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={1181} standard="C++98">
+    <PublishedBehavior>array types could not be value types</PublishedBehavior>
+    <CorrectedBehavior>they can</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={208} standard="C++98">
+    <PublishedBehavior>past-the-end iterators were always non-singular</PublishedBehavior>
+    <CorrectedBehavior>they can be singular</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={278} standard="C++98">
+    <PublishedBehavior>the validity of an iterator was not defined</PublishedBehavior>
+    <CorrectedBehavior>defined to be always non-singular</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={324} standard="C++98">
+    <PublishedBehavior>output iterators had value types</PublishedBehavior>
+    <CorrectedBehavior>output iterators have writable types instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={407} standard="C++98">
+    <PublishedBehavior>singular iterators could not be destroyed</PublishedBehavior>
+    <CorrectedBehavior>allowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={408} standard="C++98">
+    <PublishedBehavior>singular iterators could not be copied</PublishedBehavior>
+    <CorrectedBehavior>allowed if they are value-initialized</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1185} standard="C++98">
+    <PublishedBehavior>[*LegacyForwardIterator*](/docs/cpp/library/named_req/ForwardIterator), [*LegacyBidirectionalIterator*](/docs/cpp/library/named_req/BidirectionalIterator) and [*LegacyRandomAccessIterator*](/docs/cpp/library/named_req/RandomAccessIterator) always satisfy [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator)</PublishedBehavior>
+    <CorrectedBehavior>they might not satisfy [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1210} standard="C++98">
+    <PublishedBehavior>the definition of iterator singularity and reachability depended on containers</PublishedBehavior>
+    <CorrectedBehavior>depend on sequences instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3009} standard="C++17">
+    <PublishedBehavior>[`<string_view>`](/docs/cpp/library/headers/string_view) did not provide the range access function templates</PublishedBehavior>
+    <CorrectedBehavior>provides these templates</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3987} standard="C++23">
+    <PublishedBehavior>[`<flat_map>`](/docs/cpp/library/headers/flat_map) and [`<flat_set>`](/docs/cpp/library/headers/flat_set) did not provide the range access function templates</PublishedBehavior>
+    <CorrectedBehavior>provide these templates</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
