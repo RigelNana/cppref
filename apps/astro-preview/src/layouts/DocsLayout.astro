@@ -1,0 +1,178 @@
+---
+import type { MarkdownHeading } from "astro";
+import { Braces, Github, Menu, Moon, PanelLeftClose, Sun, X } from "lucide-astro";
+import DocSearch from "@/components/DocSearch.astro";
+import NavTree from "@/components/NavTree.astro";
+import type { Breadcrumb, NavNode } from "@/lib/navigation";
+import { withBase } from "@/lib/urls";
+import "@/styles/global.css";
+
+interface Props {
+  breadcrumbs: Breadcrumb[];
+  currentId: string;
+  description: string;
+  headings: MarkdownHeading[];
+  navigation: NavNode[];
+  next?: NavNode | undefined;
+  previous?: NavNode | undefined;
+  sourceUrl?: string | undefined;
+  title: string;
+}
+
+const {
+  breadcrumbs,
+  currentId,
+  description,
+  headings,
+  navigation,
+  next,
+  previous,
+  sourceUrl,
+  title,
+} = Astro.props;
+const toc = headings.filter(({ depth }) => depth === 2 || depth === 3);
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <title>{title} · cppreference modern</title>
+    <script is:inline>
+      const savedTheme = localStorage.getItem("cppref-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", savedTheme ? savedTheme === "dark" : prefersDark);
+    </script>
+  </head>
+  <body>
+    <header class="mobile-header">
+      <button class="icon-button" data-sidebar-open aria-label="Open navigation"><Menu aria-hidden="true" /></button>
+      <a class="brand" href={withBase("/")}><Braces aria-hidden="true" /><span>cppreference</span></a>
+      <button class="icon-button theme-toggle" data-theme-toggle aria-label="Toggle color theme">
+        <Sun class="theme-icon theme-icon--sun" aria-hidden="true" />
+        <Moon class="theme-icon theme-icon--moon" aria-hidden="true" />
+      </button>
+    </header>
+
+    <div class="sidebar-scrim" data-sidebar-close></div>
+    <aside class="docs-sidebar" aria-label="Documentation navigation">
+      <div class="sidebar-brand-row">
+        <a class="brand" href={withBase("/")}><Braces aria-hidden="true" /><span>cppreference</span></a>
+        <button class="icon-button sidebar-close" data-sidebar-toggle aria-label="Toggle navigation">
+          <PanelLeftClose class="desktop-only" aria-hidden="true" />
+          <X class="mobile-only" aria-hidden="true" />
+        </button>
+      </div>
+      <DocSearch />
+      <nav class="sidebar-navigation" aria-label="Reference sections">
+        <NavTree nodes={navigation} currentId={currentId} />
+      </nav>
+      <div class="sidebar-footer">
+        <a class="icon-button" href="https://github.com/RigelNana/cppref" aria-label="GitHub repository"><Github aria-hidden="true" /></a>
+        <button class="icon-button theme-toggle" data-theme-toggle aria-label="Toggle color theme">
+          <Sun class="theme-icon theme-icon--sun" aria-hidden="true" />
+          <Moon class="theme-icon theme-icon--moon" aria-hidden="true" />
+        </button>
+      </div>
+    </aside>
+    <button class="icon-button sidebar-reopen" data-sidebar-toggle aria-label="Open navigation">
+      <Menu aria-hidden="true" />
+    </button>
+
+    <div class="docs-frame">
+      <main class="docs-main">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          {
+            breadcrumbs.map((crumb, index) => (
+              <>
+                {index > 0 && <span aria-hidden="true">/</span>}
+                {crumb.href && index < breadcrumbs.length - 1
+                  ? <a href={withBase(crumb.href)}>{crumb.title}</a>
+                  : <span aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}>{crumb.title}</span>}
+              </>
+            ))
+          }
+        </nav>
+
+        <article class="docs-article prose">
+          <header class="article-header">
+            <h1>{title}</h1>
+          </header>
+          <slot />
+        </article>
+
+        <nav class="page-pager" aria-label="Adjacent pages">
+          {
+            previous ? (
+              <a class="page-pager__previous" href={withBase(previous.href ?? "/docs")}>
+                <span>Previous</span>
+                <strong>{previous.title}</strong>
+              </a>
+            ) : <span />
+          }
+          {
+            next && (
+              <a class="page-pager__next" href={withBase(next.href ?? "/docs")}>
+                <span>Next</span>
+                <strong>{next.title}</strong>
+              </a>
+            )
+          }
+        </nav>
+
+        {
+          sourceUrl && (
+            <footer class="article-footer">
+              <a href={sourceUrl} rel="noreferrer">View source on cppreference</a>
+            </footer>
+          )
+        }
+      </main>
+
+      {
+        toc.length > 0 && (
+          <aside class="docs-toc" aria-label="On this page">
+            <p>On this page</p>
+            <ol>
+              {toc.map((heading) => (
+                <li data-depth={heading.depth}><a href={`#${heading.slug}`}>{heading.text}</a></li>
+              ))}
+            </ol>
+          </aside>
+        )
+      }
+    </div>
+
+    <script>
+      const root = document.documentElement;
+      const themeButtons = document.querySelectorAll("[data-theme-toggle]");
+      for (const button of themeButtons) {
+        button.addEventListener("click", () => {
+          const dark = !root.classList.contains("dark");
+          root.classList.toggle("dark", dark);
+          localStorage.setItem("cppref-theme", dark ? "dark" : "light");
+        });
+      }
+
+      const body = document.body;
+      document.querySelector("[data-sidebar-open]")?.addEventListener("click", () => body.classList.add("sidebar-open"));
+      for (const close of document.querySelectorAll("[data-sidebar-close]")) {
+        close.addEventListener("click", () => body.classList.remove("sidebar-open"));
+      }
+      for (const toggle of document.querySelectorAll("[data-sidebar-toggle]")) {
+        toggle.addEventListener("click", () => {
+          if (window.matchMedia("(max-width: 900px)").matches) {
+            body.classList.remove("sidebar-open");
+          } else {
+            root.classList.toggle("sidebar-collapsed");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

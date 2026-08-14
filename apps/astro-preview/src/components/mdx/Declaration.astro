@@ -1,0 +1,39 @@
+---
+import { highlightCode } from "@/lib/highlight";
+import { revisionLabel, type RevisionRange } from "@/lib/revisions";
+import RevisionMark from "./RevisionMark.astro";
+
+interface Props extends RevisionRange {
+  code: string;
+  grammar?: boolean;
+  id?: string;
+  language: "c" | "cpp";
+}
+
+const { code, grammar = false, id, language, removed, since, until } = Astro.props;
+const revision = since || until || removed ? revisionLabel({ removed, since, until }) : undefined;
+const highlighted = grammar ? undefined : await highlightCode(code, language);
+const grammarParts = grammar
+  ? code.split(/(\(optional\)|attr|decl-specifier-seq|abstract-declarator|declarator|initializer)/gu)
+  : [];
+---
+
+<div class="cpp-declaration" data-language={language}>
+  {id && <span class="cpp-declaration__id">{id}</span>}
+  {
+    grammar ? (
+      <code class="cpp-syntax">
+        {
+          grammarParts.map((part) => {
+            if (part === "(optional)") return <span class="cpp-syntax-token cpp-syntax-token--optional">{part}</span>;
+            if (part === "attr" || part === "decl-specifier-seq" || part === "abstract-declarator" || part === "declarator" || part === "initializer") return <span class="cpp-syntax-token cpp-syntax-token--grammar">{part}</span>;
+            return part;
+          })
+        }
+      </code>
+    ) : (
+      <span class="cpp-declaration__code" set:html={highlighted} />
+    )
+  }
+  {revision && <RevisionMark class="cpp-declaration__standard">{revision}</RevisionMark>}
+</div>

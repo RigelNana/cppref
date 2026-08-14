@@ -1,0 +1,54 @@
+---
+import { ChevronRight } from "lucide-astro";
+import type { NavNode } from "@/lib/navigation";
+import { withBase } from "@/lib/urls";
+
+interface Props {
+  currentId: string;
+  depth?: number;
+  nodes: NavNode[];
+}
+
+const { currentId, depth = 0, nodes } = Astro.props;
+---
+
+<ul class:list={["nav-tree", `nav-tree--depth-${depth}`]}>
+  {
+    nodes.map((node) => {
+      const active = currentId === node.id || currentId === `${node.id}/index` || currentId.startsWith(`${node.id}/`);
+      const current = currentId === node.id || currentId === `${node.id}/index`;
+      if (node.kind === "page") {
+        return (
+          <li>
+            <a class:list={["nav-link", { "is-current": current }]} href={withBase(node.href ?? "/docs")} aria-current={current ? "page" : undefined}>
+              {node.title}
+            </a>
+          </li>
+        );
+      }
+
+      if (!active && node.href) {
+        return (
+          <li>
+            <a class="nav-link nav-folder-link" href={withBase(node.href)}>
+              <span>{node.title}</span>
+              <ChevronRight aria-hidden="true" />
+            </a>
+          </li>
+        );
+      }
+
+      return (
+        <li>
+          <details class="nav-folder" open={active || depth === 0}>
+            <summary class:list={["nav-summary", { "is-current": current }]}>
+              {node.href ? <a href={withBase(node.href)} aria-current={current ? "page" : undefined}>{node.title}</a> : <span>{node.title}</span>}
+              <ChevronRight aria-hidden="true" />
+            </summary>
+            {node.children && <Astro.self currentId={currentId} depth={depth + 1} nodes={node.children} />}
+          </details>
+        </li>
+      );
+    })
+  }
+</ul>

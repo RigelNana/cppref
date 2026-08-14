@@ -1,0 +1,78 @@
+---
+import { Search } from "lucide-astro";
+import { withBase } from "@/lib/urls";
+
+const searchUrl = withBase("/search.json");
+---
+
+<div class="doc-search" data-doc-search data-search-url={searchUrl}>
+  <Search aria-hidden="true" />
+  <input aria-label="Search documentation" autocomplete="off" placeholder="Search" type="search" />
+  <kbd>Ctrl K</kbd>
+  <div class="doc-search__results" hidden></div>
+</div>
+
+<script>
+  interface SearchEntry {
+    description: string;
+    href: string;
+    title: string;
+  }
+
+  const root = document.querySelector<HTMLElement>("[data-doc-search]");
+  const input = root?.querySelector<HTMLInputElement>("input");
+  const results = root?.querySelector<HTMLElement>(".doc-search__results");
+  let index: Promise<SearchEntry[]> | undefined;
+
+  function closeResults() {
+    if (results) results.hidden = true;
+  }
+
+  async function loadIndex(): Promise<SearchEntry[]> {
+    if (!root?.dataset.searchUrl) return [];
+    index ??= fetch(root.dataset.searchUrl).then((response) => response.json() as Promise<SearchEntry[]>);
+    return index;
+  }
+
+  input?.addEventListener("input", async () => {
+    if (!results) return;
+    const query = input.value.trim().toLocaleLowerCase();
+    if (query.length < 2) {
+      closeResults();
+      return;
+    }
+    const entries = await loadIndex();
+    const matches = entries
+      .filter((entry) => `${entry.title} ${entry.description}`.toLocaleLowerCase().includes(query))
+      .slice(0, 10);
+    results.replaceChildren();
+    for (const entry of matches) {
+      const link = document.createElement("a");
+      const title = document.createElement("strong");
+      const description = document.createElement("span");
+      link.href = entry.href;
+      title.textContent = entry.title;
+      description.textContent = entry.description;
+      link.append(title, description);
+      results.append(link);
+    }
+    if (matches.length === 0) {
+      const empty = document.createElement("p");
+      empty.textContent = "No matching documentation";
+      results.append(empty);
+    }
+    results.hidden = false;
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
+      event.preventDefault();
+      input?.focus();
+    }
+    if (event.key === "Escape") closeResults();
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (root && event.target instanceof Node && !root.contains(event.target)) closeResults();
+  });
+</script>

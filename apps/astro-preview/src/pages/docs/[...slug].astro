@@ -1,0 +1,40 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getCollection, render } from "astro:content";
+import { mdxComponents } from "@/components/mdx";
+import DocsLayout from "@/layouts/DocsLayout.astro";
+import { adjacentPages, breadcrumbsFor, buildNavigation } from "@/lib/navigation";
+
+interface Props {
+  entry: CollectionEntry<"docs">;
+}
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  return entries.filter((entry) => entry.id !== "index").map((entry) => ({
+    params: { slug: entry.id.replace(/\/index$/u, "") },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const entries = await getCollection("docs");
+const navigation = buildNavigation(entries);
+const breadcrumbs = breadcrumbsFor(navigation, entry.id);
+const { next, previous } = adjacentPages(navigation, entry.id);
+const { Content, headings } = await render(entry);
+---
+
+<DocsLayout
+  breadcrumbs={breadcrumbs}
+  currentId={entry.id}
+  description={entry.data.description}
+  headings={headings}
+  navigation={navigation}
+  next={next}
+  previous={previous}
+  sourceUrl={entry.data.source_url}
+  title={entry.data.title}
+>
+  <Content components={mdxComponents} />
+</DocsLayout>

@@ -1,0 +1,31 @@
+---
+import { highlightCode } from "@/lib/highlight";
+import RevisionMark from "./mdx/RevisionMark.astro";
+
+interface DeclarationVariant {
+  code: string;
+  standard?: string;
+}
+
+interface Props {
+  language: "c" | "cpp";
+  variants: DeclarationVariant[];
+}
+
+const { language, variants } = Astro.props;
+const rows = await Promise.all(variants.map(async (variant) => ({
+  ...variant,
+  highlighted: await highlightCode(variant.code, language),
+})));
+---
+
+<div class="cpp-declaration-list">
+  {
+    rows.map(({ highlighted, standard }) => (
+      <div class="cpp-declaration-line">
+        <div class="cpp-declaration-line__code" set:html={highlighted} />
+        {standard && <RevisionMark class="cpp-declaration-line__standard">{standard}</RevisionMark>}
+      </div>
+    ))
+  }
+</div>
