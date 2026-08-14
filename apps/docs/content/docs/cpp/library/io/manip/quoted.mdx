@@ -1,0 +1,172 @@
+---
+title: "std::quoted"
+description: "Allows insertion and extraction of quoted strings, such as the ones found in CSV or XML."
+source_url: "https://en.cppreference.com/w/cpp/io/manip/quoted"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-quoted:0000 */}
+<DeclarationDoc>
+Defined in header [`<iomanip>`](/docs/cpp/library/headers/iomanip)
+
+  <Declaration id="1" language="cpp" since="C++14" code={String.raw`template< class CharT >
+/*unspecified*/ quoted( const CharT* s,
+
+                        CharT delim = CharT('"'), CharT escape = CharT('\\') );`} />
+  <Declaration id="2" language="cpp" since="C++14" code={String.raw`template< class CharT, class Traits, class Allocator >
+/*unspecified*/ quoted( const std::basic_string<CharT, Traits, Allocator>& s,
+
+                        CharT delim = CharT('"'), CharT escape = CharT('\\') );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={String.raw`template< class CharT, class Traits>
+/*unspecified*/ quoted( std::basic_string_view<CharT, Traits> s,
+
+                        CharT delim = CharT('"'), CharT escape = CharT('\\') );`} />
+  <Declaration id="4" language="cpp" since="C++14" code={String.raw`template< class CharT, class Traits, class Allocator >
+/*unspecified*/ quoted( std::basic_string<CharT, Traits, Allocator>& s,
+
+                        CharT delim=CharT('"'), CharT escape=CharT('\\') );`} />
+</DeclarationDoc>
+
+<DeclarationDescription>
+  {/* source:cpp-io-manip-quoted:0001 */}
+  Allows insertion and extraction of quoted strings, such as the ones found in [CSV](https://en.wikipedia.org/wiki/Comma-separated_values) or [XML](https://en.wikipedia.org/wiki/XML).
+
+  {/* source:cpp-io-manip-quoted:0002 */}
+  1. 1-3) When used in an expression `out << quoted(s, delim, escape)`, where `out` is an output stream with `char_type` equal to `CharT` and, for overloads (2,3), `traits_type` equal to `Traits`, behaves as a [FormattedOutputFunction](/docs/cpp/library/named_req/FormattedOutputFunction), which inserts into `out` a sequence of characters `seq` constructed as follows:
+
+  {/* source:cpp-io-manip-quoted:0003 */}
+  a) First, the character `delim` is added to the sequence.
+
+  {/* source:cpp-io-manip-quoted:0004 */}
+  b) Then every character from `s`, except if the next character to output equals `delim` or equals `escape` (as determined by the stream's `traits_type::eq`), then first appends an extra copy of `escape`.
+
+  {/* source:cpp-io-manip-quoted:0005 */}
+  c) In the end, `delim` is appended to `seq` once more.
+
+  {/* source:cpp-io-manip-quoted:0006 */}
+  Then, if `seq.size() < out.width()`, adds `out.width()-seq.size()` copies of the fill character `out.fill()` either at the end of the sequence (if `ios_base::left` is set in `out.flags()`) or at the beginning of the sequence (in all other cases).
+
+  {/* source:cpp-io-manip-quoted:0007 */}
+  Finally, outputs each character from the resulting sequence as if by calling `out.rdbuf()->sputn(seq, n)`, where `n=std::max(out.width(), seq.size())` and `out.width(0)` to cancel the effects of [`std::setw`](/docs/cpp/library/io/manip/setw), if any.
+
+  {/* source:cpp-io-manip-quoted:0008 */}
+  1. 4) When used in an expression `in >> quoted(s, delim, escape)`, where `in` is an input stream with `char_type` equal to `CharT` and `traits_type` equal to `Traits`, extracts characters from `in`, using [`std::basic_istream::operator>>`](/docs/cpp/library/io/basic_istream/operator_gtgt), according to the following rules:
+
+</DeclarationDescription>
+
+{/* source:cpp-io-manip-quoted:0009 */}
+a) If the first character extracted does not equal `delim` (as determined by the stream's `traits_type::eq`), then simply performs `in >> s`.
+
+{/* source:cpp-io-manip-quoted:0010 */}
+b) Otherwise (if the first character is the delimiter):
+
+{/* source:cpp-io-manip-quoted:0011 */}
+1) Turns off the `skipws` flag on the input stream.
+
+{/* source:cpp-io-manip-quoted:0012 */}
+2) Empties the destination string by calling `s.clear()`.
+
+{/* source:cpp-io-manip-quoted:0013 */}
+3) Extracts characters from `in` and appends them to `s`, except that whenever an `escape` character is extracted, it is ignored and the next character is appended to `s`. Extraction stops when `!in == true` or when an unescaped `delim` character is found.
+
+{/* source:cpp-io-manip-quoted:0014 */}
+4) Discards the final (unescaped) `delim` character.
+
+{/* source:cpp-io-manip-quoted:0015 */}
+5) Restores the `skipws` flag on the input stream to its original value.
+
+### Parameters
+
+{/* source:cpp-io-manip-quoted:0016 */}
+<ParameterList>
+  <Parameter name="s">the string to insert or extract</Parameter>
+  <Parameter name="delim">the character to use as the delimiter, defaults to `"`</Parameter>
+  <Parameter name="escape">the character to use as the escape character, defaults to `\`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-quoted:0017 */}
+Returns an object of unspecified type such that the described behavior takes place.
+
+### Exceptions
+
+{/* source:cpp-io-manip-quoted:0018 */}
+Throws [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure) if `operator>>` or `operator<<` throws.
+
+### Notes
+
+{/* source:cpp-io-manip-quoted:0019 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_quoted_string_io`](/docs/cpp/library/feature_test#cpp_lib_quoted_string_io) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_lib_quoted_string_io_201304L) | C++14 | `std::quoted` |
+
+### Example
+
+{/* source:cpp-io-manip-quoted:0020 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
+void default_delimiter()
+{
+    const std::string in = "std::quoted() quotes this string and embedded \"quotes\" too";
+    std::stringstream ss;
+    ss << std::quoted(in);
+    std::string out;
+    ss >> std::quoted(out);
+
+    std::cout << "Default delimiter case:\n"
+                 "read in     [" << in << "]\n"
+                 "stored as   [" << ss.str() << "]\n"
+                 "written out [" << out << "]\n\n";
+}
+
+void custom_delimiter()
+{
+    const char delim{'$'};
+    const char escape{'%'};
+
+    const std::string in = "std::quoted() quotes this string and embedded $quotes$ $too";
+    std::stringstream ss;
+    ss << std::quoted(in, delim, escape);
+    std::string out;
+    ss >> std::quoted(out, delim, escape);
+
+    std::cout << "Custom delimiter case:\n"
+                 "read in     [" << in << "]\n"
+                 "stored as   [" << ss.str() << "]\n"
+                 "written out [" << out << "]\n\n";
+}
+
+int main()
+{
+    default_delimiter();
+    custom_delimiter();
+}
+```
+
+Output:
+
+```text
+Default delimiter case:
+read in     [std::quoted() quotes this string and embedded "quotes" too]
+stored as   ["std::quoted() quotes this string and embedded \"quotes\" too"]
+written out [std::quoted() quotes this string and embedded "quotes" too]
+
+Custom delimiter case:
+read in     [std::quoted() quotes this string and embedded $quotes$ $too]
+stored as   [$std::quoted() quotes this string and embedded %$quotes%$ %$too$]
+written out [std::quoted() quotes this string and embedded $quotes$ $too]
+```
+
+### See also
+
+{/* source:cpp-io-manip-quoted:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`format`](/docs/cpp/library/text/format/format) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>stores formatted representation of the arguments in a new string <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

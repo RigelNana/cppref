@@ -1,0 +1,169 @@
+---
+title: "operator>>(std::basic_istream)"
+description: "Performs character input operations."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/operator_gtgt2"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0000 */}
+<DeclarationDoc>
+Defined in header [`<istream>`](/docs/cpp/library/headers/istream)
+
+  <Declaration id="1" language="cpp" code={`template< class CharT, class Traits >
+basic_istream<CharT, Traits>&
+    operator>>( basic_istream<CharT, Traits>& st, CharT& ch );
+
+template< class Traits >
+basic_istream<char, Traits>&
+    operator>>( basic_istream<char, Traits>& st, signed char& ch );
+
+template< class Traits >
+basic_istream<char, Traits>&
+
+    operator>>( basic_istream<char, Traits>& st, unsigned char& ch );`} />
+  <Declaration id="2" language="cpp" until="C++20" code={`template< class CharT, class Traits>
+basic_istream<CharT, Traits>&
+    operator>>( basic_istream<CharT, Traits>& st, CharT* s );
+
+template< class Traits >
+basic_istream<char, Traits>&
+    operator>>( basic_istream<char, Traits>& st, signed char* s );
+
+template< class Traits >
+basic_istream<char, Traits>&
+
+    operator>>( basic_istream<char, Traits>& st, unsigned char* s );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class CharT, class Traits, std::size_t N >
+basic_istream<CharT, Traits>&
+    operator>>( basic_istream<CharT, Traits>& st, CharT (&s)[N] );
+
+template< class Traits, std::size_t N >
+basic_istream<char, Traits>&
+    operator>>( basic_istream<char, Traits>& st, signed char (&s)[N] );
+
+template< class Traits, std::size_t N >
+basic_istream<char, Traits>&
+
+    operator>>( basic_istream<char, Traits>& st, unsigned char (&s)[N] );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class Istream, class T >
+Istream&&
+
+    operator>>( Istream&& st, T&& value );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-basic-istream-operator-gtgt2:0001 */}
+    1,2. Performs character input operations.
+
+    {/* source:cpp-io-basic-istream-operator-gtgt2:0002 */}
+    1. Behaves as a [FormattedInputFunction](/docs/cpp/library/named_req/FormattedInputFunction). After constructing and checking the sentry object, which may skip leading whitespace, extracts a character and stores it to `ch`. If no character is available, sets [`failbit`](/docs/cpp/library/io/ios_base/iostate) (in addition to [`eofbit`](/docs/cpp/library/io/ios_base/iostate) that is set as required of a FormattedInputFunction).
+
+    {/* source:cpp-io-basic-istream-operator-gtgt2:0003 */}
+    2. Behaves as a [FormattedInputFunction](/docs/cpp/library/named_req/FormattedInputFunction). After constructing and checking the sentry object, which may skip leading whitespace, extracts successive characters and stores them at successive locations of a character array whose first element is pointed to by `s`. The extraction stops if any of the following conditions is met:
+
+    - A whitespace character (as determined by the [`ctype<CharT>`](/docs/cpp/library/text/locale/ctype) facet) is found. The whitespace character is not extracted.
+    - If `st.width()` is greater than zero, `st.width() - 1` characters are stored.
+    - `n - 1` characters are stored, where `n` is defined as follows: If `st.width()` is greater than zero, `std::min(std::size_t(st.width()), N)`; otherwise, `n` is `N`.
+    - End of file occurs in the input sequence (this also sets [`eofbit`](/docs/cpp/library/io/ios_base/iostate)).
+
+    In either case, an additional null character value `CharT()` is stored at the end of the output. If no characters were extracted, sets [`failbit`](/docs/cpp/library/io/ios_base/iostate) (the null character is still written, to the first position in the output). Finally, calls `st.width(0)` to cancel the effects of [`std::setw`](/docs/cpp/library/io/manip/setw), if any.
+
+    {/* source:cpp-io-basic-istream-operator-gtgt2:0004 */}
+    3. Calls the appropriate extraction operator, given an rvalue reference to an input stream object (equivalent to `st >> std::forward<T>(value)`). This overload participates in overload resolution only if `st >> std::forward<T>(value)` is well-formed and `Istream` is a class type publicly and unambiguously derived from [`std::ios_base`](/docs/cpp/library/io/ios_base).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Notes
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0005 */}
+Extracting a single character that is the last character of the stream does not set `eofbit`: this is different from other formatted input functions, such as extracting the last integer with `operator>>`, but this behavior matches the behavior of [`std::scanf`](/docs/cpp/library/io/c/scanf) with `"%c"` format specifier.
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0006 */}
+<ParameterList>
+  <Parameter name="st">input stream to extract the data from</Parameter>
+  <Parameter name="ch">reference to a character to store the extracted character to</Parameter>
+  <Parameter name="s"><InlineRevision until="C++20">pointer to</InlineRevision> a character array to store the extracted characters to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0007 */}
+1,2. `st`
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0008 */}
+3. `std::move(st)`
+
+### Example
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0009 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    std::string input = "n greetings";
+    std::istringstream stream(input);
+ 
+    char c;
+    const int MAX = 6;
+    char cstr[MAX];
+ 
+    stream >> c >> std::setw(MAX) >> cstr;
+    std::cout << "c = " << c << '\n'
+              << "cstr = " << cstr << '\n';
+ 
+    double f;
+    std::istringstream("1.23") >> f; // rvalue stream extraction
+    std::cout << "f = " << f << '\n';
+}
+```
+
+Output:
+
+```text
+c = n
+cstr = greet
+f = 1.23
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={13} standard="C++98">
+    <PublishedBehavior>the definition of `n` mentioned a non-existing name `eos`</PublishedBehavior>
+    <CorrectedBehavior>replaced with `CharT()`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={68} standard="C++98">
+    <PublishedBehavior>no null characters were stored at the end of the output for overload (2)</PublishedBehavior>
+    <CorrectedBehavior>stores a null character</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={1203} standard="C++98">
+    <PublishedBehavior>overload for rvalue stream returned lvalue reference to the base class</PublishedBehavior>
+    <CorrectedBehavior>returns rvalue reference<br />to the derived class</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2328} standard="C++98">
+    <PublishedBehavior>overload for rvalue stream required another argument to be lvalue</PublishedBehavior>
+    <CorrectedBehavior>made to accept rvalue</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2534} standard="C++98">
+    <PublishedBehavior>overload for rvalue stream was not constrained</PublishedBehavior>
+    <CorrectedBehavior>constrained</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-operator-gtgt2:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator>>`](/docs/cpp/library/io/basic_istream/operator_gtgt)</DescriptionTerm>
+    <DescriptionBody>extracts formatted data (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

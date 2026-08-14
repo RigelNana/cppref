@@ -1,0 +1,124 @@
+---
+title: "std::basic_istream<CharT,Traits>::sync"
+description: "Synchronizes the input buffer with the associated data source."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/sync"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-sync:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`int sync();`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-istream-sync:0001 */}
+Synchronizes the input buffer with the associated data source.
+
+{/* source:cpp-io-basic-istream-sync:0002 */}
+Behaves as [UnformattedInputFunction](/docs/cpp/library/named_req/UnformattedInputFunction), except that [`gcount()`](/docs/cpp/library/io/basic_istream/gcount) is not affected. After constructing and checking the sentry object,
+
+{/* source:cpp-io-basic-istream-sync:0003 */}
+If [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf) is a null pointer, returns `-1`.
+
+{/* source:cpp-io-basic-istream-sync:0004 */}
+Otherwise, calls `rdbuf()->pubsync()`. If that function returns `-1`, calls `setstate(badbit)` and returns `-1`. Otherwise, returns `0`.
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-sync:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-io-basic-istream-sync:0006 */}
+`0` on success, `-1` on failure or if the stream does not support this operation (is unbuffered).
+
+### Notes
+
+{/* source:cpp-io-basic-istream-sync:0007 */}
+As with [`readsome()`](/docs/cpp/library/io/basic_istream/readsome), it is implementation-defined whether this function does anything with library-supplied streams. The intent is typically for the next read operation to pick up any changes that may have been made to the associated input sequence after the stream buffer last filled its get area. To achieve that, `sync()` may empty the get area, or it may refill it, or it may do nothing. A notable exception is Visual Studio, where this operation discards the unprocessed input when called with a standard input stream.
+
+### Example
+
+{/* source:cpp-io-basic-istream-sync:0008 */}
+Demonstrates the use of input stream `sync()` with file input. Note that output here is implementation-defined, since calls to [`std::basic_filebuf::sync`](/docs/cpp/library/io/basic_filebuf/sync) are implementation-defined for reads.
+
+```cpp
+#include <fstream>
+#include <iostream>
+ 
+void file_abc()
+{
+    std::ofstream f("test.txt");
+    f << "abc\n";
+}
+ 
+void file_123()
+{
+    std::ofstream f("test.txt");
+    f << "123\n";
+}
+ 
+int main()
+{
+    file_abc(); // file now contains "abc"
+    std::ifstream f("test.txt");
+    std::cout << "Reading from the file\n";
+    char c;
+    f >> c;
+    std::cout << c;
+    file_123(); // file now contains "123"
+    f >> c;
+    std::cout << c;
+    f >> c;
+    std::cout << c << '\n';
+    f.close();
+ 
+    file_abc(); // file now contains "abc"
+    f.open("test.txt");
+    std::cout << "Reading from the file, with sync()\n";
+    f >> c;
+    std::cout << c;
+    file_123(); // file now contains "123"
+    f.sync();
+    f >> c;
+    std::cout << c;
+    f >> c;
+    std::cout << c << '\n';
+}
+```
+
+Possible output:
+
+```text
+Reading from the file
+abc
+Reading from the file, with sync()
+a23
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-sync:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-sync:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={62} standard="C++98">
+    <PublishedBehavior>`sync()` returned `traits::eof()` if `rdbuf()->pubsync()` returns `-1`</PublishedBehavior>
+    <CorrectedBehavior>returns `-1` in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-sync:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sync`](/docs/cpp/library/io/basic_streambuf/pubsync)</DescriptionTerm>
+    <DescriptionBody>synchronizes the buffers with the associated character sequence (virtual protected member function of `std::basic_streambuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`flush`](/docs/cpp/library/io/basic_ostream/flush)</DescriptionTerm>
+    <DescriptionBody>synchronizes with the underlying storage device (public member function of `std::basic_ostream<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

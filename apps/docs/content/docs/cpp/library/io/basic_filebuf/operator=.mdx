@@ -1,0 +1,85 @@
+---
+title: "std::basic_filebuf<CharT,Traits>::operator="
+description: "Assigns another basic_filebuf object."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_filebuf/operator="
+language: "C++"
+---
+
+
+{/* source:cpp-io-basic-filebuf-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" since="C++11" language="cpp" code={`std::basic_filebuf& operator=( std::basic_filebuf&& rhs );`} />
+  <Declaration id="2" language="cpp" code={`std::basic_filebuf& operator=( const std::basic_filebuf& rhs ) = delete;`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-filebuf-operator:0001 */}
+Assigns another `basic_filebuf` object.
+
+
+{/* source:cpp-io-basic-filebuf-operator:0002 */}
+1) First calls [`close()`](/docs/cpp/library/io/basic_filebuf/close) to close the associated file, then moves the contents of `rhs` into `*this`: the put and get buffers, the associated file, the locale, the openmode, the is_open flag, and any other state. After the move, `rhs` is not associated with a file and `rhs.is_open() == false`.
+
+{/* source:cpp-io-basic-filebuf-operator:0003 */}
+2) The copy assignment operator is deleted; `basic_filebuf` is not [`CopyAssignable`](/docs/cpp/library/named_req/CopyAssignable).
+
+### Parameters
+
+{/* source:cpp-io-basic-filebuf-operator:0004 */}
+<ParameterList>
+  <Parameter name="rhs">another `basic_filebuf` that will be moved from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-filebuf-operator:0005 */}
+`*this`
+
+
+### Example
+
+{/* source:cpp-io-basic-filebuf-operator:0006 */}
+```cpp
+#include <cassert>
+#include <fstream>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::ofstream{"test.in"} << "test\n"; // writes via a temporary object
+    std::ifstream fin("test.in"); // read-only stream
+    std::ofstream fout("test.out"); // write-only stream
+ 
+    std::string s;
+    std::getline(fin, s);
+    std::cout << "s = [" << s << "]\n"; // s contains "test"
+ 
+    assert(fout.is_open());
+    *fin.rdbuf() = std::move(*fout.rdbuf());
+    assert(!fout.is_open());
+ 
+    std::getline(fin, s);
+    std::cout << "s = [" << s << "]\n"; // s is empty input
+}
+```
+
+Output:
+
+```text
+s = [test]
+s = []
+```
+
+### See also
+
+{/* source:cpp-io-basic-filebuf-operator:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/io/basic_filebuf/basic_filebuf)</DescriptionTerm>
+    <DescriptionBody>constructs a `basic_filebuf` object   (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/io/basic_filebuf/swap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>swaps two `basic_filebuf` objects   (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

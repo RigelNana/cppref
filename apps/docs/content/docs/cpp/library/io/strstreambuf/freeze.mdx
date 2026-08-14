@@ -1,0 +1,116 @@
+---
+title: "std::strstreambuf::freeze"
+description: "If the buffer uses dynamic allocation, sets the frozen status of the stream to freezefl."
+source_url: "https://en.cppreference.com/w/cpp/io/strstreambuf/freeze"
+language: "C++"
+---
+
+{/* source:cpp-io-strstreambuf-freeze:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" until="C++26" code={`void freeze( bool freezefl = true );`} /> (deprecated in C++98)
+</DeclarationDoc>
+
+{/* source:cpp-io-strstreambuf-freeze:0001 */}
+
+If the buffer uses dynamic allocation, sets the frozen status of the stream to `freezefl`.
+
+{/* source:cpp-io-strstreambuf-freeze:0002 */}
+
+While the stream is frozen, [`overflow()`](/docs/cpp/library/io/strstreambuf/overflow) will not reallocate the buffer and the [`destructor`](/docs/cpp/library/io/strstreambuf/~strstreambuf) will not deallocate the buffer (thereby causing a memory leak).
+
+### Parameters
+
+{/* source:cpp-io-strstreambuf-freeze:0003 */}
+
+<ParameterList>
+
+  <Parameter name="freezefl">new value to set the freeze status to</Parameter>
+
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-strstreambuf-freeze:0004 */}
+
+(none)
+
+### Notes
+
+{/* source:cpp-io-strstreambuf-freeze:0005 */}
+
+Every call to [`str()`](/docs/cpp/library/io/strstreambuf/str) freezes the stream to preserve the validity of the pointer it returns. To allow the destructor to deallocate the buffer, `freeze(false)` needs to be called explicitly.
+
+### Example
+
+{/* source:cpp-io-strstreambuf-freeze:0006 */}
+
+In this example, initial allocation of the underlying array was for 16 bytes.
+
+```cpp
+#include <iostream>
+#include <strstream>
+ 
+int main()
+{
+    {
+        std::strstream dyn; // dynamically-allocated read/write buffer
+        dyn << "Test: " << 1.23; // note: no std::ends to demonstrate append behavior
+        std::cout << "dynamic buffer holds " << dyn.pcount() << " characters: '";
+        std::cout.write(dyn.str(), dyn.pcount()) << "'\n";
+        // the buffer is now frozen, further output will not make the buffer grow
+        dyn << "more output, hopefully enough to run out of the allocated space"
+            << std::ends;
+        std::cout << "After more output, it holds "
+                  << dyn.pcount() << " characters: '" << dyn.str() << "'\n";
+        dyn.freeze(false); // unfreeze before destructor
+    } // memory freed by the destructor
+ 
+    {
+        char arr[20];
+        std::ostrstream st(arr, sizeof arr); // fixed-size buffer
+        st << 1.23; // note: no std::ends to demonstrate append behavior
+        std::cout << "static buffer holds "
+                  << st.pcount() << " characters: '";
+        std::cout.write(st.str(), st.pcount());
+        std::cout << "'\n";
+        st << "more output, hopefully enough to run out of the allocated space"
+           << std::ends;
+        std::cout << "static buffer holds "
+                  << st.pcount() << " characters: '";
+        std::cout.write(st.str(), st.pcount());
+        std::cout << "'\n";
+    } // nothing to deallocate, no need to unfreeze,
+}
+```
+
+Output:
+
+```text
+dynamic buffer holds 10 characters: 'Test: 1.23'
+After more output, it holds 16 characters: 'Test: 1.23more o'
+static buffer holds 4 characters: '1.23'
+static buffer holds 20 characters: '1.23more output, hop'
+```
+
+### See also
+
+{/* source:cpp-io-strstreambuf-freeze:0007 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`freeze`](/docs/cpp/library/io/strstream/freeze)</DescriptionTerm>
+    <DescriptionBody>disables/enables automatic reallocation<br />(public member function of `std::strstream`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`freeze`](/docs/cpp/library/io/ostrstream/freeze)</DescriptionTerm>
+    <DescriptionBody>disables/enables automatic reallocation<br />(public member function of `std::ostrstream`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/io/strstreambuf/~strstreambuf) [virtual]</DescriptionTerm>
+    <DescriptionBody>destructs a `strstreambuf` object, optionally deallocating the character array<br />(virtual public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`overflow`](/docs/cpp/library/io/strstreambuf/overflow) [virtual]</DescriptionTerm>
+    <DescriptionBody>appends a character to the output sequence, may reallocate or initially allocate the buffer if dynamic and not frozen<br />(virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

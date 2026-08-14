@@ -1,0 +1,201 @@
+---
+title: "std::basic_filebuf<CharT,Traits>::open"
+description: "If the associated file was already open (is_open( ) ! = false), returns a null pointer right away."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_filebuf/open"
+language: "C++"
+---
+
+
+{/* source:cpp-io-basic-filebuf-open:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`basic_filebuf* open( const char* s, std::ios_base::openmode mode );`} />
+  <Declaration id="2" since="C++11" language="cpp" code={`basic_filebuf* open( const std::string& str, std::ios_base::openmode mode );`} />
+  <Declaration id="3" since="C++17" language="cpp" code={`basic_filebuf* open( const std::filesystem::path& p,
+                     std::ios_base::openmode mode );`} />
+  <Declaration id="4" since="C++17" language="cpp" code={`basic_filebuf* open( const std::filesystem::path::value_type* s,
+                     std::ios_base::openmode mode );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-filebuf-open:0001 */}
+If the associated file was already open ( `is_open() != false`), returns a null pointer right away.
+
+
+{/* source:cpp-io-basic-filebuf-open:0002 */}
+Otherwise, opens the file with the given name ( `s` <InlineRevision since="C++17">, `p.c_str()`</InlineRevision> or `str.c_str()`, depending on the overload). [`std::ios_base::openmode`](/docs/cpp/library/io/ios_base/openmode) values may be written as, e.g., `std::ios_base::out | std::ios_base::app` [`std::ios_base::out`](/docs/cpp/library/io/ios_base/openmode).
+
+
+{/* source:cpp-io-basic-filebuf-open:0003 */}
+<Revision since="C++17">
+Overload (4) is only provided if `std::filesystem::path::value_type` is not `char`.
+</Revision>
+
+{/* source:cpp-io-basic-filebuf-open:0004 */}
+The file is opened as if by calling [`std::fopen`](/docs/cpp/library/io/c/fopen) with the second argument (file access mode) determined by the result of `mode & ~std::ios_base::ate` [`std::ios_base::ate`](/docs/cpp/library/io/ios_base/openmode) as follows, `open()` fails if the result is not some combination of flags shown in the table:
+
+
+{/* source:cpp-io-basic-filebuf-open:0005 */}
+| [`binary`](/docs/cpp/library/io/ios_base/openmode)
+
+ | [`in`](/docs/cpp/library/io/ios_base/openmode)
+
+ | [`out`](/docs/cpp/library/io/ios_base/openmode)
+
+ | [`trunc`](/docs/cpp/library/io/ios_base/openmode)
+
+ | [`app`](/docs/cpp/library/io/ios_base/openmode)
+
+ | [`noreplace`](/docs/cpp/library/io/ios_base/openmode) <InlineRevision since="C++23" />
+ | std::fopen access mode | Action if file already exists | Action if file does not exist |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| - | + | - | - | - | - | `"r"`
+
+ | Read from start | Failure to open |
+| + | + | - | - | - | - | `"rb"`
+ | Read from start | Failure to open |
+| - | + | + | - | - | - | `"r+"`
+
+ | Read from start | Error |
+| + | + | + | - | - | - | `"r+b"`
+ | Read from start | Error |
+| - | - | + | - | - | - | `"w"`
+
+ | Destroy contents | Create new |
+| - | - | + | + | - | - | `"w"`
+
+ | Destroy contents | Create new |
+| + | - | + | - | - | - | `"wb"`
+ | Destroy contents | Create new |
+| + | - | + | + | - | - | `"wb"`
+ | Destroy contents | Create new |
+| - | + | + | + | - | - | `"w+"`
+ | Destroy contents | Create new |
+| + | + | + | + | - | - | `"w+b"`
+ | Destroy contents | Create new |
+| - | - | + | - | - | + | `"wx"`
+
+ | Failure to open | Create new |
+| - | - | + | + | - | + | `"wx"`
+
+ | Failure to open | Create new |
+| + | - | + | - | - | + | `"wbx"`
+ | Failure to open | Create new |
+| + | - | + | + | - | + | `"wbx"`
+ | Failure to open | Create new |
+| - | + | + | + | - | + | `"w+x"`
+ | Failure to open | Create new |
+| + | + | + | + | - | + | `"w+bx"`
+ | Failure to open | Create new |
+| - | - | + | - | + | - | `"a"`
+
+ | Write to end | Create new |
+| - | - | - | - | + | - | `"a"`
+
+ | Write to end | Create new |
+| + | - | + | - | + | - | `"ab"`
+ | Write to end | Create new |
+| + | - | - | - | + | - | `"ab"`
+ | Write to end | Create new |
+| - | + | + | - | + | - | `"a+"`
+ | Write to end | Create new |
+| - | + | - | - | + | - | `"a+"`
+ | Write to end | Create new |
+| + | + | + | - | + | - | `"a+b"`
+ | Write to end | Create new |
+| + | + | - | - | + | - | `"a+b"`
+ | Write to end | Create new |
+
+{/* source:cpp-io-basic-filebuf-open:0006 */}
+If the open operation succeeds and `(openmode & std::ios_base::ate) != 0` [`std::ios_base::ate`](/docs/cpp/library/io/ios_base/openmode) (the `ate` bit is set), repositions the file position to the end of file, as if by calling `std::fseek(file, 0, SEEK_END)` [`std::fseek`](/docs/cpp/library/io/c/fseek), where `file` is the pointer returned by calling [`std::fopen`](/docs/cpp/library/io/c/fopen). If the repositioning fails, calls [`close()`](/docs/cpp/library/io/basic_filebuf/close) and returns a null pointer to indicate failure.
+
+
+### Parameters
+
+{/* source:cpp-io-basic-filebuf-open:0007 */}
+<ParameterList>
+  <Parameter name="s, str, p">the file name to open; `s` must point to a null-terminated string</Parameter>
+  <Parameter name="openmode">the file opening mode, a binary OR of the [`std::ios_base::openmode`](/docs/cpp/library/io/ios_base/openmode) modes</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-filebuf-open:0008 */}
+`this` on success, a null pointer on failure.
+
+
+### Notes
+
+{/* source:cpp-io-basic-filebuf-open:0009 */}
+`open()` is typically called through the constructor or the `open()` member function of [`std::basic_fstream`](/docs/cpp/library/io/basic_fstream).
+
+
+### Example
+
+{/* source:cpp-io-basic-filebuf-open:0010 */}
+```cpp
+#include <fstream>
+#include <iostream>
+ 
+int main()
+{
+    std::string filename = "Test.b";
+    std::filebuf fb;
+ 
+    // prepare a file to read
+    double d = 3.14;
+    if (!fb.open(filename, std::ios::binary | std::ios::out))
+    {
+        std::cout << "Open file " << filename << " for write failed\n";
+        return 1;
+    } 
+    fb.sputn(reinterpret_cast<char*>(&d), sizeof d);
+    fb.close();
+ 
+    // open file for reading
+    double d2 = 0.0;
+    if (!fb.open(filename, std::ios::binary | std::ios::in))
+    {
+        std::cout << "Open file " << filename << " for read failed\n";
+        return 1;
+    }
+ 
+    auto got = fb.sgetn(reinterpret_cast<char*>(&d2), sizeof d2);
+    if (sizeof(d2) != got)
+        std::cout << "Read of " << filename << " failed\n";
+    else
+        std::cout << "Read back from file: " << d2 << '\n';
+}
+```
+
+Output:
+
+```text
+Read back from file: 3.14
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-filebuf-open:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+
+{/* source:cpp-io-basic-filebuf-open:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={596} standard="C++98">
+    <PublishedBehavior>`open()` could not open files in append mode</PublishedBehavior>
+    <CorrectedBehavior>can open in append mode</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-filebuf-open:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_open`](/docs/cpp/library/io/basic_filebuf/is_open)</DescriptionTerm>
+    <DescriptionBody>checks if the associated file is open   (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`close`](/docs/cpp/library/io/basic_filebuf/close)</DescriptionTerm>
+    <DescriptionBody>flushes the put area buffer and closes the associated file   (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

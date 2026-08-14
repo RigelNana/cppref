@@ -1,0 +1,117 @@
+---
+title: "std::ios_base::xalloc"
+description: "Returns a unique (program-wide) index value that can be used to access one long and one void * elements in the private storage of std::ios_base by calling iword() and pword()."
+source_url: "https://en.cppreference.com/w/cpp/io/ios_base/xalloc"
+language: "C++"
+---
+
+{/* source:cpp-io-ios-base-xalloc:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`static int xalloc();`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-ios-base-xalloc:0001 */}
+Returns a unique (program-wide) index value that can be used to access one `long` and one `void*` elements in the private storage of `std::ios_base` by calling [`iword()`](/docs/cpp/library/io/ios_base/iword) and [`pword()`](/docs/cpp/library/io/ios_base/pword). The call to `xalloc` does not allocate memory.
+
+{/* source:cpp-io-ios-base-xalloc:0002 */}
+<Revision since="C++11">
+This function is thread-safe: concurrent access by multiple threads does not result in a data race.
+</Revision>
+
+{/* source:cpp-io-ios-base-xalloc:0003 */}
+Effectively increments the next available unique index.
+
+### Return value
+
+{/* source:cpp-io-ios-base-xalloc:0004 */}
+Unique integer for use as `pword`/`iword` index.
+
+### Example
+
+{/* source:cpp-io-ios-base-xalloc:0005 */}
+Uses base class `pword` storage for runtime type identification of derived stream objects.
+
+```cpp
+#include <iostream>
+ 
+template<class CharT, class Traits = std::char_traits<CharT>>
+class mystream : public std::basic_ostream<CharT, Traits>
+{
+public:
+    static const int xindex;
+ 
+    mystream(std::basic_ostream<CharT, Traits>& ostr) :
+        std::basic_ostream<CharT, Traits>(ostr.rdbuf())
+    {
+        this->pword(xindex) = this;
+    }
+ 
+    void myfn()
+    {
+        *this << "[special handling for mystream]";
+    }
+};
+ 
+// Each specialization of mystream obtains a unique index from xalloc()
+template<class CharT, class Traits>
+const int mystream<CharT, Traits>::xindex = std::ios_base::xalloc();
+ 
+// This I/O manipulator will be able to recognize ostreams that are mystreams
+// by looking up the pointer stored in pword
+template<class CharT, class Traits>
+std::basic_ostream<CharT, Traits>& mymanip(std::basic_ostream<CharT, Traits>& os)
+{
+    if (os.pword(mystream<CharT, Traits>::xindex) == &os)
+        static_cast<mystream<CharT, Traits>&>(os).myfn();
+    return os;
+}
+ 
+int main()
+{
+    std::cout << "cout, narrow-character test " << mymanip << '\n';
+ 
+    mystream<char> myout(std::cout);
+    myout << "myout, narrow-character test " << mymanip << '\n';
+ 
+    std::wcout << "wcout, wide-character test " << mymanip << '\n';
+ 
+    mystream<wchar_t> mywout(std::wcout);
+    mywout << "mywout, wide-character test " << mymanip << '\n';
+}
+```
+
+Output:
+
+```text
+cout, narrow-character test
+myout, narrow-character test [special handling for mystream]
+wcout, wide-character test
+mywout, wide-character test [special handling for mystream]
+```
+
+### Defect reports
+
+{/* source:cpp-io-ios-base-xalloc:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-ios-base-xalloc:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2143} standard="C++11">
+    <PublishedBehavior>`xalloc` was not thread-safe</PublishedBehavior>
+    <CorrectedBehavior>made thread-safe</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-ios-base-xalloc:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pword`](/docs/cpp/library/io/ios_base/pword)</DescriptionTerm>
+    <DescriptionBody>resizes the private storage if necessary and access to the `void*` element at the given index (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iword`](/docs/cpp/library/io/ios_base/iword)</DescriptionTerm>
+    <DescriptionBody>resizes the private storage if necessary and access to the `long` element at the given index (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

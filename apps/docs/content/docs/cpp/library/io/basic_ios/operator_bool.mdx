@@ -1,0 +1,99 @@
+---
+title: "std::basic_ios<CharT,Traits>::operator bool"
+description: "Checks whether the stream has no errors."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_ios/operator_bool"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-ios-operator-bool:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" until="C++11" code={`operator /* unspecified-boolean-type */() const;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`explicit operator bool() const;`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-ios-operator-bool:0001 */}
+Checks whether the stream has no errors.
+
+{/* source:cpp-io-basic-ios-operator-bool:0002 */}
+1. Returns a value that evaluates to false in a boolean context if fail( ) returns true, otherwise returns a value that evaluates to true in a boolean context.
+
+{/* source:cpp-io-basic-ios-operator-bool:0003 */}
+2. Returns true if the stream has no errors and is ready for I/O operations. Specifically, returns !fail( ).
+
+{/* source:cpp-io-basic-ios-operator-bool:0004 */}
+This operator makes it possible to use streams and functions that return references to streams as loop conditions, resulting in the idiomatic C++ input loops such as `while (stream >> value) \{...\}` or while ( std::getline (stream, string) ) \{...\}. Such loops execute the loop's body only if the input operation succeeded.
+
+{/* source:cpp-io-basic-ios-operator-bool:0005 */}
+(none)
+
+{/* source:cpp-io-basic-ios-operator-bool:0006 */}
+1. A value that evaluates to true in a boolean context if the stream has no errors, a value that evaluates to false in a boolean context otherwise.
+
+{/* source:cpp-io-basic-ios-operator-bool:0007 */}
+2. true if the stream has no errors, false otherwise.
+
+{/* source:cpp-io-basic-ios-operator-bool:0008 */}
+This conversion can be used in contexts where a `bool` is expected (e.g. an [`if condition`](/docs/cpp/language/statements/if)). However, [`implicit conversions`](/docs/cpp/language/expressions/implicit_cast) (e.g. to `int`) that can occur with `bool` are not allowed.
+
+{/* source:cpp-io-basic-ios-operator-bool:0009 */}
+In C++98, `operator bool` could not be provided directly due to [`the safe bool problem`](/docs/cpp/language/expressions/implicit_cast). The initial solution in C++98 is to provide operator void *, which returns a null pointer if fail( ) returns true or a non-null pointer otherwise. It is replaced by the resolution of [LWG issue 468](https://cplusplus.github.io/LWG/issue468), which allows [Safe Bool idiom](https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Safe_bool) to be applied.
+
+{/* source:cpp-io-basic-ios-operator-bool:0010 */}
+Since C++11, conversion functions can be [`explicit`](/docs/cpp/language/classes/explicit). The resolution of [LWG issue 1094](https://cplusplus.github.io/LWG/issue1094) introduced the [`explicit`](/docs/cpp/language/classes/explicit) `operator bool` and the boolean conversion is now safe.
+
+{/* source:cpp-io-basic-ios-operator-bool:0011 */}
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    std::istringstream s("1 2 3 error");
+    int n;
+ 
+    std::cout << std::boolalpha << "s is " << static_cast<bool>(s) << '\n';
+    while (s >> n)
+        std::cout << n << '\n';
+    std::cout << "s is " << static_cast<bool>(s) << '\n';
+}
+```
+
+Output:
+
+```text
+s is true
+1
+2
+3
+s is false
+```
+
+{/* source:cpp-io-basic-ios-operator-bool:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-ios-operator-bool:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={468} standard="C++98">
+    <PublishedBehavior>`operator void *` was provided</PublishedBehavior>
+    <CorrectedBehavior>a conversion function to an unspecified boolean type is provided instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-io-basic-ios-operator-bool:0014 */}
+The following table shows the value of [`basic_ios`](/docs/cpp/library/io/basic_ios) accessors ([`good()`](/docs/cpp/library/io/basic_ios/good), [`fail()`](/docs/cpp/library/io/basic_ios/fail), etc.) for all possible combinations of [`ios_base::iostate`](/docs/cpp/library/io/ios_base/iostate) flags:
+
+{/* source:cpp-io-basic-ios-operator-bool:0015 */}
+| [`ios_base::iostate`](/docs/cpp/library/io/ios_base/iostate) flags |  |  | `basic_ios` accessors |  |  |  |  |  |
+| `eofbit` | `failbit` | `badbit` | [`good()`](/docs/cpp/library/io/basic_ios/good) | [`fail()`](/docs/cpp/library/io/basic_ios/fail) | [`bad()`](/docs/cpp/library/io/basic_ios/bad) | [`eof()`](/docs/cpp/library/io/basic_ios/eof) | `operator bool` | [`operator!`](/docs/cpp/library/io/basic_ios/operator!) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| false | false | false | true | false | false | false | true | false |
+| false | false | true | false | true | true | false | false | true |
+| false | true | false | false | true | false | false | false | true |
+| false | true | true | false | true | true | false | false | true |
+| true | false | false | false | false | false | true | true | false |
+| true | false | true | false | true | true | true | false | true |
+| true | true | false | false | true | false | true | false | true |
+| true | true | true | false | true | true | true | false | true |

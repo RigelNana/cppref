@@ -1,0 +1,105 @@
+---
+title: "std::basic_ios<CharT,Traits>::clear"
+description: "Sets the stream error state flags by assigning them the value of state. By default, assigns std::ios_base::goodbit which has the effect of clearing all error state flags."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_ios/clear"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-ios-clear:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`void clear( std::ios_base::iostate state = std::ios_base::goodbit );`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-ios-clear:0001 */}
+Sets the stream error `state` flags by assigning them the value of `state`. By default, assigns [`std::ios_base::goodbit`](/docs/cpp/library/io/ios_base/iostate) which has the effect of clearing all error `state` flags.
+
+{/* source:cpp-io-basic-ios-clear:0002 */}
+If [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf) is a null pointer (i.e. there is no associated stream buffer), then state | std::ios_base :: badbit is assigned.
+
+{/* source:cpp-io-basic-ios-clear:0003 */}
+<ParameterList>
+<Parameter name="state">new error state flags setting. It can be a combination of the following constants:</Parameter>
+</ParameterList>
+
+<DescriptionList>
+    <DescriptionItem>
+      <DescriptionTerm>[`goodbit`](/docs/cpp/library/io/ios_base/iostate)</DescriptionTerm>
+      <DescriptionBody>no error</DescriptionBody>
+    </DescriptionItem>
+    <DescriptionItem>
+      <DescriptionTerm>[`badbit`](/docs/cpp/library/io/ios_base/iostate)</DescriptionTerm>
+      <DescriptionBody>irrecoverable stream error</DescriptionBody>
+    </DescriptionItem>
+    <DescriptionItem>
+      <DescriptionTerm>[`failbit`](/docs/cpp/library/io/ios_base/iostate)</DescriptionTerm>
+      <DescriptionBody>input/output operation failed (formatting or extraction error)</DescriptionBody>
+    </DescriptionItem>
+    <DescriptionItem>
+      <DescriptionTerm>[`eofbit`](/docs/cpp/library/io/ios_base/iostate)</DescriptionTerm>
+      <DescriptionBody>associated input sequence has reached end-of-file</DescriptionBody>
+    </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-io-basic-ios-clear:0004 */}
+(none)
+
+{/* source:cpp-io-basic-ios-clear:0005 */}
+If the new error state includes a bit that is also included in the [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) mask, throws an exception of type [`failure`](/docs/cpp/library/io/ios_base/failure).
+
+{/* source:cpp-io-basic-ios-clear:0006 */}
+clear() without arguments can be used to unset the [`failbit`](/docs/cpp/library/io/basic_ios/clear#Parameters) after unexpected input; for std::cin.putback (c) see [`ungetc`](/docs/cpp/library/io/c/ungetc#Notes).
+```cpp
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    for (char c : {'\n', '4', '1', '.', '3', '\n', 'Z', 'Y', 'X'})
+        std::cin.putback(c); // emulate user's input (not portable: see ungetc Notes)
+ 
+    double n;
+    while (std::cout << "Please, enter a number: " && !(std::cin >> n))
+    {
+        std::cin.clear();
+        std::string line;
+        std::getline(std::cin, line);
+        std::cout << line << "\nI am sorry, but '" << line << "' is not a number\n";
+    }
+    std::cout << n << "\nThank you for entering the number " << n << '\n';
+}
+```
+
+Output:
+
+```text
+Please, enter a number: XYZ
+I am sorry, but 'XYZ' is not a number
+Please, enter a number: 3.14
+Thank you for entering the number 3.14
+```
+
+{/* source:cpp-io-basic-ios-clear:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-ios-clear:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={412} standard="C++98">
+    <PublishedBehavior>an excption would be thrown if the current error state includes a bit that is also included in the [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) mask</PublishedBehavior>
+    <CorrectedBehavior>checks the new error state instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-io-basic-ios-clear:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`setstate`](/docs/cpp/library/io/basic_ios/setstate)</DescriptionTerm>
+    <DescriptionBody>sets state flags (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rdstate`](/docs/cpp/library/io/basic_ios/rdstate)</DescriptionTerm>
+    <DescriptionBody>returns state flags (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

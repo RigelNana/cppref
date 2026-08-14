@@ -1,0 +1,101 @@
+---
+title: "std::tmpfile"
+description: "Creates and opens a temporary file with a unique auto-generated filename."
+source_url: "https://en.cppreference.com/w/cpp/io/c/tmpfile"
+language: "C++"
+---
+
+{/* source:cpp-io-c-tmpfile:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`std::FILE* tmpfile();`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-tmpfile:0001 */}
+Creates and opens a temporary file with a unique auto-generated filename.
+
+{/* source:cpp-io-c-tmpfile:0002 */}
+The file is opened as a binary file for update (as by [`std::fopen`](/docs/cpp/library/io/c/fopen) with access mode `"wb+"`). At least [TMP_MAX](/docs/cpp/library/io/c) files may be opened during the lifetime of a program (this limit may be shared with [`std::tmpnam`](/docs/cpp/library/io/c/tmpnam) and may be further limited by [FOPEN_MAX](/docs/cpp/library/io/c)).
+
+{/* source:cpp-io-c-tmpfile:0003 */}
+If the program closes the file, e.g. by executing [`std::fclose`](/docs/cpp/library/io/c/fclose), the file is automatically deleted.
+
+{/* source:cpp-io-c-tmpfile:0004 */}
+If the program terminates normally (by calling [`std::exit`](/docs/cpp/library/utility/program/exit), returning from `main`, etc), all files that were opened by calling `std::tmpfile` are also automatically deleted.
+
+{/* source:cpp-io-c-tmpfile:0005 */}
+If the program terminates abnormally, it is implementation-defined if these temporary files are deleted.
+
+### Parameters
+
+{/* source:cpp-io-c-tmpfile:0006 */}
+(none)
+
+### Return value
+
+{/* source:cpp-io-c-tmpfile:0007 */}
+The associated file stream or a null pointer if an error has occurred.
+
+### Notes
+
+{/* source:cpp-io-c-tmpfile:0008 */}
+On some implementations (e.g. older Linux), this function actually creates, opens, and immediately deletes the file from the file system: as long as an open file descriptor to a deleted file is held by a program, the file exists, but since it was deleted, its name does not appear in any directory, so that no other process can open it. Once the file descriptor is closed, or once the program terminates (normally or abnormally), the space occupied by the file is reclaimed by the filesystem. Newer Linux (since 3.11 or later, depending on filesystem) creates such invisible temporary files in one step, via special flag in the [open()](https://man7.org/linux/man-pages/man2/open.2.html) syscall.
+
+{/* source:cpp-io-c-tmpfile:0009 */}
+On some implementations (e.g. Windows), elevated privileges are required as the function may create the temporary file in a system directory.
+
+### Example
+
+{/* source:cpp-io-c-tmpfile:0010 */}
+```cpp
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+
+int main()
+{
+    std::cout << "TMP_MAX = " << TMP_MAX << '\n'
+              << "FOPEN_MAX = " << FOPEN_MAX << '\n';
+    std::FILE* tmpf = std::tmpfile();
+    std::fputs("Hello, world", tmpf);
+    std::rewind(tmpf);
+    char buf[6];
+    std::fgets(buf, sizeof buf, tmpf);
+    std::cout << buf << '\n';
+
+    // Linux-specific method to display the tmpfile name
+    std::cout << fs::read_symlink(
+                     fs::path("/proc/self/fd") / std::to_string(fileno(tmpf))
+                 ) << '\n';
+}
+```
+
+Possible output:
+
+```text
+TMP_MAX = 238328
+FOPEN_MAX = 16
+Hello
+"/tmp/tmpfBlY1lI (deleted)"
+```
+
+### See also
+
+{/* source:cpp-io-c-tmpfile:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`tmpnam`](/docs/cpp/library/io/c/tmpnam)</DescriptionTerm>
+    <DescriptionBody>returns a unique filename (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`temp_directory_path`](/docs/cpp/library/filesystem/temp_directory_path) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>returns a directory suitable for temporary files (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/tmpfile) for `tmpfile`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

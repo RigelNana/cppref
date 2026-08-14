@@ -1,0 +1,142 @@
+---
+title: "std::setw"
+description: "When used in an expression out << std::setw(n) or in >> std::setw(n), sets the width parameter of the stream out or in to exactly n."
+source_url: "https://en.cppreference.com/w/cpp/io/manip/setw"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-setw:0000 */}
+<DeclarationDoc>
+Defined in header [`<iomanip>`](/docs/cpp/library/headers/iomanip)
+
+  <Declaration language="cpp" code={`/* unspecified */ setw( int n );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-manip-setw:0001 */}
+When used in an expression `out << std::setw(n)` or `in >> std::setw(n)`, sets the `width` parameter of the stream `out` or `in` to exactly `n`.
+
+{/* source:cpp-io-manip-setw:0002 */}
+Some operations reset the width to zero (see [below](/docs/cpp/library/io/manip/setw#Notes)), so `std::setw` may need to be repeatedly called to set the width for multiple operations.
+
+### Parameters
+
+{/* source:cpp-io-manip-setw:0003 */}
+<ParameterList>
+  <Parameter name="n">new value for width</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-setw:0004 */}
+An object of unspecified type such that
+
+{/* source:cpp-io-manip-setw:0005 */}
+- if `out` is an object of type `std::basic_ostream<CharT, Traits>`, the expression `out << setw(n)`
+  - has type `std::basic_ostream<CharT, Traits>&`
+  - has value `out`
+  - behaves as if it called `f(out, n)`
+- if `in` is an object of type `std::basic_istream<CharT, Traits>`, the expression `in >> setw(n)`
+  - has type `std::basic_istream<CharT, Traits>&`
+  - has value `in`
+  - behaves as if it called `f(in, n)`
+{/* source:cpp-io-manip-setw:0006 */}
+where the function `f` is defined as:
+
+{/* source:cpp-io-manip-setw:0007 */}
+```cpp
+void f(std::ios_base& str, int n)
+{
+    // set width
+    str.width(n);
+}
+```
+
+### Notes
+
+{/* source:cpp-io-manip-setw:0008 */}
+The width property of the stream will be reset to zero (meaning "unspecified") if any of the following functions are called:
+
+{/* source:cpp-io-manip-setw:0009 */}
+- Input
+  {/* source:cpp-io-manip-setw:0010 */}
+  - [`operator>>(basic_istream&, basic_string&)`](/docs/cpp/library/string/basic_string/operator_ltltgtgt)
+  - [`operator>>(basic_istream&, char*)`](/docs/cpp/library/io/basic_istream/operator_gtgt2)
+{/* source:cpp-io-manip-setw:0011 */}
+- Output
+  {/* source:cpp-io-manip-setw:0012 */}
+  - Overloads of [`basic_ostream::operator<<()`](/docs/cpp/library/io/basic_ostream/operator_ltlt) that take arithmetic types or `void` pointers (at Stage 3 of [`num_put::put()`](/docs/cpp/library/text/locale/num_put/put))
+  - [`operator<<(basic_ostream&, char)`](/docs/cpp/library/io/basic_ostream/operator_ltlt2) and [`operator<<(basic_ostream&, char*)`](/docs/cpp/library/io/basic_ostream/operator_ltlt2)
+  - [`operator<<(basic_ostream&, basic_string&)`](/docs/cpp/library/string/basic_string/operator_ltltgtgt)
+  - [`std::put_money`](/docs/cpp/library/io/manip/put_money) (inside [`money_put::put()`](/docs/cpp/library/text/locale/money_put/put))
+  - [`std::quoted`](/docs/cpp/library/io/manip/quoted) (when used with an output stream)
+{/* source:cpp-io-manip-setw:0013 */}
+The exact effects this modifier has on the input and output vary between the individual I/O functions and are described at each `operator<<` and `operator>>` overload page individually.
+
+### Example
+
+{/* source:cpp-io-manip-setw:0014 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
+int main()
+{
+    std::cout << "no setw: [" << 42 << "]\n"
+              << "setw(6): [" << std::setw(6) << 42 << "]\n"
+              << "no setw, several elements: [" << 89 << 12 << 34 << "]\n"
+              << "setw(6), several elements: [" << 89 << std::setw(6) << 12 << 34 << "]\n";
+
+    std::istringstream is("hello, world");
+    char arr[10];
+
+    is >> std::setw(6) >> arr;
+    std::cout << "Input from \"" << is.str() << "\" with setw(6) gave \""
+              << arr << "\"\n";
+}
+```
+
+Output:
+
+```text
+no setw: [42]
+setw(6): [    42]
+no setw, several elements: [891234]
+setw(6), several elements: [89    1234]
+Input from "hello, world" with setw(6) gave "hello"
+```
+
+### Defect reports
+
+{/* source:cpp-io-manip-setw:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-manip-setw:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={183} standard="C++98">
+    <PublishedBehavior>`setw` could only be used with streams of  type [`std::ostream`](/docs/cpp/library/io/basic_ostream) or [`std::istream`](/docs/cpp/library/io/basic_istream)</PublishedBehavior>
+    <CorrectedBehavior>usable with any  character stream</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-manip-setw:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`width`](/docs/cpp/library/io/ios_base/width)</DescriptionTerm>
+    <DescriptionBody>manages field width <br /> (public member function of `std::ios_base`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`setfill`](/docs/cpp/library/io/manip/setfill)</DescriptionTerm>
+    <DescriptionBody>changes the fill character <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`internal left right`](/docs/cpp/library/io/manip/left)</DescriptionTerm>
+    <DescriptionBody>sets the placement of fill characters <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`showbase noshowbase`](/docs/cpp/library/io/manip/showbase)</DescriptionTerm>
+    <DescriptionBody>controls whether prefix is used to indicate numeric base <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

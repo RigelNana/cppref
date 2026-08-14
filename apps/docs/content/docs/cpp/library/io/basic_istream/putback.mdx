@@ -1,0 +1,118 @@
+---
+title: "std::basic_istream<CharT,Traits>::putback"
+description: "Puts the character ch back to the input stream so the next extracted character will be ch."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/putback"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-putback:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`basic_istream& putback( char_type ch );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-istream-putback:0001 */}
+Puts the character `ch` back to the input stream so the next extracted character will be `ch`.
+
+{/* source:cpp-io-basic-istream-putback:0002 */}
+First clears `eofbit`, then behaves as [UnformattedInputFunction](/docs/cpp/library/named_req/UnformattedInputFunction). After constructing and checking the sentry object, if [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf) is not null, calls [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf)`->sputbackc(ch)`, which calls [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf)`->pbackfail(ch)` if `ch` does not equal the most recently extracted character.
+
+{/* source:cpp-io-basic-istream-putback:0003 */}
+If `rdbuf()` is null or if `rdbuf->sputbackc(ch)` returns `Traits::eof()`, calls `setstate(badbit)`.
+
+{/* source:cpp-io-basic-istream-putback:0004 */}
+In any case, sets the [`gcount()`](/docs/cpp/library/io/basic_istream/gcount) counter to zero.
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-putback:0005 */}
+<ParameterList>
+  <Parameter name="ch">character to put into input stream</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-istream-putback:0006 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-io-basic-istream-putback:0007 */}
+If an internal operation throws an exception, it is caught and [`badbit`](/docs/cpp/library/io/ios_base/iostate) is set. If [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) is set for `badbit`, the exception is rethrown.
+
+### Example
+
+{/* source:cpp-io-basic-istream-putback:0008 */}
+Demonstrates the difference between modifying and non-modifying `putback()`.
+
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    std::stringstream s1("Hello, world"); // IO stream
+    s1.get();
+    if (s1.putback('Y')) // modifies the buffer
+        std::cout << s1.rdbuf() << '\n';
+    else
+        std::cout << "putback failed\n";
+ 
+    std::cout << "--\n";
+ 
+    std::istringstream s2("Hello, world"); // input-only stream
+    s2.get();
+    if (s2.putback('Y')) // cannot modify input-only buffer
+        std::cout << s2.rdbuf() << '\n';
+    else
+        std::cout << "putback failed\n"; 
+    s2.clear();
+ 
+    std::cout << "--\n";
+ 
+    if (s2.putback('H')) // non-modifying putback
+        std::cout << s2.rdbuf() << '\n';
+    else
+        std::cout << "putback failed\n";
+}
+```
+
+Output:
+
+```text
+Yello, world
+--
+putback failed
+--
+Hello, world
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-putback:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-putback:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2243} standard="C++98">
+    <PublishedBehavior>`sputbackc()` was called without any argument</PublishedBehavior>
+    <CorrectedBehavior>called with `ch`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-putback:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sputbackc`](/docs/cpp/library/io/basic_streambuf/sputbackc)</DescriptionTerm>
+    <DescriptionBody>puts one character back in the input sequence (public member function of `std::basic_streambuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unget`](/docs/cpp/library/io/basic_istream/unget)</DescriptionTerm>
+    <DescriptionBody>unextracts a character (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`peek`](/docs/cpp/library/io/basic_istream/peek)</DescriptionTerm>
+    <DescriptionBody>reads the next character without extracting it (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

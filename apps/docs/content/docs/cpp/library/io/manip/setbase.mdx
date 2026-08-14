@@ -1,0 +1,125 @@
+---
+title: "std::setbase"
+description: "Sets the numeric base of the stream. When used in an expression out << setbase(base) or in >> setbase(base), changes the basefield flag of the stream out or in, depending on the value of base:"
+source_url: "https://en.cppreference.com/w/cpp/io/manip/setbase"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-setbase:0000 */}
+<DeclarationDoc>
+Defined in header [`<iomanip>`](/docs/cpp/library/headers/iomanip)
+
+  <Declaration language="cpp" code={`/*unspecified*/ setbase( int base );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-manip-setbase:0001 */}
+Sets the numeric base of the stream. When used in an expression `out << setbase(base)` or `in >> setbase(base)`, changes the `basefield` flag of the stream `out` or `in`, depending on the value of `base`:
+
+{/* source:cpp-io-manip-setbase:0002 */}
+- the value `16` sets `basefield` to [`std::ios_base::hex`](/docs/cpp/library/io/ios_base/fmtflags).
+- the value `8` sets [`std::ios_base::oct`](/docs/cpp/library/io/ios_base/fmtflags).
+- the value `10` sets [`std::ios_base::dec`](/docs/cpp/library/io/ios_base/fmtflags).
+
+{/* source:cpp-io-manip-setbase:0003 */}
+Values of `base` other than 8, 10, or 16 reset `basefield` to zero, which corresponds to decimal output and prefix-dependent input.
+
+### Parameters
+
+{/* source:cpp-io-manip-setbase:0004 */}
+<ParameterList>
+  <Parameter name="base">new value for basefield</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-setbase:0005 */}
+An object of unspecified type such that
+
+{/* source:cpp-io-manip-setbase:0006 */}
+- if `out` is an object of type `std::basic_ostream<CharT, Traits>`, the expression `out << setbase(base)`
+  - has type `std::basic_ostream<CharT, Traits>&`
+  - has value `out`
+  - behaves as if it called `f(out, base)`
+- if `in` is an object of type `std::basic_istream<CharT, Traits>`, the expression `in >> setbase(base)`
+  - has type `std::basic_istream<CharT, Traits>&`
+  - has value `in`
+  - behaves as if it called `f(in, base)`
+{/* source:cpp-io-manip-setbase:0007 */}
+where the function `f` is defined as:
+
+{/* source:cpp-io-manip-setbase:0008 */}
+```cpp
+void f(std::ios_base& str, int base)
+{
+    // set basefield
+    str.setf(base == 8 ? std::ios_base::oct :
+        base == 10 ? std::ios_base::dec :
+        base == 16 ? std::ios_base::hex :
+        std::ios_base::fmtflags(0), std::ios_base::basefield);
+}
+```
+
+### Example
+
+{/* source:cpp-io-manip-setbase:0009 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
+int main()
+{
+    std::cout << "Parsing string \"10 0x10 010\"\n";
+
+    int n1, n2, n3;
+    std::istringstream s("10 0x10 010");
+
+    s >> std::setbase(16) >> n1 >> n2 >> n3;
+    std::cout << "hexadecimal parse: " << n1 << ' ' << n2 << ' ' << n3 << '\n';
+
+    s.clear();
+    s.seekg(0);
+
+    s >> std::setbase(0) >> n1 >> n2 >> n3;
+    std::cout << "prefix-dependent parse: " << n1 << ' ' << n2 << ' ' << n3 << '\n';
+
+    std::cout << "hex output: " << std::setbase(16)
+              << std::showbase << n1 << ' ' << n2 << ' ' << n3 << '\n';
+}
+```
+
+Output:
+
+```text
+Parsing string "10 0x10 010"
+hexadecimal parse: 16 16 16
+prefix-dependent parse: 10 16 8
+hex output: 0xa 0x10 0x8
+```
+
+### Defect reports
+
+{/* source:cpp-io-manip-setbase:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-manip-setbase:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={183} standard="C++98">
+    <PublishedBehavior>`setbase` could only be used with streams  of type [`std::ostream`](/docs/cpp/library/io/basic_ostream) or [`std::istream`](/docs/cpp/library/io/basic_istream)</PublishedBehavior>
+    <CorrectedBehavior>usable with any  character stream</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-manip-setbase:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`dec hex oct`](/docs/cpp/library/io/manip/hex)</DescriptionTerm>
+    <DescriptionBody>changes the base used for integer I/O <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`showbase noshowbase`](/docs/cpp/library/io/manip/showbase)</DescriptionTerm>
+    <DescriptionBody>controls whether prefix is used to indicate numeric base <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

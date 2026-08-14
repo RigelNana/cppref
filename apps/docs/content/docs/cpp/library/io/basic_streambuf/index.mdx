@@ -1,0 +1,315 @@
+---
+title: "std::basic_streambuf"
+description: "The class basic_streambuf controls input and output to a character sequence."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_streambuf"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-streambuf:0000 */}
+<DeclarationDoc>
+Defined in header [`<streambuf>`](/docs/cpp/library/headers/streambuf)
+
+  <Declaration language="cpp" code={`template<
+    class CharT,
+    class Traits = std::char_traits<CharT>
+
+> class basic_streambuf;`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-streambuf:0001 */}
+The class `basic_streambuf` controls input and output to a character sequence. It includes and provides access to
+
+{/* source:cpp-io-basic-streambuf:0002 */}
+- The controlled character sequence, also called the buffer, which may contain input sequence (also called get area) for buffering the input operations and/or output sequence (also called put area) for buffering the output operations.
+- The associated character sequence, also called source (for input) or sink (for output). This may be an entity that is accessed through OS API (file, TCP socket, serial port, other character device), or it may be an object ([`std::vector`](/docs/cpp/library/container/vector), [array](/docs/cpp/language/declarations/array), [string literal](/docs/cpp/language/expressions/string_literal)), that can be interpreted as a character source or sink.
+
+{/* source:cpp-io-basic-streambuf:0003 */}
+The I/O stream objects [`std::basic_istream`](/docs/cpp/library/io/basic_istream) and [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream), as well as all objects derived from them ([`std::ofstream`](/docs/cpp/library/io/basic_ofstream), [`std::stringstream`](/docs/cpp/library/io/basic_stringstream), etc), are implemented entirely in terms of `std::basic_streambuf`.
+
+{/* source:cpp-io-basic-streambuf:0004 */}
+The controlled character sequence is an array of `CharT` which, at all times, represents a subsequence, or a "window" into the associated character sequence. Its state is described by three pointers:
+
+{/* source:cpp-io-basic-streambuf:0005 */}
+- The beginning pointer, always points at the lowest element of the buffer.
+- The next pointer, points at the element that is the next candidate for reading or writing.
+- The end pointer, points one past the end of the buffer.
+
+{/* source:cpp-io-basic-streambuf:0006 */}
+A `basic_streambuf` object may support input (in which case the buffer described by the beginning, next, and end pointers is called get area), output (put area), or input and output simultaneously. In latter case, six pointers are tracked, which may all point to elements of the same character array or two individual arrays.
+
+{/* source:cpp-io-basic-streambuf:0007 */}
+If the next pointer is less than the end pointer in the put area, a write position is available. The next pointer can be dereferenced and assigned to.
+
+{/* source:cpp-io-basic-streambuf:0008 */}
+If the next pointer is less than the end pointer in the get area, a read position is available. The next pointer can be dereferenced and read from.
+
+{/* source:cpp-io-basic-streambuf:0009 */}
+If the next pointer is greater than the beginning pointer in a get area, a putback position is available, and the next pointer may be decremented, dereferenced, and assigned to, in order to put a character back into the get area.
+
+{/* source:cpp-io-basic-streambuf:0010 */}
+The character representation and encoding in the controlled sequence may be different from the character representations in the associated sequence, in which case a [`std::codecvt`](/docs/cpp/library/text/locale/codecvt) locale facet is typically used to perform the conversion. Common examples are UTF-8 (or other multibyte) files accessed through [`std::wfstream`](/docs/cpp/library/io/basic_fstream) objects: the controlled sequence consists of `wchar_t` characters, but the associated sequence consists of bytes.
+
+{/* source:cpp-io-basic-streambuf:0011 */}
+Typical implementation of the `std::basic_streambuf` base class holds only the six `CharT*` pointers and a copy of [`std::locale`](/docs/cpp/library/text/locale/locale) as data members. In addition, implementations may keep cached copies of locale facets, which are invalidated whenever `imbue()` is called. The concrete buffers such as [`std::basic_filebuf`](/docs/cpp/library/io/basic_filebuf) or [`std::basic_stringbuf`](/docs/cpp/library/io/basic_stringbuf) are derived from `std::basic_streambuf`.
+
+{/* source:cpp-io-basic-streambuf:0012 */}
+Several typedefs for common character types are provided:
+
+{/* source:cpp-io-basic-streambuf:0013 */}
+Defined in header [`<streambuf>`](/docs/cpp/library/headers/streambuf)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::streambuf`</DescriptionTerm>
+    <DescriptionBody>`std::basic_streambuf<char>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::wstreambuf`</DescriptionTerm>
+    <DescriptionBody>`std::basic_streambuf<wchar_t>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+{/* source:cpp-io-basic-streambuf:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`char_type`</DescriptionTerm>
+    <DescriptionBody>`CharT`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`traits_type`</DescriptionTerm>
+    <DescriptionBody>`Traits`; the program is ill-formed if `Traits::char_type` is not `CharT`.</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`int_type`</DescriptionTerm>
+    <DescriptionBody>`Traits::int_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`pos_type`</DescriptionTerm>
+    <DescriptionBody>`Traits::pos_type`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`off_type`</DescriptionTerm>
+    <DescriptionBody>`Traits::off_type`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-io-basic-streambuf:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/io/basic_streambuf/~basic_streambuf) [virtual]</DescriptionTerm>
+    <DescriptionBody>destructs the `basic_streambuf` object (virtual public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Locales
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pubimbue`](/docs/cpp/library/io/basic_streambuf/pubimbue)</DescriptionTerm>
+    <DescriptionBody>changes the associated locale and invokes `imbue()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`getloc`](/docs/cpp/library/io/basic_streambuf/getloc)</DescriptionTerm>
+    <DescriptionBody>obtains a copy of the associated locale (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Positioning
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pubsetbuf`](/docs/cpp/library/io/basic_streambuf/pubsetbuf)</DescriptionTerm>
+    <DescriptionBody>invokes `setbuf()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pubseekoff`](/docs/cpp/library/io/basic_streambuf/pubseekoff)</DescriptionTerm>
+    <DescriptionBody>invokes `seekoff()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pubseekpos`](/docs/cpp/library/io/basic_streambuf/pubseekpos)</DescriptionTerm>
+    <DescriptionBody>invokes `seekpos()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pubsync`](/docs/cpp/library/io/basic_streambuf/pubsync)</DescriptionTerm>
+    <DescriptionBody>invokes `sync()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Get area
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_avail`](/docs/cpp/library/io/basic_streambuf/in_avail)</DescriptionTerm>
+    <DescriptionBody>obtains the number of characters immediately available in the get area (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`snextc`](/docs/cpp/library/io/basic_streambuf/snextc)</DescriptionTerm>
+    <DescriptionBody>advances the input sequence, then reads one character without advancing again (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sbumpc` `stossc`](/docs/cpp/library/io/basic_streambuf/sbumpc) <InlineRevision until="C++17" /></DescriptionTerm>
+    <DescriptionBody>reads one character from the input sequence and advances the sequence (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sgetc`](/docs/cpp/library/io/basic_streambuf/sgetc)</DescriptionTerm>
+    <DescriptionBody>reads one character from the input sequence without advancing the sequence (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sgetn`](/docs/cpp/library/io/basic_streambuf/sgetn)</DescriptionTerm>
+    <DescriptionBody>invokes `xsgetn()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Put area
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sputc`](/docs/cpp/library/io/basic_streambuf/sputc)</DescriptionTerm>
+    <DescriptionBody>writes one character to the put area and advances the next pointer (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sputn`](/docs/cpp/library/io/basic_streambuf/sputn)</DescriptionTerm>
+    <DescriptionBody>invokes `xsputn()` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Putback
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sputbackc`](/docs/cpp/library/io/basic_streambuf/sputbackc)</DescriptionTerm>
+    <DescriptionBody>puts one character back in the input sequence (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sungetc`](/docs/cpp/library/io/basic_streambuf/sungetc)</DescriptionTerm>
+    <DescriptionBody>moves the next pointer in the input sequence back by one (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Protected member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/io/basic_streambuf/basic_streambuf)</DescriptionTerm>
+    <DescriptionBody>constructs a `basic_streambuf` object (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/io/basic_streambuf/operator_assignment) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>replaces a `basic_streambuf` object (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/io/basic_streambuf/swap) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>swaps two `basic_streambuf` objects (protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Locales
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`imbue`](/docs/cpp/library/io/basic_streambuf/pubimbue) [virtual]</DescriptionTerm>
+    <DescriptionBody>reacts to a change of the associated locale (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Positioning
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`setbuf`](/docs/cpp/library/io/basic_streambuf/pubsetbuf) [virtual]</DescriptionTerm>
+    <DescriptionBody>replaces the buffer with user-defined array, if permitted (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`seekoff`](/docs/cpp/library/io/basic_streambuf/pubseekoff) [virtual]</DescriptionTerm>
+    <DescriptionBody>repositions the next pointer in the input sequence, output sequence, or both, using relative addressing (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`seekpos`](/docs/cpp/library/io/basic_streambuf/pubseekpos) [virtual]</DescriptionTerm>
+    <DescriptionBody>repositions the next pointer in the input sequence, output sequence, or both using absolute addressing (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sync`](/docs/cpp/library/io/basic_streambuf/pubsync) [virtual]</DescriptionTerm>
+    <DescriptionBody>synchronizes the buffers with the associated character sequence (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Get area
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`showmanyc`](/docs/cpp/library/io/basic_streambuf/showmanyc) [virtual]</DescriptionTerm>
+    <DescriptionBody>obtains the number of characters available for input in the associated input sequence, if known (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`underflow`](/docs/cpp/library/io/basic_streambuf/underflow) [virtual]</DescriptionTerm>
+    <DescriptionBody>reads characters from the associated input sequence to the get area (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uflow`](/docs/cpp/library/io/basic_streambuf/uflow) [virtual]</DescriptionTerm>
+    <DescriptionBody>reads characters from the associated input sequence to the get area and advances the next pointer (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`xsgetn`](/docs/cpp/library/io/basic_streambuf/sgetn) [virtual]</DescriptionTerm>
+    <DescriptionBody>reads multiple characters from the input sequence (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`eback` `gptr` `egptr`](/docs/cpp/library/io/basic_streambuf/gptr)</DescriptionTerm>
+    <DescriptionBody>returns a pointer to the beginning, current character and the end of the get area (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`gbump`](/docs/cpp/library/io/basic_streambuf/gbump)</DescriptionTerm>
+    <DescriptionBody>advances the next pointer in the input sequence (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`setg`](/docs/cpp/library/io/basic_streambuf/setg)</DescriptionTerm>
+    <DescriptionBody>repositions the beginning, next, and end pointers of the input sequence (protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Put area
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`xsputn`](/docs/cpp/library/io/basic_streambuf/sputn) [virtual]</DescriptionTerm>
+    <DescriptionBody>writes multiple characters to the output sequence (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`overflow`](/docs/cpp/library/io/basic_streambuf/overflow) [virtual]</DescriptionTerm>
+    <DescriptionBody>writes characters to the associated output sequence from the put area (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pbase` `pptr` `epptr`](/docs/cpp/library/io/basic_streambuf/pptr)</DescriptionTerm>
+    <DescriptionBody>returns a pointer to the beginning, current character and the end of the put area (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pbump`](/docs/cpp/library/io/basic_streambuf/pbump)</DescriptionTerm>
+    <DescriptionBody>advances the next pointer of the output sequence (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`setp`](/docs/cpp/library/io/basic_streambuf/setp)</DescriptionTerm>
+    <DescriptionBody>repositions the beginning, next, and end pointers of the output sequence (protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Putback
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pbackfail`](/docs/cpp/library/io/basic_streambuf/pbackfail) [virtual]</DescriptionTerm>
+    <DescriptionBody>puts a character back into the input sequence, possibly modifying the input sequence (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### See also
+
+{/* source:cpp-io-basic-streambuf:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`FILE`](/docs/cpp/library/io/c/FILE)</DescriptionTerm>
+    <DescriptionBody>object type, capable of holding all information needed to control a C I/O stream (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

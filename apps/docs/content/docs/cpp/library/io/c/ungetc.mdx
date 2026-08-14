@@ -1,0 +1,130 @@
+---
+title: "std::ungetc"
+description: "If ch does not equal EOF, pushes the character ch (reinterpreted as unsigned char) into the input buffer associated with the stream stream in such a manner than subsequent read operation from stream will retrieve that character. The external device associated with the stream is not modified."
+source_url: "https://en.cppreference.com/w/cpp/io/c/ungetc"
+language: "C++"
+---
+
+{/* source:cpp-io-c-ungetc:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`int ungetc( int ch, std::FILE *stream );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-ungetc:0001 */}
+If `ch` does not equal [EOF](/docs/cpp/library/io/c), pushes the character `ch` (reinterpreted as `unsigned char`) into the input buffer associated with the stream `stream` in such a manner than subsequent read operation from `stream` will retrieve that character. The external device associated with the stream is not modified.
+
+{/* source:cpp-io-c-ungetc:0002 */}
+Stream repositioning operations [`std::fseek`](/docs/cpp/library/io/c/fseek), [`std::fsetpos`](/docs/cpp/library/io/c/fsetpos), and [`std::rewind`](/docs/cpp/library/io/c/rewind) discard the effects of `ungetc`.
+
+{/* source:cpp-io-c-ungetc:0003 */}
+If `ungetc` is called more than once without an intervening read or repositioning, it may fail (in other words, a pushback buffer of size 1 is guaranteed, but any larger buffer is implementation-defined). If multiple successful `ungetc` were performed, read operations retrieve the pushed-back characters in reverse order of `ungetc`
+
+{/* source:cpp-io-c-ungetc:0004 */}
+If `ch` equals [EOF](/docs/cpp/library/io/c), the operation fails and the stream is not affected.
+
+{/* source:cpp-io-c-ungetc:0005 */}
+A successful call to `ungetc` clears the end of file status flag [`std::feof`](/docs/cpp/library/io/c/feof).
+
+{/* source:cpp-io-c-ungetc:0006 */}
+A successful call to `ungetc` on a binary stream decrements the stream position indicator by one (the behavior is indeterminate if the stream position indicator was zero).
+
+{/* source:cpp-io-c-ungetc:0007 */}
+A successful call to `ungetc` on a text stream modifies the stream position indicator in unspecified manner but guarantees that after all pushed-back characters are retrieved with a read operation, the stream position indicator is equal to its value before `ungetc`.
+
+### Parameters
+
+{/* source:cpp-io-c-ungetc:0008 */}
+<ParameterList>
+  <Parameter name="ch">character to be pushed into the input stream buffer</Parameter>
+  <Parameter name="stream">file stream to put the character back to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-c-ungetc:0009 */}
+On success `ch` is returned.
+
+{/* source:cpp-io-c-ungetc:0010 */}
+On failure [EOF](/docs/cpp/library/io/c) is returned and the given stream remains unchanged.
+
+### Notes
+
+{/* source:cpp-io-c-ungetc:0011 */}
+The size of the pushback buffer varies in practice from 4k (Linux, MacOS) to as little as 4 (Solaris) or the guaranteed minimum 1 (HPUX, AIX).
+
+{/* source:cpp-io-c-ungetc:0012 */}
+The apparent size of the pushback buffer may be larger if the character that is pushed back equals the character existing at that location in the external character sequence (the implementation may simply decrement the read file position indicator and avoid maintaining a pushback buffer).
+
+### Example
+
+{/* source:cpp-io-c-ungetc:0013 */}
+demonstrates the use of `std::ungetc` in its original purpose: implementing [`std::scanf`](/docs/cpp/library/io/c/scanf)
+
+```cpp
+#include <cctype>
+#include <cstdio>
+
+void demo_scanf(const char* fmt, std::FILE* s)
+{
+    while (*fmt != '\0') {
+        if (*fmt == '%') {
+            switch (*++fmt) {
+                case 'u': {
+                    int c{};
+                    while (std::isspace(c=std::getc(s))) {}
+                    unsigned int num{};
+                    while (std::isdigit(c)) {
+                        num = num*10 + c-'0';
+                        c = std::getc(s);
+                    }
+                    std::printf("%%u scanned %u\n", num);
+                    std::ungetc(c, s);
+                    break;
+                }
+                case 'c': {
+                    int c = std::getc(s);
+                    std::printf("%%c scanned '%c'\n", c);
+                    break;
+                }
+            }
+        }
+        else {
+            ++fmt;
+        }
+    }
+}
+
+int main()
+{
+    if (std::FILE* f = std::fopen("input.txt", "w+"))
+    {
+        std::fputs("123x", f);
+        std::rewind(f);
+        demo_scanf("%u%c", f);
+        std::fclose(f);
+    }
+}
+```
+
+Output:
+
+```text
+%u scanned 123
+%c scanned 'x'
+```
+
+### See also
+
+{/* source:cpp-io-c-ungetc:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fgetc`, `getc`](/docs/cpp/library/io/c/fgetc)</DescriptionTerm>
+    <DescriptionBody>gets a character from a file stream (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/ungetc) for `ungetc`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

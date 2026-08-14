@@ -1,0 +1,168 @@
+---
+title: "std::basic_istream<CharT,Traits>::sentry"
+description: "An object of class basic_istream::sentry is constructed in local scope at the beginning of each member function of std::basic_istream that performs input (both formatted and unformatted)."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/sentry"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-sentry:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`class sentry;`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-istream-sentry:0001 */}
+An object of class `basic_istream::sentry` is constructed in local scope at the beginning of each member function of [`std::basic_istream`](/docs/cpp/library/io/basic_istream) that performs input (both formatted and unformatted). Its constructor prepares the input stream: checks if the stream is already in a failed state, flushes the `tie()`'d output streams, skips leading whitespace unless `noskipws` flag is set, and performs other implementation-defined tasks if necessary. All cleanup, if necessary, is performed in the destructor, so that it is guaranteed to happen if exceptions are thrown during input.
+
+### Member types
+
+{/* source:cpp-io-basic-istream-sentry:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`traits_type`</DescriptionTerm>
+    <DescriptionBody>`Traits`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-io-basic-istream-sentry:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>(constructor)</DescriptionTerm>
+    <DescriptionBody>constructs the sentry object. All the preparation tasks are done here<br />(public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>(destructor)</DescriptionTerm>
+    <DescriptionBody>finalizes the stream object after formatted input or after exception, if necessary<br />(public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>operator=</DescriptionTerm>
+    <DescriptionBody>not copy assignable<br />(public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>operator bool</DescriptionTerm>
+    <DescriptionBody>checks if the preparation of the stream object was successful<br />(public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-io-basic-istream-sentry:0004 */}
+#### std::basic_istream::sentry::sentry
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`explicit sentry( std::basic_istream<CharT, Traits>& is, bool noskipws = false );`} />
+</DeclarationDoc>
+
+Prepares the stream for formatted input.
+
+If `is.good()` is `false`, calls `is.setstate(std::ios_base::failbit)` and returns. Otherwise, if `is.tie()` is not a null pointer, calls `is.tie()->flush()` to synchronize the output sequence with external streams. This call can be suppressed if the put area of `is.tie()` is empty. The implementation may defer the call to `flush()` until a call of `is.rdbuf()->underflow()` occurs. If no such call occurs before the sentry object is destroyed, it may be eliminated entirely.
+
+If `noskipws` is zero and `is.flags() & std::ios_base::skipws` is nonzero, the function extracts and discards all whitespace characters until the next available character is not a whitespace character (as determined by the currently imbued locale in `is`). If `is.rdbuf()->sbumpc()` or `is.rdbuf()->sgetc()` returns `traits::eof()`, the function calls `setstate(std::ios_base::failbit | std::ios_base::eofbit)` (which may throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure)).
+
+Additional implementation-defined preparation may take place, which may call `setstate(std::ios_base::failbit)` (which may throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure)).
+
+If after preparation is completed, `is.good() == true`, then any subsequent calls to `operator bool` will return `true`.
+
+##### Parameters
+
+<ParameterList>
+  <Parameter name="is">input stream to prepare</Parameter>
+  <Parameter name="noskipws">`true` if whitespace should not be skipped</Parameter>
+</ParameterList>
+
+##### Exceptions
+
+[`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure) if the end of file condition occurs when skipping whitespace.
+
+{/* source:cpp-io-basic-istream-sentry:0005 */}
+#### std::basic_istream::sentry::~sentry
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`~sentry();`} />
+</DeclarationDoc>
+
+Does nothing.
+
+{/* source:cpp-io-basic-istream-sentry:0006 */}
+#### std::basic_istream::sentry::operator bool
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`explicit operator bool() const;`} />
+</DeclarationDoc>
+
+Checks whether the preparation of the input stream was successful.
+
+##### Parameters
+
+(none)
+
+##### Return value
+
+`true` if the initialization of the input stream was successful, `false` otherwise.
+
+### Example
+
+{/* source:cpp-io-basic-istream-sentry:0007 */}
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+struct Foo
+{
+    char n[5];
+};
+ 
+std::istream& operator>>(std::istream& is, Foo& f)
+{
+    std::istream::sentry s(is);
+    if (s)
+        is.read(f.n, 5);
+    return is;
+}
+ 
+int main()
+{
+    std::string input = "   abcde";
+    std::istringstream stream(input);
+    Foo f;
+    stream >> f;
+    std::cout.write(f.n, 5);
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+abcde
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-sentry:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-sentry:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={195} standard="C++98">
+    <PublishedBehavior>it was unclear whether the constructor would set `eofbit`</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={419} standard="C++98">
+    <PublishedBehavior>the constructor did not set `failbit` if `eofbit` has been set</PublishedBehavior>
+    <CorrectedBehavior>sets `failbit` in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-sentry:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator>>`](/docs/cpp/library/io/basic_istream/operator_gtgt)</DescriptionTerm>
+    <DescriptionBody>extracts formatted data (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator>>(std::basic_istream)`](/docs/cpp/library/io/basic_istream/operator_gtgt2)</DescriptionTerm>
+    <DescriptionBody>extracts characters and character arrays (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,93 @@
+---
+title: "std::FILE"
+description: "Each std::FILE object denotes a C stream."
+source_url: "https://en.cppreference.com/w/cpp/io/c/FILE"
+language: "C++"
+---
+
+{/* source:cpp-io-c-file:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`typedef /* unspecified */ FILE;`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-file:0001 */}
+Each `std::FILE` object denotes a C stream.
+
+{/* source:cpp-io-c-file:0002 */}
+C standard (referenced by C++ standard) does not specify whether `std::FILE` is a complete object type. While it may be possible to copy a valid `std::FILE`, using a pointer to such a copy as an argument for an I/O function invokes unspecified behavior. In other words, `std::FILE` may be semantically non-copyable.
+
+{/* source:cpp-io-c-file:0003 */}
+I/O streams can be used for both unformatted and formatted input and output. Furthermore, the functions that handle input and output can also be locale-sensitive, such that wide/multibyte conversions are performed as necessary.
+
+### Stream state
+
+{/* source:cpp-io-c-file:0004 */}
+Besides the system-specific information necessary to access the device (*e.g.,* a POSIX file descriptor), each `std::FILE` object directly or indirectly holds the following:
+
+{/* source:cpp-io-c-file:0005 */}
+1. Character width: unset, narrow, or wide.
+2. Parse state for conversions between multibyte and wide characters (an object of type [`std::mbstate_t`](/docs/cpp/library/text/multibyte/mbstate_t))
+3. Buffering state: unbuffered, line-buffered, fully buffered.
+4. The buffer, which may be replaced by an external, user-provided buffer.
+5. I/O mode: input, output, or update (both input and output).
+6. Binary/text mode indicator.
+7. End-of-file status indicator.
+8. Error status indicator.
+9. File position indicator, accessible as an object of type [`std::fpos_t`](/docs/cpp/library/io/c/fpos_t), which, for wide streams, includes parse state.
+10. <InlineRevision since="C++17">Reentrant lock used to prevent data races when multiple threads read, write, position, or query the position of a stream.</InlineRevision>
+
+### Narrow and wide orientation
+
+{/* source:cpp-io-c-file:0006 */}
+A newly opened stream has no orientation. The first call to `std::fwide` or to any I/O function establishes the orientation: a wide I/O function makes the stream wide-oriented; a narrow I/O function makes the stream narrow-oriented. Once set, the orientation can be changed with only [`std::freopen`](/docs/cpp/library/io/c/freopen). Narrow I/O functions cannot be called on a wide-oriented stream; wide I/O functions cannot be called on a narrow-oriented stream. Wide I/O functions convert between wide and multibyte characters as if by calling [`std::mbrtowc`](/docs/cpp/library/text/multibyte/mbrtowc) or [`std::wcrtomb`](/docs/cpp/library/text/multibyte/wcrtomb) with the conversion state as described by the stream. Unlike the multibyte character strings that are valid in a program, multibyte character sequences in the file may contain embedded nulls and do not have to begin or end in the initial shift state.
+
+{/* source:cpp-io-c-file:0007 */}
+The conversion state of a stream with wide orientation is established by the C locale that is installed at the time the stream's orientation is set.
+
+### Binary and text modes
+
+{/* source:cpp-io-c-file:0008 */}
+A *text stream* is an ordered sequence of characters that can be composed into lines; a line can be decomposed into zero or more characters plus a terminating `'\n'` (“newline”) character. Whether the last line requires a terminating `'\n'` is implementation-defined. Furthermore, characters may have to be added, altered, or deleted on input and output to conform to the conventions for representing text in the OS (in particular, C streams on Windows OS convert `'\n'` to `'\r\n'` on output, and convert `'\r\n'` to `'\n'` on input).
+
+{/* source:cpp-io-c-file:0009 */}
+Data read in from a text stream is guaranteed to compare equal to the data that were earlier written out to that stream only if each of the following is true:
+
+{/* source:cpp-io-c-file:0010 */}
+- The data consist of only printing characters and/or the control characters `'\t'` and `'\n'` (in particular, on Windows OS, the character `'\0x1A'` terminates input).
+- No `'\n'` character is immediately preceded by space characters (such space characters may disappear when such output is later read as input).
+- The last character is `'\n'`.
+
+{/* source:cpp-io-c-file:0011 */}
+A binary stream is an ordered sequence of characters that can transparently record internal data. Data read in from a binary stream always equal the data that were earlier written out to that stream, except that an implementation is allowed to append an indeterminate number of null characters to the end of the stream. A wide binary stream doesn't need to end in the initial shift state.
+
+### Notes
+
+{/* source:cpp-io-c-file:0012 */}
+POSIX explicitly requires that the LC_CTYPE facet of the currently installed C locale be stored within the `FILE` object the moment the stream's orientation becomes wide; POSIX requires that this LC_CTYPE facet be used for all future I/O on this stream until the orientation is changed, regardless of any subsequent call to [`std::setlocale`](/docs/cpp/library/text/locale/setlocale).
+
+{/* source:cpp-io-c-file:0013 */}
+It is intended that each line of text be composed of data that are essentially human-readable. POSIX implementations do not distinguish between text and binary streams (there is no special mapping for `'\n'` or any other characters).
+
+### See also
+
+{/* source:cpp-io-c-file:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_streambuf`](/docs/cpp/library/io/basic_streambuf)</DescriptionTerm>
+    <DescriptionBody>abstracts a raw device <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_filebuf`](/docs/cpp/library/io/basic_filebuf)</DescriptionTerm>
+    <DescriptionBody>implements raw file device <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stdin`, `stdout`, `stderr`](/docs/cpp/library/io/c/std_streams)</DescriptionTerm>
+    <DescriptionBody>expression of type `FILE*` associated with the input stream<br />expression of type `FILE*` associated with the output stream<br />expression of type `FILE*` associated with the error output stream <br /> (macro constant)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/FILE) for `FILE`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

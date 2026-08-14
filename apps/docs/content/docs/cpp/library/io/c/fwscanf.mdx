@@ -1,0 +1,129 @@
+---
+title: "std::wscanf, std::fwscanf, std::swscanf"
+description: "Reads data from the a variety of sources, interprets it according to format and stores the results into given locations."
+source_url: "https://en.cppreference.com/w/cpp/io/c/fwscanf"
+language: "C++"
+---
+
+{/* source:cpp-io-c-fwscanf:0000 */}
+<DeclarationDoc>
+Defined in header [`<cwchar>`](/docs/cpp/library/headers/cwchar)
+
+  <Declaration id="1" language="cpp" code={`int wscanf( const wchar_t* format, ... );`} />
+  <Declaration id="2" language="cpp" code={`int fwscanf( std::FILE* stream, const wchar_t* format, ... );`} />
+  <Declaration id="3" language="cpp" code={`int swscanf( const wchar_t* buffer, const wchar_t* format, ... );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-c-fwscanf:0001 */}
+    Reads data from the a variety of sources, interprets it according to `format` and stores the results into given locations.
+
+    {/* source:cpp-io-c-fwscanf:0002 */}
+    1. Reads the data from [`stdin`](/docs/cpp/library/io/c/std_streams).
+
+    {/* source:cpp-io-c-fwscanf:0003 */}
+    2. Reads the data from file stream `stream`.
+
+    {/* source:cpp-io-c-fwscanf:0004 */}
+    3. Reads the data from null-terminated wide string `buffer`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-io-c-fwscanf:0005 */}
+<ParameterList>
+  <Parameter name="stream">input file stream to read from</Parameter>
+  <Parameter name="buffer">pointer to a null-terminated wide string to read from</Parameter>
+  <Parameter name="format">pointer to a null-terminated wide string specifying how to read the input</Parameter>
+  <Parameter name="...">receiving arguments.</Parameter>
+</ParameterList>
+
+{/* source:cpp-io-c-fwscanf:0006 */}
+The format string consists of
+
+{/* source:cpp-io-c-fwscanf:0007 */}
+- non-whitespace wide characters except `%`: each such character in the format string consumes exactly one identical character from the input stream, or causes the function to fail if the next character on the stream does not compare equal.
+- whitespace characters: any single whitespace character in the format string consumes all available consecutive whitespace characters from the input (determined as if by calling [`iswspace`](/docs/cpp/library/text/wide/iswspace) in a loop). Note that there is no difference between `"\n"`, `" "`, `"\t\t"`, or other whitespace in the format string.
+- conversion specifications. Each conversion specification has the following format:
+
+{/* source:cpp-io-c-fwscanf:0008 */}
+- introductory `%` character.
+
+{/* source:cpp-io-c-fwscanf:0009 */}
+- (optional) assignment-suppressing character `*`. If this option is present, the function does not assign the result of the conversion to any receiving argument.
+
+{/* source:cpp-io-c-fwscanf:0010 */}
+- (optional) integer number (greater than zero) that specifies maximum field width, that is, the maximum number of characters that the function is allowed to consume when doing the conversion specified by the current conversion specification. Note that `%s` and `%[` may lead to buffer overflow if the width is not provided.
+
+{/* source:cpp-io-c-fwscanf:0011 */}
+- (optional) length modifier that specifies the size of the receiving argument, that is, the actual destination type. This affects the conversion accuracy and overflow rules. The default destination type is different for each conversion type (see table below).
+
+{/* source:cpp-io-c-fwscanf:0012 */}
+- conversion format specifier.
+
+{/* source:cpp-io-c-fwscanf:0013 */}
+The following format specifiers are available:
+
+{/* source:cpp-io-c-fwscanf:0014 */}
+| Conversion specifier | Explanation | Argument type: Length modifier → `hh` | `h` | (none) | `l` | `ll` | `j` | `z` | `t` | `L` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `%` | Matches literal `%`. | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| `c` | Matches a **character** or a sequence of **characters**. If a width specifier is used, matches exactly *width* wide characters (the argument must be a pointer to an array with sufficient room). Unlike %s and %[, does not append the null character to the array. | N/A | N/A | `char*` | `wchar_t*` | N/A | N/A | N/A | N/A | N/A |
+| `s` | Matches a sequence of non-whitespace characters (a **string**). If width specifier is used, matches up to *width* or until the first whitespace character, whichever appears first. Always stores a null character in addition to the characters matched (so the argument array must have room for at least *width+1* characters) | N/A | N/A | `char*` | `wchar_t*` | N/A | N/A | N/A | N/A | N/A |
+| `[`*set*`]` | Matches a non-empty sequence of character from set of characters. If the first character of the set is `^`, then all characters not in the set are matched. If the set begins with `]` or `^]` then the `]` character is also included into the set. It is implementation-defined whether the character `-` in the non-initial position in the scanset may be indicating a range, as in `[0-9]`. If width specifier is used, matches only up to *width*. Always stores a null character in addition to the characters matched (so the argument array must have room for at least *width+1* characters) | N/A | N/A | `char*` | `wchar_t*` | N/A | N/A | N/A | N/A | N/A |
+| `d` | Matches a **decimal integer**. The format of the number is the same as expected by [`wcstol`](/docs/cpp/library/text/wide/wcstol) with the value `10` for the `base` argument | `signed char*` or `unsigned char*` | `signed short*` or `unsigned short*` | `signed int*` or `unsigned int*` | `signed long*` or `unsigned long*` | `signed long long*` or `unsigned long long*` | `intmax_t*` or `uintmax_t*` | `size_t*` | `ptrdiff_t*` | N/A |
+| `i` | Matches an **integer**. The format of the number is the same as expected by [`wcstol`](/docs/cpp/library/text/wide/wcstol) with the value `0` for the `base` argument (base is determined by the first characters parsed) | `signed char*` or `unsigned char*` | `signed short*` or `unsigned short*` | `signed int*` or `unsigned int*` | `signed long*` or `unsigned long*` | `signed long long*` or `unsigned long long*` | `intmax_t*` or `uintmax_t*` | `size_t*` | `ptrdiff_t*` | N/A |
+| `u` | Matches an unsigned **decimal integer**. The format of the number is the same as expected by [`wcstoul`](/docs/cpp/library/text/wide/wcstoul) with the value `10` for the `base` argument. | `signed char*` or `unsigned char*` | `signed short*` or `unsigned short*` | `signed int*` or `unsigned int*` | `signed long*` or `unsigned long*` | `signed long long*` or `unsigned long long*` | `intmax_t*` or `uintmax_t*` | `size_t*` | `ptrdiff_t*` | N/A |
+| `o` | Matches an unsigned **octal integer**. The format of the number is the same as expected by [`wcstoul`](/docs/cpp/library/text/wide/wcstoul) with the value `8` for the `base` argument | `signed char*` or `unsigned char*` | `signed short*` or `unsigned short*` | `signed int*` or `unsigned int*` | `signed long*` or `unsigned long*` | `signed long long*` or `unsigned long long*` | `intmax_t*` or `uintmax_t*` | `size_t*` | `ptrdiff_t*` | N/A |
+| `x`, `X` | Matches an unsigned **hexadecimal integer**. The format of the number is the same as expected by [`wcstoul`](/docs/cpp/library/text/wide/wcstoul) with the value `16` for the `base` argument | `signed char*` or `unsigned char*` | `signed short*` or `unsigned short*` | `signed int*` or `unsigned int*` | `signed long*` or `unsigned long*` | `signed long long*` or `unsigned long long*` | `intmax_t*` or `uintmax_t*` | `size_t*` | `ptrdiff_t*` | N/A |
+| `n` | Returns the **number of characters read so far**. No input is consumed. Does not increment the assignment count. If the specifier has assignment-suppressing operator defined, the behavior is undefined | N/A | N/A | `char*` | `wchar_t*` | N/A | N/A | N/A | N/A | N/A |
+| `a`, `A` <InlineRevision since="C++11" />, `e`, `E`, `f`, `F`, `g`, `G` | Matches a **floating-point number**. The format of the number is the same as expected by [`wcstof`](/docs/cpp/library/text/wide/wcstof) | N/A | N/A | `float*` | `double*` | N/A | N/A | N/A | N/A | `long double*` |
+| `p` | Matches implementation defined character sequence defining a **pointer**. `printf` family of functions should produce the same sequence using `%p` format specifier | N/A | N/A | `void**` | N/A | N/A | N/A | N/A | N/A | N/A |
+
+{/* source:cpp-io-c-fwscanf:0015 */}
+For every conversion specifier other than `n`, the longest sequence of input characters which does not exceed any specified field width and which either is exactly what the conversion specifier expects or is a prefix of a sequence it would expect, is what's consumed from the stream. The first character, if any, after this consumed sequence remains unread. If the consumed sequence has length zero or if the consumed sequence cannot be converted as specified above, the matching failure occurs unless end-of-file, an encoding error, or a read error prevented input from the stream, in which case it is an input failure.
+
+{/* source:cpp-io-c-fwscanf:0016 */}
+All conversion specifiers other than `[`, `c`, and `n` consume and discard all leading whitespace characters (determined as if by calling [`iswspace`](/docs/cpp/library/text/wide/iswspace)) before attempting to parse the input. These consumed characters do not count towards the specified maximum field width.
+
+{/* source:cpp-io-c-fwscanf:0017 */}
+If the length specifier `l` is not used, the conversion specifiers `c`, `s`, and `[` perform wide-to-multibyte character conversion as if by calling [`wcrtomb`](/docs/cpp/library/text/multibyte/wcrtomb) with an [`mbstate_t`](/docs/cpp/library/text/multibyte/mbstate_t) object initialized to zero before the first character is converted.
+
+{/* source:cpp-io-c-fwscanf:0018 */}
+The conversion specifiers `s` and `[` always store the null terminator in addition to the matched characters. The size of the destination array must be at least one greater than the specified field width. The use of `%s` or `%[`, without specifying the destination array size, is as unsafe as [`std::gets`](/docs/cpp/library/io/c/gets).
+
+{/* source:cpp-io-c-fwscanf:0019 */}
+The correct conversion specifications for the [fixed-width integer types](/docs/cpp/library/utility/types/integer) (`int8_t`, etc) are defined in the header [`<cinttypes>`](/docs/cpp/library/headers/cinttypes) (although [`SCNdMAX`](/docs/cpp/library/utility/types/integer), [`SCNuMAX`](/docs/cpp/library/utility/types/integer), etc is synonymous with `%jd`, `%ju`, etc).
+
+{/* source:cpp-io-c-fwscanf:0020 */}
+There is a [sequence point](/docs/cpp/language/expressions/eval_order) after the action of each conversion specifier; this permits storing multiple fields in the same "sink" variable.
+
+{/* source:cpp-io-c-fwscanf:0021 */}
+When parsing an incomplete floating-point value that ends in the exponent with no digits, such as parsing `"100er"` with the conversion specifier `%f`, the sequence `"100e"` (the longest prefix of a possibly valid floating-point number) is consumed, resulting in a matching error (the consumed sequence cannot be converted to a floating-point number), with `"r"` remaining. Some existing implementations do not follow this rule and roll back to consume only `"100"`, leaving `"er"`, e.g. [glibc bug 1765](https://sourceware.org/bugzilla/show_bug.cgi?id=1765).
+
+{/* source:cpp-io-c-fwscanf:0022 */}
+A conversion specification must be valid. Otherwise, the behavior is undefined.
+
+### Return value
+
+{/* source:cpp-io-c-fwscanf:0023 */}
+Number of arguments successfully read, or [EOF](/docs/cpp/library/io/c) if failure occurs before the first receiving argument was assigned.
+
+### Example
+
+{/* source:cpp-io-c-fwscanf:0024 */}
+This section is incomplete. Reason: no example
+
+### See also
+
+{/* source:cpp-io-c-fwscanf:0025 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`vwscanf`, `vfwscanf`, `vswscanf`](/docs/cpp/library/io/c/vfwscanf) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>reads formatted wide character input from [`stdin`](/docs/cpp/library/io/c/std_streams), a file stream or a buffer using variable argument list (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/fwscanf) for `wscanf`, `fwscanf`, `swscanf`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

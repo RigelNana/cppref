@@ -1,0 +1,100 @@
+---
+title: "std::flush"
+description: "Flushes the output sequence os as if by calling os.flush()."
+source_url: "https://en.cppreference.com/w/cpp/io/manip/flush"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-flush:0000 */}
+<DeclarationDoc>
+Defined in header [`<ostream>`](/docs/cpp/library/headers/ostream)
+
+  <Declaration language="cpp" code={`template< class CharT, class Traits >
+std::basic_ostream<CharT, Traits>& flush( std::basic_ostream<CharT, Traits>& os );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-manip-flush:0001 */}
+Flushes the output sequence `os` as if by calling `os.flush()`.
+
+{/* source:cpp-io-manip-flush:0002 */}
+This is an output-only I/O manipulator, it may be called with an expression such as `out << std::flush` for any `out` of type [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream).
+
+### Notes
+
+{/* source:cpp-io-manip-flush:0003 */}
+This manipulator may be used to produce an incomplete line of output immediately, e.g. when displaying output from a long-running process, logging activity of multiple threads or logging activity of a program that may crash unexpectedly. An explicit flush of [`std::cout`](/docs/cpp/library/io/basic_ostream/cout) is also necessary before a call to [`std::system`](/docs/cpp/library/utility/program/system), if the spawned process performs any screen I/O (a common example is `std::system("pause")` on Windows). In most other usual interactive I/O scenarios, [`std::endl`](/docs/cpp/library/io/manip/endl) is redundant when used with [`std::cout`](/docs/cpp/library/io/basic_ostream/cout) because any input from [`std::cin`](/docs/cpp/library/io/basic_istream/cin), output to [`std::cerr`](/docs/cpp/library/io/basic_ostream/cerr), or program termination forces a call to `std::cout.flush()`.
+
+{/* source:cpp-io-manip-flush:0004 */}
+When a complete line of output needs to be flushed, the [`std::endl`](/docs/cpp/library/io/manip/endl) manipulator may be used.
+
+{/* source:cpp-io-manip-flush:0005 */}
+When every output operation needs to be flushed, the [`std::unitbuf`](/docs/cpp/library/io/manip/unitbuf) manipulator may be used.
+
+### Parameters
+
+{/* source:cpp-io-manip-flush:0006 */}
+<ParameterList>
+  <Parameter name="os">reference to output stream</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-flush:0007 */}
+`os` (reference to the stream after manipulation).
+
+### Example
+
+{/* source:cpp-io-manip-flush:0008 */}
+Without `std::flush`, the output would be the same, but may not appear in real time.
+
+```cpp
+#include <chrono>
+#include <iostream>
+
+template<typename Diff>
+void log_progress(Diff d)
+{
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(d) << " ... "
+              << std::flush;
+}
+
+int main()
+{
+    volatile int sink = 0;
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    for (int j = 0; j < 5; ++j)
+    {
+        for (int n = 0; n < 10000; ++n)
+            for (int m = 0; m < 20000; ++m)
+                sink += m * n; // do some work
+        auto now = std::chrono::high_resolution_clock::now();
+        log_progress(now - t1);
+    }
+    std::cout << '\n';
+}
+```
+
+Possible output:
+
+```text
+567ms ... 1137ms ... 1707ms ... 2269ms ... 2842ms ...
+```
+
+### See also
+
+{/* source:cpp-io-manip-flush:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unitbuf nounitbuf`](/docs/cpp/library/io/manip/unitbuf)</DescriptionTerm>
+    <DescriptionBody>controls whether output is flushed after each operation <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`endl`](/docs/cpp/library/io/manip/endl)</DescriptionTerm>
+    <DescriptionBody>outputs `'\n'` and flushes the output stream <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`flush`](/docs/cpp/library/io/basic_ostream/flush)</DescriptionTerm>
+    <DescriptionBody>synchronizes with the underlying storage device <br /> (public member function of `std::basic_ostream<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

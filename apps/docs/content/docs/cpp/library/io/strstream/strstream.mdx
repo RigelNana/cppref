@@ -1,0 +1,133 @@
+---
+title: "std::strstream::strstream"
+description: "Constructs new input/output strstream and its underlying std::strstreambuf."
+source_url: "https://en.cppreference.com/w/cpp/io/strstream/strstream"
+language: "C++"
+---
+
+{/* source:cpp-io-strstream-strstream:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" until="C++26" code={`strstream();`} /> (deprecated in C++98)
+  <Declaration id="2" language="cpp" until="C++26" code={`strstream( char* s, int n, std::ios_base::openmode mode =
+                               std::ios_base::in | std::ios_base::out );`} /> (deprecated in C++98)
+
+  <DeclarationDescription>
+    {/* source:cpp-io-strstream-strstream:0001 */}
+    Constructs new input/output strstream and its underlying [`std::strstreambuf`](/docs/cpp/library/io/strstreambuf).
+
+    {/* source:cpp-io-strstream-strstream:0002 */}
+    1) Default-constructs the underlying [`std::strstreambuf`](/docs/cpp/library/io/strstreambuf), which creates a dynamically growing buffer, and initializes the base class with the address of the strstreambuf member.
+
+    {/* source:cpp-io-strstream-strstream:0003 */}
+    2) Initialized the base class with the address of the underlying [`std::strstreambuf`](/docs/cpp/library/io/strstreambuf) member, which is initialized in one of the two possible ways, both of which use a user-provided fixed-size array:
+
+    {/* source:cpp-io-strstream-strstream:0004 */}
+    - a) if `(mode & app) == 0` (the `app` bit is not set in `mode`), constructs the buffer by calling `strstreambuf(s, n, s)`. The behavior is undefined if there are less than `n` elements in the array whose first element is pointed to by `s`.
+
+    {/* source:cpp-io-strstream-strstream:0005 */}
+    - b) if `(mode & app) != 0` (the `app` bit is set in `mode`), constructs the buffer by calling `strstreambuf(s, n, s + std::strlen(s))`. The behavior is undefined if there are less than `n` elements in the array whose first element is pointed to by `s` or if the array does not contain a valid null-terminated character sequence.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-io-strstream-strstream:0006 */}
+
+<ParameterList>
+
+  <Parameter name="s">`char` array to use as the output buffer</Parameter>
+  <Parameter name="n">size of the array to be used for output</Parameter>
+  <Parameter name="mode">specifies stream open mode. It is a bitmask type, the following constants are defined (although only `app` is used):</Parameter>
+
+</ParameterList>
+
+| Constant | Explanation |
+| --- | --- |
+| [`app`](/docs/cpp/library/io/ios_base/openmode) | seek to the end of stream before each write |
+| [`binary`](/docs/cpp/library/io/ios_base/openmode) | open in [`binary mode`](/docs/cpp/library/io/c/FILE#Binary_and_text_modes) |
+| [`in`](/docs/cpp/library/io/ios_base/openmode) | open for reading |
+| [`out`](/docs/cpp/library/io/ios_base/openmode) | open for writing |
+| [`trunc`](/docs/cpp/library/io/ios_base/openmode) | discard the contents of the stream when opening |
+| [`ate`](/docs/cpp/library/io/ios_base/openmode) | seek to the end of stream immediately after open |
+| [`noreplace`](/docs/cpp/library/io/ios_base/openmode) <InlineRevision since="C++23" /> | open in exclusive mode |
+
+### Example
+
+{/* source:cpp-io-strstream-strstream:0007 */}
+
+```cpp
+#include <iostream>
+#include <string>
+#include <strstream>
+ 
+int main()
+{
+    // dynamic buffer
+    std::strstream s1;
+    s1 << 1 << ' ' << 3.14 << " example" << std::ends;
+    std::cout << "Buffer holds: '" << s1.str() << "'\n";
+    s1.freeze(false);
+ 
+    int n;
+    double d;
+    std::string w;
+    s1 >> n >> d >> w;
+    std::cout << "Read back: n = " << n
+              << ", d = " << d
+              << ", w = '" << w << "'\n";
+ 
+    // static buffer
+    char arr[20] = "-1 -3.14 ";
+    std::strstream s2(arr, sizeof arr, std::ios_base::app);
+    s2 << "another" << std::ends;
+    std::cout << "Buffer holds: '" << s2.str() << "'\n";
+    s2 >> n >> d >> w;
+    std::cout << "Read back: n = " << n
+              << ", d = " << d
+              << ", w = '" << w << "'\n";
+}
+```
+
+Output:
+
+```text
+Buffer holds: '1 3.14 example'
+Read back: n = 1, d = 3.14, w = 'example'
+Buffer holds: '-1 -3.14 another'
+Read back: n = -1, d = -3.14, w = 'another'
+```
+
+### Defect reports
+
+{/* source:cpp-io-strstream-strstream:0008 */}
+
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-strstream-strstream:0009 */}
+
+<DefectReportList>
+  <DefectReport kind="lwg" id={115} standard="C++98">
+    <PublishedBehavior>overload (2) only considered the case `mode & app == 0` (`==` has higher precedence than `&`)</PublishedBehavior>
+    <CorrectedBehavior>considers cases `(mode & app) == 0` and `(mode & app) != 0`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-strstream-strstream:0010 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/io/strstreambuf/strstreambuf)</DescriptionTerm>
+    <DescriptionBody>constructs a `strstreambuf` object<br />(public member function of `std::strstreambuf`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/io/istrstream/istrstream)</DescriptionTerm>
+    <DescriptionBody>constructs an `istrstream` object, optionally allocating the buffer<br />(public member function of `std::istrstream`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/io/ostrstream/ostrstream)</DescriptionTerm>
+    <DescriptionBody>constructs an `ostrstream` object, optionally allocating the buffer<br />(public member function of `std::ostrstream`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

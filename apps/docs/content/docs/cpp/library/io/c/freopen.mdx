@@ -1,0 +1,101 @@
+---
+title: "std::freopen"
+description: "First, attempts to close the file associated with stream, ignoring any errors. Then, if filename is not null, attempts to open the file specified by filename using mode as if by std::fopen, and associates that file with the file stream pointed to by stream. If filename is a null pointer, then the function attempts to reopen the file that is already associated with stream (it is implementation defined which mode changes are allowed in this case)."
+source_url: "https://en.cppreference.com/w/cpp/io/c/freopen"
+language: "C++"
+---
+
+{/* source:cpp-io-c-freopen:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`std::FILE* freopen( const char* filename, const char* mode, std::FILE* stream );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-freopen:0001 */}
+First, attempts to close the file associated with `stream`, ignoring any errors. Then, if `filename` is not null, attempts to open the file specified by `filename` using `mode` as if by [`std::fopen`](/docs/cpp/library/io/c/fopen), and associates that file with the file stream pointed to by `stream`. If `filename` is a null pointer, then the function attempts to reopen the file that is already associated with `stream` (it is implementation defined which mode changes are allowed in this case).
+
+### Parameters
+
+{/* source:cpp-io-c-freopen:0002 */}
+<ParameterList>
+  <Parameter name="filename">file name to associate the file stream to</Parameter>
+  <Parameter name="mode">null-terminated character string determining new [file access mode](/docs/cpp/library/io/c/freopen#File_access_flags)</Parameter>
+  <Parameter name="stream">the file stream to modify</Parameter>
+</ParameterList>
+
+### File access flags
+
+{/* source:cpp-io-c-freopen:0003 */}
+| File access mode string | Meaning | Explanation | Action if file already exists | Action if file does not exist |
+| --- | --- | --- | --- | --- |
+| `"r"` | read | Open a file for reading | read from start | return `NULL` and set error |
+| `"w"` | write | Create a file for writing | destroy contents | create new |
+| `"a"` | append | Append to a file | write to end | create new |
+| `"r+"` | read extended | Open a file for read/write | read from start | return `NULL` and set error |
+| `"w+"` | write extended | Create a file for read/write | destroy contents | create new |
+| `"a+"` | append extended | Open a file for read/write | write to end | create new |
+
+File access mode flag `"b"` can optionally be specified to open a file [in binary mode](/docs/cpp/library/io/c/FILE#Binary_and_text_modes). This flag has no effect on POSIX systems, but on Windows, for example, it disables special handling of `'\n'` and `'\x1A'`.
+
+On the append file access modes, data is written to the end of the file regardless of the current position of the file position indicator.
+
+<InlineRevision since="C++17">File access mode flag `"x"` can optionally be appended to `"w"` or `"w+"` specifiers. This flag forces the function to fail if the file exists, instead of overwriting it.</InlineRevision>
+
+The behavior is undefined if the mode is not one of the strings listed above. Some implementations define additional supported modes (e.g. [Windows](https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/fopen-wfopen)).
+
+### Return value
+
+{/* source:cpp-io-c-freopen:0004 */}
+`stream` on success, a null pointer on failure.
+
+### Notes
+
+{/* source:cpp-io-c-freopen:0005 */}
+`std::freopen` is the only way to change the narrow/wide orientation of a stream once it has been established by an I/O operation or by `std::fwide`.
+
+{/* source:cpp-io-c-freopen:0006 */}
+Microsoft CRT version of `std::freopen` does not support any mode changes when `filename` is a null pointer and treats this as an error (see [documentation](https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/freopen-wfreopen)). A possible workaround is the non-standard function [`_setmode()`](https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode).
+
+### Example
+
+{/* source:cpp-io-c-freopen:0007 */}
+The following code redirects `stdout` to a file.
+
+```cpp
+#include <cstdio>
+ 
+int main()
+{
+    std::printf("stdout is printed to console\n");
+    if (std::freopen("redir.txt", "w", stdout))
+    {
+        std::printf("stdout is redirected to a file\n"); // this is written to redir.txt
+        std::fclose(stdout);
+    }
+}
+```
+
+Output:
+
+```text
+stdout is printed to console
+```
+
+### See also
+
+{/* source:cpp-io-c-freopen:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fopen`](/docs/cpp/library/io/c/fopen)</DescriptionTerm>
+    <DescriptionBody>opens a file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fclose`](/docs/cpp/library/io/c/fclose)</DescriptionTerm>
+    <DescriptionBody>closes a file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/freopen) for `freopen`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

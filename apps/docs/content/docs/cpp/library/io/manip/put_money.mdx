@@ -1,0 +1,105 @@
+---
+title: "std::put_money"
+description: "When used in an expression out << put_money(mon, intl), converts the monetary value mon to its character representation as specified by the std::money_put facet of the locale currently imbued in out."
+source_url: "https://en.cppreference.com/w/cpp/io/manip/put_money"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-put-money:0000 */}
+<DeclarationDoc>
+Defined in header [`<iomanip>`](/docs/cpp/library/headers/iomanip)
+
+  <Declaration language="cpp" since="C++11" code={`template< class MoneyT >
+/*unspecified*/ put_money( const MoneyT& mon, bool intl = false );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-manip-put-money:0001 */}
+When used in an expression `out << put_money(mon, intl)`, converts the monetary value `mon` to its character representation as specified by the [`std::money_put`](/docs/cpp/library/text/locale/money_put) facet of the locale currently imbued in `out`.
+
+{/* source:cpp-io-manip-put-money:0002 */}
+The insertion operation in `out << put_money(mon, intl)` behaves as a [FormattedOutputFunction](/docs/cpp/library/named_req/FormattedOutputFunction).
+
+### Parameters
+
+{/* source:cpp-io-manip-put-money:0003 */}
+<ParameterList>
+  <Parameter name="mon">a monetary value, either `long double` or [`std::basic_string`](/docs/cpp/library/string/basic_string)</Parameter>
+  <Parameter name="intl">use international currency strings if `true`, use currency symbols otherwise</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-put-money:0004 */}
+An object of unspecified type such that
+
+{/* source:cpp-io-manip-put-money:0005 */}
+- if `out` is an object of type `std::basic_ostream<CharT, Traits>`, the expression `out << put_money(mon, intl)`
+  - has type `std::basic_ostream<CharT, Traits>&`
+  - has value `out`
+  - behaves as a [FormattedOutputFunction](/docs/cpp/library/named_req/FormattedOutputFunction) that calls `f(out, mon, intl)`
+{/* source:cpp-io-manip-put-money:0006 */}
+where the function `f` is defined as:
+
+{/* source:cpp-io-manip-put-money:0007 */}
+```cpp
+template<class CharT, class Traits, class MoneyT>
+void f(std::basic_ios<CharT, Traits>& str, const MoneyT& mon, bool intl)
+{
+    using Iter = std::ostreambuf_iterator<CharT, Traits>;
+    using MoneyPut = std::money_put<CharT, Iter>;
+
+    const MoneyPut& mp = std::use_facet<MoneyPut>(str.getloc());
+    const Iter end = mp.put(Iter(str.rdbuf()), intl, str, str.fill(), mon);
+
+    if (end.failed())
+        str.setstate(std::ios_base::badbit);
+}
+```
+
+### Example
+
+{/* source:cpp-io-manip-put-money:0008 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+
+int main()
+{
+    long double mon = 123.45; // or std::string mon = "123.45";
+
+    std::cout.imbue(std::locale("en_US.UTF-8"));
+    std::cout << std::showbase
+              << "en_US: " << std::put_money(mon)
+              << " or " << std::put_money(mon, true) << '\n';
+
+    std::cout.imbue(std::locale("ru_RU.UTF-8"));
+    std::cout << "ru_RU: " << std::put_money(mon)
+              << " or " << std::put_money(mon, true) << '\n';
+
+    std::cout.imbue(std::locale("ja_JP.UTF-8"));
+    std::cout << "ja_JP: " << std::put_money(mon)
+              << " or " << std::put_money(mon, true) << '\n';
+}
+```
+
+Possible output:
+
+```text
+en_US: $1.23 or USD  1.23
+ru_RU: 1.23 руб or 1.23 RUB
+ja_JP: ￥123 or JPY  123
+```
+
+### See also
+
+{/* source:cpp-io-manip-put-money:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`money_put`](/docs/cpp/library/text/locale/money_put)</DescriptionTerm>
+    <DescriptionBody>formats a monetary value for output as a character sequence <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_money`](/docs/cpp/library/io/manip/get_money) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>parses a monetary value <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,95 @@
+---
+title: "std::basic_istream<CharT,Traits>::readsome"
+description: "Extracts up to count immediately available characters from the input stream. The extracted characters are stored into the character array pointed to by s."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/readsome"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-readsome:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`std::streamsize readsome( char_type* s, std::streamsize count );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-istream-readsome:0001 */}
+Extracts up to `count` immediately available characters from the input stream. The extracted characters are stored into the character array pointed to by `s`.
+
+{/* source:cpp-io-basic-istream-readsome:0002 */}
+Behaves as [UnformattedInputFunction](/docs/cpp/library/named_req/UnformattedInputFunction). After constructing and checking the sentry object,
+
+{/* source:cpp-io-basic-istream-readsome:0003 */}
+- If `rdbuf()->in_avail() == -1`, calls `setstate(eofbit)` and extracts no characters.
+
+{/* source:cpp-io-basic-istream-readsome:0004 */}
+- If `rdbuf()->in_avail() == 0`, extracts no characters.
+
+{/* source:cpp-io-basic-istream-readsome:0005 */}
+- If `rdbuf()->in_avail() > 0`, extracts `std::min(rdbuf()->in_avail(), count)` characters and stores them into successive locations of the character array whose first element is pointed to by `s`.
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-readsome:0006 */}
+<ParameterList>
+  <Parameter name="s">pointer to the character array to store the characters to</Parameter>
+  <Parameter name="count">maximum number of characters to read</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-istream-readsome:0007 */}
+The number of characters actually extracted.
+
+### Exceptions
+
+{/* source:cpp-io-basic-istream-readsome:0008 */}
+If an internal operation throws an exception, it is caught and [`badbit`](/docs/cpp/library/io/ios_base/iostate) is set. If [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) is set for `badbit`, the exception is rethrown.
+
+### Notes
+
+{/* source:cpp-io-basic-istream-readsome:0009 */}
+The behavior of this function is highly implementation-specific. For example, using `readsome()` with [`std::ifstream`](/docs/cpp/library/io/basic_ifstream) leads to significant, implementation-specific outcomes. Some library implementations fill the underlying `filebuf` with data as soon as [`std::ifstream`](/docs/cpp/library/io/basic_ifstream) opens a file, which means `readsome()` always reads data and could even read the entire file. With other implementations, [`std::ifstream`](/docs/cpp/library/io/basic_ifstream) only reads from a file when an input operation is invoked, which means calling `readsome()` immediately after opening the file never extracts any characters. Similarly, calling `std::cin.readsome()` may return all pending, unprocessed console input or may always return zero and extract no characters.
+
+### Example
+
+{/* source:cpp-io-basic-istream-readsome:0010 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    char c[10] = "*********"; // c[9] == '\0'
+ 
+    // std::stringbuf makes its entire buffer available for unblocking read
+    std::istringstream input("This is sample text.");
+ 
+    auto r = input.readsome(c, 5); // reads 'This ' and stores in c[0] .. c[4]
+    assert(r == 5);
+    std::cout << c << '\n';
+ 
+    r = input.readsome(c, 9); // reads 'is sample' and stores in c[0] .. c[8]
+    assert(r == 9);
+    std::cout << c << '\n';
+}
+```
+
+Output:
+
+```text
+This ****
+is sample
+```
+
+### See also
+
+{/* source:cpp-io-basic-istream-readsome:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`read`](/docs/cpp/library/io/basic_istream/read)</DescriptionTerm>
+    <DescriptionBody>extracts blocks of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_avail`](/docs/cpp/library/io/basic_streambuf/in_avail)</DescriptionTerm>
+    <DescriptionBody>obtains the number of characters immediately available in the get area (public member function of `std::basic_streambuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

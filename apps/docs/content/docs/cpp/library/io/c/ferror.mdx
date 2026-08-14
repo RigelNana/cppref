@@ -1,0 +1,85 @@
+---
+title: "std::ferror"
+description: "Checks the given stream for errors."
+source_url: "https://en.cppreference.com/w/cpp/io/c/ferror"
+language: "C++"
+---
+
+{/* source:cpp-io-c-ferror:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`int ferror( std::FILE* stream );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-ferror:0001 */}
+Checks the given stream for errors.
+
+### Parameters
+
+{/* source:cpp-io-c-ferror:0002 */}
+<ParameterList>
+  <Parameter name="stream">the file stream to check</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-c-ferror:0003 */}
+Nonzero value if the file stream has errors occurred, 0 otherwise.
+
+### Example
+
+{/* source:cpp-io-c-ferror:0004 */}
+```cpp
+#include <clocale>
+#include <cstdio>
+#include <cstdlib>
+#include <cwchar>
+ 
+int main()
+{
+    const char *fname = std::tmpnam(nullptr);
+    std::FILE* f = std::fopen(fname, "wb");
+    std::fputs("\xff\xff\n", f); // not a valid UTF-8 character sequence
+    std::fclose(f);
+ 
+    std::setlocale(LC_ALL, "en_US.utf8");
+    f = std::fopen(fname, "rb");
+    std::wint_t ch;
+    while ((ch=std::fgetwc(f)) != WEOF) // attempt to read as UTF-8
+        std::printf("%#x ", ch);
+ 
+    if (std::feof(f))
+        puts("EOF indicator set");
+    if (std::ferror(f))
+        puts("Error indicator set");
+}
+```
+
+Output:
+
+```text
+Error indicator set
+```
+
+### See also
+
+{/* source:cpp-io-c-ferror:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clearerr`](/docs/cpp/library/io/c/clearerr)</DescriptionTerm>
+    <DescriptionBody>clears errors <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`feof`](/docs/cpp/library/io/c/feof)</DescriptionTerm>
+    <DescriptionBody>checks for the end-of-file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fail`](/docs/cpp/library/io/basic_ios/fail)</DescriptionTerm>
+    <DescriptionBody>checks if an error has occurred <br /> (public member function of `std::basic_ios<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/ferror) for `ferror`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

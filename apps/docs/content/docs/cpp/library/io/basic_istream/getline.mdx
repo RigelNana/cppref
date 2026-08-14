@@ -1,0 +1,128 @@
+---
+title: "std::basic_istream<CharT,Traits>::getline"
+description: "Extracts characters from stream until end of line or the specified delimiter delim."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/getline"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-getline:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`basic_istream& getline( char_type* s, std::streamsize count );`} />
+  <Declaration id="2" language="cpp" code={`basic_istream& getline( char_type* s, std::streamsize count, char_type delim );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-basic-istream-getline:0001 */}
+    Extracts characters from stream until end of line or the specified delimiter `delim`.
+
+    {/* source:cpp-io-basic-istream-getline:0002 */}
+    The first overload is equivalent to `getline(s, count, widen('\n'))`.
+
+    {/* source:cpp-io-basic-istream-getline:0003 */}
+    Behaves as [UnformattedInputFunction](/docs/cpp/library/named_req/UnformattedInputFunction). After constructing and checking the sentry object, extracts characters from `*this` and stores them in successive locations of the array whose first element is pointed to by `s`, until any of the following occurs (tested in the order shown):
+
+    {/* source:cpp-io-basic-istream-getline:0004 */}
+    1. end of file condition occurs in the input sequence.
+    2. the next available character `c` is the delimiter, as determined by `Traits::eq(c, delim)`. The delimiter is extracted (unlike [`basic_istream::get()`](/docs/cpp/library/io/basic_istream/get)) and counted towards [`gcount()`](/docs/cpp/library/io/basic_istream/gcount), but is not stored.
+    3. `count` is non-positive, or `count - 1` characters have been extracted (`setstate(failbit)` is called in this case).
+
+    {/* source:cpp-io-basic-istream-getline:0005 */}
+    If the function extracts no characters, `failbit` is set in the local error state before [`setstate()`](/docs/cpp/library/io/basic_ios/setstate) is called.
+
+    {/* source:cpp-io-basic-istream-getline:0006 */}
+    In any case, if `count > 0`, it then stores a null character `CharT()` into the next successive location of the array and updates [`gcount()`](/docs/cpp/library/io/basic_istream/gcount).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Notes
+
+{/* source:cpp-io-basic-istream-getline:0007 */}
+Because condition #2 is tested before condition #3, the input line that exactly fits the buffer does not trigger `failbit`.
+
+{/* source:cpp-io-basic-istream-getline:0008 */}
+Because the terminating character is counted as an extracted character, an empty input line does not trigger `failbit`.
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-getline:0009 */}
+<ParameterList>
+  <Parameter name="s">pointer to the character string to store the characters to</Parameter>
+  <Parameter name="count">size of character string pointed to by `s`</Parameter>
+  <Parameter name="delim">delimiting character to stop the extraction at. It is extracted but not stored.</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-istream-getline:0010 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-io-basic-istream-getline:0011 */}
+If an internal operation throws an exception, it is caught and [`badbit`](/docs/cpp/library/io/ios_base/iostate) is set. If [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) is set for `badbit`, the exception is rethrown.
+
+### Example
+
+{/* source:cpp-io-basic-istream-getline:0012 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <sstream>
+#include <vector>
+ 
+int main()
+{
+    std::istringstream input("abc|def|gh");
+    std::vector<std::array<char, 4>> v;
+ 
+    // note: the following loop terminates when std::ios_base::operator bool()
+    // on the stream returned from getline() returns false
+    for (std::array<char, 4> a; input.getline(&a[0], 4, '|');)
+        v.push_back(a);
+ 
+    for (auto& a : v)
+        std::cout << &a[0] << '\n';
+}
+```
+
+Output:
+
+```text
+abc
+def
+gh
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-getline:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-getline:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={531} standard="C++98">
+    <PublishedBehavior>`std::getline` could not handle the<br />case where `count` is non-positive</PublishedBehavior>
+    <CorrectedBehavior>no character is<br />extracted in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-getline:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`getline`](/docs/cpp/library/string/basic_string/getline)</DescriptionTerm>
+    <DescriptionBody>read data from an I/O stream into a string (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator>>`](/docs/cpp/library/io/basic_istream/operator_gtgt)</DescriptionTerm>
+    <DescriptionBody>extracts formatted data (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get`](/docs/cpp/library/io/basic_istream/get)</DescriptionTerm>
+    <DescriptionBody>extracts characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`read`](/docs/cpp/library/io/basic_istream/read)</DescriptionTerm>
+    <DescriptionBody>extracts blocks of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

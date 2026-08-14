@@ -1,0 +1,66 @@
+---
+title: "std::basic_ostream<CharT,Traits>::operator="
+description: "The copy assignment operator is protected, and is deleted. Output streams are not CopyAssignable."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_ostream/operator="
+language: "C++"
+---
+
+{/* source:cpp-io-basic-ostream-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`protected:
+basic_ostream& operator=( const basic_ostream& rhs ) = delete;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`protected:
+basic_ostream& operator=( basic_ostream&& rhs );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-basic-ostream-operator:0001 */}
+    1. The copy assignment operator is protected, and is deleted. Output streams are not [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable).
+
+    {/* source:cpp-io-basic-ostream-operator:0002 */}
+    2. The move assignment operator exchanges all data members of the base class, except for [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf), with `rhs`, as if by calling `swap(*rhs)`. This move assignment operator is protected: it is only called by the move assignment operators of the derived movable output stream classes [`std::basic_ofstream`](/docs/cpp/library/io/basic_ofstream) and [`std::basic_ostringstream`](/docs/cpp/library/io/basic_ostringstream), which know how to correctly move-assign the associated streambuffers.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-io-basic-ostream-operator:0003 */}
+<ParameterList>
+  <Parameter name="rhs">the `basic_ostream` object from which to assign to `*this`</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-io-basic-ostream-operator:0004 */}
+```cpp
+#include <iostream>
+#include <sstream>
+#include <utility>
+ 
+int main()
+{
+    std::ostringstream s;
+//  std::cout = s;            // ERROR: copy assignment operator is deleted
+//  std::cout = std::move(s); // ERROR: move assignment operator is protected
+    s = std::move(std::ostringstream() << 42); // OK, moved through derived
+    std::cout << s.str() << '\n';
+}
+```
+
+Output:
+
+```text
+42
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-ostream-operator:0005 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-ostream-operator:0006 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2067} standard="C++11">
+    <PublishedBehavior>1. the parameter type of overload (1) was `basic_ostream&` 2. the parameter type of overload (2) was `const basic_ostream&&`</PublishedBehavior>
+    <CorrectedBehavior>1. added `const` 2. removed `const`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

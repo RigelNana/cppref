@@ -1,0 +1,153 @@
+---
+title: "std::basic_istream<CharT,Traits>::get"
+description: "Extracts character or characters from stream."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/get"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-get:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`int_type get();`} />
+  <Declaration id="2" language="cpp" code={`basic_istream& get( char_type& ch );`} />
+  <Declaration id="3" language="cpp" code={`basic_istream& get( char_type* s, std::streamsize count );`} />
+  <Declaration id="4" language="cpp" code={`basic_istream& get( char_type* s, std::streamsize count, char_type delim );`} />
+  <Declaration id="5" language="cpp" code={`basic_istream& get( basic_streambuf& strbuf );`} />
+  <Declaration id="6" language="cpp" code={`basic_istream& get( basic_streambuf& strbuf, char_type delim );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-basic-istream-get:0001 */}
+    Extracts character or characters from stream.
+
+    {/* source:cpp-io-basic-istream-get:0002 */}
+    All versions behave as [UnformattedInputFunctions](/docs/cpp/library/named_req/UnformattedInputFunction). After constructing and checking the sentry object, these functions perform the following:
+
+    {/* source:cpp-io-basic-istream-get:0003 */}
+    1. Reads one character and returns it if available. Otherwise, returns `Traits::eof()` and sets [`failbit`](/docs/cpp/library/io/ios_base/iostate) and [`eofbit`](/docs/cpp/library/io/ios_base/iostate).
+
+    {/* source:cpp-io-basic-istream-get:0004 */}
+    2. Reads one character and stores it to `ch` if available. Otherwise, leaves `ch` unmodified and sets [`failbit`](/docs/cpp/library/io/ios_base/iostate) and [`eofbit`](/docs/cpp/library/io/ios_base/iostate). Note that this function is not overloaded on the types `signed char` and `unsigned char`, unlike the formatted character input `operator>>`.
+
+    {/* source:cpp-io-basic-istream-get:0005 */}
+    3. Same as `get(s, count, widen('\n'))`, that is, reads at most `std::max(0, count - 1)` characters and stores them into character string pointed to by `s` until `'\n'` is found.
+
+    {/* source:cpp-io-basic-istream-get:0006 */}
+    4. Reads characters and stores them into the successive locations of the character array whose first element is pointed to by `s`. Characters are extracted and stored until any of the following occurs:
+
+    - `count` is less than `1` or `count - 1` characters have been stored.
+    - end of file condition occurs in the input sequence (`setstate(eofbit)` is called).
+    - the next available input character `c` equals `delim`, as determined by `Traits::eq(c, delim)`. This character is not extracted (unlike [`getline()`](/docs/cpp/library/io/basic_istream/getline)).
+
+    {/* source:cpp-io-basic-istream-get:0007 */}
+    In any case, if `count > 0`, a null character (`CharT()`) is stored in the next successive location of the array.
+
+    {/* source:cpp-io-basic-istream-get:0008 */}
+    5. Same as `get(strbuf, widen('\n'))`, that is, reads available characters and inserts them to the given [`basic_streambuf`](/docs/cpp/library/io/basic_streambuf) object until `'\n'` is found.
+
+    {/* source:cpp-io-basic-istream-get:0009 */}
+    6. Reads characters and inserts them to the output sequence controlled by the given [`basic_streambuf`](/docs/cpp/library/io/basic_streambuf) object. Characters are extracted and inserted into `strbuf` until any of the following occurs:
+
+    - end of file condition occurs in the input sequence.
+    - inserting into the output sequence fails (in which case the character that could not be inserted, is not extracted).
+    - the next available input character `c` equals `delim`, as determined by `Traits::eq(c, delim)`. This character is not extracted.
+    - an exception occurs (in which case the exception is caught and not rethrown).
+
+    {/* source:cpp-io-basic-istream-get:0010 */}
+    If no characters were extracted, calls `setstate(failbit)`.
+
+    {/* source:cpp-io-basic-istream-get:0011 */}
+    All versions set the value of [`gcount()`](/docs/cpp/library/io/basic_istream/gcount) to the number of characters extracted.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-get:0012 */}
+<ParameterList>
+  <Parameter name="ch">reference to the character to write the result to</Parameter>
+  <Parameter name="s">pointer to the character string to store the characters to</Parameter>
+  <Parameter name="count">size of character string pointed to by `s`</Parameter>
+  <Parameter name="delim">delimiting character to stop the extraction at. It is not extracted and not stored</Parameter>
+  <Parameter name="strbuf">stream buffer to read the content to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-istream-get:0013 */}
+1. The extracted character or `Traits::eof()`.
+
+{/* source:cpp-io-basic-istream-get:0014 */}
+2-6. `*this`
+
+### Exceptions
+
+{/* source:cpp-io-basic-istream-get:0015 */}
+If an internal operation throws an exception, it is caught and [`badbit`](/docs/cpp/library/io/ios_base/iostate) is set. If [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) is set for `badbit`, the exception is rethrown.
+
+### Example
+
+{/* source:cpp-io-basic-istream-get:0016 */}
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    std::istringstream s1("Hello, world.");
+    char c1 = s1.get(); // reads 'H'
+    std::cout << "after reading " << c1 << ", gcount() == " <<  s1.gcount() << '\n';
+ 
+    char c2;
+    s1.get(c2);         // reads 'e'
+    char str[5];
+    s1.get(str, 5);     // reads "llo,"
+    std::cout << "after reading " << str << ", gcount() == " <<  s1.gcount() << '\n';
+ 
+    std::cout << c1 << c2 << str;
+    s1.get(*std::cout.rdbuf()); // reads the rest, not including '\n'
+    std::cout << "\nAfter the last get(), gcount() == " << s1.gcount() << '\n';
+}
+```
+
+Output:
+
+```text
+after reading H, gcount() == 1
+after reading llo,, gcount() == 4
+Hello, world.
+After the last get(), gcount() == 7
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-get:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-get:0018 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={370} standard="C++98">
+    <PublishedBehavior>the effect of overload (5) was `get(s, count, widen('\n'))`,<br />which is the effect of overload (3)</PublishedBehavior>
+    <CorrectedBehavior>corrected to<br />`get(strbuf, widen('\n'))`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={531} standard="C++98">
+    <PublishedBehavior>overloads (3,4) could not handle the<br />case where `count` is non-positive</PublishedBehavior>
+    <CorrectedBehavior>no character is<br />extracted in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-get:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`read`](/docs/cpp/library/io/basic_istream/read)</DescriptionTerm>
+    <DescriptionBody>extracts blocks of characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator>>`](/docs/cpp/library/io/basic_istream/operator_gtgt)</DescriptionTerm>
+    <DescriptionBody>extracts formatted data (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator>>(std::basic_istream)`](/docs/cpp/library/io/basic_istream/operator_gtgt2)</DescriptionTerm>
+    <DescriptionBody>extracts characters and character arrays (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

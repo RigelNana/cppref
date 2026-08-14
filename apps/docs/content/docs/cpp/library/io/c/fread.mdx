@@ -1,0 +1,103 @@
+---
+title: "std::fread"
+description: "Reads up to count objects into the array buffer from the given input stream stream as if by calling std::fgetc size times for each object, and storing the results, in the order obtained, into the successive positions of buffer, which is reinterpreted as an array of unsigned char. The file position indicator for the stream is advanced by the number of characters read."
+source_url: "https://en.cppreference.com/w/cpp/io/c/fread"
+language: "C++"
+---
+
+{/* source:cpp-io-c-fread:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`std::size_t fread( void* buffer, std::size_t size, std::size_t count, std::FILE* stream );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-fread:0001 */}
+Reads up to `count` objects into the array `buffer` from the given input stream `stream` as if by calling [`std::fgetc`](/docs/cpp/library/io/c/fgetc) `size` times for each object, and storing the results, in the order obtained, into the successive positions of `buffer`, which is reinterpreted as an array of `unsigned char`. The file position indicator for the stream is advanced by the number of characters read.
+
+{/* source:cpp-io-c-fread:0002 */}
+If the objects are not [TriviallyCopyable](/docs/cpp/library/named_req/TriviallyCopyable), the behavior is undefined.
+
+{/* source:cpp-io-c-fread:0003 */}
+If an error occurs, the resulting value of the file position indicator for the stream is indeterminate. If a partial element is read, its value is indeterminate.
+
+### Parameters
+
+{/* source:cpp-io-c-fread:0004 */}
+<ParameterList>
+  <Parameter name="buffer">pointer to the first object in the array to be read</Parameter>
+  <Parameter name="size">size of each object in bytes</Parameter>
+  <Parameter name="count">the number of the objects to be read</Parameter>
+  <Parameter name="stream">input file stream to read from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-c-fread:0005 */}
+Number of objects read successfully, which may be less than `count` if an error or end-of-file condition occurs.
+
+{/* source:cpp-io-c-fread:0006 */}
+If `size` or `count` is zero, `fread` returns zero and performs no other action.
+
+{/* source:cpp-io-c-fread:0007 */}
+`fread` does not distinguish between end-of-file and error, and callers must use [`std::feof`](/docs/cpp/library/io/c/feof) and [`std::ferror`](/docs/cpp/library/io/c/ferror) to determine which occurred.
+
+### Example
+
+{/* source:cpp-io-c-fread:0008 */}
+```cpp
+#include <cstddef>
+#include <cstdio>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    // Prepare file
+    std::ofstream("test.txt") << 1 << ' ' << 2 << '\n';
+    std::FILE* f = std::fopen("test.txt", "r");
+ 
+    std::vector<char> buf(4); // char is trivially copyable
+    const std::size_t n = std::fread(&buf[0], sizeof buf[0], buf.size(), f);
+ 
+    std::cout << "Read " << n << " object" << (n > 1 ? "s" : "") << ": "
+              << std::hex << std::uppercase << std::setfill('0');
+    for (char n : buf)
+        std::cout << "0x" << std::setw(2) << static_cast<short>(n) << ' ';
+    std::cout << '\n';
+ 
+    std::vector<std::string> buf2; // string is not trivially copyable
+//  This would result in undefined behavior:
+//  std::fread(&buf2[0], sizeof buf2[0], buf2.size(), f);
+}
+```
+
+Possible output:
+
+```text
+Read 4 objects: 0x31 0x20 0x32 0x0A
+```
+
+### See also
+
+{/* source:cpp-io-c-fread:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`scanf`, `fscanf`, `sscanf`](/docs/cpp/library/io/c/scanf)</DescriptionTerm>
+    <DescriptionBody>reads formatted input from [`stdin`](/docs/cpp/library/io/c/std_streams), a file stream or a buffer <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fgets`](/docs/cpp/library/io/c/fgets)</DescriptionTerm>
+    <DescriptionBody>gets a character string from a file stream <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fwrite`](/docs/cpp/library/io/c/fwrite)</DescriptionTerm>
+    <DescriptionBody>writes to a file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/fread) for `fread`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

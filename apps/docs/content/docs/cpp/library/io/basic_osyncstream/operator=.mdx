@@ -1,0 +1,87 @@
+---
+title: "std::basic_osyncstream<CharT,Traits,Allocator>::operator="
+description: "Move-assigns a synchronized output stream."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_osyncstream/operator="
+language: "C++"
+---
+
+{/* source:cpp-io-basic-osyncstream-operator:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`basic_osyncstream& operator=( std::basic_osyncstream&& other );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-osyncstream-operator:0001 */}
+Move-assigns a synchronized output stream:
+
+{/* source:cpp-io-basic-osyncstream-operator:0002 */}
+[Move-assigns](/docs/cpp/library/io/basic_ostream/operator_assignment) the wrapped `std::basic_syncbuf` from the corresponding member of `other` (after this move-assignment, `other.get_wrapped()` returns a null pointer and destruction of `other` produces no output; any pending buffered output will be emitted) and move-assigns the base `std::basic_ostream` (this swaps all stream state variables except for `rdbuf` between `*this` and `other`)
+
+### Parameters
+
+{/* source:cpp-io-basic-osyncstream-operator:0003 */}
+<ParameterList>
+  <Parameter name="other">another synchronized output stream to move from</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-osyncstream-operator:0004 */}
+`*this`
+
+### Example
+
+{/* source:cpp-io-basic-osyncstream-operator:0005 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <syncstream>
+#include <utility>
+ 
+int main()
+{
+    std::osyncstream out(std::cout);
+    out << "test\n";
+    std::ostringstream str_out;
+    std::osyncstream{str_out} = std::move(out); // Note that out is emitted here
+    std::cout << "str_out = " << std::quoted(str_out.view()) << '\n';
+}
+```
+
+Output:
+
+```text
+test
+str_out = ""
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-osyncstream-operator:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-osyncstream-operator:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3867} standard="C++20">
+    <PublishedBehavior>the move assignment operator was `noexcept`, but [`std::basic_syncbuf`](/docs/cpp/library/io/basic_syncbuf)'s move assignment operator is not</PublishedBehavior>
+    <CorrectedBehavior>removed `noexcept`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-osyncstream-operator:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/io/basic_osyncstream/basic_osyncstream)</DescriptionTerm>
+    <DescriptionBody>constructs a `basic_osyncstream` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/io/basic_osyncstream/~basic_osyncstream)</DescriptionTerm>
+    <DescriptionBody>destroys the `basic_osyncstream` and emits its internal buffer (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emit`](/docs/cpp/library/io/basic_osyncstream/emit)</DescriptionTerm>
+    <DescriptionBody>calls [`emit()`](/docs/cpp/library/io/basic_syncbuf/emit) on the underlying `basic_syncbuf` to transmit its internal data to the final destination (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

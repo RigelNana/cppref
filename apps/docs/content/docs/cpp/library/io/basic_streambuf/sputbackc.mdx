@@ -1,0 +1,88 @@
+---
+title: "std::basic_streambuf<CharT,Traits>::sputbackc"
+description: "Puts back a character back to the get area."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_streambuf/sputbackc"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`int_type sputbackc( char_type c );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0001 */}
+Puts back a character back to the get area.
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0002 */}
+If a putback position is available in the get area ([`gptr() > eback()`](/docs/cpp/library/io/basic_streambuf/gptr)), and the character `c` is equal to the character one position to the left of [`gptr()`](/docs/cpp/library/io/basic_streambuf/gptr) (as determined by `Traits::eq(c, gptr()[-1])`, then simply decrements the next pointer (`gptr()`).
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0003 */}
+Otherwise, calls `pbackfail(Traits::to_int_type(c))` to either back up the get area or to modify both the get area and possibly the associated character sequence.
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0004 */}
+The I/O stream function [`basic_istream::putback`](/docs/cpp/library/io/basic_istream/putback) is implemented in terms of this function.
+
+### Parameters
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0005 */}
+<ParameterList>
+  <Parameter name="c">character to put back</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0006 */}
+If putback position was available, returns the character that the next pointer is now pointing at, converted to `int_type` with `Traits::to_int_type(*gptr())`. The next single-character input from this streambuf will return this character.
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0007 */}
+If putback position was not available, returns what [`pbackfail()`](/docs/cpp/library/io/basic_streambuf/pbackfail) returns, which is `Traits::eof()` on failure.
+
+### Example
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0008 */}
+```cpp
+#include <iostream>
+#include <sstream>
+
+int main()
+{
+    std::stringstream s("abcdef"); // gptr() points to 'a' in "abcdef"
+    std::cout << "Before putback, string holds " << s.str() << '\n';
+    char c1 = s.get(); // c1 = 'a', gptr() now points to 'b' in "abcdef"
+    char c2 = s.rdbuf()->sputbackc('z'); // same as s.putback('z')
+                                         // gptr() now points to 'z' in "zbcdef"
+    std::cout << "After putback, string holds " << s.str() << '\n';
+    char c3 = s.get(); // c3 = 'z', gptr() now points to 'b' in "zbcdef"
+    char c4 = s.get(); // c4 = 'b', gptr() now points to 'c' in "zbcdef"
+    std::cout << c1 << c2 << c3 << c4 << '\n';
+
+    s.rdbuf()->sputbackc('b');  // gptr() now points to 'b' in "zbcdef"
+    s.rdbuf()->sputbackc('z');  // gptr() now points to 'z' in "zbcdef"
+    int eof = s.rdbuf()->sputbackc('x');  // nothing to unget: pbackfail() fails
+    if (eof == EOF)
+        std::cout << "No room to putback after 'z'\n";
+}
+```
+
+Output:
+
+```text
+Before putback, string holds abcdef
+After putback, string holds zbcdef
+azzb
+No room to putback after 'z'
+```
+
+### See also
+
+{/* source:cpp-io-basic-streambuf-sputbackc:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sungetc`](/docs/cpp/library/io/basic_streambuf/sungetc)</DescriptionTerm>
+    <DescriptionBody>moves the next pointer in the input sequence back by one (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`putback`](/docs/cpp/library/io/basic_istream/putback)</DescriptionTerm>
+    <DescriptionBody>puts a character into input stream (public member function of `std::basic_istream<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

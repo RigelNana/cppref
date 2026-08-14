@@ -1,0 +1,164 @@
+---
+title: "std::basic_stringbuf<CharT,Traits,Allocator>::seekoff"
+description: "Repositions std::basic_streambuf::gptr and/or std::basic_streambuf::pptr, if possible, to the position that corresponds to exactly off characters from beginning, end, or current position of the get and/or put area of the buffer."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_stringbuf/seekoff"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`protected:
+virtual pos_type seekoff( off_type off,
+                          std::ios_base::seekdir dir,
+
+                          std::ios_base::openmode which = std::ios_base::in | std::ios_base::out );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0001 */}
+Repositions [`std::basic_streambuf::gptr`](/docs/cpp/library/io/basic_streambuf/gptr) and/or [`std::basic_streambuf::pptr`](/docs/cpp/library/io/basic_streambuf/pptr), if possible, to the position that corresponds to exactly `off` characters from beginning, end, or current position of the get and/or put area of the buffer.
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0002 */}
+- If `which` includes [`std::ios_base::in`](/docs/cpp/library/io/ios_base/openmode) and this buffer is open for reading (that is, if `(which & std::ios_base::in) == std::ios_base::in`), then repositions the read pointer [`std::basic_streambuf::gptr`](/docs/cpp/library/io/basic_streambuf/gptr) inside the get area as described below
+- If `which` includes [`std::ios_base::out`](/docs/cpp/library/io/ios_base/openmode) and this buffer is open for writing (that is, `(which & std::ios_base::out) == std::ios_base::out`), then repositions the write pointer [`std::basic_streambuf::pptr`](/docs/cpp/library/io/basic_streambuf/pptr) inside the put area as described below
+- If `which` includes both [`std::ios_base::in`](/docs/cpp/library/io/ios_base/openmode) and [`std::ios_base::out`](/docs/cpp/library/io/ios_base/openmode) and the buffer is open for both reading and writing (that is, `(which & (std::ios_base::in | std::ios_base::out)) == (std::ios_base::in | std::ios_base::out)`), and `dir` is either [`std::ios_base::beg`](/docs/cpp/library/io/ios_base/seekdir) or [`std::ios_base::end`](/docs/cpp/library/io/ios_base/seekdir), then repositions both read and write pointers as described below.
+- Otherwise, this function fails.
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0003 */}
+If `gptr` and/or `pptr` is repositioned, it is done as follows:
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0004 */}
+1. The new pointer offset `newoff` of type `off_type` is determined
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0005 */}
+   a. if `dir == std::ios_base::beg`, then `newoff` is zero
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0006 */}
+   b. if `dir == std::ios_base::cur`, then `newoff` is the current position of the pointer (`gptr() - eback()` or `pptr() - pbase()`)
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0007 */}
+   c. if `dir == std::ios_base::end`, then `newoff` is the length of the entire initialized part of the buffer (if [over-allocation](/docs/cpp/library/io/basic_stringbuf/str) is used, the high watermark pointer minus the beginning pointer)
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0008 */}
+2. If the pointer to be repositioned is a null pointer and `newoff` would be non-zero, this function fails.
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0009 */}
+3. If `newoff + off < 0` (the repositioning would move the pointer to before the beginning of the buffer) or if `newoff + off` would point past the end of the buffer (or past the last initialized character in the buffer if [over-allocation](/docs/cpp/library/io/basic_stringbuf/str) is used), the function fails.
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0010 */}
+4. Otherwise, the pointer is assigned as if by `gptr() = eback() + newoff + off` or `pptr() = pbase() + newoff + off`.
+
+### Parameters
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0011 */}
+<ParameterList>
+  <Parameter name="off">relative position to set the next pointer(s) to</Parameter>
+  <Parameter name="dir">defines base position to apply the relative offset to. It can be one of the following constants: [`beg`](/docs/cpp/library/io/ios_base/seekdir) the beginning of a stream [`end`](/docs/cpp/library/io/ios_base/seekdir) the ending of a stream [`cur`](/docs/cpp/library/io/ios_base/seekdir) the current position of stream position indicator</Parameter>
+  <Parameter name="which">defines whether the input sequences, the output sequence, or both are affected. It can be one or a combination of the following constants: [`in`](/docs/cpp/library/io/ios_base/openmode) affect the input sequence [`out`](/docs/cpp/library/io/ios_base/openmode) affect the output sequence</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0012 */}
+`pos_type(newoff)` on success, `pos_type(off_type(-1))` on failure or if `pos_type` cannot represent the resulting stream position.
+
+### Example
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0013 */}
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    std::stringstream ss("123"); // in/out
+    std::cout << "put pos = " << ss.tellp()
+              << " get pos = " << ss.tellg() << '\n';
+ 
+    // absolute positioning both pointers
+    ss.rdbuf()->pubseekoff(1, std::ios_base::beg); // move both 1 forward
+    std::cout << "put pos = " << ss.tellp()
+              << " get pos = " << ss.tellg() << '\n';
+ 
+    // try to move both pointers 1 forward from current position
+    if (-1 == ss.rdbuf()->pubseekoff(1, std::ios_base::cur))
+        std::cout << "moving both pointers from current position failed\n";
+    std::cout << "put pos = " << ss.tellp()
+              << " get pos = " << ss.tellg() << '\n';
+ 
+    // move the write pointer 1 forward, but not the read pointer
+    // can also be called as ss.seekp(1, std::ios_base::cur);
+    ss.rdbuf()->pubseekoff(1, std::ios_base::cur, std::ios_base::out);
+    std::cout << "put pos = " << ss.tellp()
+              << " get pos = " << ss.tellg() << '\n';
+ 
+    ss << 'a'; // write at put position
+    std::cout << "Wrote 'a' at put position, the buffer is now " << ss.str() << '\n';
+ 
+    char ch;
+    ss >> ch;
+    std::cout << "reading at get position gives '" << ch << "'\n";
+}
+```
+
+Output:
+
+```text
+put pos = 0 get pos = 0
+put pos = 1 get pos = 1
+moving both pointers from current position failed
+put pos = 1 get pos = 1
+put pos = 2 get pos = 1
+Wrote 'a' at put position, the buffer is now 12a
+reading at get position gives '2'
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={55} standard="C++98">
+    <PublishedBehavior>`seekoff` returned an undefined invalid stream position on failure</PublishedBehavior>
+    <CorrectedBehavior>`pos_type(off_type(-1))` is returned on failure</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={375} standard="C++98">
+    <PublishedBehavior>static constant members of [`std::ios_base`](/docs/cpp/library/io/ios_base) were misspecified as members of [`std::basic_ios`](/docs/cpp/library/io/basic_ios)</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={432} standard="C++98">
+    <PublishedBehavior>`seekoff` might succeed even if `newoff + off` would point past the last initialized character</PublishedBehavior>
+    <CorrectedBehavior>`seekoff` fails in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={453} standard="C++98">
+    <PublishedBehavior>repositioning null `gptr()` and/or null `pptr()` with a new offset of zero always failed</PublishedBehavior>
+    <CorrectedBehavior>it can succeed in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={563} standard="C++98">
+    <PublishedBehavior>the end pointer could not be used to calculate `newoff` because it could not be precisely controlled by the program after resolving [LWG issue 432](https://cplusplus.github.io/LWG/issue432)</PublishedBehavior>
+    <CorrectedBehavior>use the high watermark pointer instead</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-stringbuf-seekoff:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`pubseekoff`](/docs/cpp/library/io/basic_streambuf/pubseekoff)</DescriptionTerm>
+    <DescriptionBody>invokes `seekoff()` (public member function of `std::basic_streambuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`seekpos`](/docs/cpp/library/io/basic_stringbuf/seekpos)</DescriptionTerm>
+    <DescriptionBody>repositions the next pointer in the input sequence, output sequence, or both using absolute addressing (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`seekoff`](/docs/cpp/library/io/basic_filebuf/seekoff)</DescriptionTerm>
+    <DescriptionBody>repositions the file position, using relative addressing (virtual protected member function of `std::basic_filebuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`seekoff`](/docs/cpp/library/io/strstreambuf/seekoff)</DescriptionTerm>
+    <DescriptionBody>repositions the next pointer in the input sequence, output sequence, or both, using relative addressing (virtual protected member function of `std::strstreambuf`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

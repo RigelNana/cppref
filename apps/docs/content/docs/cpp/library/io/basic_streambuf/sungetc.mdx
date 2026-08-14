@@ -1,0 +1,78 @@
+---
+title: "std::basic_streambuf<CharT,Traits>::sungetc"
+description: "If a putback position is available in the get area (gptr() > eback()), then decrements the next pointer (gptr()) and returns the character it now points to."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_streambuf/sungetc"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-streambuf-sungetc:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`int_type sungetc();`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-streambuf-sungetc:0001 */}
+If a putback position is available in the get area ([`gptr() > eback()`](/docs/cpp/library/io/basic_streambuf/gptr)), then decrements the next pointer (`gptr()`) and returns the character it now points to.
+
+{/* source:cpp-io-basic-streambuf-sungetc:0002 */}
+If a putback position is not available, then calls [`pbackfail()`](/docs/cpp/library/io/basic_streambuf/pbackfail) to back up the input sequence if possible.
+
+{/* source:cpp-io-basic-streambuf-sungetc:0003 */}
+The I/O stream function [`basic_istream::unget`](/docs/cpp/library/io/basic_istream/unget) is implemented in terms of this function.
+
+### Parameters
+
+{/* source:cpp-io-basic-streambuf-sungetc:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-io-basic-streambuf-sungetc:0005 */}
+If putback position was available, returns the character that the next pointer is now pointing at, converted to `int_type` with `Traits::to_int_type(*gptr())`. The next single-character input from this streambuf will return this character.
+
+{/* source:cpp-io-basic-streambuf-sungetc:0006 */}
+If putback position was not available, returns what [`pbackfail()`](/docs/cpp/library/io/basic_streambuf/pbackfail) returns, which is `Traits::eof()` on failure.
+
+### Example
+
+{/* source:cpp-io-basic-streambuf-sungetc:0007 */}
+```cpp
+#include <iostream>
+#include <sstream>
+
+int main()
+{
+    std::stringstream s("abcdef"); // gptr() points to 'a'
+    char c1 = s.get(); // c = 'a', gptr() now points to 'b' 
+    char c2 = s.rdbuf()->sungetc(); // same as s.unget(): gptr() points to 'a' again 
+    char c3 = s.get(); // c3 = 'a', gptr() now points to 'b'
+    char c4 = s.get(); // c4 = 'b', gptr() now points to 'c'
+    std::cout << c1 << c2 << c3 << c4 << '\n';
+
+    s.rdbuf()->sungetc();  // back to 'b'
+    s.rdbuf()->sungetc();  // back to 'a'
+    int eof = s.rdbuf()->sungetc();  // nothing to unget: pbackfail() fails
+    if (eof == EOF)
+            std::cout << "Nothing to unget after 'a'\n";
+}
+```
+
+Output:
+
+```text
+aaab
+Nothing to unget after 'a'
+```
+
+### See also
+
+{/* source:cpp-io-basic-streambuf-sungetc:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sputbackc`](/docs/cpp/library/io/basic_streambuf/sputbackc)</DescriptionTerm>
+    <DescriptionBody>puts one character back in the input sequence (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unget`](/docs/cpp/library/io/basic_istream/unget)</DescriptionTerm>
+    <DescriptionBody>unextracts a character (public member function of `std::basic_istream<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

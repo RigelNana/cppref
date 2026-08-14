@@ -1,0 +1,109 @@
+---
+title: "std::endl"
+description: "Inserts a newline character into the output sequence os and flushes it as if by calling os.put(os.widen('\\n')) followed by os.flush()."
+source_url: "https://en.cppreference.com/w/cpp/io/manip/endl"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-endl:0000 */}
+<DeclarationDoc>
+Defined in header [`<ostream>`](/docs/cpp/library/headers/ostream)
+
+  <Declaration language="cpp" code={`template< class CharT, class Traits >
+std::basic_ostream<CharT, Traits>& endl( std::basic_ostream<CharT, Traits>& os );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-manip-endl:0001 */}
+Inserts a newline character into the output sequence `os` and flushes it as if by calling `os.put(os.widen('\n'))` followed by `os.flush()`.
+
+{/* source:cpp-io-manip-endl:0002 */}
+This is an output-only I/O manipulator, it may be called with an expression such as `out << std::endl` for any `out` of type [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream).
+
+### Notes
+
+{/* source:cpp-io-manip-endl:0003 */}
+This manipulator may be used to produce a line of output immediately, e.g. when displaying output from a long-running process, logging activity of multiple threads or logging activity of a program that may crash unexpectedly. An explicit flush of [`std::cout`](/docs/cpp/library/io/basic_ostream/cout) is also necessary before a call to [`std::system`](/docs/cpp/library/utility/program/system), if the spawned process performs any screen I/O. In most other usual interactive I/O scenarios, `std::endl` is redundant when used with [`std::cout`](/docs/cpp/library/io/basic_ostream/cout) because any input from [`std::cin`](/docs/cpp/library/io/basic_istream/cin), output to [`std::cerr`](/docs/cpp/library/io/basic_ostream/cerr), or program termination forces a call to `std::cout.flush()`. Use of `std::endl` in place of `'\n'`, encouraged by some sources, may significantly degrade output performance.
+
+{/* source:cpp-io-manip-endl:0004 */}
+In many implementations, standard output is line-buffered, and writing `'\n'` causes a flush anyway, unless `std::ios::sync_with_stdio(false)` was executed. In those situations, unnecessary `endl` only degrades the performance of file output, not standard output.
+
+{/* source:cpp-io-manip-endl:0005 */}
+The code samples on this wiki [follow Bjarne Stroustrup](https://www.stroustrup.com/3rd_code.html) and [The C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rio-endl) in flushing the standard output only where necessary.
+
+{/* source:cpp-io-manip-endl:0006 */}
+When an incomplete line of output needs to be flushed, the [`std::flush`](/docs/cpp/library/io/manip/flush) manipulator may be used.
+
+{/* source:cpp-io-manip-endl:0007 */}
+When every character of output needs to be flushed, the [`std::unitbuf`](/docs/cpp/library/io/manip/unitbuf) manipulator may be used.
+
+### Parameters
+
+{/* source:cpp-io-manip-endl:0008 */}
+<ParameterList>
+  <Parameter name="os">reference to output stream</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-endl:0009 */}
+`os` (reference to the stream after manipulation).
+
+### Example
+
+{/* source:cpp-io-manip-endl:0010 */}
+With `'\n'` instead of `endl`, the output would be the same, but may not appear in real time.
+
+```cpp
+#include <chrono>
+#include <iostream>
+
+template<typename Diff>
+void log_progress(Diff d)
+{
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(d)
+              << " passed" << std::endl;
+}
+
+int main()
+{
+    std::cout.sync_with_stdio(false); // on some platforms, stdout flushes on \n
+
+    static volatile int sink{};
+    const auto t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 5; ++i)
+    {
+        for (int j = 0; j < 10000; ++j)
+            for (int k = 0; k < 20000; ++k)
+                sink += i * j * k; // do some work
+        log_progress(std::chrono::high_resolution_clock::now() - t1);
+    }
+}
+```
+
+Possible output:
+
+```text
+566ms passed
+1133ms passed
+1699ms passed
+2262ms passed
+2829ms passed
+```
+
+### See also
+
+{/* source:cpp-io-manip-endl:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unitbuf nounitbuf`](/docs/cpp/library/io/manip/unitbuf)</DescriptionTerm>
+    <DescriptionBody>controls whether output is flushed after each operation <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`flush`](/docs/cpp/library/io/manip/flush)</DescriptionTerm>
+    <DescriptionBody>flushes the output stream <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`flush`](/docs/cpp/library/io/basic_ostream/flush)</DescriptionTerm>
+    <DescriptionBody>synchronizes with the underlying storage device <br /> (public member function of `std::basic_ostream<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,136 @@
+---
+title: "std::ios_base::pword"
+description: "First, allocates or resizes the private storage (dynamic array of void * or another indexable data structure) sufficiently to make index a valid index, then returns a reference to the void * element of the private storage with the index index."
+source_url: "https://en.cppreference.com/w/cpp/io/ios_base/pword"
+language: "C++"
+---
+
+{/* source:cpp-io-ios-base-pword:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`void*& pword( int index );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-ios-base-pword:0001 */}
+First, allocates or resizes the private storage (dynamic array of `void*` or another indexable data structure) sufficiently to make `index` a valid index, then returns a reference to the `void*` element of the private storage with the index `index`.
+
+{/* source:cpp-io-ios-base-pword:0002 */}
+The reference may be invalidated by any operation on this `ios_base` object, including another call to `pword()`, but the stored values are retained, so that reading from `pword(index)` with the same index later will produce the same value until the next call to [`std::basic_ios::copyfmt()`](/docs/cpp/library/io/basic_ios/copyfmt). The value can be used for any purpose. The index of the element must be obtained by [`xalloc()`](/docs/cpp/library/io/ios_base/xalloc), otherwise the behavior is undefined. New elements are initialized to a [null pointer](/docs/cpp/language/declarations/pointer#Null_pointers).
+
+{/* source:cpp-io-ios-base-pword:0003 */}
+If the function fails (possibly caused by an allocation failure) and `*this` is a base class subobject of a `basic_ios<>` object or subobject, calls `std::basic_ios<>::setstate(badbit)` which may throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure).
+
+### Parameters
+
+{/* source:cpp-io-ios-base-pword:0004 */}
+<ParameterList>
+  <Parameter name="index">index value of the element</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-ios-base-pword:0005 */}
+A reference to the element.
+
+### Exceptions
+
+{/* source:cpp-io-ios-base-pword:0006 */}
+May throw [`std::ios_base::failure`](/docs/cpp/library/io/ios_base/failure) when setting the badbit.
+
+### Notes
+
+{/* source:cpp-io-ios-base-pword:0007 */}
+If the pointers stored in `pword` require management, [`register_callback()`](/docs/cpp/library/io/ios_base/register_callback) may be used to install handlers that execute deep copy or deallocation as needed.
+
+### Example
+
+{/* source:cpp-io-ios-base-pword:0008 */}
+Uses base class `pword` storage for runtime type identification of derived stream objects.
+
+```cpp
+#include <iostream>
+ 
+template<class CharT, class Traits = std::char_traits<CharT>>
+class mystream : public std::basic_ostream<CharT, Traits>
+{
+public:
+    static const int xindex;
+ 
+    mystream(std::basic_ostream<CharT, Traits>& ostr) :
+        std::basic_ostream<CharT, Traits>(ostr.rdbuf())
+    {
+        this->pword(xindex) = this;
+    }
+ 
+    void myfn()
+    {
+        *this << "[special handling for mystream]";
+    }
+};
+ 
+// Each specialization of mystream obtains a unique index from xalloc()
+template<class CharT, class Traits>
+const int mystream<CharT, Traits>::xindex = std::ios_base::xalloc();
+ 
+// This I/O manipulator will be able to recognize ostreams that are mystreams
+// by looking up the pointer stored in pword
+template<class CharT, class Traits>
+std::basic_ostream<CharT, Traits>& mymanip(std::basic_ostream<CharT, Traits>& os)
+{
+    if (os.pword(mystream<CharT, Traits>::xindex) == &os)
+        static_cast<mystream<CharT, Traits>&>(os).myfn();
+    return os;
+}
+ 
+int main()
+{
+    std::cout << "cout, narrow-character test " << mymanip << '\n';
+ 
+    mystream<char> myout(std::cout);
+    myout << "myout, narrow-character test " << mymanip << '\n';
+ 
+    std::wcout << "wcout, wide-character test " << mymanip << '\n';
+ 
+    mystream<wchar_t> mywout(std::wcout);
+    mywout << "mywout, wide-character test " << mymanip << '\n';
+}
+```
+
+Output:
+
+```text
+cout, narrow-character test
+myout, narrow-character test [special handling for mystream]
+wcout, wide-character test
+mywout, wide-character test [special handling for mystream]
+```
+
+### Defect reports
+
+{/* source:cpp-io-ios-base-pword:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-ios-base-pword:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={36} standard="C++98">
+    <PublishedBehavior>the stored value might not be retained if the reference is invalidated</PublishedBehavior>
+    <CorrectedBehavior>the stored value is retained until the next call of `copyfmt()`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={41} standard="C++98">
+    <PublishedBehavior>the function set badbit by itself on failure, but `ios_base` does not provide such interface</PublishedBehavior>
+    <CorrectedBehavior>badbit is set by `basic_ios` (if `*this` is its base class subobject)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-ios-base-pword:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iword`](/docs/cpp/library/io/ios_base/iword)</DescriptionTerm>
+    <DescriptionBody>resizes the private storage if necessary and access to the `long` element at the given index (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`xalloc`](/docs/cpp/library/io/ios_base/xalloc) [static]</DescriptionTerm>
+    <DescriptionBody>returns a program-wide unique integer that is safe to use as index to `pword()` and [`iword()`](/docs/cpp/library/io/ios_base/iword) (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

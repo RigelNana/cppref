@@ -1,0 +1,133 @@
+---
+title: "std::basic_stringstream<CharT,Traits,Allocator>::str"
+description: "Manages the contents of the underlying string object."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_stringstream/str"
+language: "C++"
+---
+
+
+{/* source:cpp-io-basic-stringstream-str:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" until="C++20" code={`std::basic_string<CharT, Traits, Allocator> str() const;`} />
+  <Declaration id="1" language="cpp" since="C++20" code={`std::basic_string<CharT, Traits, Allocator> str() const&;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class SAlloc >
+std::basic_string<CharT, Traits, SAlloc> str( const SAlloc& a ) const;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`std::basic_string<CharT, Traits, Allocator> str() &&;`} />
+  <Declaration id="4" language="cpp" code={`void str( const std::basic_string<CharT, Traits, Allocator>& s );`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template< class SAlloc >
+void str( const std::basic_string<CharT, Traits, SAlloc>& s );`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`void str( std::basic_string<CharT, Traits, Allocator>&& s );`} />
+  <Declaration id="7" language="cpp" since="C++26" code={`template< class StringViewLike >
+void str( const StringViewLike& t );`} />
+  <DeclarationDescription>
+
+    {/* source:cpp-io-basic-stringstream-str:0001 */}
+    Manages the contents of the underlying string object.
+
+    {/* source:cpp-io-basic-stringstream-str:0002 */}
+    1. Returns a copy of the underlying string. Equivalent to `return rdbuf()->str();`.
+
+    {/* source:cpp-io-basic-stringstream-str:0003 */}
+    2. Returns a copy of the underlying string, using `a` as allocator. Equivalent to `return rdbuf()->str(a);`.
+
+    {/* source:cpp-io-basic-stringstream-str:0004 */}
+    3. Returns a string move-constructed from the underlying string. Equivalent to `return std::move(*rdbuf()).str();`.
+
+    {/* source:cpp-io-basic-stringstream-str:0005 */}
+    4,5. Replaces the contents of the underlying string. Equivalent to `rdbuf()->str(s);`.
+
+    {/* source:cpp-io-basic-stringstream-str:0006 */}
+    6. Replaces the contents of the underlying string. Equivalent to `rdbuf()->str(std::move(s));`.
+
+    {/* source:cpp-io-basic-stringstream-str:0007 */}
+    7. Replaces the contents of the underlying string. Equivalent to `rdbuf()->str(t);`.
+
+    {/* source:cpp-io-basic-stringstream-str:0008 */}
+    This overload participates in overload resolution only if `is_convertible_v<const T&, basic_string_view<charT, traits>>` is `true`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-io-basic-stringstream-str:0009 */}
+<ParameterList>
+
+  <Parameter name="s">new contents of the underlying string</Parameter>
+
+  <Parameter name="t">an object (convertible to [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view)) to use as the new contents of the underlying string</Parameter>
+
+  <Parameter name="a">allocator used to construct the returned string</Parameter>
+
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-stringstream-str:0010 */}
+1,2. A copy of the underlying string object.
+
+{/* source:cpp-io-basic-stringstream-str:0011 */}
+3. A string move-constructed from the underlying string object.
+
+{/* source:cpp-io-basic-stringstream-str:0012 */}
+4-7. (none)
+
+### Notes
+
+{/* source:cpp-io-basic-stringstream-str:0013 */}
+The copy of the underlying string returned by [`str`](/docs/cpp/library/io/basic_stringstream/str#top) is a temporary object that will be destructed at the end of the expression, so directly calling [`c_str()`](/docs/cpp/library/string/basic_string/c_str) on the result of `str()` (for example in `auto *ptr = out.str().c_str();`) results in a dangling pointer.
+
+{/* source:cpp-io-basic-stringstream-str:0014 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_sstream_from_string_view`](/docs/cpp/library/feature_test#cpp_lib_sstream_from_string_view) | [`202306L`](/docs/cpp/library/compiler_support/26#cpp_lib_sstream_from_string_view_202306L) | (C++26) | Interfacing [`std::stringstreams`](/docs/cpp/library/io/basic_stringstream) with [`std::string_view`](/docs/cpp/library/string/basic_string_view), ([7](/docs/cpp/library/io/basic_stringstream/str#Version_7)) |
+
+### Example
+
+{/* source:cpp-io-basic-stringstream-str:0015 */}
+```cpp
+#include <iostream>
+#include <sstream>
+ 
+int main()
+{
+    int n;
+ 
+    std::istringstream in; // could also use in("1 2")
+    in.str("1 2");
+    in >> n;
+    std::cout << "After reading the first int from \"1 2\", the int is "
+              << n << ", str() = \"" << in.str() << "\"\n";
+ 
+    std::ostringstream out("1 2");
+    out << 3;
+    std::cout << "After writing the int '3' to output stream \"1 2\""
+              << ", str() = \"" << out.str() << "\"\n";
+ 
+    std::ostringstream ate("1 2", std::ios_base::ate);
+    ate << 3;
+    std::cout << "After writing the int '3' to append stream \"1 2\""
+              << ", str() = \"" << ate.str() << "\"\n";
+}
+```
+
+Output:
+
+```text
+After reading the first int from "1 2", the int is 1, str() = "1 2"
+After writing the int '3' to output stream "1 2", str() = "3 2"
+After writing the int '3' to append stream "1 2", str() = "1 23"
+```
+
+### See also
+
+{/* source:cpp-io-basic-stringstream-str:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`rdbuf`](/docs/cpp/library/io/basic_stringstream/rdbuf)</DescriptionTerm>
+    <DescriptionBody>returns the underlying raw string device object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`str`](/docs/cpp/library/io/basic_stringbuf/str)</DescriptionTerm>
+    <DescriptionBody>replaces or obtains a copy of the associated character string (public member function of `std::basic_stringbuf<CharT,Traits,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

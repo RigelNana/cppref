@@ -1,0 +1,102 @@
+---
+title: "std::unitbuf, std::nounitbuf"
+description: "Enables or disables automatic flushing of the output stream after any output operation. Has no effect on input."
+source_url: "https://en.cppreference.com/w/cpp/io/manip/unitbuf"
+language: "C++"
+---
+
+{/* source:cpp-io-manip-unitbuf:0000 */}
+<DeclarationDoc>
+Defined in header [`<ios>`](/docs/cpp/library/headers/ios)
+
+  <Declaration id="1" language="cpp" code={`std::ios_base& unitbuf( std::ios_base& str );`} />
+  <Declaration id="2" language="cpp" code={`std::ios_base& nounitbuf( std::ios_base& str );`} />
+</DeclarationDoc>
+
+<DeclarationDescription>
+  {/* source:cpp-io-manip-unitbuf:0001 */}
+  Enables or disables automatic flushing of the output stream after any output operation. Has no effect on input.
+
+  {/* source:cpp-io-manip-unitbuf:0002 */}
+  1. 1) Enables the `unitbuf` flag in the stream `str` as if by calling `str.setf(std::ios_base::unitbuf)`.
+
+  {/* source:cpp-io-manip-unitbuf:0003 */}
+  1. 2) Disables the `unitbuf` flag in the stream `str` as if by calling `str.unsetf(std::ios_base::unitbuf)`.
+
+</DeclarationDescription>
+
+{/* source:cpp-io-manip-unitbuf:0004 */}
+This is an I/O manipulator, it may be called with an expression such as `out << std::unitbuf` for any `out` of type [`std::basic_ostream`](/docs/cpp/library/io/basic_ostream) or with an expression such as `in >> std::unitbuf` for any `in` of type [`std::basic_istream`](/docs/cpp/library/io/basic_istream).
+
+### Notes
+
+{/* source:cpp-io-manip-unitbuf:0005 */}
+Flushing is performed in the destructor of the [`std::basic_ostream::sentry`](/docs/cpp/library/io/basic_ostream/sentry) object, which calls `str.rdbuf()->pubsync()` if `str.flags() & std::ios_base::unitbuf` is `true`.
+
+{/* source:cpp-io-manip-unitbuf:0006 */}
+The standard output objects [`std::cerr`](/docs/cpp/library/io/basic_ostream/cerr) and [`std::wcerr`](/docs/cpp/library/io/basic_ostream/cerr) have their `unitbuf` bit set by default.
+
+### Parameters
+
+{/* source:cpp-io-manip-unitbuf:0007 */}
+<ParameterList>
+  <Parameter name="str">reference to I/O stream</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-manip-unitbuf:0008 */}
+`str` (reference to the stream after manipulation).
+
+### Example
+
+{/* source:cpp-io-manip-unitbuf:0009 */}
+Without `std::unitbuf` or another explicit flush, the output is the same, but does not appear in real time.
+
+```cpp
+#include <chrono>
+#include <iostream>
+
+template<typename Diff>
+void log_progress(Diff d)
+{
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(d)
+              << " ... ";
+}
+
+int main()
+{
+    volatile int sink = 0;
+    std::cout << std::unitbuf; // enable automatic flushing
+
+    const auto start = std::chrono::high_resolution_clock::now();
+    for (int j = 0; j < 5; ++j)
+    {
+        for (int n = 0; n < 10000; ++n)
+            for (int m = 0; m < 20000; ++m)
+                sink += m * n; // do some work
+        log_progress(std::chrono::high_resolution_clock::now() - start);
+    }
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+571ms ... 1146ms ... 1722ms ... 2294ms ... 2865ms ...
+```
+
+### See also
+
+{/* source:cpp-io-manip-unitbuf:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`flush`](/docs/cpp/library/io/manip/flush)</DescriptionTerm>
+    <DescriptionBody>flushes the output stream <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`endl`](/docs/cpp/library/io/manip/endl)</DescriptionTerm>
+    <DescriptionBody>outputs `'\n'` and flushes the output stream <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

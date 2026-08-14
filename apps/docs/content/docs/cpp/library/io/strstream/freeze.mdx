@@ -1,0 +1,88 @@
+---
+title: "std::strstream::freeze"
+description: "If the stream is using a dynamically-allocated array for output, disables (flag == true) or enables (flag == false) automatic allocation/deallocation of the buffer. Effectively calls rdbuf( ) - >freeze(flag)."
+source_url: "https://en.cppreference.com/w/cpp/io/strstream/freeze"
+language: "C++"
+---
+
+{/* source:cpp-io-strstream-freeze:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" until="C++26" code={`void freeze( bool flag = true );`} /> (deprecated in C++98)
+</DeclarationDoc>
+
+{/* source:cpp-io-strstream-freeze:0001 */}
+
+If the stream is using a dynamically-allocated array for output, disables (`flag == true`) or enables (`flag == false`) automatic allocation/deallocation of the buffer. Effectively calls `rdbuf()->freeze(flag)`.
+
+### Notes
+
+{/* source:cpp-io-strstream-freeze:0002 */}
+
+After a call to [`str()`](/docs/cpp/library/io/strstream/str), dynamic streams become frozen automatically. A call to `freeze(false)` is required before exiting the scope in which this `strstream` object was created, otherwise the destructor will leak memory. Also, additional output to a frozen stream may be truncated once it reaches the end of the allocated buffer.
+
+### Parameters
+
+{/* source:cpp-io-strstream-freeze:0003 */}
+
+<ParameterList>
+
+  <Parameter name="flag">desired status</Parameter>
+
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-strstream-freeze:0004 */}
+
+(none)
+
+### Example
+
+{/* source:cpp-io-strstream-freeze:0005 */}
+
+```cpp
+#include <iostream>
+#include <strstream>
+ 
+int main()
+{
+    std::strstream dyn; // dynamically-allocated output buffer
+    dyn << "Test: " << 1.23; // note: no std::ends to demonstrate appending
+    std::cout << "The output stream contains \"";
+    std::cout.write(dyn.str(), dyn.pcount()) << "\"\n";
+    // the stream is now frozen due to str()
+    dyn << " More text"; // output to a frozen stream may be truncated
+    std::cout << "The output stream contains \"";
+    std::cout.write(dyn.str(), dyn.pcount()) << "\"\n";
+    dyn.freeze(false); // freeze(false) must be called or the  destructor will leak
+ 
+    std::strstream dyn2; // dynamically-allocated output buffer
+    dyn2 << "Test: " << 1.23; // note: no std::ends
+    std::cout << "The output stream contains \"";
+    std::cout.write(dyn2.str(), dyn2.pcount()) << "\"\n";
+    dyn2.freeze(false);   // unfreeze the stream after str()
+    dyn2 << " More text" << std::ends; // output will not be truncated (buffer grows)
+    std::cout << "The output stream contains \"" << dyn2.str() << "\"\n";
+    dyn2.freeze(false); // freeze(false) must be called or the  destructor will leak 
+}
+```
+
+Possible output:
+
+```text
+The output stream contains "Test: 1.23"
+The output stream contains "Test: 1.23 More "
+The output stream contains "Test: 1.23"
+The output stream contains "Test: 1.23 More text"
+```
+
+### See also
+
+{/* source:cpp-io-strstream-freeze:0006 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`freeze`](/docs/cpp/library/io/strstreambuf/freeze)</DescriptionTerm>
+    <DescriptionBody>sets/clears the frozen state of the buffer<br />(public member function of `std::strstreambuf`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

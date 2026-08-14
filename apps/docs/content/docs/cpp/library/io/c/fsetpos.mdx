@@ -1,0 +1,121 @@
+---
+title: "std::fsetpos"
+description: "Sets the file position indicator and the multibyte parsing state (if any) for the C file stream stream according to the value pointed to by pos."
+source_url: "https://en.cppreference.com/w/cpp/io/c/fsetpos"
+language: "C++"
+---
+
+{/* source:cpp-io-c-fsetpos:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdio>`](/docs/cpp/library/headers/cstdio)
+
+  <Declaration language="cpp" code={`int fsetpos( std::FILE* stream, const std::fpos_t* pos );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-c-fsetpos:0001 */}
+Sets the file position indicator and the multibyte parsing state (if any) for the C file stream `stream` according to the value pointed to by `pos`.
+
+{/* source:cpp-io-c-fsetpos:0002 */}
+Besides establishing new parse state and position, a call to this function undoes the effects of [`std::ungetc`](/docs/cpp/library/io/c/ungetc) and clears the end-of-file state, if it is set.
+
+{/* source:cpp-io-c-fsetpos:0003 */}
+If a read or write error occurs, the error indicator ([`std::ferror`](/docs/cpp/library/io/c/ferror)) for the stream is set.
+
+### Parameters
+
+{/* source:cpp-io-c-fsetpos:0004 */}
+<ParameterList>
+  <Parameter name="stream">file stream to modify</Parameter>
+  <Parameter name="pos">pointer to a `fpos_t` object obtained from [`std::fgetpos`](/docs/cpp/library/io/c/fgetpos) called on a stream associated with the same file</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-c-fsetpos:0005 */}
+0 upon success, nonzero value otherwise. Also, sets [`errno`](/docs/cpp/library/error/errno) on failure.
+
+### Notes
+
+{/* source:cpp-io-c-fsetpos:0006 */}
+After seeking to a non-end position in a wide stream, the next call to any output function may render the remainder of the file undefined, e.g. by outputting a multibyte sequence of a different length.
+
+### Example
+
+{/* source:cpp-io-c-fsetpos:0007 */}
+```cpp
+#include <cstdio>
+#include <cstdlib>
+ 
+int main()
+{
+    // Prepare an array of floating-point values.
+    const int SIZE = 5;
+    double A[SIZE] = {1., 2., 3., 4., 5.};
+    // Write array to a file.
+    std::FILE * fp = std::fopen("test.bin", "wb");
+    std::fwrite(A, sizeof(double), SIZE, fp);
+    std::fclose(fp);
+ 
+    // Read the values into array B.
+    double B[SIZE];
+    fp = std::fopen("test.bin", "rb");
+    std::fpos_t pos;
+    if (std::fgetpos(fp, &pos) != 0)      // current position: start of file
+    {
+       std::perror("fgetpos()");
+       std::fprintf(stderr, "fgetpos() failed in file %s at line # %d\n",
+                    __FILE__, __LINE__-3);
+       std::exit(EXIT_FAILURE);
+    }
+ 
+    int ret_code = std::fread(B, sizeof(double), 1, fp);      // read one value
+    // current position: after reading one value
+    std::printf("%.1f; read count = %d\n", B[0], ret_code);   // print one value and ret_code
+ 
+    if (std::fsetpos(fp, &pos) != 0)   // reset current position to start of file
+    {
+       if (std::ferror(fp))
+       {
+          std::perror("fsetpos()");
+          std::fprintf(stderr, "fsetpos() failed in file %s at line # %d\n",
+                       __FILE__, __LINE__-5);
+          std::exit(EXIT_FAILURE);
+       }
+    }
+ 
+    ret_code = std::fread(B, sizeof(double), 1, fp);         // re-read first value
+    std::printf("%.1f; read count = %d\n", B[0], ret_code);  // print one value and ret_code
+    std::fclose(fp);
+ 
+    return EXIT_SUCCESS; 
+}
+```
+
+Output:
+
+```text
+1.0; read count = 1
+1.0; read count = 1
+```
+
+### See also
+
+{/* source:cpp-io-c-fsetpos:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fgetpos`](/docs/cpp/library/io/c/fgetpos)</DescriptionTerm>
+    <DescriptionBody>gets the file position indicator <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ftell`](/docs/cpp/library/io/c/ftell)</DescriptionTerm>
+    <DescriptionBody>returns the current file position indicator <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fseek`](/docs/cpp/library/io/c/fseek)</DescriptionTerm>
+    <DescriptionBody>moves the file position indicator to a specific location in a file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/io/fsetpos) for `fsetpos`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,101 @@
+---
+title: "std::basic_ios<CharT,Traits>::copyfmt"
+description: "If other refers to the same object as *this, has no effects. Otherwise, copies the state of the stream other into *this. This is done in the following sequence:"
+source_url: "https://en.cppreference.com/w/cpp/io/basic_ios/copyfmt"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-ios-copyfmt:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`basic_ios& copyfmt( const basic_ios& other );`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-ios-copyfmt:0001 */}
+If `other` refers to the same object as `*this`, has no effects. Otherwise, copies the state of the stream `other` into `*this`. This is done in the following sequence:
+
+{/* source:cpp-io-basic-ios-copyfmt:0002 */}
+1. Calls every callback registered by [`register_callback()`](/docs/cpp/library/io/ios_base/register_callback) passing [`erase_event`](/docs/cpp/library/io/ios_base/event) as parameter.
+
+{/* source:cpp-io-basic-ios-copyfmt:0003 */}
+2. Copies all member objects from `other` to `*this` except for [`rdstate()`](/docs/cpp/library/io/basic_ios/rdstate), the exception mask, and [`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf). In particular, makes copies of the locale, the formatting flags, the contents of the arrays [`std::ios_base::iword`](/docs/cpp/library/io/ios_base/iword) and [`std::ios_base::pword`](/docs/cpp/library/io/ios_base/pword) (but not the iword and pword pointers themselves), the callbacks, and the tied stream.
+
+{/* source:cpp-io-basic-ios-copyfmt:0004 */}
+3. Calls every callback registered by [`register_callback()`](/docs/cpp/library/io/ios_base/register_callback) passing [`copyfmt_event`](/docs/cpp/library/io/ios_base/event) as parameter.
+
+{/* source:cpp-io-basic-ios-copyfmt:0005 */}
+4. Copies the exception mask from `other` to `*this` as if by calling exceptions(`other`.exceptions ( ) ).
+
+{/* source:cpp-io-basic-ios-copyfmt:0006 */}
+<ParameterList>
+<Parameter name="other">another stream to use as source</Parameter>
+</ParameterList>
+
+{/* source:cpp-io-basic-ios-copyfmt:0007 */}
+`*this`
+
+{/* source:cpp-io-basic-ios-copyfmt:0008 */}
+The second pass through the callbacks may be used to deep-copy the user-defined objects pointed to by the pointers in [`std::ios_base::pword`](/docs/cpp/library/io/ios_base/pword).
+
+{/* source:cpp-io-basic-ios-copyfmt:0009 */}
+copyfmt() may be used to save and restore the state of a stream. Boost provides a more fine-grained [I/O state savers](https://www.boost.org/doc/libs/release/libs/io/doc/ios_state.html) library for the same purpose.
+
+{/* source:cpp-io-basic-ios-copyfmt:0010 */}
+Makes the [`std::ofstream`](/docs/cpp/library/io/basic_ofstream) object "out" behave exactly like [`std::cout`](/docs/cpp/library/io/basic_ostream/cout), including formatting, [`tie()`](/docs/cpp/library/io/basic_ios/tie) to [`std::cin`](/docs/cpp/library/io/basic_istream/cin), etc.
+```cpp
+#include <bitset>
+#include <climits>
+#include <fstream>
+#include <iostream>
+ 
+int main()
+{
+    std::ofstream out;
+ 
+    out.copyfmt(std::cout); // copy everything except rdstate and rdbuf
+    out.clear(std::cout.rdstate()); // copy rdstate
+    out.basic_ios<char>::rdbuf(std::cout.rdbuf()); // share the buffer
+ 
+    out << "Hello, world\n";
+ 
+    auto bin = [](std::ios_base::fmtflags f)
+    {
+        return std::bitset<sizeof(std::ios_base::fmtflags) * CHAR_BIT>
+            { static_cast<unsigned long long>(f) };
+    };
+    std::ofstream out2;
+    std::cout << "1) out2.flags(): " << bin(out2.flags()) << '\n';
+    std::cout << "2) cout.flags(): " << bin(std::cout.flags()) << '\n';
+    std::cout.setf(std::ios::hex | std::ios::fixed | std::ios::boolalpha);
+    std::cout << "3) cout.flags(): " << bin(std::cout.flags()) << '\n';
+    out2.copyfmt(std::cout); // copy everything except rdstate and rdbuf
+    std::cout << "4) out2.flags(): " << bin(out2.flags()) << '\n';
+}
+```
+
+Possible output:
+
+```text
+Hello, world
+1) out2.flags(): 00000000000000000001000000000010
+2) cout.flags(): 00000000000000000001000000000010
+3) cout.flags(): 00000000000000000001000000001111
+4) out2.flags(): 00000000000000000001000000001111
+```
+
+{/* source:cpp-io-basic-ios-copyfmt:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-ios-copyfmt:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={256} standard="C++98">
+    <PublishedBehavior>step 3 called the registered callbacks with the event type `copy_event`, which is not defined</PublishedBehavior>
+    <CorrectedBehavior>corrected to [`copyfmt_event`](/docs/cpp/library/io/ios_base/event)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={292} standard="C++98">
+    <PublishedBehavior>if `other` refers to the same object as `* this`, the member objects were still copied and the registered callbacks were still called</PublishedBehavior>
+    <CorrectedBehavior>do nothing in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

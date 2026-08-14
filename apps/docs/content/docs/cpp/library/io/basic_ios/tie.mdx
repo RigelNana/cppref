@@ -1,0 +1,85 @@
+---
+title: "std::basic_ios<CharT,Traits>::tie"
+description: "Manages the tied stream. A tied stream is an output stream which is synchronized with the sequence controlled by the stream buffer (rdbuf()), that is, flush( ) is called on the tied stream before any input/output operation on *this."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_ios/tie"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-ios-tie:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`std::basic_ostream<CharT, Traits>* tie() const;`} />
+  <Declaration id="2" language="cpp" code={`std::basic_ostream<CharT, Traits>* tie( std::basic_ostream<CharT, Traits>* str );`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-ios-tie:0001 */}
+Manages the tied stream. A tied stream is an output stream which is synchronized with the sequence controlled by the stream buffer ([`rdbuf()`](/docs/cpp/library/io/basic_ios/rdbuf)), that is, flush( ) is called on the tied stream before any input/output operation on `*this`.
+
+{/* source:cpp-io-basic-ios-tie:0002 */}
+1. Returns the current tied stream. If there is no tied stream, a null pointer is returned.
+
+{/* source:cpp-io-basic-ios-tie:0003 */}
+2. Sets the current tied stream to `str`. Returns the tied stream before the operation. If there is no tied stream, a null pointer is returned. If `str` is not null and tie( ) is reachable by traversing the linked list of tied stream objects starting from `str`- \>tie( ), the behavior is undefined.
+
+{/* source:cpp-io-basic-ios-tie:0004 */}
+<ParameterList>
+<Parameter name="str">an output stream to set as the tied stream</Parameter>
+</ParameterList>
+
+{/* source:cpp-io-basic-ios-tie:0005 */}
+The tied stream, or a null pointer if there was no tied stream.
+
+{/* source:cpp-io-basic-ios-tie:0006 */}
+May throw implementation-defined exceptions.
+
+{/* source:cpp-io-basic-ios-tie:0007 */}
+By default, the standard stream [`std::cout`](/docs/cpp/library/io/basic_ostream/cout) is tied to [`std::cin`](/docs/cpp/library/io/basic_istream/cin) and [`std::cerr`](/docs/cpp/library/io/basic_ostream/cerr). Similarly, its wide counterpart [`std::wcout`](/docs/cpp/library/io/basic_ostream/cout) is tied to [`std::wcin`](/docs/cpp/library/io/basic_istream/cin) and [`std::wcerr`](/docs/cpp/library/io/basic_ostream/cerr).
+
+{/* source:cpp-io-basic-ios-tie:0008 */}
+```cpp
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    std::ofstream os("test.txt");
+    std::ifstream is("test.txt");
+    std::string value("0");
+ 
+    os << "Hello";
+    is >> value;
+ 
+    std::cout << "Result before tie(): " << std::quoted(value) << "\n";
+    is.clear();
+    is.tie(&os);
+ 
+    is >> value;
+ 
+    std::cout << "Result after tie(): " << std::quoted(value) << "\n";
+}
+```
+
+Output:
+
+```text
+Result before tie(): "0"
+Result after tie(): "Hello"
+```
+
+{/* source:cpp-io-basic-ios-tie:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-ios-tie:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={835} standard="C++98">
+    <PublishedBehavior>two streams could be tied to each other [`[1]`](/docs/tie#cite_note-1) (either directly or through another intermediate stream object)</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-io-basic-ios-tie:0011 */}
+1. ↑ [`↑`](/docs/tie#cite_ref-1) [`std::basic_ostream::flush()`](/docs/cpp/library/io/basic_ostream/flush) is an [`UnformattedOutputFunction`](/docs/cpp/library/named_req/UnformattedOutputFunction), so it creates a sentry object while being called. When `flush()` is called on a stream object, the [constructor of the sentry object](/docs/cpp/library/io/basic_ostream/sentry) will call `flush()` on its tied stream, and that `flush()` will construct another sentry object and its constructor will call `flush()` on the tied stream of that stream and so on. Therefore, if streams `a` and `b` are (directly or indirectly) tied to each other, calling `a. flush ( )` will eventually call `b. flush ( )`, which will eventually call `a. flush ( )`, and will result in an infinite loop.

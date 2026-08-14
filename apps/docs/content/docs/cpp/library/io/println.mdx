@@ -1,0 +1,167 @@
+---
+title: "std::println"
+description: "Format `args` according to the format string `fmt` with appended `'\\n'` (which means that each output ends with a new-line), and print the result to a stream."
+source_url: "https://en.cppreference.com/w/cpp/io/println"
+language: "C++"
+---
+
+{/* source:cpp-io-println:0000 */}
+<DeclarationDoc>
+Defined in header [`<print>`](/docs/cpp/library/headers/print)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class... Args >
+void println( std::format_string<Args...> fmt, Args&&... args );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class... Args >
+void println( std::FILE* stream,
+
+              std::format_string<Args...> fmt, Args&&... args );`} />
+  <Declaration id="3" language="cpp" since="C++26" code={`void println();`} />
+  <Declaration id="4" language="cpp" since="C++26" code={`void println( std::FILE* stream );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-println:0001 */}
+    Format `args` according to the format string `fmt` with appended `'\n'` (which means that each output ends with a new-line), and print the result to a stream.
+
+    {/* source:cpp-io-println:0002 */}
+    1. Equivalent to `std::println(stdout, fmt, std::forward<Args>(args)...)`.
+
+    {/* source:cpp-io-println:0003 */}
+    2. Equivalent to performing the following operations:
+
+    <Revision until="C++26">
+    ```cpp
+    std::print(stream, "{}\n", std::format(fmt, std::forward<Args>(args)...));
+    ```
+    </Revision>
+
+    <Revision since="C++26">
+    ```cpp
+    std::print(stream, std::runtime_format(std::string(fmt.get()) + '\n'),
+               std::forward<Args>(args)...)
+    ```
+    </Revision>
+
+    {/* source:cpp-io-println:0004 */}
+    3. Equivalent to `std::println(stdout)`.
+
+    {/* source:cpp-io-println:0005 */}
+    4. Equivalent to `std::print(stream, "\n")`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-io-println:0006 */}
+If [`std::formatter<Ti, char>`](/docs/cpp/library/text/format/formatter) does not meet the [BasicFormatter](/docs/cpp/library/named_req/BasicFormatter) requirements for any `Ti` in `Args` (as required by [`std::make_format_args`](/docs/cpp/library/text/format/make_format_args)), the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-io-println:0007 */}
+<ParameterList>
+  <Parameter name="stream">output file stream to write to</Parameter>
+  <Parameter name="fmt">
+an object that represents the format string. The format string consists of
+
+- ordinary characters (except `{` and `}`), which are copied unchanged to the output,
+- escape sequences `{{` and `}}`, which are replaced with `{` and `}` respectively in the output, and
+- replacement fields.
+
+Each replacement field has the following format:
+
+1. `{ arg-id (optional) }` – replacement field without a format specification
+2. `{ arg-id (optional) : format-spec }` – replacement field with a format specification
+
+`arg-id` – specifies the index of the argument in `args` whose value is to be used for formatting; if it is omitted, the arguments are used in order.
+
+The `arg-id`s in a format string must all be present or all be omitted. Mixing manual and automatic indexing is an error.
+
+`format-spec` – the format specification defined by the [`std::formatter`](/docs/cpp/library/text/format/formatter) specialization for the corresponding argument. Cannot start with `}`.
+
+For basic types and standard string types, the format specification is interpreted as [standard format specification](/docs/cpp/library/text/format/spec).
+
+For chrono types, the format specification is interpreted as [chrono format specification](/docs/cpp/library/chrono/system_clock/formatter#Format_specification).
+
+<Revision since="C++23">
+- For range types, the format specification is interpreted as [range format specification](/docs/cpp/library/text/format/range_formatter#Range_format_specification).
+- For [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), the format specification is interpreted as [tuple format specification](/docs/cpp/library/text/format/tuple_formatter#Format_specification).
+- For [`std::thread::id`](/docs/cpp/library/thread/thread/id) and [`std::stacktrace_entry`](/docs/cpp/library/error/stacktrace_entry), see [thread id format specification](/docs/cpp/library/thread/thread/id/formatter#Format_specification) and [stacktrace entry format specification](/docs/cpp/library/error/stacktrace_entry/formatter#Format_specification).
+- For [`std::basic_stacktrace`](/docs/cpp/library/error/basic_stacktrace), no format specifier is allowed.
+</Revision>
+
+<Revision since="C++26">
+- For [`std::filesystem::path`](/docs/cpp/library/filesystem/path), see [path format specification](/docs/cpp/library/filesystem/path/formatter#Format_specification).
+</Revision>
+
+For other formattable types, the format specification is determined by user-defined `formatter` specializations.
+</Parameter>
+  <Parameter name="args...">arguments to be formatted</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-io-println:0008 */}
+- [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) on allocation failure.
+- [`std::system_error`](/docs/cpp/library/error/system_error), if writing to the stream fails.
+- Propagates any exception thrown by used [formatters](/docs/cpp/library/text/format/formatter), e.g. [`std::format_error`](/docs/cpp/library/text/format/format_error).
+
+### Notes
+
+{/* source:cpp-io-println:0009 */}
+Although overloads [3,4](/docs/cpp/library/io/println#Version_3) are added in C++26, all known implementations make them available in C++23 mode.
+
+{/* source:cpp-io-println:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_print`](/docs/cpp/library/feature_test#cpp_lib_print) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_print_202207L) | (C++23) | Formatted output |
+| | [`202403L`](/docs/cpp/library/compiler_support/26#cpp_lib_print_202403L) | (C++26) | Unbuffered formatted output[[1]](/docs/cpp/library/io/println#cite_note-1) |
+| [`__cpp_lib_format`](/docs/cpp/library/feature_test#cpp_lib_format) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_format_202207L) | (C++23) | Exposing `std::basic_format_string` |
+
+{/* source:cpp-io-println:0011 */}
+1. ↑ Although P3107R5 is accepted as a DR, `std::runtime_format` is only avilable since C++26. As a result, the resolution cannot be applied in C++23.
+
+### Example
+
+{/* source:cpp-io-println:0012 */}
+```cpp
+#include <print>
+ 
+int main()
+{
+    // Each call to std::println ends with new-line
+    std::println("Please"); // overload (1)
+    std::println("enter"); // (1)
+ 
+    std::print("pass");
+    std::print("word");
+ 
+    std::println(); // (3); valid since C++26; same effect as std::print("\n"); 
+}
+```
+
+Output:
+
+```text
+Please
+enter
+password
+```
+
+### See also
+
+{/* source:cpp-io-println:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`print`](/docs/cpp/library/io/print) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>prints to [`stdout`](/docs/cpp/library/io/c/std_streams) or a file stream using [formatted](/docs/cpp/library/text/format) representation of the arguments (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`println(std::ostream)`](/docs/cpp/library/io/basic_ostream/println) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>outputs [formatted](/docs/cpp/library/text/format) representation of the arguments with appended `'\n'` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`format`](/docs/cpp/library/text/format/format) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>stores formatted representation of the arguments in a new string (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`printf fprintf sprintf snprintf`](/docs/cpp/library/io/c/printf) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>prints formatted output to [`stdout`](/docs/cpp/library/io/c/std_streams), a file stream or a buffer (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

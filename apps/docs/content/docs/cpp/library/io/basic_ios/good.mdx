@@ -1,0 +1,89 @@
+---
+title: "std::basic_ios<CharT,Traits>::good"
+description: "Returns true if the most recent I/O operation on the stream completed successfully. Specifically, returns result of rdstate( ) == 0."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_ios/good"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-ios-good:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`bool good() const;`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-ios-good:0001 */}
+Returns true if the most recent I/O operation on the stream completed successfully. Specifically, returns result of rdstate( ) == 0.
+
+{/* source:cpp-io-basic-ios-good:0002 */}
+See [`ios_base::iostate`](/docs/cpp/library/io/ios_base/iostate) for the list of conditions that set the stream status bits.
+
+{/* source:cpp-io-basic-ios-good:0003 */}
+(none)
+
+{/* source:cpp-io-basic-ios-good:0004 */}
+true if the stream error flags are all false, false otherwise.
+
+{/* source:cpp-io-basic-ios-good:0005 */}
+```cpp
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+ 
+int main()
+{
+    const char* fname = "/tmp/test.txt";
+    std::ofstream ofile{fname};
+    ofile << "10 " << "11 " << "12 " << "non-int";
+    ofile.close();
+ 
+    std::ifstream file{fname};
+    if (!file.good())  
+    {  
+        std::cout << "#1. Opening file test.txt failed - "
+                     "one of the error flags is true\n";
+        return EXIT_FAILURE;
+    }
+ 
+    // typical C++ I/O loop uses the return value of the I/O function
+    // as the loop controlling condition, operator bool() is used here
+    for (int n; file >> n;)
+        std::cout << n << ' ';
+    std::cout << '\n';
+ 
+    if (file.bad()) 
+    {
+        std::cout << "#2. I/O error while reading - badbit is true\n";
+        return EXIT_FAILURE;
+    } 
+    else if (file.eof())
+        std::cout << "#3. End of file reached successfully - eofbit is true\n"
+            "This is fine even though file.good() is false\n"; 
+    else if (file.fail())
+        std::cout << "#4. Non-integer data encountered - failbit is true\n";
+}
+```
+
+Possible output:
+
+```text
+10 11 12 
+#4. Non-integer data encountered - failbit is true
+```
+
+{/* source:cpp-io-basic-ios-good:0006 */}
+The following table shows the value of [`basic_ios`](/docs/cpp/library/io/basic_ios) accessors (good(), [`fail()`](/docs/cpp/library/io/basic_ios/fail), etc.) for all possible combinations of [`ios_base::iostate`](/docs/cpp/library/io/ios_base/iostate) flags:
+
+{/* source:cpp-io-basic-ios-good:0007 */}
+| [`ios_base::iostate`](/docs/cpp/library/io/ios_base/iostate) flags |  |  | `basic_ios` accessors |  |  |  |  |  |
+| `eofbit` | `failbit` | `badbit` | `good()` | [`fail()`](/docs/cpp/library/io/basic_ios/fail) | [`bad()`](/docs/cpp/library/io/basic_ios/bad) | [`eof()`](/docs/cpp/library/io/basic_ios/eof) | [`operator bool`](/docs/cpp/library/io/basic_ios/operator_bool) | [`operator!`](/docs/cpp/library/io/basic_ios/operator!) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| false | false | false | true | false | false | false | true | false |
+| false | false | true | false | true | true | false | false | true |
+| false | true | false | false | true | false | false | false | true |
+| false | true | true | false | true | true | false | false | true |
+| true | false | false | false | false | false | true | true | false |
+| true | false | true | false | true | true | true | false | true |
+| true | true | false | false | true | false | true | false | true |
+| true | true | true | false | true | true | true | false | true |

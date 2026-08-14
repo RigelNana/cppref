@@ -1,0 +1,120 @@
+---
+title: "std::basic_streambuf<CharT,Traits>::underflow"
+description: "Ensures that at least one character is available in the input area by updating the pointers to the input area (if needed) and reading more data in from the input sequence (if applicable)."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_streambuf/underflow"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-streambuf-underflow:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`protected:
+virtual int_type underflow();`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-streambuf-underflow:0001 */}
+Ensures that at least one character is available in the input area by updating the pointers to the input area (if needed) and reading more data in from the input sequence (if applicable). Returns the value of that character (converted to `int_type` with `Traits::to_int_type(c)`) on success or `Traits::eof()` on failure.
+
+{/* source:cpp-io-basic-streambuf-underflow:0002 */}
+The function may update `gptr`, `egptr` and `eback` pointers to define the location of newly loaded data (if any). On failure, the function ensures that either `gptr() == nullptr` or `gptr() == egptr`.
+
+{/* source:cpp-io-basic-streambuf-underflow:0003 */}
+The base class version of the function does nothing. The derived classes may override this function to allow updates to the get area in the case of exhaustion.
+
+### Parameters
+
+{/* source:cpp-io-basic-streambuf-underflow:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-io-basic-streambuf-underflow:0005 */}
+The value of the character pointed to by the get pointer after the call on success, or `Traits::eof()` otherwise.
+
+{/* source:cpp-io-basic-streambuf-underflow:0006 */}
+The base class version of the function returns `traits::eof()`.
+
+### Note
+
+{/* source:cpp-io-basic-streambuf-underflow:0007 */}
+The public functions of [`std::streambuf`](/docs/cpp/library/io/basic_streambuf) call this function only if `gptr() == nullptr` or `gptr() >= egptr()`.
+
+### Example
+
+{/* source:cpp-io-basic-streambuf-underflow:0008 */}
+```cpp
+#include <iostream>
+#include <sstream>
+
+class null_filter_buf : public std::streambuf
+{
+    std::streambuf* src;
+    char ch; // single-byte buffer
+protected:
+    int underflow()
+    {
+        traits_type::int_type i;
+        while ((i = src->sbumpc()) == '\0')
+            ; // skip zeroes
+        if (!traits_type::eq_int_type(i, traits_type::eof()))
+        {
+            ch = traits_type::to_char_type(i);
+            setg(&ch, &ch, &ch+1); // make one read position available
+        }
+        return i;
+    }
+public:
+    null_filter_buf(std::streambuf* buf) : src(buf)
+    {
+        setg(&ch, &ch + 1, &ch + 1); // buffer is initially full
+    }
+};
+
+void filtered_read(std::istream& in)
+{
+    std::streambuf* orig = in.rdbuf();
+    null_filter_buf buf(orig);
+    in.rdbuf(&buf);
+    for (char c; in.get(c);)
+        std::cout << c;
+    in.rdbuf(orig);
+}
+
+int main()
+{
+    char a[] = "This i\0s \0an e\0\0\0xample";
+    std::istringstream in(std::string(std::begin(a), std::end(a)));
+    filtered_read(in);
+}
+```
+
+Output:
+
+```text
+This is an example
+```
+
+### See also
+
+{/* source:cpp-io-basic-streambuf-underflow:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`uflow`](/docs/cpp/library/io/basic_streambuf/uflow)</DescriptionTerm>
+    <DescriptionBody>reads characters from the associated input sequence to the get area and advances the next pointer (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`overflow`](/docs/cpp/library/io/basic_streambuf/overflow)</DescriptionTerm>
+    <DescriptionBody>writes characters to the associated output sequence from the put area (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`underflow`](/docs/cpp/library/io/basic_filebuf/underflow)</DescriptionTerm>
+    <DescriptionBody>reads from the associated file (virtual protected member function of `std::basic_filebuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`underflow`](/docs/cpp/library/io/basic_stringbuf/underflow)</DescriptionTerm>
+    <DescriptionBody>returns the next character available in the input sequence (virtual protected member function of `std::basic_stringbuf<CharT,Traits,Allocator>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`underflow`](/docs/cpp/library/io/strstreambuf/underflow)</DescriptionTerm>
+    <DescriptionBody>reads a character from the input sequence without advancing the next pointer (virtual protected member function of `std::strstreambuf`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

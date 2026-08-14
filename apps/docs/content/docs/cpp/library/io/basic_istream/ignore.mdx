@@ -1,0 +1,113 @@
+---
+title: "std::basic_istream<CharT,Traits>::ignore"
+description: "Extracts and discards characters from the input stream until and including delim."
+source_url: "https://en.cppreference.com/w/cpp/io/basic_istream/ignore"
+language: "C++"
+---
+
+{/* source:cpp-io-basic-istream-ignore:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`basic_istream& ignore( std::streamsize count = 1, int_type delim = Traits::eof() );`} />
+</DeclarationDoc>
+
+{/* source:cpp-io-basic-istream-ignore:0001 */}
+Extracts and discards characters from the input stream until and including `delim`.
+
+{/* source:cpp-io-basic-istream-ignore:0002 */}
+`ignore` behaves as an [UnformattedInputFunction](/docs/cpp/library/named_req/UnformattedInputFunction). After constructing and checking the sentry object, it extracts characters from the stream and discards them until any of the following conditions occurs:
+
+{/* source:cpp-io-basic-istream-ignore:0003 */}
+- `count` characters were extracted. This test is disabled in the special case when `count` equals `std::numeric_limits<std::streamsize>::max()`.
+
+{/* source:cpp-io-basic-istream-ignore:0004 */}
+- end of file conditions occurs in the input sequence, in which case the function calls `setstate(eofbit)`.
+
+{/* source:cpp-io-basic-istream-ignore:0005 */}
+- the next available character `c` in the input sequence is `delim`, as determined by `Traits::eq_int_type(Traits::to_int_type(c), delim)`. The delimiter character is extracted and discarded. This test is disabled if `delim` is `Traits::eof()`.
+
+### Parameters
+
+{/* source:cpp-io-basic-istream-ignore:0006 */}
+<ParameterList>
+  <Parameter name="count">number of characters to extract</Parameter>
+  <Parameter name="delim">delimiting character to stop the extraction at. It is also extracted</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-io-basic-istream-ignore:0007 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-io-basic-istream-ignore:0008 */}
+If an internal operation throws an exception, it is caught and [`badbit`](/docs/cpp/library/io/ios_base/iostate) is set. If [`exceptions()`](/docs/cpp/library/io/basic_ios/exceptions) is set for `badbit`, the exception is rethrown.
+
+### Example
+
+{/* source:cpp-io-basic-istream-ignore:0009 */}
+The following example uses `ignore` to skip over non-numeric input:
+
+```cpp
+#include <iostream>
+#include <limits>
+#include <sstream>
+ 
+constexpr auto max_size = std::numeric_limits<std::streamsize>::max();
+ 
+int main()
+{
+    std::istringstream input("1\n"
+                             "some non-numeric input\n"
+                             "2\n");
+    for (;;)
+    {
+        int n;
+        input >> n;
+ 
+        if (input.eof() || input.bad())
+            break;
+        else if (input.fail())
+        {
+            input.clear(); // unset failbit
+            input.ignore(max_size, '\n'); // skip bad input
+        }
+        else
+            std::cout << n << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+1
+2
+```
+
+### Defect reports
+
+{/* source:cpp-io-basic-istream-ignore:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-basic-istream-ignore:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={172} standard="C++98">
+    <PublishedBehavior>the type of `count` was misspecified as `int`</PublishedBehavior>
+    <CorrectedBehavior>corrected to [`std::streamsize`](/docs/cpp/library/io/streamsize)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-basic-istream-ignore:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get`](/docs/cpp/library/io/basic_istream/get)</DescriptionTerm>
+    <DescriptionBody>extracts characters (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`getline`](/docs/cpp/library/io/basic_istream/getline)</DescriptionTerm>
+    <DescriptionBody>extracts characters until the given character is found (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,144 @@
+---
+title: "std::vprint_nonunicode, std::vprint_nonunicode_buffered"
+description: "Format `args` according to the format string `fmt`, and writes the result to the output stream."
+source_url: "https://en.cppreference.com/w/cpp/io/vprint_nonunicode"
+language: "C++"
+---
+
+{/* source:cpp-io-vprint-nonunicode:0000 */}
+<DeclarationDoc>
+Defined in header [`<print>`](/docs/cpp/library/headers/print)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`void vprint_nonunicode( std::FILE* stream,
+                        std::string_view fmt, std::format_args args );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`void vprint_nonunicode_buffered
+    ( std::FILE* stream, std::string_view fmt, std::format_args args );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`void vprint_nonunicode_buffered
+    ( std::string_view fmt, std::format_args args );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-io-vprint-nonunicode:0001 */}
+    Format `args` according to the format string `fmt`, and writes the result to the output stream.
+
+    {/* source:cpp-io-vprint-nonunicode:0002 */}
+    1. While holding the lock on `stream`, writes the character representation of formatting arguments provided by `args` formatted according to specifications given in `fmt` to `stream`.
+
+    {/* source:cpp-io-vprint-nonunicode:0003 */}
+    If `stream` is not a valid pointer to an output C stream, the behavior is undefined.
+
+    {/* source:cpp-io-vprint-nonunicode:0004 */}
+    2. Equivalent to
+
+    ```cpp
+    std::string out = std::vformat(fmt, args);
+    std::vprint_nonunicode(stream, "{}", std::make_format_args(out));
+    ```
+
+    {/* source:cpp-io-vprint-nonunicode:0005 */}
+    3. Equivalent to `std::vprint_nonunicode_buffered(stdout, fmt, args)`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-io-vprint-nonunicode:0006 */}
+<ParameterList>
+  <Parameter name="stream">output file stream to write to</Parameter>
+  <Parameter name="fmt">
+an object that represents the format string. The format string consists of
+
+- ordinary characters (except `{` and `}`), which are copied unchanged to the output,
+- escape sequences `{{` and `}}`, which are replaced with `{` and `}` respectively in the output, and
+- replacement fields.
+
+Each replacement field has the following format:
+
+1. `{ arg-id (optional) }` – replacement field without a format specification
+2. `{ arg-id (optional) : format-spec }` – replacement field with a format specification
+
+`arg-id` – specifies the index of the argument in `args` whose value is to be used for formatting; if it is omitted, the arguments are used in order.
+
+The `arg-id`s in a format string must all be present or all be omitted. Mixing manual and automatic indexing is an error.
+
+`format-spec` – the format specification defined by the [`std::formatter`](/docs/cpp/library/text/format/formatter) specialization for the corresponding argument. Cannot start with `}`.
+
+For basic types and standard string types, the format specification is interpreted as [standard format specification](/docs/cpp/library/text/format/spec).
+
+For chrono types, the format specification is interpreted as [chrono format specification](/docs/cpp/library/chrono/system_clock/formatter#Format_specification).
+
+<Revision since="C++23">
+- For range types, the format specification is interpreted as [range format specification](/docs/cpp/library/text/format/range_formatter#Range_format_specification).
+- For [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), the format specification is interpreted as [tuple format specification](/docs/cpp/library/text/format/tuple_formatter#Format_specification).
+- For [`std::thread::id`](/docs/cpp/library/thread/thread/id) and [`std::stacktrace_entry`](/docs/cpp/library/error/stacktrace_entry), see [thread id format specification](/docs/cpp/library/thread/thread/id/formatter#Format_specification) and [stacktrace entry format specification](/docs/cpp/library/error/stacktrace_entry/formatter#Format_specification).
+- For [`std::basic_stacktrace`](/docs/cpp/library/error/basic_stacktrace), no format specifier is allowed.
+</Revision>
+
+<Revision since="C++26">
+- For [`std::filesystem::path`](/docs/cpp/library/filesystem/path), see [path format specification](/docs/cpp/library/filesystem/path/formatter#Format_specification).
+</Revision>
+
+For other formattable types, the format specification is determined by user-defined `formatter` specializations.
+</Parameter>
+  <Parameter name="args...">arguments to be formatted</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-io-vprint-nonunicode:0007 */}
+- [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) on allocation failure.
+- [`std::system_error`](/docs/cpp/library/error/system_error), if writing to the stream fails.
+- Propagates any exception thrown by used [formatters](/docs/cpp/library/text/format/formatter), e.g. [`std::format_error`](/docs/cpp/library/text/format/format_error).
+
+### Notes
+
+{/* source:cpp-io-vprint-nonunicode:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_print`](/docs/cpp/library/feature_test#cpp_lib_print) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_print_202207L) | (C++23) | Formatted output |
+| | [`202403L`](/docs/cpp/library/compiler_support/26#cpp_lib_print_202403L) | (C++26) (DR23) | Unbuffered formatted output |
+| | [`202406L`](/docs/cpp/library/compiler_support/26#cpp_lib_print_202406L) | (C++26) (DR23) | Enabling unbuffered formatted output for more formattable types |
+| [`__cpp_lib_format`](/docs/cpp/library/feature_test#cpp_lib_format) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_format_202207L) | (C++23) | Exposing `std::basic_format_string` |
+
+### Example
+
+{/* source:cpp-io-vprint-nonunicode:0009 */}
+This section is incomplete. Reason: no example
+
+### Defect reports
+
+{/* source:cpp-io-vprint-nonunicode:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-io-vprint-nonunicode:0011 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P3107R5" standard="C++23">
+    <PublishedBehavior>printing operations were always buffered</PublishedBehavior>
+    <CorrectedBehavior>provides unbuffered printing operations</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P3235R3" standard="C++23">
+    <PublishedBehavior>the names of the functions added by [P3107R5](https://wg21.link/P3107R5) were misleading</PublishedBehavior>
+    <CorrectedBehavior>changed the function names</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-io-vprint-nonunicode:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`vprint_unicode vprint_unicode_buffered`](/docs/cpp/library/io/vprint_unicode) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>prints to Unicode capable [`stdout`](/docs/cpp/library/io/c/std_streams) or a file stream using [type-erased](/docs/cpp/library/text/format/basic_format_args) argument representation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`vprint_nonunicode(std::ostream)`](/docs/cpp/library/io/basic_ostream/vprint_nonunicode) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>outputs character data using [type-erased](/docs/cpp/library/text/format/basic_format_args) argument representation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`print`](/docs/cpp/library/io/print) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>prints to [`stdout`](/docs/cpp/library/io/c/std_streams) or a file stream using [formatted](/docs/cpp/library/text/format) representation of the arguments (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`format`](/docs/cpp/library/text/format/format) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>stores formatted representation of the arguments in a new string (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
