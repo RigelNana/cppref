@@ -1,0 +1,109 @@
+---
+title: "std::ranges::view_interface<D>::data"
+description: "The default implementation of data() member function obtains the address denoted by the beginning iterator via std::to_address, which is also the lowest address of the contiguous storage (implied by contiguous_iterator) referenced by the view of the derived type when the view is not empty."
+source_url: "https://en.cppreference.com/w/cpp/ranges/view_interface/data"
+language: "C++"
+---
+
+{/* source:cpp-ranges-view-interface-data:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr auto data()
+    requires std::contiguous_iterator<ranges::iterator_t<D>>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr auto data() const
+    requires ranges::range<const D> && 
+
+        std::contiguous_iterator<ranges::iterator_t<const D>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-view-interface-data:0001 */}
+The default implementation of `data()` member function obtains the address denoted by the beginning iterator via `std::to_address`, which is also the lowest address of the contiguous storage (implied by [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator)) referenced by the view of the derived type when the view is not empty.
+
+{/* source:cpp-ranges-view-interface-data:0002 */}
+1. 1) Let `derived` be `static_cast<D&>(*this)`. Equivalent to `return std::to_address(ranges::begin(derived));`.
+
+{/* source:cpp-ranges-view-interface-data:0003 */}
+2. 2) Same as (1), except that `derived` is `static_cast<const D&>(*this)`.
+
+### Parameters
+
+{/* source:cpp-ranges-view-interface-data:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-view-interface-data:0005 */}
+The address denoted by the beginning iterator.
+
+### Notes
+
+{/* source:cpp-ranges-view-interface-data:0006 */}
+Following derived types may use the default implementation of `data()`:
+
+{/* source:cpp-ranges-view-interface-data:0007 */}
+- [`std::ranges::common_view`](/docs/cpp/library/ranges/common_view)
+- [`std::ranges::drop_view`](/docs/cpp/library/ranges/drop_view)
+- [`std::ranges::drop_while_view`](/docs/cpp/library/ranges/drop_while_view)
+- [`std::ranges::ref_view`](/docs/cpp/library/ranges/ref_view)
+- [`std::ranges::subrange`](/docs/cpp/library/ranges/subrange)
+- [`std::ranges::take_view`](/docs/cpp/library/ranges/take_view)
+- [`std::ranges::take_while_view`](/docs/cpp/library/ranges/take_while_view)
+
+{/* source:cpp-ranges-view-interface-data:0008 */}
+Following types are derived from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface) and do not declare their own `data()` member function, but they cannot use the default implementation, because their iterator types never satisfy [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator):
+
+{/* source:cpp-ranges-view-interface-data:0009 */}
+- [`std::ranges::basic_istream_view`](/docs/cpp/library/ranges/basic_istream_view)
+- [`std::ranges::elements_view`](/docs/cpp/library/ranges/elements_view)
+- [`std::ranges::filter_view`](/docs/cpp/library/ranges/filter_view)
+- [`std::ranges::iota_view`](/docs/cpp/library/ranges/iota_view)
+- [`std::ranges::join_view`](/docs/cpp/library/ranges/join_view)
+- `std::ranges::lazy_split_view`
+- [`std::ranges::reverse_view`](/docs/cpp/library/ranges/reverse_view)
+- [`std::ranges::split_view`](/docs/cpp/library/ranges/split_view)
+- [`std::ranges::transform_view`](/docs/cpp/library/ranges/transform_view)
+
+### Example
+
+{/* source:cpp-ranges-view-interface-data:0010 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+ 
+int main() {
+    constexpr std::string_view str { "Hello, C++20!" };
+    std::cout << (str | std::views::drop(7)).data() << '\n';
+    constexpr static std::array a { 1,2,3,4,5 };
+    constexpr auto v { a | std::views::take(3) };
+    static_assert( &a[0] == v.data() );
+}
+```
+
+Output:
+
+```text
+C++20!
+```
+
+### See also
+
+{/* source:cpp-ranges-view-interface-data:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/iterator/data) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains the pointer to the underlying array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::data`](/docs/cpp/library/ranges/data) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains a pointer to the beginning of a contiguous range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::cdata`](/docs/cpp/library/ranges/cdata) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains a pointer to the beginning of a read-only contiguous range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_address`](/docs/cpp/library/memory/to_address) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains a raw pointer from a pointer-like type (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

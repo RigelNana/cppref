@@ -1,0 +1,74 @@
+---
+title: "std::ranges::iota_view<W, Bound>::size"
+description: "Returns the size of the view if the view is bounded."
+source_url: "https://en.cppreference.com/w/cpp/ranges/iota_view/size"
+language: "C++"
+---
+
+{/* source:cpp-ranges-iota-view-size:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr auto size() const
+    requires (std::same_as<W, Bound> && /*advanceable*/<W>) ||
+             (/*is-integer-like*/<W> && /*is-integer-like*/<Bound>) ||
+
+             std::sized_sentinel_for<Bound, W>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-iota-view-size:0001 */}
+Returns the size of the view if the view is bounded.
+
+{/* source:cpp-ranges-iota-view-size:0002 */}
+For the definitions of `/*advanceable*/` and `/*is-integer-like*/`, see [advanceable](/docs/cpp/library/ranges/iota_view/iterator#advanceable) and [is-integer-like](/docs/cpp/library/iterator/is-integer-like) respectively.
+
+### Return value
+
+{/* source:cpp-ranges-iota-view-size:0003 */}
+If any of `W` and `Bound` is not a [integer-like type](/docs/cpp/library/iterator/is-integer-like), returns [`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)([`bound_`](/docs/cpp/library/ranges/iota_view#bound) `-` [`value_`](/docs/cpp/library/ranges/iota_view#value)).
+
+{/* source:cpp-ranges-iota-view-size:0004 */}
+Otherwise, returns `(`[`value_`](/docs/cpp/library/ranges/iota_view#value) `< 0) ?` `(`[`bound_`](/docs/cpp/library/ranges/iota_view#bound) `< 0) ?` [`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(-`[`value_`](/docs/cpp/library/ranges/iota_view#value)`) - `[`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(-`[`bound_`](/docs/cpp/library/ranges/iota_view#bound)`) : `[`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(`[`bound_`](/docs/cpp/library/ranges/iota_view#bound)`) + `[`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(-`[`value_`](/docs/cpp/library/ranges/iota_view#value)`)) : `[`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(`[`bound_`](/docs/cpp/library/ranges/iota_view#bound)`) - `[`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(`[`value_`](/docs/cpp/library/ranges/iota_view#value)`).
+
+### Example
+
+{/* source:cpp-ranges-iota-view-size:0005 */}
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    unsigned initial_value{1}, bound{5};
+    auto i{std::views::iota(initial_value, bound)};
+    assert(i.size() == bound - initial_value and i.size() == 4);
+ 
+    auto u{std::views::iota(8)};
+    // assert(u.size()); // Error: size() is not present since “u” is unbounded
+}
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-iota-view-size:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-iota-view-size:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3610} standard="C++20">
+    <PublishedBehavior>`size` might reject integer-class types</PublishedBehavior>
+    <CorrectedBehavior>accept if possible</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-iota-view-size:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::size`](/docs/cpp/library/ranges/size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::ssize`](/docs/cpp/library/ranges/ssize) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a signed integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

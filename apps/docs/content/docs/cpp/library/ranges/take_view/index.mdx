@@ -1,0 +1,229 @@
+---
+title: "std::ranges::views::take, std::ranges::take_view"
+description: "take_view is a range adaptor that represents view of the elements from an underlying sequence, starting at the beginning and ending at a given bound."
+source_url: "https://en.cppreference.com/w/cpp/ranges/take_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-take-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< ranges::view V >
+class take_view
+
+    : public ranges::view_interface<take_view<V>>`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`namespace views {
+    inline constexpr /* unspecified */ take = /* unspecified */;
+
+}`} />
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< ranges::viewable_range R >
+    requires /* see below */
+constexpr ranges::view auto
+
+    take( R&& r, ranges::range_difference_t<R> count );`} />
+  <Declaration language="cpp" since="C++20" code={`template< class DifferenceType >
+constexpr /* range adaptor closure */ take( DifferenceType&& count );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-take-view:0001 */}
+1. 1) A range adaptor that represents [`view`](/docs/cpp/library/ranges/view) of the elements from an underlying sequence, starting at the beginning and ending at a given bound.
+
+{/* source:cpp-ranges-take-view:0002 */}
+2. 2) `views::take` is a [`RangeAdaptorObject`](/docs/cpp/library/named_req/RangeAdaptorObject). The expression `views::take(e, f)` results in a view that represents the first `f` elements from `e`. The result is not necessarily a `take_view`.
+
+`views::take(e, f)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to (where `T` is `std::remove_cvref_t<decltype((e))>` and `D` is `ranges::range_difference_t<decltype((e))>`):
+
+- `((void)f, `[`decay-copy`](/docs/cpp/library/standard_library/decay-copy)`(e))`, if `T` is a [`ranges::empty_view`](/docs/cpp/library/ranges/empty_view), except that the evaluations of `e` and `f` are indeterminately sequenced;
+- `U(ranges::begin(e), ranges::begin(e) + std::min<D>(ranges::distance(e), f))`, if `T` is a specialization of [`std::span`](/docs/cpp/library/container/span), [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view), or [`ranges::subrange`](/docs/cpp/library/ranges/subrange) that models both [`random_access_range`](/docs/cpp/library/ranges/random_access_range) and [`sized_range`](/docs/cpp/library/ranges/sized_range), where `U` is
+  - [`std::span<typename T::element_type>`](/docs/cpp/library/container/span), if `T` is a specialization of `std::span`;
+  - `T`, if `T` is a specialization of `std::basic_string_view`;
+  - [`ranges::subrange<ranges::iterator_t<T>>`](/docs/cpp/library/ranges/subrange), if `T` is a specialization of `ranges::subrange`;
+- `ranges::iota_view(*ranges::begin(e), *(ranges::begin(e) + std::min<D>(ranges::distance(e), f)))`, if `T` is a specialization of [`ranges::iota_view`](/docs/cpp/library/ranges/iota_view) that models both [`random_access_range`](/docs/cpp/library/ranges/random_access_range) and [`sized_range`](/docs/cpp/library/ranges/sized_range);
+
+<Revision since="C++23">
+- otherwise, if `T` is a specialization of [`ranges::repeat_view`](/docs/cpp/library/ranges/repeat_view):
+  - `views::repeat(*e.value_, std::min<D>(ranges::distance(e), f))`, if `T` models [`sized_range`](/docs/cpp/library/ranges/sized_range); is such case `e` is evaluated only once;
+  - `views::repeat(*e.value_, static_cast<D>(e))` otherwise;
+</Revision>
+
+- otherwise, `take_view(e, f)`.
+
+In all cases, `decltype((f))` must model `std::convertible_to<D>`.
+
+{/* source:cpp-ranges-take-view:0003 */}
+`take_view` models the concepts [`contiguous_range`](/docs/cpp/library/ranges/contiguous_range), [`random_access_range`](/docs/cpp/library/ranges/random_access_range), [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range), [`forward_range`](/docs/cpp/library/ranges/forward_range), [`input_range`](/docs/cpp/library/ranges/input_range), and [`sized_range`](/docs/cpp/library/ranges/sized_range) when the underlying view `V` models respective concepts. It models [`common_range`](/docs/cpp/library/ranges/common_range) when the underlying view `V` models both [`random_access_range`](/docs/cpp/library/ranges/random_access_range) and [`sized_range`](/docs/cpp/library/ranges/sized_range).
+
+### Data members
+
+{/* source:cpp-ranges-take-view:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>*`base_`* (private)</DescriptionTerm>
+    <DescriptionBody>the underlying [`view`](/docs/cpp/library/ranges/view) of type `V` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>*`count_`* (private)</DescriptionTerm>
+    <DescriptionBody>the number of elements to take, of type `ranges::range_difference_t<V>` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-take-view:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/take_view/take_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `take_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`base`](/docs/cpp/library/ranges/take_view/base)</DescriptionTerm>
+    <DescriptionBody>returns a copy of the underlying (adapted) view (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/take_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/take_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/take_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if the underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/ranges/view_interface/data)</DescriptionTerm>
+    <DescriptionBody>gets the address of derived view's data. Provided if its iterator type satisfies [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the *n*th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Deduction guides
+
+### Nested classes
+
+{/* source:cpp-ranges-take-view:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sentinel`](/docs/cpp/library/ranges/take_view/sentinel) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>the sentinel type (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper templates
+
+{/* source:cpp-ranges-take-view:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+constexpr bool enable_borrowed_range<std::ranges::take_view<T>> =
+
+    ranges::enable_borrowed_range<T>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-take-view:0008 */}
+This specialization of [`std::ranges::enable_borrowed_range`](/docs/cpp/library/ranges/borrowed_range) makes `take_view` satisfy [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) when the underlying view satisfies it.
+
+### Example
+
+{/* source:cpp-ranges-take-view:0009 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <ranges>
+ 
+int main()
+{
+    namespace views = std::views;
+    auto print = [](char x){ std::cout << x; };
+ 
+    for (const char nums[]{'1', '2', '3'};
+         int n : views::iota(0, 5))
+    {
+        std::cout << "take(" << n << "): ";
+        // safely takes only upto min(n, nums.size()) elements:
+        std::ranges::for_each(nums | views::take(n), print);
+        std::cout << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+take(0): 
+take(1): 1
+take(2): 12
+take(3): 123
+take(4): 123
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-take-view:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-take-view:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3407} standard="C++20">
+    <PublishedBehavior>`views::take` sometimes failed to construct a sized random access range</PublishedBehavior>
+    <CorrectedBehavior>the result type is adjusted so that construction is always valid</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3494} standard="C++20">
+    <PublishedBehavior>`take_view` was never a `borrowed_range`</PublishedBehavior>
+    <CorrectedBehavior>it is a `borrowed_range` if its underlying view is</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-take-view:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`views::counted`](/docs/cpp/library/ranges/counted_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a subrange from an iterator and a count (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::take_while_view views::take_while`](/docs/cpp/library/ranges/take_while_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the initial elements of another [`view`](/docs/cpp/library/ranges/view), until the first element on which a predicate returns `false` (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::copy_n`](/docs/cpp/library/algorithm/ranges/copy_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>copies a number of elements to a new location (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

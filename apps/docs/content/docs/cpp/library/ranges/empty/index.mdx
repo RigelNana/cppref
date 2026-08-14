@@ -1,0 +1,146 @@
+---
+title: "std::ranges::empty"
+description: "Determines whether or not t has any elements."
+source_url: "https://en.cppreference.com/w/cpp/ranges/empty"
+language: "C++"
+---
+
+{/* source:cpp-ranges-empty:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`inline namespace /*unspecified*/ {
+    inline constexpr auto empty = /*unspecified*/;
+
+}`} />
+(customization point object)
+Call signature
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T >
+    requires /* see below */
+
+constexpr bool empty( T&& t );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-empty:0001 */}
+Determines whether or not `t` has any elements.
+
+{/* source:cpp-ranges-empty:0002 */}
+A call to `ranges::empty` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to:
+
+{/* source:cpp-ranges-empty:0003 */}
+1. `bool(t.empty())`, if that expression is valid.
+2. Otherwise, `(ranges::size(t) == 0)`, if that expression is valid.
+3. Otherwise, `bool(ranges::begin(t) == ranges::end(t))`, if that expression is valid and `decltype(ranges::begin(t))` models [`std::forward_iterator`](/docs/cpp/library/iterator/forward_iterator).
+
+{/* source:cpp-ranges-empty:0004 */}
+In all other cases, a call to `ranges::empty` is ill-formed, which can result in [substitution failure](/docs/cpp/language/templates/sfinae) when `ranges::empty(t)` appears in the immediate context of a template instantiation.
+
+### Customization point objects
+
+{/* source:cpp-ranges-empty:0005 */}
+The name `ranges::empty` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__empty_fn`.
+
+{/* source:cpp-ranges-empty:0006 */}
+All instances of `__empty_fn` are equal. The effects of invoking different instances of type `__empty_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `ranges::empty` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-empty:0007 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `ranges::empty` above, `__empty_fn` models
+
+{/* source:cpp-ranges-empty:0008 */}
+- `std::invocable<__empty_fn, Args...>`,
+- `std::invocable<const __empty_fn, Args...>`,
+- `std::invocable<__empty_fn&, Args...>`, and
+- `std::invocable<const __empty_fn&, Args...>`.
+
+{/* source:cpp-ranges-empty:0009 */}
+Otherwise, no function call operator of `__empty_fn` participates in overload resolution.
+
+### Example
+
+{/* source:cpp-ranges-empty:0010 */}
+```cpp
+#include <iostream>
+#include <ranges>
+#include <vector>
+ 
+template<std::ranges::input_range R>
+void print(char id, R&& r)
+{
+    if (std::ranges::empty(r))
+    {
+        std::cout << '\t' << id << ") Empty\n";
+        return;
+    }
+ 
+    std::cout << '\t' << id << ") Elements:";
+    for (const auto& element : r)
+        std::cout << ' ' << element;
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    {
+        auto v = std::vector<int>{1, 2, 3};
+        std::cout << "(1) ranges::empty uses std::vector::empty:\n";
+        print('a', v);
+ 
+        v.clear();
+        print('b', v);
+    }
+    {
+        std::cout << "(2) ranges::empty uses ranges::size(initializer_list):\n";
+        auto il = {7, 8, 9};
+        print('a', il);
+ 
+        print('b', std::initializer_list<int>{});
+    }
+    {
+        std::cout << "(2) ranges::empty on a raw array uses ranges::size:\n";
+        int array[] = {4, 5, 6}; // array has a known bound
+        print('a', array);
+    }
+    {
+        struct Scanty : private std::vector<int>
+        {
+            using std::vector<int>::begin;
+            using std::vector<int>::end;
+            using std::vector<int>::push_back;
+            // Note: both empty() and size() are hidden
+        };
+ 
+        std::cout << "(3) calling ranges::empty on an object w/o empty() or size():\n";
+        Scanty y;
+        print('a', y);
+        y.push_back(42);
+        print('b', y);
+    }
+}
+```
+
+Output:
+
+```text
+(1) ranges::empty uses std::vector::empty:
+        a) Elements: 1 2 3
+        b) Empty
+(2) ranges::empty uses ranges::size(initializer_list):
+        a) Elements: 7 8 9
+        b) Empty
+(2) ranges::empty on a raw array uses ranges::size:
+        a) Elements: 4 5 6
+(3) calling ranges::empty on an object w/o empty() or size():
+        a) Empty
+        b) Elements: 42
+```
+
+### See also
+
+{/* source:cpp-ranges-empty:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/iterator/empty) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

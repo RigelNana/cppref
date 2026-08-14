@@ -1,0 +1,116 @@
+---
+title: "std::ranges::get(std::ranges::subrange)"
+description: "Provides structured binding support."
+source_url: "https://en.cppreference.com/w/cpp/ranges/subrange/get"
+language: "C++"
+---
+
+{/* source:cpp-ranges-subrange-get:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::size_t N, class I, class S, ranges::subrange_kind K >
+    requires ((N == 0 && std::copyable<I>) || N == 1)
+
+constexpr auto get( const ranges::subrange<I, S, K>& r );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< std::size_t N, class I, class S, ranges::subrange_kind K >
+    requires (N < 2)
+
+constexpr auto get( ranges::subrange<I, S, K>&& r );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`namespace std { using ranges::get; }`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange-get:0001 */}
+Provides [structured binding](/docs/cpp/language/declarations/structured_binding) support.
+
+{/* source:cpp-ranges-subrange-get:0002 */}
+1. 1) Obtains the iterator or sentinel from a `subrange` lvalue (or a const rvalue) when `N == 0` or `N == 1`, respectively.
+
+{/* source:cpp-ranges-subrange-get:0003 */}
+2. 2) Same as (1), except that it takes a non-const `subrange` rvalue.
+
+{/* source:cpp-ranges-subrange-get:0004 */}
+3. 3) Overloads (1,2) are imported into `namespace std`, which simplifies their usage and makes every `subrange` with a copyable iterator a [`pair-like`](/docs/cpp/library/utility/tuple/tuple-like) type.
+
+### Parameters
+
+{/* source:cpp-ranges-subrange-get:0005 */}
+<ParameterList>
+  <Parameter name="r">a subrange</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-ranges-subrange-get:0006 */}
+1,2) If `N` is `0`, returns `r.begin()`. Otherwise (`N` is `1`), returns `r.end()`.
+
+### Example
+
+{/* source:cpp-ranges-subrange-get:0007 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+
+int main()
+{
+    std::array a{1, -2, 3, -4};
+
+    std::ranges::subrange sub_a{std::next(a.begin()), std::prev(a.end())};
+    std::cout << *std::ranges::get<0>(sub_a) << ' '   // == *(begin(a) + 1)
+              << *std::ranges::get<1>(sub_a) << '\n'; // == *(end(a) - 1)
+
+    *std::get<0>(sub_a) = 42; // OK
+//  *std::get<2>(sub_a) = 13; // Error: index can only be 0 or 1
+}
+```
+
+Output:
+
+```text
+-2 -4
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-subrange-get:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-subrange-get:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3589} standard="C++20">
+    <PublishedBehavior>overload ([1](/docs/cpp/library/ranges/subrange/get#Version_1)) copies [`begin_`](/docs/cpp/library/ranges/subrange#begin) if `N` is `0`, but `I` might not model [`copyable`](/docs/cpp/library/concepts/copyable)</PublishedBehavior>
+    <CorrectedBehavior>added constraints</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-subrange-get:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[Structured binding](/docs/cpp/language/declarations/structured_binding) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>binds the specified names to sub-objects or tuple elements of the initializer</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::tuple)`](/docs/cpp/library/utility/tuple/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>tuple accesses specified element (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::pair)`](/docs/cpp/library/utility/pair/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element of a pair (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::array)`](/docs/cpp/library/container/array/get) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>accesses an element of an array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::variant)`](/docs/cpp/library/utility/variant/get) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>reads the value of the variant given the index or the type (if the type is unique), throws on error (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::complex)`](/docs/cpp/library/numeric/complex/get) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>obtains a reference to real or imaginary part from a [`std::complex`](/docs/cpp/library/numeric/complex) (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

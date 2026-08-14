@@ -1,0 +1,87 @@
+---
+title: "std::ranges::slide_view<V>::end"
+description: "Returns a sentinel or an iterator representing the end of the slide_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/slide_view/end"
+language: "C++"
+---
+
+{/* source:cpp-ranges-slide-view-end:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr auto end()
+    requires (!(/*simple-view*/<V> && /*slide-caches-nothing*/<const V>));`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr auto end() const
+    requires /*slide-caches-nothing*/<const V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-slide-view-end:0001 */}
+Returns a [`sentinel`](/docs/cpp/library/ranges/slide_view/sentinel) or an [`iterator`](/docs/cpp/library/ranges/slide_view/iterator) representing the end of the `slide_view`.
+
+{/* source:cpp-ranges-slide-view-end:0002 */}
+1) Let [`base_`](/docs/cpp/library/ranges/slide_view#Data_members) and [`n_`](/docs/cpp/library/ranges/slide_view#Data_members) be the underlying data members. Equivalent to:
+
+- If `V` models [`slide-caches-nothing`](/docs/cpp/library/ranges/slide_view#slide-caches-nothing), `return iterator<false>(ranges::begin(base_) + ranges::range_difference_t<V>(size()), n_);`.
+- Otherwise, if `V` models [`slide-caches-last`](/docs/cpp/library/ranges/slide_view#slide-caches-last), `return iterator<false>(ranges::prev(ranges::end(base_), n_ - 1, ranges::begin(base_)), n_);`.
+- Otherwise, if `V` models [`common_range`](/docs/cpp/library/ranges/common_range), `return iterator<false>(ranges::end(base_), ranges::end(base_), n_);`.
+- Otherwise, `return sentinel(ranges::end(base_));`.
+
+{/* source:cpp-ranges-slide-view-end:0003 */}
+If `V` models [`slide-caches-last`](/docs/cpp/library/ranges/slide_view#slide-caches-last), this function caches the result within the [`cached_end_`](/docs/cpp/library/ranges/slide_view#Data_members) for use on subsequent calls. This is necessary to provide the amortized constant-time complexity required by the [`range`](/docs/cpp/library/ranges/range).
+
+{/* source:cpp-ranges-slide-view-end:0004 */}
+2) Equivalent to `begin() + ranges::range_difference_t<const V>(size())`.
+
+### Parameters
+
+{/* source:cpp-ranges-slide-view-end:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-slide-view-end:0006 */}
+A [`sentinel`](/docs/cpp/library/ranges/slide_view/sentinel) or an [`iterator`](/docs/cpp/library/ranges/slide_view/iterator) representing the end of the `slide_view`.
+
+### Example
+
+{/* source:cpp-ranges-slide-view-end:0007 */}
+```cpp
+#include <iostream>
+#include <ranges>
+
+int main()
+{
+    static constexpr auto source = {'A', 'B', 'C', 'D'};
+
+    for (const auto subrange: source | std::views::slide(3))
+    {
+        std::cout << "[ ";
+        for (auto it = subrange.begin(); it != subrange.end(); ++it)
+            std::cout << *it << ' ';
+        std::cout << "]\n";
+    }
+}
+```
+
+Output:
+
+```text
+[ A B C ]
+[ B C D ]
+```
+
+### See also
+
+{/* source:cpp-ranges-slide-view-end:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/slide_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::begin`](/docs/cpp/library/ranges/begin) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::end`](/docs/cpp/library/ranges/end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel indicating the end of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

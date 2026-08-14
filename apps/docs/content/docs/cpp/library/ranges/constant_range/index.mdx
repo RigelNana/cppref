@@ -1,0 +1,91 @@
+---
+title: "std::ranges::constant_range"
+description: "The constant_range concept is a refinement of range for which ranges::begin returns a constant iterator."
+source_url: "https://en.cppreference.com/w/cpp/ranges/constant_range"
+language: "C++"
+---
+
+{/* source:cpp-ranges-constant-range:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class T >
+concept constant_range =
+    ranges::input_range<T> &&
+
+    /*constant-iterator*/<ranges::iterator_t<T>>;`} />
+
+Helper concepts
+
+  <Declaration id="2" language="cpp" code={`template< class T >
+concept /*constant-iterator*/ =
+    std::input_iterator<T> &&
+
+    std::same_as<std::iter_const_reference_t<T>, std::iter_reference_t<T>>;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-constant-range:0001 */}
+1. The `constant_range` concept is a refinement of [`range`](/docs/cpp/library/ranges/range) for which `ranges::begin` returns a [constant iterator](/docs/cpp/library/iterator#Iterator_categories).
+
+{/* source:cpp-ranges-constant-range:0002 */}
+2. The concept `/*constant-iterator*/<T>` is satisfied when the result of the indirection operation of the input iterator is its const reference type which implies read-only.
+
+### Example
+
+{/* source:cpp-ranges-constant-range:0003 */}
+```cpp
+#include <ranges>
+#include <span>
+#include <string_view>
+#include <vector>
+ 
+// mechanisms for ensuring the parameter is a constant range
+// 1) an overload set where the mutable one defers to the constant one
+template<std::ranges::constant_range R>
+void takes_any_range1(R&& r)
+{
+    // R is definitely a constant range
+}
+ 
+template<std::ranges::range R>
+void takes_any_range1(R&& r)
+{
+    takes_any_range1(std::views::as_const(std::forward<R>(r)));
+}
+ 
+// 2) one function template that shadows its parameter
+template<std::ranges::range R>
+void takes_any_range2(R&& _r)
+{
+    auto r = std::views::as_const(std::forward<R>(_r));
+ 
+    // r is definitely a constant range
+    // never use _r again
+}
+ 
+// 3) one function template that recursively invokes itself
+template<std::ranges::range R>
+void takes_any_range3(R&& r)
+{
+    if constexpr (std::ranges::constant_range<R>)
+    {
+        // R is definitely a constant range
+        // put implementation here
+    }
+    else
+        takes_any_range3(std::views::as_const(std::forward<R>(r)));
+}
+ 
+static_assert
+(
+        std::ranges::constant_range<const std::vector<int>> and
+    not std::ranges::constant_range<std::vector<int>> and
+        std::ranges::constant_range<std::string_view> and
+    not std::ranges::constant_range<std::span<int>> and
+        std::ranges::constant_range<std::span<const int>> and
+    not std::ranges::constant_range<const std::span<int>>
+);
+ 
+int main() {}
+```

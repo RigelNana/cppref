@@ -1,0 +1,400 @@
+---
+title: "std::ranges::iota_view<W, Bound>::iterator"
+description: "The iterator type returned by begin() and end() of ranges::iota_view<W, Bound>, along with the helper concepts used to determine the iterator category."
+source_url: "https://en.cppreference.com/w/cpp/ranges/iota_view/iterator"
+language: "C++"
+---
+
+{/* source:cpp-ranges-iota-view-iterator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`struct /*iterator*/;`} />
+  (exposition only*)
+
+Helper alias templates
+
+  <Declaration id="2" language="cpp" code={`template< class I >
+using /*iota-diff-t*/ = /* see below */;`} />
+  (exposition only*)
+
+Helper concepts
+
+  <Declaration id="3" language="cpp" code={`template< class I >
+concept /*decrementable*/ =
+    std::incrementable<I> && requires(I i) {
+        { --i } -> std::same_as<I&>;
+        { i-- } -> std::same_as<I>;
+
+    };`} />
+  (exposition only*)
+
+  <Declaration id="4" language="cpp" code={`template< class I >
+concept /*advanceable*/ =
+    /*decrementable*/<I> && std::totally_ordered<I> &&
+    requires(I i, const I j, const /*iota-diff-t*/<I> n) {
+        { i += n } -> std::same_as<I&>;
+        { i -= n } -> std::same_as<I&>;
+        I(j + n);
+        I(n + j);
+        I(j - n);
+        { j - j } -> std::convertible_to</*iota-diff-t*/<I>>;
+
+    };`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-iota-view-iterator:0001 */}
+1. 1) `ranges::iota_view<W, Bound>::iterator` is the type of the iterators returned by [`begin()`](/docs/cpp/library/ranges/iota_view/begin) and [`end()`](/docs/cpp/library/ranges/iota_view/end) of `ranges::iota_view<W, Bound>`.
+
+{/* source:cpp-ranges-iota-view-iterator:0002 */}
+2. 2) Calculates the difference type for both iterator types and [integer-like types](/docs/cpp/library/iterator/is-integer-like).
+   - If `I` is not an integral type, or if it is an integral type and `sizeof(std::iter_difference_t<I>)` is greater than `sizeof(I)`, then `/*iota-diff-t*/<I>` is `std::iter_difference_t<I>`.
+   - Otherwise, `/*iota-diff-t*/<I>` is a signed integer type of width greater than the width of `I` if such a type exists.
+   - Otherwise, `I` is one of the widest integral types, and `/*iota-diff-t*/<I>` is an unspecified [signed-integer-like type](/docs/cpp/library/iterator/is-integer-like) of width not less than the width of `I`. It is unspecified whether `/*iota-diff-t*/<I>` models [`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable) in this case.
+
+{/* source:cpp-ranges-iota-view-iterator:0003 */}
+3. 3) Specifies that a type is [`incrementable`](/docs/cpp/library/iterator/incrementable), and pre- and post- `operator--` for the type have common meaning.
+
+{/* source:cpp-ranges-iota-view-iterator:0004 */}
+4. 4) Specifies that a type is both [`decrementable`](/docs/cpp/library/ranges/iota_view/iterator#decrementable) and [`totally_ordered`](/docs/cpp/library/concepts/totally_ordered), and `operator+=`, `operator-=`, `operator+`, and `operator-` among the type and its different type have common meaning.
+
+{/* source:cpp-ranges-iota-view-iterator:0005 */}
+`/*iterator*/` models
+
+{/* source:cpp-ranges-iota-view-iterator:0006 */}
+- [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) if `W` models [`advanceable`](/docs/cpp/library/ranges/iota_view/iterator#advanceable) (4),
+- [`bidirectional_iterator`](/docs/cpp/library/iterator/bidirectional_iterator) if `W` models [`decrementable`](/docs/cpp/library/ranges/iota_view/iterator#decrementable) (3),
+- [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator) if `W` models [`incrementable`](/docs/cpp/library/iterator/incrementable), and
+- [`input_iterator`](/docs/cpp/library/iterator/input_iterator) otherwise.
+
+{/* source:cpp-ranges-iota-view-iterator:0007 */}
+However, it only satisfies [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator) if `W` models [`incrementable`](/docs/cpp/library/iterator/incrementable), and does not satisfy [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator) otherwise.
+
+### Semantic requirements
+
+{/* source:cpp-ranges-iota-view-iterator:0008 */}
+3. 3) Type `I` models `decrementable` only if `I` satisfies `decrementable` and all concepts it subsumes are modeled, and given equal objects `a` and `b` of type `I`:
+   - If `a` and `b` are in the domain of both pre- and post- `operator--` (i.e. they are decrementable), then the following are all `true`:
+     - `std::addressof(--a) == std::addressof(a)`,
+     - `bool(a-- == b)`,
+     - `bool(((void)a--, a) == --b)`,
+     - `bool(++(--a) == b)`.
+   - If `a` and `b` are in the domain of both pre- and post- `operator++` (i.e. they are incrementable), then `bool(--(++a) == b)` is `true`.
+
+{/* source:cpp-ranges-iota-view-iterator:0009 */}
+4. 4) Let `D` denote `/*iota-diff-t*/<I>`. Type `I` models [`advanceable`](/docs/cpp/library/ranges/iota_view/iterator#advanceable) only if `I` satisfies [`advanceable`](/docs/cpp/library/ranges/iota_view/iterator#advanceable) and all concepts it subsumes are modeled, and given
+   - objects `a` and `b` of type `I` and
+   - value `n` of type `D`,
+
+   such that `b` is reachable from `a` after `n` applications of `++a`, all following conditions are satisfied:
+   - `(a += n)` is equal to `b`.
+   - `std::addressof(a += n)` is equal to `std::addressof(a)`.
+   - `I(a + n)` is equal to `(a += n)`.
+   - For any two positive values `x` and `y` of type `D`, if `I(a + D(x + y))` is well-defined, then `I(a + D(x + y))` is equal to `I(I(a + x) + y)`.
+   - `I(a + D(0))` is equal to `a`.
+   - If `I(a + D(n - 1))` is well-defined, then `I(a + n)` is equal to `[](I c) { return ++c; }(I(a + D(n - 1)))`.
+   - `(b += -n)` is equal to `a`.
+   - `(b -= n)` is equal to `a`.
+   - `std::addressof(b -= n)` is equal to `std::addressof(b)`.
+   - `I(b - n)` is equal to `(b -= n)`.
+   - `D(b - a)` is equal to `n`.
+   - `D(a - b)` is equal to `D(-n)`.
+   - `bool(a <= b)` is `true`.
+
+### Nested types
+
+{/* source:cpp-ranges-iota-view-iterator:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_concept`</DescriptionTerm>
+    <DescriptionBody>an [iterator tag](/docs/cpp/library/iterator/iterator_tags), see below</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category` (only present if `W` models [`incrementable`](/docs/cpp/library/iterator/incrementable) and `/*iota-diff-t*/<W>` is an integral type)</DescriptionTerm>
+    <DescriptionBody>[`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`W`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`/*iota-diff-t*/<W>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Determining the iterator concept
+
+{/* source:cpp-ranges-iota-view-iterator:0011 */}
+`iterator_concept` is defined as follows:
+
+{/* source:cpp-ranges-iota-view-iterator:0012 */}
+- If `W` models [`advanceable`](/docs/cpp/library/ranges/iota_view/iterator#advanceable), `iterator_concept` denotes [`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, if `W` models [`decrementable`](/docs/cpp/library/ranges/iota_view/iterator#decrementable), `iterator_concept` denotes [`std::bidirectional_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, if `W` models [`incrementable`](/docs/cpp/library/iterator/incrementable), `iterator_concept` denotes [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, `iterator_concept` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+
+### Data members
+
+{/* source:cpp-ranges-iota-view-iterator:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`W value_`</DescriptionTerm>
+    <DescriptionBody>the current value (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-iota-view-iterator:0014 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`/*iterator*/() requires std::default_initializable<W> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit /*iterator*/( W value );`} />
+</DeclarationDoc>
+
+1. 1) Value initializes [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value).
+2. 2) Initializes [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) with `value`.
+
+{/* source:cpp-ranges-iota-view-iterator:0015 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr W operator*() const
+    noexcept(std::is_nothrow_copy_constructible_v<W>);`} />
+</DeclarationDoc>
+
+Returns [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value).
+
+### Example
+
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    auto it{std::views::iota(6, 9).begin()};
+    const int& r = *it; // binds with temporary
+    assert(*it == 6 and r == 6);
+    ++it;
+    assert(*it == 7 and r == 6);
+}
+```
+
+{/* source:cpp-ranges-iota-view-iterator:0016 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr /*iterator*/& operator++();`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr void operator++(int);`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr /*iterator*/ operator++(int) requires std::incrementable<W>;`} />
+</DeclarationDoc>
+
+1. 1) Equivalent to `++value_; return *this;`.
+2. 2) Equivalent to `++value_;`.
+3. 3) Equivalent to `auto tmp = *this; ++value_; return tmp;`.
+
+### Example
+
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    auto it{std::views::iota(8).begin()};
+    assert(*it == 8);
+    assert(*++it == 9);
+    assert(*it++ == 9);
+    assert(*it == 10);
+}
+```
+
+{/* source:cpp-ranges-iota-view-iterator:0017 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr /*iterator*/& operator--() requires /*decrementable*/<W>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr /*iterator*/operator--(int) requires /*decrementable*/<W>;`} />
+</DeclarationDoc>
+
+1. 1) Equivalent to `--value_; return *this;`.
+2. 2) Equivalent to `auto tmp = *this; --value_; return tmp;`.
+
+### Example
+
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    auto it{std::views::iota(8).begin()};
+    assert(*it == 8);
+    assert(*--it == 7);
+    assert(*it-- == 7);
+    assert(*it == 6);
+}
+```
+
+{/* source:cpp-ranges-iota-view-iterator:0018 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr /*iterator*/& operator+=( difference_type n )
+    requires /*advanceable*/<W>;`} />
+</DeclarationDoc>
+
+Updates [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) and returns `*this`:
+- If `W` is an [unsigned-integer-like type](/docs/cpp/library/iterator/is-integer-like):
+  - If `n` is non-negative, performs [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `+= static_cast<W>(n)`.
+  - Otherwise, performs [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `-= static_cast<W>(-n)`.
+- Otherwise, performs [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `+= n`.
+
+### Example
+
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    auto it{std::views::iota(5).begin()};
+    assert(*it == 5);
+    assert(*(it += 3) == 8);
+}
+```
+
+{/* source:cpp-ranges-iota-view-iterator:0019 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr /*iterator*/& operator-=( difference_type n )
+    requires /*advanceable*/<W>;`} />
+</DeclarationDoc>
+
+Updates [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) and returns `*this`:
+- If `W` is an [unsigned-integer-like type](/docs/cpp/library/iterator/is-integer-like):
+  - If `n` is non-negative, performs [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `-= static_cast<W>(n)`.
+  - Otherwise, performs [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `+= static_cast<W>(-n)`.
+- Otherwise, performs [`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `-= n`.
+
+### Example
+
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    auto it{std::views::iota(6).begin()};
+    assert(*it == 6);
+    assert(*(it -= -3) == 9);
+}
+```
+
+{/* source:cpp-ranges-iota-view-iterator:0020 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr W operator[]( difference_type n ) const
+    requires /*advanceable*/<W>;`} />
+</DeclarationDoc>
+
+Returns `W(`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) `+ n)`.
+
+### Example
+
+```cpp
+#include <cassert>
+#include <ranges>
+ 
+int main()
+{
+    auto it{std::views::iota(6).begin()};
+    assert(*it == 6);
+    assert(*(it + 3) == 9);
+}
+```
+
+### Non-member functions
+
+{/* source:cpp-ranges-iota-view-iterator:0021 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`friend constexpr bool operator==
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires std::equality_comparable<W>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`friend constexpr bool operator<
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires std::totally_ordered<W>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`friend constexpr bool operator>
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires std::totally_ordered<W>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`friend constexpr bool operator<=
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires std::totally_ordered<W>;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`friend constexpr bool operator>=
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires std::totally_ordered<W>;`} />
+  <Declaration id="6" language="cpp" since="C++20" code={`friend constexpr bool operator<=>
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires std::totally_ordered<W> && std::three_way_comparable<W>;`} />
+</DeclarationDoc>
+
+1. 1) Returns `x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` == y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value).
+2. 2) Returns `x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` < y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value).
+3. 3) Returns `y < x`.
+4. 4) Returns `!(y < x)`.
+5. 5) Returns `!(x < y)`.
+6. 6) Returns `x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` <=> y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value).
+
+The `!=` operator is [synthesized](/docs/cpp/language/expressions/default_comparisons#Other_defaulted_comparison_operators) from `operator==`.
+
+These functions are not visible to ordinary [unqualified](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified lookup](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [argument-dependent lookup](/docs/cpp/language/functions/adl) when `iterator` is an associated class of the arguments.
+
+{/* source:cpp-ranges-iota-view-iterator:0022 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`friend constexpr /*iterator*/ operator+
+    ( /*iterator*/ i, difference_type n )
+
+    requires /*advanceable*/<W>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`friend constexpr /*iterator*/ operator+
+    ( difference_type n, /*iterator*/ i )
+
+    requires /*advanceable*/<W>;`} />
+</DeclarationDoc>
+
+Equivalent to `i += n; return i;`.
+
+These functions are not visible to ordinary [unqualified](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified lookup](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [argument-dependent lookup](/docs/cpp/language/functions/adl) when `iterator` is an associated class of the arguments.
+
+{/* source:cpp-ranges-iota-view-iterator:0023 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`friend constexpr /*iterator*/ operator-
+    ( /*iterator*/ i, difference_type n )
+
+    requires /*advanceable*/<W>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`friend constexpr difference_type operator-
+    ( const /*iterator*/& x, const /*iterator*/& y )
+
+    requires /*advanceable*/<W>;`} />
+</DeclarationDoc>
+
+1. 1) Equivalent to `i -= n; return i;`.
+2. 2) Let `D` be `difference_type`:
+   - If `W` is an [integer-like type](/docs/cpp/library/iterator/is-integer-like):
+     - If `W` is signed-integer-like, returns `D(D(x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)`) - D(y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)`))`.
+     - Otherwise, returns `y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` > x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` ? D(-D(y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` - x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)`)) : D(x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` - y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)`)`.
+   - Otherwise, returns `x.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` - y.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)`.
+
+These functions are not visible to ordinary [unqualified](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified lookup](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [argument-dependent lookup](/docs/cpp/language/functions/adl) when `iterator` is an associated class of the arguments.
+
+### Defect reports
+
+{/* source:cpp-ranges-iota-view-iterator:0024 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-iota-view-iterator:0025 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2259R1" standard="C++20">
+    <PublishedBehavior>member [`iterator_category`](/docs/cpp/library/ranges/iota_view/iterator#iterator_category) is always defined</PublishedBehavior>
+    <CorrectedBehavior>defined only if `W` satisfies [`incrementable`](/docs/cpp/library/iterator/incrementable)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3580} standard="C++20">
+    <PublishedBehavior>bodies of `operator+` and `operator-` rule out [implicit move](/docs/cpp/language/statements/return#Automatic_move_from_local_variables_and_parameters)</PublishedBehavior>
+    <CorrectedBehavior>made suitable for implicit move</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

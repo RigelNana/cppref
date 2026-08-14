@@ -1,0 +1,257 @@
+---
+title: "std::ranges::views::slide, std::ranges::slide_view"
+description: "slide_view is a range adaptor that takes a view and a number n and produces a view whose m-th element (a \"window\") is a view over the m-th through (m + n - 1)-th elements of the original view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/slide_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-slide-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< ranges::forward_range V >
+    requires ranges::view<V>
+class slide_view
+
+    : public ranges::view_interface<slide_view<V>>`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`namespace views {
+    inline constexpr /* unspecified */ slide = /* unspecified */;
+
+}`} />
+
+Call signature
+
+  <Declaration language="cpp" since="C++23" code={`template< ranges::viewable_range R >
+constexpr ranges::view auto slide( R&& r, ranges::range_difference_t<R> n );`} />
+  <Declaration language="cpp" since="C++23" code={`template< class DifferenceType >
+constexpr /* range adaptor object */ slide( DifferenceType&& n );`} />
+
+Helper concepts
+
+  <Declaration id="3" language="cpp" code={`template< class V >
+concept /*slide-caches-nothing*/ =
+
+    ranges::random_access_range<V> && ranges::sized_range<V>;`} />
+  (exposition only*)
+  <Declaration id="4" language="cpp" code={`template< class V >
+concept /*slide-caches-last*/ =
+    !/*slide-caches-nothing*/<V> &&
+
+    ranges::bidirectional_range<V> && ranges::common_range<V>;`} />
+  (exposition only*)
+  <Declaration id="5" language="cpp" code={`template< class V >
+concept /*slide-caches-first*/ =
+
+    !/*slide-caches-nothing*/<V> && !/*slide-caches-last*/<V>;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-slide-view:0001 */}
+1) `slide_view` is a range adaptor that takes a [`view`](/docs/cpp/library/ranges/view) and a number `n` and produces a view whose *m*th element (a "window") is a view over the *m*th through *(m + n - 1)*th elements of the original view.
+
+{/* source:cpp-ranges-slide-view:0002 */}
+Let `s` be the size of the original view. Then the size of produced view is:
+
+- `s - n + 1`, if `s >= n`,
+- `0` otherwise, and the resulting view is empty.
+
+{/* source:cpp-ranges-slide-view:0003 */}
+2) The name `views::slide` denotes a [RangeAdaptorObject](/docs/cpp/library/named_req/RangeAdaptorObject). Given subexpressions `e` and `n`, the expression `views::slide(e, n)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `slide_view(e, n)`.
+
+{/* source:cpp-ranges-slide-view:0004 */}
+If `n` is not greater than `0`, the behavior is undefined.
+
+{/* source:cpp-ranges-slide-view:0005 */}
+`slide_view` always models [`forward_range`](/docs/cpp/library/ranges/forward_range), and models [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range), [`random_access_range`](/docs/cpp/library/ranges/random_access_range), or [`sized_range`](/docs/cpp/library/ranges/sized_range) if adapted [`view`](/docs/cpp/library/ranges/view) type models the corresponding concept.
+
+### Data members
+
+{/* source:cpp-ranges-slide-view:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`base_` (private)</DescriptionTerm>
+    <DescriptionBody>The underlying [`view`](/docs/cpp/library/ranges/view) of type `V`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`n_` (private)</DescriptionTerm>
+    <DescriptionBody>The "window size" of type `ranges::range_difference_t<V>`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`cached_begin_` (private) (present only if `V` models the [`slide-caches-first`](/docs/cpp/library/ranges/slide_view#slide-caches-first))</DescriptionTerm>
+    <DescriptionBody>An [`optional-like`](/docs/cpp/library/ranges#Non-propagating_cache) object. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`cached_end_` (private) (present only if `V` models the [`slide-caches-last`](/docs/cpp/library/ranges/slide_view#slide-caches-last))</DescriptionTerm>
+    <DescriptionBody>An [`optional-like`](/docs/cpp/library/ranges#Non-propagating_cache) object. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-slide-view:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/slide_view/slide_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `slide_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/slide_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/slide_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/slide_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if the underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin)</DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend)</DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the *n*th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Deduction guides
+
+### Nested classes
+
+{/* source:cpp-ranges-slide-view:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/slide_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sentinel`](/docs/cpp/library/ranges/slide_view/sentinel)</DescriptionTerm>
+    <DescriptionBody>the sentinel type used when `slide_view` is not a [`common_range`](/docs/cpp/library/ranges/common_range) (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper templates
+
+{/* source:cpp-ranges-slide-view:0009 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class V >
+constexpr bool ranges::enable_borrowed_range<slide_view<V>> =
+
+    ranges::enable_borrowed_range<V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-slide-view:0010 */}
+This specialization of [`ranges::enable_borrowed_range`](/docs/cpp/library/ranges/borrowed_range) makes `slide_view` satisfy [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) when the underlying view satisfies it.
+
+### Notes
+
+{/* source:cpp-ranges-slide-view:0011 */}
+There are similarities between `ranges::adjacent_view` and `ranges::slide_view`:
+
+{/* source:cpp-ranges-slide-view:0012 */}
+- Both create a "sliding window" of size `N`.
+- Both have the same size `S - N + 1`, where `S` is the size of an adapted [`view`](/docs/cpp/library/ranges/view) such that `S >= N > 0`.
+
+{/* source:cpp-ranges-slide-view:0013 */}
+The following table shows the differences between these adaptors:
+
+{/* source:cpp-ranges-slide-view:0014 */}
+| View adaptor | `value_type` | The window size `N` |
+| --- | --- | --- |
+| `ranges::adjacent_view` | [`std::tuple`](/docs/cpp/library/utility/tuple) | A template parameter |
+| `ranges::slide_view` | `ranges::range` | A runtime argument |
+
+{/* source:cpp-ranges-slide-view:0015 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_slide`](/docs/cpp/library/feature_test#cpp_lib_ranges_slide) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_slide_202202L) | (C++23) | `std::ranges::slide_view` |
+
+### Example
+
+{/* source:cpp-ranges-slide-view:0016 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <ranges>
+
+auto print_subrange = [](std::ranges::viewable_range auto&& r)
+{
+    std::cout << '[';
+    for (char space[]{0,0}; auto elem : r)
+        std::cout << space << elem, *space = ' ';
+    std::cout << "] ";
+};
+
+int main()
+{
+    const auto v = {1, 2, 3, 4, 5, 6};
+
+    std::cout << "All sliding windows of width:\n";
+    for (const unsigned width : std::views::iota(1U, 1U + v.size()))
+    {
+        auto const windows = v | std::views::slide(width);
+        std::cout << "W = " << width << ": ";
+        std::ranges::for_each(windows, print_subrange);
+        std::cout << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+All sliding windows of width W:
+W = 1: [1] [2] [3] [4] [5] [6] 
+W = 2: [1 2] [2 3] [3 4] [4 5] [5 6] 
+W = 3: [1 2 3] [2 3 4] [3 4 5] [4 5 6] 
+W = 4: [1 2 3 4] [2 3 4 5] [3 4 5 6] 
+W = 5: [1 2 3 4 5] [2 3 4 5 6] 
+W = 6: [1 2 3 4 5 6] 
+```
+
+### References
+
+{/* source:cpp-ranges-slide-view:0017 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 26.7.29 Slide view [range.slide]
+
+### See also
+
+{/* source:cpp-ranges-slide-view:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::adjacent_view`, `views::adjacent`](/docs/cpp/library/ranges/adjacent_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of references to adjacent elements of the adapted view (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::chunk_view`, `views::chunk`](/docs/cpp/library/ranges/chunk_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a range of [`view`](/docs/cpp/library/ranges/view)s that are `N`-sized non-overlapping successive chunks of the elements of another [`view`](/docs/cpp/library/ranges/view) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

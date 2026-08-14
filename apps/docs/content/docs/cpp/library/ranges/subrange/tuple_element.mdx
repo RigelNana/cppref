@@ -1,0 +1,99 @@
+---
+title: "std::tuple_element<std::ranges::subrange>"
+description: "The partial specializations of std::tuple_element for std::ranges::subrange provide compile-time access to the iterator or sentinel type of a subrange, using tuple-like syntax."
+source_url: "https://en.cppreference.com/w/cpp/ranges/subrange/tuple_element"
+language: "C++"
+---
+
+{/* source:cpp-ranges-subrange-tuple-element:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class I, class S, ranges::subrange_kind K >
+struct tuple_element<0, ranges::subrange<I, S, K>>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class I, class S, ranges::subrange_kind K >
+struct tuple_element<0, const ranges::subrange<I, S, K>>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class I, class S, ranges::subrange_kind K >
+struct tuple_element<1, ranges::subrange<I, S, K>>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class I, class S, ranges::subrange_kind K >
+struct tuple_element<1, const ranges::subrange<I, S, K>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange-tuple-element:0001 */}
+The partial specializations of [`std::tuple_element`](/docs/cpp/library/utility/tuple_element) for [`std::ranges::subrange`](/docs/cpp/library/ranges/subrange) provide compile-time access to the iterator or sentinel type of a `subrange`, using tuple-like syntax. They are provided for structured binding support.
+
+{/* source:cpp-ranges-subrange-tuple-element:0002 */}
+1,2) Obtains the iterator type, i.e. `I`.
+
+{/* source:cpp-ranges-subrange-tuple-element:0003 */}
+3,4) Obtains the sentinel type, i.e. `S`.
+
+### Member types
+
+{/* source:cpp-ranges-subrange-tuple-element:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>(1,2) `I` (3,4) `S`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-ranges-subrange-tuple-element:0005 */}
+As [`get`](/docs/cpp/library/ranges/subrange/get) functions for `subrange` return iterators and sentinels by value, `const` qualifier is not added to the result types when the `subrange` is const-qualified (but not volatile-qualified).
+
+{/* source:cpp-ranges-subrange-tuple-element:0006 */}
+If the `subrange` is volatile-qualified, the result types are also volatile-qualified because the partial specialization for volatile or const volatile types are used. Such usage is deprecated.
+
+### Example
+
+{/* source:cpp-ranges-subrange-tuple-element:0007 */}
+```cpp
+#include <iterator>
+#include <list>
+#include <ranges>
+#include <type_traits>
+
+int main()
+{
+    std::list<int> list{3, 1, 4, 1, 5, 9, 2, 6};
+
+    std::ranges::subrange subrange
+    {
+        std::counted_iterator{std::begin(list), 4},
+        std::default_sentinel
+    };
+
+    static_assert(
+        std::is_same_v<
+            std::tuple_element_t<0, decltype(subrange)>,
+            // implementation-defined type:
+            std::counted_iterator<std::_List_iterator<int>>
+            >);
+
+    static_assert(
+        std::is_same_v<
+            std::tuple_element_t<1, decltype(subrange)>,
+            std::default_sentinel_t
+            >);
+}
+```
+
+### See also
+
+{/* source:cpp-ranges-subrange-tuple-element:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[Structured binding](/docs/cpp/language/declarations/structured_binding) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>binds the specified names to sub-objects or tuple elements of the initializer</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple_element`](/docs/cpp/library/utility/tuple_element) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the element types of a tuple-like type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::tuple_size<std::ranges::subrange>`](/docs/cpp/library/ranges/subrange/tuple_size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains the size of a [`std::ranges::subrange`](/docs/cpp/library/ranges/subrange) (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

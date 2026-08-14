@@ -1,0 +1,102 @@
+---
+title: "std::ranges::cartesian_product_view<First, Vs...>::iterator<Const>::next, std::ranges::cartesian_product_view<First, Vs...>::iterator<Const>::prev, std::ranges::cartesian_product_view<First, Vs...>::iterator<Const>::distance_from"
+description: "next recursively generates the next element (the tuple of iterators) in cartesian_product_view, prev recursively generates the previous element, and distance_from returns the distance between two iterators."
+source_url: "https://en.cppreference.com/w/cpp/ranges/cartesian_product_view/iterator/helpers"
+language: "C++"
+---
+
+{/* source:cpp-ranges-cartesian-product-view-iterator-helpers:0000 */}
+## std::ranges::cartesian_product_view::*iterator*::*next*
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< std::size_t N = sizeof...(Vs) >
+constexpr void /*next*/();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+If called with default template parameter, recursively generates the next element (the tuple of iterators) in `cartesian_product_view`.
+
+Let *[`current_`](/docs/cpp/library/ranges/cartesian_product_view/iterator#Data_members)* denote the underlying tuple of iterators. Equivalent to:
+
+```cpp
+auto& it = std::get<N>(current_);
+++it;
+if constexpr (N > 0)
+{
+    if (it == ranges::end(std::get<N>(parent_->bases_)))
+    {
+        it = ranges::begin(std::get<N>(parent_->bases_));
+        next<N - 1>();
+    }
+}
+```
+
+Used in the following non-static member functions:
+
+- `ranges::cartesian_product_view::`[`operator+`](/docs/cpp/library/ranges/cartesian_product_view/iterator/operator_arith)
+
+{/* source:cpp-ranges-cartesian-product-view-iterator-helpers:0001 */}
+## std::ranges::cartesian_product_view::*iterator*::*prev*
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< std::size_t N = sizeof...(Vs) >
+constexpr void /*prev*/();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+If called with default template parameter, recursively generates the previous element (the tuple of iterators) in `cartesian_product_view`.
+
+Let *[`current_`](/docs/cpp/library/ranges/cartesian_product_view/iterator#Data_members)* denote the underlying tuple of iterators. Equivalent to:
+
+```cpp
+auto& it = std::get<N>(current_);
+if constexpr (N > 0)
+{
+    if (it == ranges::begin(std::get<N>(parent_->bases_)))
+    {
+        it = /*cartesian-common-arg-end*/(std::get<N>(parent_->bases_));
+        prev<N - 1>();
+    }
+}
+--it;
+```
+
+Used in the following non-static member functions:
+
+- `ranges::cartesian_product_view::`[`operator-`](/docs/cpp/library/ranges/cartesian_product_view/iterator/operator_arith)
+
+{/* source:cpp-ranges-cartesian-product-view-iterator-helpers:0002 */}
+## std::ranges::cartesian_product_view::*iterator*::*distance_from*
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class Tuple >
+constexpr difference_type
+
+    /*distance-from*/( const Tuple& t ) const;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Returns the "distance" (i.e., number of "hops") between two [`iterators`](/docs/cpp/library/ranges/cartesian_product_view/iterator).
+
+Let:
+
+- *[`parent_`](/docs/cpp/library/ranges/cartesian_product_view/iterator#Data_members)* be the underlying pointer to `cartesian_product_view`
+- `/*scaled-size*/(N)` be:
+  - the product of `static_cast<difference_type>(ranges::size(std::get<N>(parent_->bases_)))` and `/*scaled-size*/(N + 1)` if `N ≤ sizeof...(Vs)`, otherwise `static_cast<difference_type>(1);`
+- `/*scaled-distance*/(N)` be the product of `static_cast<difference_type>(std::get<N>(current_) - std::get<N>(t))` and `/*scaled-size*/(N + 1);`
+- `/*scaled-sum*/` be the sum of `/*scaled-distance*/(N)` for every integer `0 ≤ N ≤ sizeof...(Vs)`.
+
+Returns: `/*scaled-sum*/`.
+
+The behavior is undefined if `/*scaled-sum*/` cannot be represented by `difference_type`.
+
+Used in the following functions:
+
+- [`operator-`](/docs/cpp/library/ranges/cartesian_product_view/iterator/operator_arith2)`(const /*iterator*/&, const /*iterator*/&)`
+- [`operator-`](/docs/cpp/library/ranges/cartesian_product_view/iterator/operator_arith2)`(const /*iterator*/&, std::default_sentinel_t)`
+
+### Parameters
+
+<ParameterList>
+  <Parameter name="t">a tuple of iterators to find the distance to</Parameter>
+</ParameterList>

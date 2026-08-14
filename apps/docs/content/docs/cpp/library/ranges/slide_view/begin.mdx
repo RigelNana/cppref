@@ -1,0 +1,86 @@
+---
+title: "std::ranges::slide_view<V>::begin"
+description: "Returns an iterator to the first element of the slide_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/slide_view/begin"
+language: "C++"
+---
+
+{/* source:cpp-ranges-slide-view-begin:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr auto begin()
+    requires (!(/*simple-view*/<V> && /*slide-caches-nothing*/<const V>));`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr auto begin() const
+    requires /*slide-caches-nothing*/<const V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-slide-view-begin:0001 */}
+Returns an iterator to the first element of the `slide_view`.
+
+{/* source:cpp-ranges-slide-view-begin:0002 */}
+1) If `V` models [`slide-caches-first`](/docs/cpp/library/ranges/slide_view#slide-caches-first), equivalent to:
+
+```cpp
+return iterator<false>(
+            ranges::begin(base_),
+            ranges::next(ranges::begin(base_), n_ - 1, ranges::end(base_)),
+            n_
+        );
+```
+
+Otherwise, equivalent to: `return iterator<false>(ranges::begin(base_), n_);`.
+
+{/* source:cpp-ranges-slide-view-begin:0003 */}
+If `V` models [`slide-caches-first`](/docs/cpp/library/ranges/slide_view#slide-caches-first) this function caches the result within the [`cached_begin_`](/docs/cpp/library/ranges/slide_view#Data_members) for use on subsequent calls. This is necessary to provide the amortized constant-time complexity required by the [`range`](/docs/cpp/library/ranges/range).
+
+{/* source:cpp-ranges-slide-view-begin:0004 */}
+2) Equivalent to: `return iterator<true>(ranges::begin(base_), n_);`
+
+### Parameters
+
+{/* source:cpp-ranges-slide-view-begin:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-slide-view-begin:0006 */}
+An [`iterator`](/docs/cpp/library/ranges/slide_view/iterator) to the first element of [`slide_view`](/docs/cpp/library/ranges/slide_view), which points to the [`n_`](/docs/cpp/library/ranges/slide_view#Data_members)-sized subrange of the possibly const-qualified underlying view type – `V` for overload ([1](/docs/cpp/library/ranges/slide_view/begin#Version_1)) or `const V` for overload ([2](/docs/cpp/library/ranges/slide_view/begin#Version_2)).
+
+### Example
+
+{/* source:cpp-ranges-slide-view-begin:0007 */}
+```cpp
+#include <iostream>
+#include <ranges>
+#include <string_view>
+using namespace std::literals;
+
+int main()
+{
+    static constexpr auto source = {"∀x"sv, "∃y"sv, "ε"sv, "δ"sv};
+    auto view{std::ranges::slide_view(source, 2)};
+    const auto subrange{*(view.begin())};
+    for (std::string_view const s : subrange)
+        std::cout << s << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+∀x ∃y
+```
+
+### See also
+
+{/* source:cpp-ranges-slide-view-begin:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/slide_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`](/docs/cpp/library/ranges/slide_view/sentinel/operator_cmp) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>compares a sentinel with an iterator returned from [`slide_view::begin`](/docs/cpp/library/ranges/slide_view/begin) (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

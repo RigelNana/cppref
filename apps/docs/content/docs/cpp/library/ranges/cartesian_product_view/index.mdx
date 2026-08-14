@@ -1,0 +1,280 @@
+---
+title: "std::ranges::views::cartesian_product, std::ranges::cartesian_product_view"
+description: "cartesian_product_view is a range adaptor that takes n views, where n > 0, and produces a view of tuples calculated by the n-ary cartesian product of the provided ranges."
+source_url: "https://en.cppreference.com/w/cpp/ranges/cartesian_product_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-cartesian-product-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< ranges::input_range First, ranges::forward_range... Vs >
+    requires (ranges::view<First> && ... && ranges::view<Vs>)
+class cartesian_product_view
+
+    : public ranges::view_interface<cartesian_product_view<First, Vs...>>`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`namespace views {
+    inline constexpr /*unspecified*/ cartesian_product = /*unspecified*/;
+
+}`} />
+
+Call signature
+
+  <Declaration language="cpp" since="C++23" code={`template< ranges::viewable_range... Rs >
+    requires /* see below */
+
+constexpr ranges::view auto cartesian_product( Rs&&... rs );`} />
+
+Helper concepts
+
+  <Declaration id="3" language="cpp" code={`template< bool Const, class First, class... Vs >
+concept /*cartesian-product-is-random-access*/ =
+    (ranges::random_access_range</*maybe-const*/<Const, First>> && ... &&
+        (ranges::random_access_range</*maybe-const*/<Const, Vs>> &&
+
+            ranges::sized_range</*maybe-const*/<Const, Vs>>));`} />
+  (exposition only*)
+  <Declaration id="4" language="cpp" code={`template< class R >
+concept /*cartesian-product-common-arg*/ =
+    ranges::common_range<R> ||
+
+        (ranges::sized_range<R> && ranges::random_access_range<R>);`} />
+  (exposition only*)
+  <Declaration id="5" language="cpp" code={`template< bool Const, class First, class... Vs >
+concept /*cartesian-product-is-bidirectional*/ =
+    (ranges::bidirectional_range</*maybe-const*/<Const, First>> && ... &&
+        (ranges::bidirectional_range</*maybe-const*/<Const, Vs>> &&
+
+            /*cartesian-product-common-arg*/</*maybe-const*/<Const, Vs>>));`} />
+  (exposition only*)
+  <Declaration id="6" language="cpp" code={`template< class First, class... Vs >
+concept /*cartesian-product-is-common*/ =
+
+    /*cartesian-product-common-arg*/<First>;`} />
+  (exposition only*)
+  <Declaration id="7" language="cpp" code={`template< class... Vs >
+concept /*cartesian-product-is-sized*/ =
+
+    (ranges::sized_range<Vs> && ...);`} />
+  (exposition only*)
+  <Declaration id="8" language="cpp" code={`template< bool Const, template<class> class FirstSent, class First, class... Vs >
+concept /*cartesian-is-sized-sentinel*/ =
+    (std::sized_sentinel_for<FirstSent</*maybe-const*/<Const, First>>,
+        ranges::iterator_t</*maybe-const*/<Const, First>>> && ... &&
+            (ranges::sized_range</*maybe-const*/<Const, Vs>> &&
+                std::sized_sentinel_for<ranges::iterator_t<
+                    /*maybe-const*/<Const, Vs>>,
+
+                        ranges::iterator_t</*maybe-const*/<Const, Vs>>>));`} />
+  (exposition only*)
+
+Helper function templates
+
+  <Declaration id="9" language="cpp" code={`template< /*cartesian-product-common-arg*/ R >
+constexpr auto /*cartesian-common-arg-end*/( R& r )
+{
+    if constexpr (ranges::common_range<R>)
+        return ranges::end(r);
+    else
+        return ranges::begin(r) + ranges::distance(r);
+
+}`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-cartesian-product-view:0001 */}
+1) `cartesian_product_view` is a range adaptor that takes *n* [`view`](/docs/cpp/library/ranges/view)s, where *n > 0*, and produces a [`view`](/docs/cpp/library/ranges/view) of tuples calculated by the [n-ary cartesian product](https://en.wikipedia.org/wiki/Cartesian_product#n-ary_Cartesian_product) of the provided ranges. The size of produced view is a multiple of sizes of provided ranges, while each element is a tuple (of references) of the size *n*.
+
+{/* source:cpp-ranges-cartesian-product-view:0002 */}
+2) `views::cartesian_product` is a customization point object.
+
+- When calling with no argument, `views::cartesian_product()` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `views::single(std::tuple())`.
+- Otherwise, `views::cartesian_product(rs...)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `ranges::cartesian_product_view<views::all_t<decltype((rs))>...>(rs...)`.
+
+{/* source:cpp-ranges-cartesian-product-view:0003 */}
+3) Determines if `cartesian_product` is a random access range (see also [`random_access_range`](/docs/cpp/library/ranges/random_access_range)).
+
+{/* source:cpp-ranges-cartesian-product-view:0004 */}
+4) Determines if `cartesian_product` is a common range (see also [`common_range`](/docs/cpp/library/ranges/common_range)).
+
+{/* source:cpp-ranges-cartesian-product-view:0005 */}
+5) Determines if `cartesian_product` is a bidirectional range (see also [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range)).
+
+{/* source:cpp-ranges-cartesian-product-view:0006 */}
+6) Determines if `cartesian_product` satisfies the helper concept `/*cartesian-product-is-common*/` (see also [`common_range`](/docs/cpp/library/ranges/common_range)).
+
+{/* source:cpp-ranges-cartesian-product-view:0007 */}
+7) Determines if `cartesian_product` is a sized range (see also [`sized_range`](/docs/cpp/library/ranges/sized_range)).
+
+{/* source:cpp-ranges-cartesian-product-view:0008 */}
+8) Determines if `cartesian_product` uses sized sentinel.
+
+{/* source:cpp-ranges-cartesian-product-view:0009 */}
+9) Returns the end of the produced [`view`](/docs/cpp/library/ranges/view). Participates in overload resolution only if `cartesian_product` satisfies the helper concept `/*cartesian-product-common-arg*/`.
+
+{/* source:cpp-ranges-cartesian-product-view:0010 */}
+The `First` [`range`](/docs/cpp/library/ranges/range) passed to `cartesian_product_view` is treated specially, since it is only passed through a single time. As a result, several constrains are relaxed on it:
+
+{/* source:cpp-ranges-cartesian-product-view:0011 */}
+- `First` is an [`input_range`](/docs/cpp/library/ranges/input_range) instead of [`forward_range`](/docs/cpp/library/ranges/forward_range);
+- `First` does not have to be a [`sized_range`](/docs/cpp/library/ranges/sized_range) in order for the `cartesian_product_view` to be [`random_access_range`](/docs/cpp/library/ranges/random_access_range) or [`common_range`](/docs/cpp/library/ranges/common_range);
+- `First` does not have to be [`common_range`](/docs/cpp/library/ranges/common_range) in order for the `cartesian_product_view` to be [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range).
+
+### Customization point objects
+
+{/* source:cpp-ranges-cartesian-product-view:0012 */}
+The name `views::cartesian_product` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as *`__cartesian_product_fn`*.
+
+{/* source:cpp-ranges-cartesian-product-view:0013 */}
+All instances of *`__cartesian_product_fn`* are equal. The effects of invoking different instances of type *`__cartesian_product_fn`* on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `views::cartesian_product` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-cartesian-product-view:0014 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `views::cartesian_product` above, *`__cartesian_product_fn`* models
+
+{/* source:cpp-ranges-cartesian-product-view:0015 */}
+- `std::invocable<__cartesian_product_fn, Args...>`,
+- `std::invocable<const __cartesian_product_fn, Args...>`,
+- `std::invocable<__cartesian_product_fn&, Args...>`, and
+- `std::invocable<const __cartesian_product_fn&, Args...>`.
+
+{/* source:cpp-ranges-cartesian-product-view:0016 */}
+Otherwise, no function call operator of *`__cartesian_product_fn`* participates in overload resolution.
+
+### Data members
+
+{/* source:cpp-ranges-cartesian-product-view:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::tuple<First, Vs...>` *`base_`* (private)</DescriptionTerm>
+    <DescriptionBody>An object that holds all adapted [`view`](/docs/cpp/library/ranges/view) objects. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-cartesian-product-view:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/cartesian_product_view/cartesian_product_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `cartesian_product_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/cartesian_product_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/cartesian_product_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/cartesian_product_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if the underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`-th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/ranges/cartesian_product_view/deduction_guides)
+
+### Nested classes
+
+{/* source:cpp-ranges-cartesian-product-view:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/cartesian_product_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-ranges-cartesian-product-view:0020 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_cartesian_product`](/docs/cpp/library/feature_test#cpp_lib_ranges_cartesian_product) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_cartesian_product_202207L) | (C++23) | `std::ranges::cartesian_product_view` |
+
+### Example
+
+{/* source:cpp-ranges-cartesian-product-view:0021 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <list>
+#include <ranges>
+#include <string>
+#include <vector>
+ 
+void print(std::tuple<char const&, int const&, std::string const&> t, int pos)
+{
+    const auto& [a, b, c] = t;
+    std::cout << '(' << a << ' ' << b << ' ' << c << ')' << (pos % 4 ? " " : "\n");
+}
+ 
+int main()
+{
+    const auto x = std::array{'A', 'B'};
+    const auto y = std::vector{1, 2, 3};
+    const auto z = std::list<std::string>{"α", "β", "γ", "δ"};
+ 
+    for (int i{1}; auto const& tuple : std::views::cartesian_product(x, y, z))
+        print(tuple, i++);
+}
+```
+
+Output:
+
+```text
+(A 1 α) (A 1 β) (A 1 γ) (A 1 δ)
+(A 2 α) (A 2 β) (A 2 γ) (A 2 δ)
+(A 3 α) (A 3 β) (A 3 γ) (A 3 δ)
+(B 1 α) (B 1 β) (B 1 γ) (B 1 δ)
+(B 2 α) (B 2 β) (B 2 γ) (B 2 δ)
+(B 3 α) (B 3 β) (B 3 γ) (B 3 δ)
+```
+
+### References
+
+{/* source:cpp-ranges-cartesian-product-view:0022 */}
+C++23 standard (ISO/IEC 14882:2024): 26.7.31 Cartesian product view [range.stride]
+
+### See also
+
+{/* source:cpp-ranges-cartesian-product-view:0023 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::zip_view`, `views::zip`](/docs/cpp/library/ranges/zip_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of references to corresponding elements of the adapted views (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

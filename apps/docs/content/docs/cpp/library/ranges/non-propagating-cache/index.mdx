@@ -1,0 +1,171 @@
+---
+title: "Non-propagating cache (C++20)"
+description: "Some range adaptors such as ranges::join_view and ranges::lazy_split_view conditionally store value (e.g. an iterator) which is specified in terms of an exposition-only class template non-propagating-cache."
+source_url: "https://en.cppreference.com/w/cpp/ranges/non-propagating-cache"
+language: "C++"
+---
+
+{/* source:cpp-ranges-non-propagating-cache:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+    requires std::is_object_v<T>
+
+class /*non-propagating-cache*/;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-non-propagating-cache:0001 */}
+Some range adaptors such as [`ranges::join_view`](/docs/cpp/library/ranges/join_view) and [`ranges::lazy_split_view`](/docs/cpp/library/ranges/lazy_split_view) conditionally store value (e.g. an iterator) which is specified in terms of an exposition-only class template `non-propagating-cache`.
+
+{/* source:cpp-ranges-non-propagating-cache:0002 */}
+The wrapper behaves exactly like `std::optional<T>`, except that:
+
+{/* source:cpp-ranges-non-propagating-cache:0003 */}
+- it does not copy the value of the source when it is copy constructed or assigned to,
+- it resets the value of the source when it is moved-from,
+- it resets its value when it is assigned from, and
+- it additionally provides a member function template to enable an input view to temporarily cache values as it is iterated over.
+
+{/* source:cpp-ranges-non-propagating-cache:0004 */}
+The wrapper encapsulates a cache containing a value. Clearing cache is an operation equivalent to resetting a contained value. Such operation is performed when copying or moving a wrapper.
+
+### Template parameters
+
+{/* source:cpp-ranges-non-propagating-cache:0005 */}
+<ParameterList>
+  <Parameter name="T">the type of the contained value, must be an object type</Parameter>
+</ParameterList>
+
+### Member functions
+
+## Copy and move constructors
+
+{/* source:cpp-ranges-non-propagating-cache:0006 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr /*non-propagating-cache*/
+    ( const /*non-propagating-cache*/& ) noexcept {}`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr /*non-propagating-cache*/
+    ( /*non-propagating-cache*/&& other ) noexcept { other.reset(); }`} />
+</DeclarationDoc>
+
+1) The copy constructor has no effect.
+
+2) The move constructor clears the cache of `other`.
+
+## Copy and move assignment operators
+
+{/* source:cpp-ranges-non-propagating-cache:0007 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr /*non-propagating-cache*/&
+    operator=( const /*non-propagating-cache*/& other ) noexcept
+{ 
+    if (std::addressof(other) != this)
+        reset();
+    return *this;
+
+}`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr /*non-propagating-cache*/&
+    operator=( /*non-propagating-cache*/&& other ) noexcept
+{
+    reset();
+    other.reset();
+    return *this;
+
+}`} />
+</DeclarationDoc>
+
+1) The copy assignment operator clears the cache of `*this`.
+
+2) The move assignment operator clears caches of both `*this` and `other`.
+
+## `non-propagating-cache<T>::emplace-deref`
+
+{/* source:cpp-ranges-non-propagating-cache:0008 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class I >
+constexpr T& /*emplace-deref*/( const I& i );`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Initializes the contained value by [direct-initializing](/docs/cpp/language/initialization/direct_initialization) (but not direct-list-initializing) with `*i`. If `*this` already contains a value before the call, `reset()` is called.
+
+Returns a reference to the new contained value.
+
+The program is ill-formed unless the declaration `T t(*i);` is well-formed for some invented variable `t`. If `*i` is a prvalue of possibly cv-qualified `T`, then it is not required to be movable.
+
+## Members identical to `std::optional`
+
+### Member functions
+
+{/* source:cpp-ranges-non-propagating-cache:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/optional/optional)</DescriptionTerm>
+    <DescriptionBody>constructs the `optional` object (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/utility/optional/~optional)</DescriptionTerm>
+    <DescriptionBody>destroys the contained value, if there is one (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/utility/optional/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns contents (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Observers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator->`, `operator*`](/docs/cpp/library/utility/optional/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the contained value (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`, `has_value`](/docs/cpp/library/utility/optional/operator_bool)</DescriptionTerm>
+    <DescriptionBody>checks whether the object contains a value (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/utility/optional/reset)</DescriptionTerm>
+    <DescriptionBody>destroys any contained value (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/utility/optional/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs the contained value in-place (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-ranges-non-propagating-cache:0010 */}
+`non-propagating-cache` is used in implementations to cache the result of `begin()` to provide an amortized constant time complexity of the method.
+
+### See also
+
+{/* source:cpp-ranges-non-propagating-cache:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::join_view`, `views::join`](/docs/cpp/library/ranges/join_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the sequence obtained from flattening a [`view`](/docs/cpp/library/ranges/view) of [`range`](/docs/cpp/library/ranges/range)s (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::join_with_view`, `views::join_with`](/docs/cpp/library/ranges/join_with_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the sequence obtained from flattening a view of ranges, with the delimiter in between elements (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::split_view`, `views::split`](/docs/cpp/library/ranges/split_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) over the subranges obtained from splitting another [`view`](/docs/cpp/library/ranges/view) using a delimiter (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lazy_split_view`, `views::lazy_split`](/docs/cpp/library/ranges/lazy_split_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) over the subranges obtained from splitting another [`view`](/docs/cpp/library/ranges/view) using a delimiter (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::chunk_view`, `views::chunk`](/docs/cpp/library/ranges/chunk_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a range of [`views`](/docs/cpp/library/ranges/view) that are `N`-sized non-overlapping successive chunks of the elements of another [`view`](/docs/cpp/library/ranges/view) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

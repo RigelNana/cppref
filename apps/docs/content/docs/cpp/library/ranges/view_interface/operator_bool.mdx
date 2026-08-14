@@ -1,0 +1,83 @@
+---
+title: "std::ranges::view_interface<D>::operator bool"
+description: "The default implementation of operator bool member function checks whether the view is non-empty."
+source_url: "https://en.cppreference.com/w/cpp/ranges/view_interface/operator_bool"
+language: "C++"
+---
+
+{/* source:cpp-ranges-view-interface-operator-bool:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr explicit operator bool() requires /* see below */;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit operator bool() const requires /* see below */;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-view-interface-operator-bool:0001 */}
+The default implementation of `operator bool` member function checks whether the view is non-empty. It makes the derived type [contextually convertible to `bool`](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions).
+
+{/* source:cpp-ranges-view-interface-operator-bool:0002 */}
+1. 1) Let `derived` be `static_cast<D&>(*this)`. The expression in the requires-clause is equal to `requires { ranges::empty(derived); }`, and the function body is equivalent to `return !ranges::empty(derived);`.
+
+{/* source:cpp-ranges-view-interface-operator-bool:0003 */}
+2. 2) Same as (1), except that `derived` is `static_cast<const D&>(*this)`.
+
+### Parameters
+
+{/* source:cpp-ranges-view-interface-operator-bool:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-view-interface-operator-bool:0005 */}
+`false` if the value of the derived type is empty (determined by [`std::ranges::empty`](/docs/cpp/library/ranges/empty)), `true` otherwise.
+
+### Notes
+
+{/* source:cpp-ranges-view-interface-operator-bool:0006 */}
+In C++20, no type derived from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface) in the standard library provides their own `operator bool`. Almost all of these types use the default implementation.
+
+{/* source:cpp-ranges-view-interface-operator-bool:0007 */}
+A notable exception is [`std::ranges::basic_istream_view`](/docs/cpp/library/ranges/basic_istream_view). For its iterator type never satisfies [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator), the view cannot use the inherited `operator bool`.
+
+### Example
+
+{/* source:cpp-ranges-view-interface-operator-bool:0008 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <ranges>
+ 
+int main()
+{
+    const std::array ints {0, 1, 2, 3, 4};
+    auto odds = ints | std::views::filter([](int i) { return 0 != i % 2; });
+    auto negs = ints | std::views::filter([](int i) { return i < 0; });
+    std::cout << std::boolalpha
+              << "Has odd numbers: " << (!!odds) << ' ' << '\n'
+              << "Has negative numbers: " << (!!negs) << ' ' << '\n';
+}
+```
+
+Output:
+
+```text
+Has odd numbers: true
+Has negative numbers: false
+```
+
+### See also
+
+{/* source:cpp-ranges-view-interface-operator-bool:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::empty`](/docs/cpp/library/ranges/empty) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks whether a range is empty (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/iterator/empty) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the container is empty (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

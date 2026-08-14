@@ -1,0 +1,88 @@
+---
+title: "std::ranges::range"
+description: "The range concept defines the requirements of a type that allows iteration over its elements by providing an iterator and sentinel that denote the elements of the range."
+source_url: "https://en.cppreference.com/w/cpp/ranges/range"
+language: "C++"
+---
+
+{/* source:cpp-ranges-range:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+concept range = requires( T& t ) {
+    ranges::begin(t); // equality-preserving for forward iterators
+    ranges::end (t);
+
+};`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-range:0001 */}
+The `range` concept defines the requirements of a type that allows iteration over its elements by providing an iterator and sentinel that denote the elements of the range.
+
+### Semantic requirements
+
+{/* source:cpp-ranges-range:0002 */}
+Given an expression `E` such that `decltype((E))` is `T`, `T` models `range` only if
+
+{/* source:cpp-ranges-range:0003 */}
+- `[ranges::begin(E), ranges::end(E))` denotes a [range](/docs/cpp/library/iterator#Ranges), and
+- both `ranges::begin(E)` and `ranges::end(E)` are amortized constant time and do not alter the value of `E` in a manner observable to [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) expressions, and
+- if the type of `ranges::begin(E)` models [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator), `ranges::begin(E)` is [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) (in other words, forward iterators support multi-pass algorithms).
+
+### Notes
+
+{/* source:cpp-ranges-range:0004 */}
+A typical `range` class only needs to provide two functions:
+
+{/* source:cpp-ranges-range:0005 */}
+1. A member function `begin()` whose return type models [`input_or_output_iterator`](/docs/cpp/library/iterator/input_or_output_iterator).
+2. A member function `end()` whose return type models [`sentinel_for`](/docs/cpp/library/iterator/sentinel_for)`<It>`, where `It` is the return type of `begin()`.
+
+{/* source:cpp-ranges-range:0006 */}
+Alternatively, they can be non-member functions, to be found by [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+### Example
+
+{/* source:cpp-ranges-range:0007 */}
+```cpp
+#include <ranges>
+ 
+// A minimum range
+struct SimpleRange
+{
+    int* begin();
+    int* end();
+};
+static_assert(std::ranges::range<SimpleRange>);
+ 
+// Not a range: no begin/end
+struct NotRange
+{
+    int t {};
+};
+static_assert(!std::ranges::range<NotRange>);
+ 
+// Not a range: begin does not return an input_or_output_iterator
+struct NotRange2
+{
+    void* begin();
+    int* end();
+};
+static_assert(!std::ranges::range<NotRange2>);
+ 
+int main() {}
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-range:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-range:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3915} standard="C++20">
+    <PublishedBehavior>`ranges::begin(t)` and `ranges::end(t)` did not require implicit expression variations</PublishedBehavior>
+    <CorrectedBehavior>removed the redundant description</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

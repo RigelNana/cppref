@@ -1,0 +1,116 @@
+---
+title: "std::ranges::cdata"
+description: "Returns a pointer to the first element of constant type of a contiguous range denoted by a const-qualified argument."
+source_url: "https://en.cppreference.com/w/cpp/ranges/cdata"
+language: "C++"
+---
+
+{/* source:cpp-ranges-cdata:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`inline namespace /*unspecified*/ {
+    inline constexpr /*unspecified*/ cdata = /*unspecified*/;
+
+}`} />
+(customization point object)
+Call signature
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T >
+    requires /* see below */
+
+constexpr /* see below */ cdata( T&& t );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-cdata:0001 */}
+Returns a pointer to the first element <InlineRevision since="C++23">of constant type</InlineRevision> of a contiguous range denoted by a <InlineRevision until="C++23">const-qualified</InlineRevision> argument.
+
+{/* source:cpp-ranges-cdata:0002 */}
+<Revision until="C++23">
+Let `CT` be
+
+- `const std::remove_reference_t<T>&` if the argument is an lvalue (i.e. `T` is an lvalue reference type),
+- `const T` otherwise.
+
+A call to `ranges::cdata` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `ranges::data(static_cast<CT&&>(t))`.
+
+The return type is equivalent to `std::remove_reference_t<ranges::range_reference_t<CT>>*`.
+</Revision>
+
+{/* source:cpp-ranges-cdata:0003 */}
+<Revision since="C++23">
+If the argument is an lvalue or `ranges::enable_borrowed_range<std::remove_cv_t<T>>` is `true`, then a call to `ranges::cdata` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to:
+
+- [`as-const-pointer`](/docs/cpp/library/ranges#as-const-pointer)`(ranges::data(`[`possibly-const-range`](/docs/cpp/library/ranges#possibly-const-range)`(t)))`.
+
+The return type is equivalent to `std::remove_reference_t<ranges::range_const_reference_t<T>>*`.
+
+In all other cases, a call to `ranges::cdata` is ill-formed, which can result in [substitution failure](/docs/cpp/language/templates/sfinae) when the call appears in the immediate context of a template instantiation.
+</Revision>
+
+{/* source:cpp-ranges-cdata:0004 */}
+If `ranges::cdata(t)` is valid, then it returns a pointer to an object <InlineRevision since="C++23">of constant type</InlineRevision>.
+
+### Customization point objects
+
+{/* source:cpp-ranges-cdata:0005 */}
+The name `ranges::cdata` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__cdata_fn`.
+
+{/* source:cpp-ranges-cdata:0006 */}
+All instances of `__cdata_fn` are equal. The effects of invoking different instances of type `__cdata_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `ranges::cdata` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-cdata:0007 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `ranges::cdata` above, `__cdata_fn` models
+
+{/* source:cpp-ranges-cdata:0008 */}
+- `std::invocable<__cdata_fn, Args...>`,
+- `std::invocable<const __cdata_fn, Args...>`,
+- `std::invocable<__cdata_fn&, Args...>`, and
+- `std::invocable<const __cdata_fn&, Args...>`.
+
+{/* source:cpp-ranges-cdata:0009 */}
+Otherwise, no function call operator of `__cdata_fn` participates in overload resolution.
+
+### Example
+
+{/* source:cpp-ranges-cdata:0010 */}
+```cpp
+#include <cstring>
+#include <iostream>
+#include <ranges>
+#include <string>
+ 
+int main()
+{
+    std::string src {"hello world!\n"};
+ 
+//  std::ranges::cdata(src)[0] = 'H'; // error, src.data() is treated as read-only
+    std::ranges::data(src)[0] = 'H'; // OK, src.data() is a non-const storage
+ 
+    char dst[20]; // storage for a C-style string
+    std::strcpy(dst, std::ranges::cdata(src));
+    // [data(src), data(src) + size(src)] is guaranteed to be an NTBS
+ 
+    std::cout << dst;
+}
+```
+
+Output:
+
+```text
+Hello world!
+```
+
+### See also
+
+{/* source:cpp-ranges-cdata:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::data`](/docs/cpp/library/ranges/data) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains a pointer to the beginning of a contiguous range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/iterator/data) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains the pointer to the underlying array (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

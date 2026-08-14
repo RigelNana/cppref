@@ -10,7 +10,14 @@ export function withBase(href: string): string {
   return `${base}${normalizedPathname}${suffix}` || "/";
 }
 
-export function docHref(id: string): string {
-  const route = id === "index" ? "" : id.replace(/\/index$/u, "");
+export function docRoute(id: string, ids: ReadonlySet<string>): string {
+  if (id === "index") return "";
+  if (!id.endsWith("/index")) return id;
+  const parentId = id.slice(0, id.length - "/index".length);
+  return ids.has(parentId) ? id : parentId;
+}
+
+export function docHref(id: string, ids: ReadonlySet<string>): string {
+  const route = docRoute(id, ids);
   return route ? `/docs/${route}` : "/docs";
 }

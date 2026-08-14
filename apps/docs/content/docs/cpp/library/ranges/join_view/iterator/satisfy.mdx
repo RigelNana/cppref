@@ -1,0 +1,53 @@
+---
+title: "std::ranges::join_view<V>::iterator<Const>::satisfy"
+description: "Skips over empty inner ranges and initializes the underlying iterator."
+source_url: "https://en.cppreference.com/w/cpp/ranges/join_view/iterator/satisfy"
+language: "C++"
+---
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr void satisfy();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0001 */}
+Skips over empty inner ranges and initializes the underlying iterator [`inner_`](/docs/cpp/library/ranges/join_view/iterator#Data_members).
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0002 */}
+Let the constant `/*ref-is-glvalue*/` be `std::is_reference_v<ranges::range_reference_t<Base>>`.
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0003 */}
+The function body is equivalent to
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0004 */}
+```cpp
+auto update_inner = [this](const ranges::iterator_t<Base>& x) -> auto&&
+{
+    if constexpr (/*ref-is-glvalue*/)     // *x is a reference
+        return *x;
+    else
+        return parent_->inner_./*emplace-deref*/(x);
+};
+ 
+for (; outer_ != ranges::end(parent_->base_); ++outer_)
+{
+    auto&& inner = update_inner(outer_);
+    inner_ = ranges::begin(inner);
+    if (inner_ != ranges::end(inner))
+        return;
+}
+ 
+if constexpr (/*ref-is-glvalue*/)
+    inner_ = InnerIter();
+```
+
+### Parameters
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-join-view-iterator-satisfy:0006 */}
+(none)

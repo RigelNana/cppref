@@ -1,0 +1,146 @@
+---
+title: "std::ranges::size"
+description: "Calculates the number of elements in t in constant time."
+source_url: "https://en.cppreference.com/w/cpp/ranges/size"
+language: "C++"
+---
+
+{/* source:cpp-ranges-size:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+Defined in header [`<iterator>`](/docs/cpp/library/headers/iterator)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`inline namespace /* unspecified */ {
+    inline constexpr auto size = /* unspecified */;
+
+}`} />
+(customization point object)
+Call signature
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T >
+    requires /* see below */
+
+constexpr auto size( T&& t );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-size:0001 */}
+Calculates the number of elements in `t` in constant time.
+
+{/* source:cpp-ranges-size:0002 */}
+Given the [subexpression](/docs/cpp/language/expressions#Full-expressions) of which `t` denotes the (possibly [materialized](/docs/cpp/language/expressions/implicit_cast#Temporary_materialization)) result object as `E`, and the type of `E` as `T`:
+
+{/* source:cpp-ranges-size:0003 */}
+- If `T` is an array of unknown bound, `ranges::size(E)` is ill-formed.
+- Otherwise, if `T` is an array type, `ranges::size(E)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to <InlineRevision until="C++23">[`decay-copy`](/docs/cpp/library/standard_library/decay-copy)`(std::extent_v<T>)`</InlineRevision><InlineRevision since="C++23">`auto(std::extent_v<T>)`</InlineRevision>.
+- Otherwise, if all following conditions are satisfied, `ranges::size(E)` is expression-equivalent to <InlineRevision until="C++23">[`decay-copy`](/docs/cpp/library/standard_library/decay-copy)`(t.size())`</InlineRevision><InlineRevision since="C++23">`auto(t.size())`</InlineRevision>:
+  - `ranges::disable_sized_range<std::remove_cv_t<T>>` is `false`.
+  - <InlineRevision until="C++23">[`decay-copy`](/docs/cpp/library/standard_library/decay-copy)`(t.size())`</InlineRevision><InlineRevision since="C++23">`auto(t.size())`</InlineRevision> is a valid expression of [integer-like type](/docs/cpp/library/iterator/is-integer-like).
+- Otherwise, if all following conditions are satisfied, `ranges::size(E)` is expression-equivalent to <InlineRevision until="C++23">[`decay-copy`](/docs/cpp/library/standard_library/decay-copy)`(size(t))`</InlineRevision><InlineRevision since="C++23">`auto(size(t))`</InlineRevision>:
+  - `T` is a class or enumeration type.
+  - `ranges::disable_sized_range<std::remove_cv_t<T>>` is `false`.
+  - <InlineRevision until="C++23">[`decay-copy`](/docs/cpp/library/standard_library/decay-copy)`(size(t))`</InlineRevision><InlineRevision since="C++23">`auto(size(t))`</InlineRevision> is a valid expression of [integer-like type](/docs/cpp/library/iterator/is-integer-like), where the meaning of `size` is established as if by performing [argument-dependent lookup](/docs/cpp/language/functions/adl) only.
+- Otherwise, if all following conditions are satisfied, `ranges::size(E)` is expression-equivalent to [`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(ranges::end(t) - ranges::begin(t))`:
+  - `T` models [`forward_range`](/docs/cpp/library/ranges/forward_range).
+  - Given the type of `ranges::begin(t)` as `I` and the type of `ranges::end(t)` as `S`, both [`sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for)`<S, I>` and [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator)`<I>` are modeled.
+  - [`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(ranges::end(t) - ranges::begin(t))` is a valid expression.
+- Otherwise, `ranges::size(E)` is ill-formed.
+
+{/* source:cpp-ranges-size:0004 */}
+Diagnosable ill-formed cases above result in [substitution failure](/docs/cpp/language/templates/sfinae) when `ranges::size(E)` appears in the immediate context of a template instantiation.
+
+### Customization point objects
+
+{/* source:cpp-ranges-size:0005 */}
+The name `ranges::size` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__size_fn`.
+
+{/* source:cpp-ranges-size:0006 */}
+All instances of `__size_fn` are equal. The effects of invoking different instances of type `__size_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `ranges::size` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-size:0007 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `ranges::size` above, `__size_fn` models
+
+{/* source:cpp-ranges-size:0008 */}
+- `std::invocable<__size_fn, Args...>`,
+- `std::invocable<const __size_fn, Args...>`,
+- `std::invocable<__size_fn&, Args...>`, and
+- `std::invocable<const __size_fn&, Args...>`.
+
+{/* source:cpp-ranges-size:0009 */}
+Otherwise, no function call operator of `__size_fn` participates in overload resolution.
+
+### Notes
+
+{/* source:cpp-ranges-size:0010 */}
+Whenever `ranges::size(e)` is valid for an expression `e`, the return type is [integer-like](/docs/cpp/library/iterator/is-integer-like).
+
+{/* source:cpp-ranges-size:0011 */}
+The C++20 standard requires that if the underlying `size` function call returns a prvalue, the return value is move-constructed from the materialized temporary object. All implementations directly return the prvalue instead. The requirement is corrected by the post-C++20 proposal [P0849R8](https://wg21.link/P0849R8) to match the implementations.
+
+{/* source:cpp-ranges-size:0012 */}
+The expression `ranges::distance(e)` can also be used to determine the size of a range `e`. Unlike `ranges::size(e)`, `ranges::distance(e)` works even if `e` is an unsized range, at the cost of having linear complexity in that case.
+
+### Example
+
+{/* source:cpp-ranges-size:0013 */}
+```cpp
+#include <iostream>
+#include <ranges>
+#include <type_traits>
+#include <vector>
+ 
+int main()
+{
+    auto v = std::vector<int>{};
+    std::cout << "ranges::size(v) == " << std::ranges::size(v) << '\n';
+ 
+    auto il = {7};     // std::initializer_list
+    std::cout << "ranges::size(il) == " << std::ranges::size(il) << '\n';
+ 
+    int array[]{4, 5}; // array has a known bound
+    std::cout << "ranges::size(array) == " << std::ranges::size(array) << '\n';
+ 
+    static_assert(std::is_signed_v<decltype(std::ranges::size(v))> == false);
+}
+```
+
+Output:
+
+```text
+ranges::size(v) == 0
+ranges::size(il) == 1
+ranges::size(array) == 2
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-size:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-size:0015 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2602R2" standard="C++20">
+    <PublishedBehavior>there's machinery to prohibit certain non-member `size` found by [ADL](/docs/cpp/language/functions/adl)</PublishedBehavior>
+    <CorrectedBehavior>removed such machinery</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-size:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::ssize`](/docs/cpp/library/ranges/ssize) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a signed integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::sized_range`](/docs/cpp/library/ranges/sized_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a range knows its size in constant time (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::distance`](/docs/cpp/library/iterator/ranges/distance) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the distance between an iterator and a sentinel, or between the beginning and end of a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`, `ssize`](/docs/cpp/library/iterator/size) <InlineRevision since="C++17" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the size of a container or array (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

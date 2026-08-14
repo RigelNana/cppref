@@ -1,0 +1,216 @@
+---
+title: "std::ranges::concat_view<Views...>::iterator"
+description: "ranges::concat_view<Views...>::iterator is the type of the iterators returned by begin() and end() of ranges::concat_view<Views...>."
+source_url: "https://en.cppreference.com/w/cpp/ranges/concat_view/iterator"
+language: "C++"
+---
+
+{/* source:cpp-ranges-concat-view-iterator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< bool Const >
+class /*iterator*/`} />
+  (exposition only*)
+
+Helper concepts
+
+  <Declaration id="2" language="cpp" code={`template< bool Const, class... Rs >
+concept /*concat-is-random-access*/ = /* see description */;`} />
+  (exposition only*)
+  <Declaration id="3" language="cpp" code={`template< bool Const, class... Rs >
+concept /*concat-is-bidirectional*/ = /* see description */;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-concat-view-iterator:0001 */}
+1) `ranges::concat_view<Views...>::iterator` is the type of the iterators returned by [`begin()`](/docs/cpp/library/ranges/concat_view/begin) and [`end()`](/docs/cpp/library/ranges/concat_view/end) of `ranges::concat_view<Views...>`.
+
+{/* source:cpp-ranges-concat-view-iterator:0002 */}
+2) Let `Fs` be the pack that consists of all elements of `Rs` except the last element. Equivalent to
+
+{/* source:cpp-ranges-concat-view-iterator:0003 */}
+`template<bool Const, class... Rs> concept /*concat-is-random-access*/ = // exposition only [`all-random-access`](/docs/cpp/library/ranges#all-random-access)`\<Const, Rs...> && (ranges::common_range\<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`\<Const, Fs>> && ...);`.
+
+{/* source:cpp-ranges-concat-view-iterator:0004 */}
+3) Let `Fs` be the pack that consists of all elements of `Rs` except the last element. Equivalent to
+
+{/* source:cpp-ranges-concat-view-iterator:0005 */}
+`template<bool Const, class... Rs> concept /*concat-is-bidirectional*/ = // exposition only [`all-bidirectional`](/docs/cpp/library/ranges#all-bidirectional)`\<Const, Rs...> && (ranges::common_range\<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`\<Const, Fs>> && ...);`.
+
+### Template parameters
+
+{/* source:cpp-ranges-concat-view-iterator:0006 */}
+<ParameterList>
+  <Parameter name="Const">whether the iterator is a constant iterator</Parameter>
+</ParameterList>
+
+### Nested types
+
+{/* source:cpp-ranges-concat-view-iterator:0007 */}
+#### Exposition-only types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`base-iter`</DescriptionTerm>
+    <DescriptionBody>`std::variant<ranges::iterator_t<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, Views>>...>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Iterator property types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_concept`</DescriptionTerm>
+    <DescriptionBody>an [iterator tag](/docs/cpp/library/iterator/iterator_tags), [see below](/docs/cpp/library/ranges/concat_view/iterator#Determining_the_iterator_concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category` (conditionally present)</DescriptionTerm>
+    <DescriptionBody>an iterator tag, [see below](/docs/cpp/library/ranges/concat_view/iterator#Determining_the_iterator_category)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>[`concat-value-t`](/docs/cpp/library/ranges/concat_view#concat-value-t)`<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, Views>...>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`std::common_type_t<ranges::range_difference_t<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, Views>>...>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Determining the iterator concept
+
+{/* source:cpp-ranges-concat-view-iterator:0008 */}
+`iterator_concept` is defined as follows:
+
+{/* source:cpp-ranges-concat-view-iterator:0009 */}
+- If [`concat-is-random-access`](/docs/cpp/library/ranges/concat_view/iterator#concat-is-random-access)`<Const, Views...>` is modeled, `iterator_concept` denotes [`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, if [`concat-is-bidirectional`](/docs/cpp/library/ranges/concat_view/iterator#concat-is-bidirectional)`<Const, Views...>` is modeled, `iterator_concept` denotes [`std::bidirectional_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, if [`all-forward`](/docs/cpp/library/ranges#all-forward)`<Const, Views...>` is modeled, `iterator_concept` denotes [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, `iterator_concept` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+
+#### Determining the iterator category
+
+{/* source:cpp-ranges-concat-view-iterator:0010 */}
+`iterator_category` is defined if and only if [`all-forward`](/docs/cpp/library/ranges#all-forward)`<Const, Views...>` is modeled. In this case, it is defined as follows:
+
+{/* source:cpp-ranges-concat-view-iterator:0011 */}
+- If `std::is_reference_v<`[`concat-reference-t`](/docs/cpp/library/ranges/concat_view#concat-reference-t)`<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, Views>...>>` is `false`, `iterator_category` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, let `Cs` denote the pack of types `std::iterator_traits<ranges::iterator_t<`[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, Views>>>::iterator_category...`:
+  - If `(std::derived_from<Cs, std::random_access_iterator_tag> && ...) && `[`concat-is-random-access`](/docs/cpp/library/ranges/concat_view/iterator#concat-is-random-access)`<Const, Views...>` is `true`, `iterator_category` denotes [`std::random_access_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+  - Otherwise, if `(std::derived_from<Cs, std::bidirectional_iterator_tag> && ...) && `[`concat-is-bidirectional`](/docs/cpp/library/ranges/concat_view/iterator#concat-is-bidirectional)`<Const, Views...>` is `true`, `iterator_category` denotes [`std::bidirectional_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+  - Otherwise, if `(std::derived_from<Cs, std::forward_iterator_tag> && ...)` is `true`, `iterator_category` denotes [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+  - Otherwise, `iterator_category` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+
+### Data members
+
+{/* source:cpp-ranges-concat-view-iterator:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, ranges::concat_view>* parent_`</DescriptionTerm>
+    <DescriptionBody>a pointer to the parent [`concat_view`](/docs/cpp/library/ranges/concat_view) (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`base-iter it_`</DescriptionTerm>
+    <DescriptionBody>an iterator into the current view (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-concat-view-iterator:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/concat_view/iterator/iterator)</DescriptionTerm>
+    <DescriptionBody>constructs an iterator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/ranges/concat_view/iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/concat_view/iterator/operator_at)</DescriptionTerm>
+    <DescriptionBody>accesses an element by index (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++ operator++(int) operator-- operator--(int) operator+= operator-=`](/docs/cpp/library/ranges/concat_view/iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances or decrements the underlying iterator (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Exposition-only function templates
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`satisfy`](/docs/cpp/library/ranges/concat_view/iterator/helpers#satisfy)</DescriptionTerm>
+    <DescriptionBody>replaces `it_` with the beginning of the next view, if `it_` is the end of current view (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prev`](/docs/cpp/library/ranges/concat_view/iterator/helpers#prev)</DescriptionTerm>
+    <DescriptionBody>decrements `it_` such that it points to the previous position (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`advance-fwd`](/docs/cpp/library/ranges/concat_view/iterator/helpers#advance-fwd)</DescriptionTerm>
+    <DescriptionBody>advances the current position on given offset (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`advance-bwd`](/docs/cpp/library/ranges/concat_view/iterator/helpers#advance-bwd)</DescriptionTerm>
+    <DescriptionBody>decrements the current position on given value (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-ranges-concat-view-iterator:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator== operator< operator> operator<= operator>= operator<=>`](/docs/cpp/library/ranges/concat_view/iterator/operator_cmp) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>compares the underlying iterators (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+ operator-`](/docs/cpp/library/ranges/concat_view/iterator/operator_arith2)</DescriptionTerm>
+    <DescriptionBody>performs iterator arithmetic (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_move`](/docs/cpp/library/ranges/concat_view/iterator/iter_move)</DescriptionTerm>
+    <DescriptionBody>casts the result of dereferencing the underlying iterator to its associated rvalue reference type (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/ranges/concat_view/iterator/iter_swap)</DescriptionTerm>
+    <DescriptionBody>swaps the objects pointed to by two underlying iterators (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-ranges-concat-view-iterator:0015 */}
+The preliminary version can be checked out on [Compiler Explorer](https://godbolt.org/z/TGv8v84xz).
+
+```cpp
+#include <iostream>
+#include <iterator>
+#include <ranges>
+ 
+int main()
+{
+    namespace views = std::views;
+    static constexpr int p[]{1, 2, 3};
+    static constexpr auto e = {4, 5};
+    auto t = views::iota(6, 9);
+    auto cat = views::concat(p, e, t);
+    auto dog = views::concat(cat, cat);
+    for (auto i{dog.begin()}; i != std::default_sentinel; ++i)
+        std::cout << *i << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8
+```
+
+### References
+
+{/* source:cpp-ranges-concat-view-iterator:0016 */}
+- C++26 standard (ISO/IEC 14882:2026):
+  - 26.7.18.3 Class template `concat_view::iterator` [range.concat.iterator]

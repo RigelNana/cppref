@@ -1,0 +1,82 @@
+---
+title: "std::ranges::zip_transform_view<F,Views...>::size"
+description: "Returns the number of elements in the zip_transform_view. Provided only if each underlying (adapted) range satisfies sized_range."
+source_url: "https://en.cppreference.com/w/cpp/ranges/zip_transform_view/size"
+language: "C++"
+---
+
+{/* source:cpp-ranges-zip-transform-view-size:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr auto size()
+    requires ranges::sized_range</*InnerView*/>;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr auto size() const
+    requires ranges::sized_range<const /*InnerView*/>`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-zip-transform-view-size:0001 */}
+Returns the number of elements in the `zip_transform_view`. Provided only if each underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range).
+
+{/* source:cpp-ranges-zip-transform-view-size:0002 */}
+1,2) Equivalent to: `return` [`zip_`](/docs/cpp/library/ranges/zip_transform_view#Data_members)`.size();`.
+
+### Parameters
+
+{/* source:cpp-ranges-zip-transform-view-size:0003 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-zip-transform-view-size:0004 */}
+The number of elements, which is the minimum size among all sizes of adapted [`view`](/docs/cpp/library/ranges/view)s.
+
+### Example
+
+{/* source:cpp-ranges-zip-transform-view-size:0005 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <deque>
+#include <forward_list>
+#include <functional>
+#include <iostream>
+#include <ranges>
+#include <vector>
+ 
+int main()
+{
+    auto x = std::vector{1, 2, 3, 4, 5};
+    auto y = std::deque<short>{10, 20, 30};
+    auto z = std::forward_list{100., 200.};
+ 
+    auto v1 = std::views::zip_transform(std::plus{}, x, y);
+    assert(v1.size() == std::min(x.size(), y.size()));
+    assert(v1.size() == 3);
+    for (int i : v1)
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    [[maybe_unused]] auto v2 = std::views::zip_transform(std::plus{}, x, z);
+//  auto sz = v2.size(); // Error: z doesn't have size(), so neither does v2
+    static_assert(not std::ranges::sized_range<decltype(z)>);
+}
+```
+
+Output:
+
+```text
+11 22 33
+```
+
+### See also
+
+{/* source:cpp-ranges-zip-transform-view-size:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::size`](/docs/cpp/library/ranges/size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::ssize`](/docs/cpp/library/ranges/ssize) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a signed integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

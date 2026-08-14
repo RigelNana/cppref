@@ -1,0 +1,76 @@
+---
+title: "std::ranges::drop_view<V>::drop_view"
+description: "Constructs a drop_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/drop_view/drop_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-drop-view-drop-view:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`drop_view() requires std::default_initializable<V> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit drop_view( V base, ranges::range_difference_t<V> count );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-drop-view-drop-view:0001 */}
+Constructs a `drop_view`.
+
+{/* source:cpp-ranges-drop-view-drop-view:0002 */}
+1. 1) Default constructor. [Value-initializes](/docs/cpp/language/initialization/value_initialization) the underlying view [`base_`](/docs/cpp/library/ranges/drop_view#Data_members) and initializes the count [`count_`](/docs/cpp/library/ranges/drop_view#Data_members) to `0`. After construction, [`base()`](/docs/cpp/library/ranges/drop_view/base) returns a copy of `V()` and [`size()`](/docs/cpp/library/ranges/drop_view/size) equals to the size of the underlying view.
+
+{/* source:cpp-ranges-drop-view-drop-view:0003 */}
+2. 2) Initializes the underlying view `base_` with `std::move(base)` and the count `count_` with `count`. After construction, [`base()`](/docs/cpp/library/ranges/drop_view/base) returns a copy of `base` and [`size()`](/docs/cpp/library/ranges/drop_view/size) returns `ranges::size(base) - count` if the size of `base` is not less than `count`, or `0` otherwise.
+
+### Parameters
+
+{/* source:cpp-ranges-drop-view-drop-view:0004 */}
+<ParameterList>
+  <Parameter name="base">the underlying view</Parameter>
+  <Parameter name="count">number of elements to skip</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-ranges-drop-view-drop-view:0005 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+ 
+int main()
+{
+    constexpr std::array hi{'H', 'e', 'l', 'l', 'o', ',',
+                            ' ', 'C', '+', '+', '2', '0'};
+ 
+    std::ranges::for_each(hi, [](const char c){ std::cout << c; });
+    std::cout << '\n';
+ 
+    constexpr auto n = std::distance(hi.cbegin(), std::ranges::find(hi, 'C'));
+ 
+    auto cxx = std::ranges::drop_view{hi, n};
+ 
+    std::ranges::for_each(cxx, [](const char c){ std::cout << c; });
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+Hello, C++20
+C++20
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-drop-view-drop-view:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-drop-view-drop-view:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3714} standard="C++20">
+    <PublishedBehavior>the multi-parameter constructor was not explicit</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

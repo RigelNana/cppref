@@ -1,0 +1,75 @@
+---
+title: "std::ranges::sized_range, std::ranges::disable_sized_range"
+description: "The sized_range concept specifies the requirements of a range type that knows its size in constant time with the size function."
+source_url: "https://en.cppreference.com/w/cpp/ranges/sized_range"
+language: "C++"
+---
+
+{/* source:cpp-ranges-sized-range:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T >
+concept sized_range = ranges::range<T> &&
+    requires(T& t) {
+        ranges::size(t);
+
+    };`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class >
+constexpr bool disable_sized_range = false;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-sized-range:0001 */}
+1. 1) The `sized_range` concept specifies the requirements of a [`range`](/docs/cpp/library/ranges/range) type that knows its size in constant time with the `size` function.
+
+{/* source:cpp-ranges-sized-range:0002 */}
+2. 2) The `disable_sized_range` exists to allow use of range types that provide a `size` function (either as a member or as a non-member) but do not in fact model `sized_range`. Users may specialize `disable_sized_range` for cv-unqualified program-defined types. Such specializations shall be usable in [constant expressions](/docs/cpp/language/expressions/constant_expression) and have type `const bool`.
+
+### Semantic requirements
+
+{/* source:cpp-ranges-sized-range:0003 */}
+1. 1) Given an lvalue `t` of type `std::remove_reference_t<T>`, `T` models `sized_range` only if
+   - `ranges::size(t)`
+     - has amortized constant-time complexity,
+     - does not alter the value of `t` in a manner observable to [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) expressions, and
+     - is equal to `ranges::distance(ranges::begin(t), ranges::end(t))`, and
+   - if `ranges::iterator_t<T>` models [`forward_iterator`](/docs/cpp/library/iterator/forward_iterator), `ranges::size(t)` is well-defined regardless of the evaluation of `ranges::begin(t)` (in other words, a single-pass sized range may support a call to size only before the first call to begin, but a forward range must support size at all times).
+
+### Notes
+
+{/* source:cpp-ranges-sized-range:0004 */}
+`disable_sized_range` cannot be used to opt-out a range whose iterator and sentinel satisfy [`sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for); [`std::disable_sized_sentinel_for`](/docs/cpp/library/iterator/sized_sentinel_for) must be used instead.
+
+{/* source:cpp-ranges-sized-range:0005 */}
+`disable_sized_range` cannot be specialized for array types or reference types.
+
+### Example
+
+{/* source:cpp-ranges-sized-range:0006 */}
+```cpp
+#include <forward_list>
+#include <list>
+#include <ranges>
+ 
+static_assert
+(
+    std::ranges::sized_range<std::list<int>> and
+    not std::ranges::sized_range<std::forward_list<int>>
+);
+ 
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-ranges-sized-range:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::random_access_range`](/docs/cpp/library/ranges/random_access_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies a range whose iterator type satisfies [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator) (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::contiguous_range`](/docs/cpp/library/ranges/contiguous_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies a range whose iterator type satisfies [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator) (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

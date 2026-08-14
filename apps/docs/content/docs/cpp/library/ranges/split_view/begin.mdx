@@ -1,0 +1,96 @@
+---
+title: "std::ranges::split_view<V,Pattern>::begin"
+description: "Returns an iterator to the first found subrange."
+source_url: "https://en.cppreference.com/w/cpp/ranges/split_view/begin"
+language: "C++"
+---
+
+{/* source:cpp-ranges-split-view-begin:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr /*iterator*/ begin();`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-split-view-begin:0001 */}
+Returns an [`iterator`](/docs/cpp/library/ranges/split_view/iterator) to the first found subrange.
+
+{/* source:cpp-ranges-split-view-begin:0002 */}
+In order to provide the amortized constant time complexity required by the [`range`](/docs/cpp/library/ranges/range) concept, this function caches the result within the `split_view` (by means of [`cached_begin_`](/docs/cpp/library/ranges/split_view#cached_begin) member) for use on subsequent calls.
+
+{/* source:cpp-ranges-split-view-begin:0003 */}
+Let [`base_`](/docs/cpp/library/ranges/split_view#base) be the underlying data member. Equivalent to:
+
+{/* source:cpp-ranges-split-view-begin:0004 */}
+```cpp
+constexpr /*iterator*/ begin()
+{
+    if (!cached_begin_.has_value())
+        cached_begin_ = this->find_next(ranges::begin(base_));
+    return {*this, ranges::begin(base_), cached_begin_.value()};
+}
+```
+
+### Return value
+
+{/* source:cpp-ranges-split-view-begin:0005 */}
+An [`iterator`](/docs/cpp/library/ranges/split_view/iterator).
+
+### Complexity
+
+{/* source:cpp-ranges-split-view-begin:0006 */}
+Amortized O(1).
+
+### Example
+
+{/* source:cpp-ranges-split-view-begin:0007 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+ 
+int main()
+{
+    constexpr std::string_view sentence{"Keep..moving..forward.."};
+    constexpr std::string_view delim{".."};
+    std::ranges::split_view words{sentence, delim};
+ 
+    std::cout << "begin(): " << std::quoted(std::string_view{*words.begin()})
+              << "\nSubstrings: ";
+    for (auto word : words)
+        std::cout << std::quoted(std::string_view(word)) << ' ';
+ 
+    std::ranges::split_view letters{sentence, std::string_view{""}};
+    std::cout << "\nbegin(): " << std::quoted(std::string_view{*letters.begin()})
+              << "\nLetters: ";
+    for (auto letter : letters)
+        std::cout << std::string_view(letter) << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+begin(): "Keep"
+Substrings: "Keep" "moving" "forward" ""
+begin(): "K"
+Letters: K e e p . . m o v i n g . . f o r w a r d . .
+```
+
+### See also
+
+{/* source:cpp-ranges-split-view-begin:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/split_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/lazy_split_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function of `std::ranges::lazy_split_view<V,Pattern>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::begin`](/docs/cpp/library/ranges/begin) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,83 @@
+---
+title: "std::ranges::concat_view<Views...>::size"
+description: "Returns the number of elements."
+source_url: "https://en.cppreference.com/w/cpp/ranges/concat_view/size"
+language: "C++"
+---
+
+{/* source:cpp-ranges-concat-view-size:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`constexpr auto size()
+    requires(sized_range<Views> && ...);`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`constexpr auto size() const
+    requires(sized_range<const Views> && ...);`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-concat-view-size:0001 */}
+Returns the number of elements.
+
+{/* source:cpp-ranges-concat-view-size:0002 */}
+Equivalent to `return std::apply( [](auto... sizes) { using CT = ranges::common_type_t<decltype(sizes)...>; return ( `[`make-unsigned-like-t`](/docs/cpp/library/ranges#make-unsigned-like-t)`<CT>(sizes) + ...); }, `[`tuple-transform`](/docs/cpp/library/ranges#tuple-transform)`(ranges::size, `[`views_`](/docs/cpp/library/ranges/concat_view#views)`));`.
+
+### Return value
+
+{/* source:cpp-ranges-concat-view-size:0003 */}
+As described above.
+
+### Complexity
+
+{/* source:cpp-ranges-concat-view-size:0004 */}
+Constant.
+
+### Notes
+
+{/* source:cpp-ranges-concat-view-size:0005 */}
+The complexity of `concat_view` is constant time (even though in some cases it is a linear function of the number of ranges it concatenates which is a statically known parameter of this view) because time complexity as required by the ranges concepts are formally expressed with respect to the total number of elements (the size) of a given range, and not to the statically known parameters of that range.
+
+### Example
+
+{/* source:cpp-ranges-concat-view-size:0006 */}
+The preliminary version can be checked out on [Compiler Explorer](https://godbolt.org/z/KccTnacPe).
+
+```cpp
+#include <cassert>
+#include <forward_list>
+#include <list>
+#include <ranges>
+ 
+int main()
+{
+    constexpr static auto a = {1, 2};
+    constexpr static auto b = {1, 2, 3};
+    constexpr static auto c = {1, 2, 3, 4};
+ 
+    constexpr auto con{std::views::concat(a, b, c)};
+    static_assert(std::ranges::sized_range<decltype(con)>);
+    static_assert(con.size() == 2 + 3 + 4);
+ 
+    std::forward_list d = b;
+    static_assert(not std::ranges::sized_range<std::forward_list<int>>);
+    const auto cat{std::views::concat(b, c, d)};
+    static_assert(not std::ranges::sized_range<decltype(cat)>);
+//  auto x = cat.size(); // error: cat is not sized_range because of d
+ 
+    std::list e = c;
+    const auto dog{std::views::concat(a, b, e)};
+    static_assert(std::ranges::sized_range<decltype(dog)>);
+    assert(dog.size() == 2 + 3 + 4);
+}
+```
+
+### See also
+
+{/* source:cpp-ranges-concat-view-size:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::size`](/docs/cpp/library/ranges/size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::ssize`](/docs/cpp/library/ranges/ssize) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a signed integer equal to the size of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

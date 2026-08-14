@@ -1,0 +1,91 @@
+---
+title: "std::ranges::dangling"
+description: "dangling is a placeholder type and an empty class type, used together with the template aliases ranges::borrowed_iterator_t and ranges::borrowed_subrange_t."
+source_url: "https://en.cppreference.com/w/cpp/ranges/dangling"
+language: "C++"
+---
+
+{/* source:cpp-ranges-dangling:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration language="cpp" since="C++20" code={`struct dangling;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-dangling:0001 */}
+`dangling` is a placeholder type and an empty class type, used together with the template aliases [`ranges::borrowed_iterator_t`](/docs/cpp/library/ranges/borrowed_iterator_t) and [`ranges::borrowed_subrange_t`](/docs/cpp/library/ranges/borrowed_iterator_t).
+
+{/* source:cpp-ranges-dangling:0002 */}
+When some [constrained algorithms](/docs/cpp/library/algorithm/ranges) that usually return an iterator or a subrange of a [`range`](/docs/cpp/library/ranges/range) take a particular rvalue range argument that does not model [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range), `dangling` will be returned instead to avoid returning potentially dangling results.
+
+### Member functions
+
+{/* source:cpp-ranges-dangling:0003 */}
+## std::ranges::dangling::dangling
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`constexpr dangling() noexcept = default;`} />
+  <Declaration id="2" language="cpp" code={`template<class... Args>
+constexpr dangling(Args&&...) noexcept { }`} />
+</DeclarationDoc>
+
+1. 1) `dangling` is trivially default constructible.
+2. 2) `dangling` can be constructed from arguments of arbitrary number and arbitrary non-void type. The construction does not have any side-effect itself.
+
+   In other words, after replacing the type (e.g. an iterator type) in a well-formed non-aggregate initialization with `dangling`, the resulting initialization is also well-formed.
+
+### Example
+
+{/* source:cpp-ranges-dangling:0004 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <ranges>
+#include <type_traits>
+#include <string_view>
+ 
+int main()
+{
+    auto get_array_by_value = [] { return std::array{0, 1, 0, 1}; };
+    auto dangling_iter = std::ranges::max_element(get_array_by_value());
+    static_assert(std::is_same_v<std::ranges::dangling, decltype(dangling_iter)>);
+//  std::cout << *dangling_iter << '\n'; // compilation error: no match for 'operator*'
+                                         // (operand type is 'std::ranges::dangling')
+ 
+    auto get_persistent_array = []() -> const std::array<int, 4>& {
+        static constexpr std::array a{0, 1, 0, 1};
+        return a;
+    };
+    auto valid_iter = std::ranges::max_element(get_persistent_array());
+    static_assert(!std::is_same_v<std::ranges::dangling, decltype(valid_iter)>);
+    std::cout << *valid_iter << ' '; // 1
+ 
+ 
+    auto get_string_view = [] { return std::string_view{"alpha"}; };
+    auto valid_iter2 = std::ranges::min_element(get_string_view());
+        // OK: std::basic_string_view models borrowed_range
+    static_assert(!std::is_same_v<std::ranges::dangling, decltype(valid_iter2)>);
+    std::cout << '\'' << *valid_iter2 << '\'' << '\n'; // 'a'
+}
+```
+
+Output:
+
+```text
+1 'a'
+```
+
+### See also
+
+{/* source:cpp-ranges-dangling:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::borrowed_iterator_t`, `ranges::borrowed_subrange_t`](/docs/cpp/library/ranges/borrowed_iterator_t) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains iterator type or `subrange` type of a [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) (alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::borrowed_range`](/docs/cpp/library/ranges/borrowed_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is a [`range`](/docs/cpp/library/ranges/range) and iterators obtained from an expression of it can be safely returned without danger of dangling (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

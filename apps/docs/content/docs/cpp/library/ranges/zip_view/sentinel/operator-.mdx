@@ -1,0 +1,84 @@
+---
+title: "operator-(ranges::zip_view::sentinel)"
+description: "Computes the minimal distance between the underlying tuple of iterators of x and the underlying tuple of sentinels of y."
+source_url: "https://en.cppreference.com/w/cpp/ranges/zip_view/sentinel/operator-"
+language: "C++"
+---
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`template< bool OtherConst >
+    requires (std::sized_sentinel_for<
+                ranges::sentinel_t</*maybe-const*/<Const, Views>>,
+                ranges::iterator_t</*maybe-const*/<OtherConst, Views>>> && ...)
+friend constexpr
+    std::common_type_t<ranges::range_difference_t</*maybe-const*/<OtherConst, Views>>...>
+
+operator-( const iterator<OtherConst>& x, const sentinel& y );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< bool OtherConst >
+    requires (std::sized_sentinel_for<
+                ranges::sentinel_t</*maybe-const*/<Const, Views>>,
+                ranges::iterator_t</*maybe-const*/<OtherConst, Views>>> && ...)
+friend constexpr
+    std::common_type_t<ranges::range_difference_t</*maybe-const*/<OtherConst, Views>>...>
+
+operator-( const sentinel& y, const iterator<OtherConst>& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0001 */}
+Computes the minimal distance between the underlying tuple of iterators of `x` and the underlying tuple of sentinels of `y`.
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0002 */}
+These functions are not visible to ordinary [unqualified](/docs/cpp/language/basic_concepts/unqualified_lookup) or [qualified lookup](/docs/cpp/language/basic_concepts/qualified_lookup), and can only be found by [argument-dependent lookup](/docs/cpp/language/functions/adl) when `zip_view::sentinel<Const>` is an associated class of the arguments.
+
+### Parameters
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0003 */}
+<ParameterList>
+  <Parameter name="x">an [`iterator`](/docs/cpp/library/ranges/zip_view/iterator)</Parameter>
+  <Parameter name="y">a [`sentinel`](/docs/cpp/library/ranges/zip_view/sentinel)</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0004 */}
+Let *`current_`* denote the underlying tuple of iterators of `x`, and *`end_`* denote the underlying tuple of sentinels of `y`.
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0005 */}
+Let *`DIST`*(x, y, i) be a distance calculated by expression equivalent to `std::get<i>(x.current_) - std::get<i>(y.end_)` for some integer i.
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0006 */}
+1. 1) the value with the smallest absolute value among *`DIST`*(x, y, i) of all `i` in range `0 ≤ i < sizeof...(Views)`
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0007 */}
+2. 2) `-(x - y)`.
+
+### Example
+
+{/* source:cpp-ranges-zip-view-sentinel-operator:0008 */}
+```cpp
+#include <cassert>
+#include <deque>
+#include <list>
+#include <ranges>
+#include <vector>
+ 
+int main()
+{
+    auto x = std::vector{1, 2, 3, 4};
+    auto y = std::deque{'a', 'b', 'c'};
+    auto z = {1.1, 2.2};
+    auto w = std::list{1, 2, 3};
+ 
+    auto p = std::views::zip(x, y, z);
+    assert(p.begin() - p.end() == +2);
+    assert(p.end() - p.begin() == -2);
+ 
+    [[maybe_unused]]
+    auto q = std::views::zip(x, y, w);
+ 
+    // The following code fires a compile-time error because std::list::iterator
+    // does not support operator- that is needed to calculate the distance:
+    // auto e = q.begin() - q.end();
+}
+```

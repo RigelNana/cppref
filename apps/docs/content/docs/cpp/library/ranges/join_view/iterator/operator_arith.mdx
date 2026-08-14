@@ -1,0 +1,94 @@
+---
+title: "std::ranges::join_view<V>::iterator<Const>::operator++,--"
+description: "Increments or decrements the underlying iterator."
+source_url: "https://en.cppreference.com/w/cpp/ranges/join_view/iterator/operator_arith"
+language: "C++"
+---
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr /*iterator*/& operator++();`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr void operator++( int );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr /*iterator*/ operator++( int )
+    requires /*ref-is-glvalue*/ && ranges::forward_range<Base> &&
+
+             ranges::forward_range<ranges::range_reference_t<Base>>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`constexpr iterator& operator--()
+    requires /*ref-is-glvalue*/ && ranges::bidirectional_range<Base> &&
+             ranges::bidirectional_range<ranges::range_reference_t<Base>> &&
+
+             ranges::common_range<ranges::range_reference_t<Base>>;`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`constexpr /*iterator*/ operator--( int )
+    requires /*ref-is-glvalue*/ && ranges::bidirectional_range<Base> &&
+             ranges::bidirectional_range<ranges::range_reference_t<Base>> &&
+
+             ranges::common_range<ranges::range_reference_t<Base>>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0001 */}
+Increments or decrements the underlying iterator.
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0002 */}
+Let [`inner_`](/docs/cpp/library/ranges/join_view/iterator#Data_members) and [`outer_`](/docs/cpp/library/ranges/join_view/iterator#Data_members) be the underlying iterators, and [`parent_`](/docs/cpp/library/ranges/join_view/iterator#Data_members) be the pointer to parent [`ranges::join_view`](/docs/cpp/library/ranges/join_view), the constant `/*ref-is-glvalue*/` be `std::is_reference_v<ranges::range_reference_t<Base>>`.
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0003 */}
+1. 1) Let `/*inner-range*/` be: `*outer_`, if `/*ref-is-glvalue*/ == true`; `*parent_->inner_` otherwise. Equivalent to:
+
+```cpp
+auto&& inner_rng = /*inner-range*/;
+if (++inner_ == ranges::end(inner_rng))
+{
+    ++outer_;
+    satisfy();
+}
+return *this;
+```
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0004 */}
+2. 2) Equivalent to: `++*this`.
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0005 */}
+3. 3) Equivalent to:
+
+```cpp
+auto tmp = *this;
+++*this;
+return tmp;
+```
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0006 */}
+4. 4) Equivalent to:
+
+```cpp
+if (outer_ == ranges::end(parent_->base_))
+    inner_ = ranges::end(*--outer_);
+while (inner_ == ranges::begin(*outer_))
+    inner_ = ranges::end(*--outer_);
+--inner_;
+return *this;
+```
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0007 */}
+5. 5) Equivalent to:
+
+```cpp
+auto tmp = *this;
+--*this;
+return tmp;
+```
+
+### Parameters
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0008 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0009 */}
+1. 1,4) `*this`
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0010 */}
+2. 2) (none)
+
+{/* source:cpp-ranges-join-view-iterator-operator-arith:0011 */}
+3. 3,5) a copy of `*this` that was made before the change.

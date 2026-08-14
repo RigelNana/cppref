@@ -1,0 +1,310 @@
+---
+title: "std::ranges::views::concat, std::ranges::concat_view"
+description: "concat_view presents a view factory that takes an arbitrary number of ranges as an argument list, and provides a view that starts at the first element of the first range, ends at the last element of the last range, with all range elements sequenced in between respectively in the order given in the arguments, effectively concatenating, or chaining together the argument ranges."
+source_url: "https://en.cppreference.com/w/cpp/ranges/concat_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-concat-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++26" code={`template< ranges::input_range... Views >
+    requires (ranges::view<Views> && ...) && (sizeof...(Views) > 0) &&
+              /*concatable*/<Views...>
+class concat_view
+
+    : public ranges::view_interface<concat_view<Views...>>`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`namespace views {
+    inline constexpr /* unspecified */ concat = /* unspecified */;
+
+}`} />
+
+Call signature
+
+  <Declaration language="cpp" since="C++26" code={`template< ranges::viewable_range... Rs >
+    requires /* see below */
+
+constexpr ranges::view auto concat( Rs&&... rs );`} />
+
+Helper type aliases
+
+  <Declaration id="3" language="cpp" code={`template< class... Rs >
+using /*concat-reference-t*/ =
+
+    ranges::common_reference_t<ranges::range_reference_t<Rs>...>;`} />
+  (exposition only*)
+  <Declaration id="4" language="cpp" code={`template< class... Rs >
+using /*concat-value-t*/ = std::common_type_t<ranges::range_value_t<Rs>...>;`} />
+  (exposition only*)
+  <Declaration id="5" language="cpp" code={`template< class... Rs >
+using /*concat-rvalue-reference-t*/ =
+
+    ranges::common_reference_t<ranges::range_rvalue_reference_t<Rs>...>;`} />
+  (exposition only*)
+
+Helper concepts
+
+  <Declaration id="6" language="cpp" code={`template< class Ref, class RRef, class It >
+concept /*concat-indirectly-readable-impl*/ = /* see description */;`} />
+  (exposition only*)
+  <Declaration id="7" language="cpp" code={`template< class... Rs >
+concept /*concatable*/ = /* see description */;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-concat-view:0001 */}
+`concat_view` presents a [`view`](/docs/cpp/library/ranges/view) factory that takes an arbitrary number of ranges as an argument list, and provides a view that starts at the first element of the first range, ends at the last element of the last range, with all range elements sequenced in between respectively in the order given in the arguments, effectively concatenating, or chaining together the argument ranges.
+
+{/* source:cpp-ranges-concat-view:0002 */}
+1) The class template with a template parameter that is a non-empty pack of [`view`](/docs/cpp/library/ranges/view)s each of which models at least [`input_range`](/docs/cpp/library/ranges/input_range) and is [`concatable`](/docs/cpp/library/ranges/concat_view#concatable) (7).
+
+{/* source:cpp-ranges-concat-view:0003 */}
+2) `views::concat` is a customization point object.
+
+Given a pack of subexpressions `exprs`, the expression `views::concat(exprs...)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to
+
+- [`views::all(exprs...)`](/docs/cpp/library/ranges/all_view) if `exprs` is a pack with only one element whose type models [`input_range`](/docs/cpp/library/ranges/input_range),
+- `concat_view(exprs...)` otherwise.
+
+{/* source:cpp-ranges-concat-view:0004 */}
+3) Represents the reference type. An extra constraint is needed to make sure that each underlying range’s `ranges::range_reference_t` is convertible to `ranges::common_reference_t`.
+
+{/* source:cpp-ranges-concat-view:0005 */}
+4) The [`iterator::value_type`](/docs/cpp/library/ranges/concat_view/iterator#Nested_types) that additionally respects the underlying ranges’ `value_type` to support the cases when the underlying ranges have proxy iterators.
+
+{/* source:cpp-ranges-concat-view:0006 */}
+5) The rvalue reference that also correctly supports the cases where underlying iterators customize `iter_move`.
+
+{/* source:cpp-ranges-concat-view:0007 */}
+6) Defines the `indirectly-readable` concept for the [`iterator`](/docs/cpp/library/ranges/concat_view/iterator) so that `concat_view` can model [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-ranges-concat-view:0008 */}
+Equivalent to:
+
+```cpp
+template< class... Rs >
+concept /*concat-indirectly-readable*/ = // exposition only
+    std::common_reference_with</*concat-reference-t*/<Rs...>&&,
+                               /*concat-value-t*/<Rs...>&> &&
+    std::common_reference_with</*concat-reference-t*/<Rs...>&&,
+                               /*concat-rvalue-reference-t*/<Rs...>&&> &&
+    std::common_reference_with</*concat-rvalue-reference-t*/<Rs...>&&,
+                               /*concat-value-t*/<Rs...> const&> &&
+    (/*concat-indirectly-readable-impl*/</*concat-reference-t*/<Rs...>,
+                                         /*concat-rvalue-reference-t*/<Rs...>,
+                                         ranges::iterator_t<Rs>> && ...);
+```
+
+{/* source:cpp-ranges-concat-view:0009 */}
+where exposition-only concept `/*concat-indirectly-readable-impl*/` is
+
+```cpp
+template< class Ref, class RRef, class It >
+concept /*concat-indirectly-readable-impl*/ = // exposition only
+    requires(const It it) {
+        { *it } -> std::convertible_to<Ref>;
+        { ranges::iter_move(it)} -> std::convertible_to<RRef>;
+    };
+```
+
+{/* source:cpp-ranges-concat-view:0010 */}
+7) Determines whether any two or more different ranges can be adapted into a sequence that itself models a range. Equivalent to:
+
+```cpp
+template< class... Rs >
+concept /*concatable*/ = requires { // exposition only
+        typename /*concat-reference-t*/<Rs...>;
+        typename /*concat-value-t*/<Rs...>;
+        typename /*concat-rvalue-reference-t*/<Rs...>;
+    } && /*concat-indirectly-readable*/<Rs...>;
+```
+
+{/* source:cpp-ranges-concat-view:0011 */}
+`concat_view` always models [`input_range`](/docs/cpp/library/ranges/input_range), and models [`forward_range`](/docs/cpp/library/ranges/forward_range), [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range), [`random_access_range`](/docs/cpp/library/ranges/random_access_range), or [`sized_range`](/docs/cpp/library/ranges/sized_range) if each adapted [`view`](/docs/cpp/library/ranges/view) type models the corresponding concept.
+
+{/* source:cpp-ranges-concat-view:0012 */}
+`concat_view` can be [`common_range`](/docs/cpp/library/ranges/common_range) if the last underlying range models [`common_range`](/docs/cpp/library/ranges/common_range).
+
+### Customization point objects
+
+{/* source:cpp-ranges-concat-view:0013 */}
+The name `views::concat` denotes a customization point object, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__concat_fn`.
+
+{/* source:cpp-ranges-concat-view:0014 */}
+All instances of `__concat_fn` are equal. The effects of invoking different instances of type `__concat_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `views::concat` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-concat-view:0015 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `views::concat` above, `__concat_fn` models
+
+{/* source:cpp-ranges-concat-view:0016 */}
+- `std::invocable<__concat_fn, Args...>`,
+- `std::invocable<const __concat_fn, Args...>`,
+- `std::invocable<__concat_fn&, Args...>`,
+- and `std::invocable<const __concat_fn&, Args...>`.
+
+{/* source:cpp-ranges-concat-view:0017 */}
+Otherwise, no function call operator of `__concat_fn` participates in overload resolution.
+
+### Data members
+
+{/* source:cpp-ranges-concat-view:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::tuple<Views...>` `views_`</DescriptionTerm>
+    <DescriptionBody>all adapted view objects (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-concat-view:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/concat_view/concat_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `concat_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/concat_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/concat_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/concat_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if the underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Deduction guides
+
+### Nested classes
+
+{/* source:cpp-ranges-concat-view:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/concat_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper templates
+
+{/* source:cpp-ranges-concat-view:0021 */}
+There is no specialization of `ranges::enable_borrowed_range` for `concat_view`, because this would require the iterator implementation to contain a copy of all iterators and sentinels of all underlying ranges at all times.
+
+### Notes
+
+{/* source:cpp-ranges-concat-view:0022 */}
+No argument `views::concat()` is ill-formed, because there is no reasonable way to determine an element type `T`. Single argument `views::concat(r)` is expression equivalent to [`views::all(r)`](/docs/cpp/library/ranges/all_view).
+
+{/* source:cpp-ranges-concat-view:0023 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_concat`](/docs/cpp/library/feature_test#cpp_lib_ranges_concat) | [`202403L`](/docs/cpp/library/compiler_support/26#cpp_lib_ranges_concat_202403L) | (C++26) | `std::ranges::concat_view` |
+
+### Example
+
+{/* source:cpp-ranges-concat-view:0024 */}
+The preliminary version can be checked out on [Compiler Explorer](https://godbolt.org/z/o84hc69o9).
+
+```cpp
+#include <cassert>
+#include <list>
+#include <print>
+#include <ranges>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v0{1, 2, 3}, v1{4, 5};
+    int a[]{6, 7};
+    int i{8};
+    auto ie{std::views::single(i)};
+ 
+    auto con = std::views::concat(v0, v1, a, ie);
+    assert(con.size() == v0.size() + v1.size() + std::size(a) + ie.size());
+    std::println("con.size(): {}", con.size());
+    std::println("con: {}", con);
+    con[6] = 42; // con is random_access_range, operator[] returns a reference
+    assert(a[1] == 42); // a[1] was modified via con[6]
+    std::println("con: {}", con);
+ 
+    std::list<int> l{7, 8}; // list is bidirectional range
+    auto cat = std::views::concat(v0, l);
+    std::println("cat: {}", cat);
+    // cat[0] = 13; // compile-time error: cat is bidirectional => no operator[]
+}
+```
+
+Output:
+
+```text
+con.size(): 8
+con: [1, 2, 3, 4, 5, 6, 7, 8]
+con: [1, 2, 3, 4, 5, 6, 42, 8]
+cat: [1, 2, 3, 7, 8]
+```
+
+### References
+
+{/* source:cpp-ranges-concat-view:0025 */}
+- C++26 standard (ISO/IEC 14882:2026):
+  - 26.7.18 Concat view [range.concat]
+
+### See also
+
+{/* source:cpp-ranges-concat-view:0026 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::join_view views::join`](/docs/cpp/library/ranges/join_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the sequence obtained from flattening a [`view`](/docs/cpp/library/ranges/view) of [`range`](/docs/cpp/library/ranges/range)s (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::join_with_view views::join_with`](/docs/cpp/library/ranges/join_with_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the sequence obtained from flattening a view of ranges, with the delimiter in between elements (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::zip_view views::zip`](/docs/cpp/library/ranges/zip_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of references to corresponding elements of the adapted views (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::cartesian_product_view views::cartesian_product`](/docs/cpp/library/ranges/cartesian_product_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of results calculated by the n-ary cartesian product of the adapted views (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

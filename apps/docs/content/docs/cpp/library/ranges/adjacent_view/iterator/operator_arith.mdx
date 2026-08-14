@@ -1,0 +1,152 @@
+---
+title: "std::ranges::adjacent_view<V,N>::iterator<Const>::operator++,--,+=,-="
+description: "Increments or decrements the iterator."
+source_url: "https://en.cppreference.com/w/cpp/ranges/adjacent_view/iterator/operator_arith"
+language: "C++"
+---
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr /*iterator*/& operator++();`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr /*iterator*/ operator++( int );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`constexpr /*iterator*/& operator--()
+    requires ranges::bidirectional_range<Base>;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`constexpr /*iterator*/ operator--( int )
+    requires ranges::bidirectional_range<Base>;`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`constexpr /*iterator*/& operator+=( difference_type n )
+    requires ranges::random_access_range<Base>;`} />
+  <Declaration id="6" language="cpp" since="C++23" code={`constexpr /*iterator*/& operator-=( difference_type n )
+    requires ranges::random_access_range<Base>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0001 */}
+Increments or decrements the iterator.
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0002 */}
+Let [`current_`](/docs/cpp/library/ranges/adjacent_view/iterator#Data_members) be an underlying array of iterators.
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0003 */}
+1) Equivalent to:
+
+```cpp
+for (auto& i : current_)
+    i = std::ranges::next(i);
+return *this;
+```
+
+The behavior is undefined if before the call the `current_.back()` is not incrementable.
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0004 */}
+2) Equivalent to:
+
+```cpp
+auto tmp = *this;
+++*this;
+return tmp;
+```
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0005 */}
+3) Equivalent to:
+
+```cpp
+for (auto& i : current_)
+    i = std::ranges::prev(i);
+return *this;
+```
+
+The behavior is undefined if before the call the `current_.front()` is not decrementable.
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0006 */}
+4) Equivalent to:
+
+```cpp
+auto tmp = *this;
+--*this;
+return tmp;
+```
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0007 */}
+5) Equivalent to:
+
+```cpp
+for (auto& i : current_)
+    i = i + n;
+return *this;
+```
+
+The behavior is undefined if before the call the `current_.back() + n` does not have well-defined behavior.
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0008 */}
+6) Equivalent to:
+
+```cpp
+for (auto& i : current_)
+    i = i - n;
+return *this;
+```
+
+The behavior is undefined if before the call the `current_.front() - n` does not have well-defined behavior.
+
+### Parameters
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0009 */}
+<ParameterList>
+  <Parameter name="n">position relative to current location</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0010 */}
+1,3,5,6) `*this`
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0011 */}
+2,4) A copy of `*this` that was made before the change.
+
+### Example
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0012 */}
+```cpp
+#include <cassert>
+#include <list>
+#include <ranges>
+#include <utility>
+#include <vector>
+ 
+int main()
+{
+    {
+        auto v = std::vector{0, 1, 2, 3, 4, 5};
+        auto i = (v | std::views::pairwise).begin();
+        assert((*i == std::pair{0, 1}));
+        ++i;                            // overload (1)
+        assert((*i == std::pair{1, 2}));
+        --i;                            // overload (3)
+        assert((*i == std::pair{0, 1}));
+        i += 2;                         // overload (5)
+        assert((*i == std::pair{2, 3}));
+        i -= 2;                         // overload (6)
+        assert((*i == std::pair{0, 1}));
+    }
+    {
+        auto v = std::list{0, 1, 2, 3, 4, 5};
+        auto i = (v | std::views::pairwise).begin();
+        assert((*i == std::pair{0, 1}));
+        ++i;                            // overload (1)
+        assert((*i == std::pair{1, 2}));
+        --i;                            // overload (3)
+        assert((*i == std::pair{0, 1}));
+//      i += 2; // Error: v is not a random_access_range; overload (5)
+//      i -= 2; // Error: v is not a random_access_range; overload (6)
+    }
+}
+```
+
+### See also
+
+{/* source:cpp-ranges-adjacent-view-iterator-operator-arith:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+`, `operator-`](/docs/cpp/library/ranges/adjacent_view/iterator/operator_arith2) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>performs iterator arithmetic (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

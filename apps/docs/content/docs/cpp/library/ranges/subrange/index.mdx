@@ -1,0 +1,274 @@
+---
+title: "std::ranges::subrange"
+description: "The subrange class template combines together an iterator and a sentinel into a single view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/subrange"
+language: "C++"
+---
+
+{/* source:cpp-ranges-subrange:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template<
+    std::input_or_output_iterator I,
+    std::sentinel_for<I> S = I,
+    ranges::subrange_kind K = std::sized_sentinel_for<S, I> ?
+                              ranges::subrange_kind::sized :
+                              ranges::subrange_kind::unsized
+>
+    requires (K == ranges::subrange_kind::sized ||
+                 !std::sized_sentinel_for<S, I>)
+class subrange
+
+    : public ranges::view_interface<subrange<I, S, K>>`} />
+  (1)
+
+Helper concepts
+
+  <Declaration id="2" language="cpp" code={`template<class From, class To>
+concept /*uses-nonqualification-pointer-conversion*/ =
+
+    /* see description */;`} />
+  (2) (exposition only*)
+
+  <Declaration id="3" language="cpp" code={`template<class From, class To>
+concept /*convertible-to-non-slicing*/ = /* see description */;`} />
+  (3) (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange:0001 */}
+1. 1) The `subrange` class template combines together an iterator and a sentinel into a single [`view`](/docs/cpp/library/ranges/view). It models [`sized_range`](/docs/cpp/library/ranges/sized_range) whenever the final template parameter is `subrange_kind::sized` (which happens when `std::sized_sentinel_for<S, I>` is satisfied or when `size` is passed explicitly as a constructor argument).
+
+{/* source:cpp-ranges-subrange:0002 */}
+2. 2) Determines whether `From` is convertible to `To` without [qualification conversions](/docs/cpp/language/expressions/implicit_cast#Qualification_conversions). Equivalent to:
+
+   ```cpp
+   template<class From, class To>
+   concept /*uses-nonqualification-pointer-conversion*/ =
+       std::is_pointer_v<From> && std::is_pointer_v<To> &&
+           !std::convertible_to<std::remove_pointer_t<From>(*)[],
+                                std::remove_pointer_t<To>(*)[]>;
+   ```
+
+{/* source:cpp-ranges-subrange:0003 */}
+3. 3) Determines whether `From` is convertible to `To` without derived-to-base conversion:
+
+   ```cpp
+   template<class From, class To>
+   concept /*convertible-to-non-slicing*/ =
+       std::convertible_to<From, To> &&
+           !/*uses-nonqualification-pointer-conversion*/
+               <std::decay_t<From>, std::decay_t<To>>;
+   ```
+
+### Data members
+
+{/* source:cpp-ranges-subrange:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`constexpr bool` `StoreSize` [static]</DescriptionTerm>
+    <DescriptionBody>`K == ranges::subrange_kind::sized &&` `!std::sized_sentinel_for<S, I>` (exposition-only static member constant*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`I` `begin_`</DescriptionTerm>
+    <DescriptionBody>an iterator to the beginning of the subrange (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`S` `end_`</DescriptionTerm>
+    <DescriptionBody>a sentinel denoting the end of the subrange (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make-unsigned-like-t`](/docs/cpp/library/ranges#make-unsigned-like-t)`<std::iter_difference_t<I>>` `size_`</DescriptionTerm>
+    <DescriptionBody>(present only if `StoreSize` is `true`) the size of the subrange (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-subrange:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/subrange/subrange)</DescriptionTerm>
+    <DescriptionBody>creates a new `subrange` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator PairLike`](/docs/cpp/library/ranges/subrange/operator_PairLike)</DescriptionTerm>
+    <DescriptionBody>converts the `subrange` to a [`pair-like`](/docs/cpp/library/utility/tuple/tuple-like) type (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Observers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/subrange/begin)</DescriptionTerm>
+    <DescriptionBody>obtains the iterator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/subrange/end)</DescriptionTerm>
+    <DescriptionBody>obtains the sentinel (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/subrange/empty)</DescriptionTerm>
+    <DescriptionBody>checks whether the `subrange` is empty (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/subrange/size)</DescriptionTerm>
+    <DescriptionBody>obtains the size of the `subrange` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterator operations
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`advance`](/docs/cpp/library/ranges/subrange/advance)</DescriptionTerm>
+    <DescriptionBody>advances the iterator by given distance (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`prev`](/docs/cpp/library/ranges/subrange/prev)</DescriptionTerm>
+    <DescriptionBody>obtains a copy of the `subrange` with its iterator decremented by a given distance (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`next`](/docs/cpp/library/ranges/subrange/next)</DescriptionTerm>
+    <DescriptionBody>obtains a copy of the `subrange` with its iterator advanced by a given distance (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`data`](/docs/cpp/library/ranges/view_interface/data)</DescriptionTerm>
+    <DescriptionBody>gets the address of derived view's data. Provided if its iterator type satisfies [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`<sup>th</sup> element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/ranges/subrange/deduction_guides)
+
+### Non-member functions
+
+{/* source:cpp-ranges-subrange:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get(std::ranges::subrange)`](/docs/cpp/library/ranges/subrange/get) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains iterator or sentinel from a `std::ranges::subrange` (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-ranges-subrange:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::subrange_kind`](/docs/cpp/library/ranges/subrange/../subrange_kind) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies whether a `std::ranges::subrange` models [`std::ranges::sized_range`](/docs/cpp/library/ranges/sized_range) (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::tuple_size<std::ranges::subrange>`](/docs/cpp/library/ranges/subrange/tuple_size) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains the size of a `std::ranges::subrange` (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::tuple_element<std::ranges::subrange>`](/docs/cpp/library/ranges/subrange/tuple_element) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>obtains the type of the iterator or the sentinel of a `std::ranges::subrange` (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper templates
+
+{/* source:cpp-ranges-subrange:0008 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class I, class S, ranges::subrange_kind K >
+constexpr bool ranges::enable_borrowed_range<ranges::subrange<I, S, K>> = true;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange:0009 */}
+This specialization of `ranges::enable_borrowed_range` makes `subrange` satisfy [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range).
+
+### Example
+
+{/* source:cpp-ranges-subrange:0010 */}
+```cpp
+#include <map>
+#include <print>
+#include <ranges>
+
+void make_uppercase(char& v)
+{
+    v += 'A' - 'a';
+}
+
+void uppercase_transform(std::multimap<int, char>& m, int k)
+{
+    auto [first, last] = m.equal_range(k);
+    for (auto& [_, v] : std::ranges::subrange(first, last))
+        make_uppercase(v);
+}
+
+int main()
+{
+    std::multimap<int, char> mm{{4, 'a'}, {3, '-'}, {4, 'b'}, {5, '-'}, {4, 'c'}};
+    std::println("Before: {}", mm);
+    uppercase_transform(mm, 4);
+    std::println("After:  {}", mm);
+}
+```
+
+Output:
+
+```text
+Before: {3: '-', 4: 'a', 4: 'b', 4: 'c', 5: '-'}
+After:  {3: '-', 4: 'A', 4: 'B', 4: 'C', 5: '-'}
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-subrange:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-subrange:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3470} standard="C++20">
+    <PublishedBehavior>`convertible-to-non-slicing` might reject qualification conversions</PublishedBehavior>
+    <CorrectedBehavior>always accepts them</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-subrange:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::view_interface`](/docs/cpp/library/ranges/view_interface) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>helper class template for defining a [`view`](/docs/cpp/library/ranges/view), using the [curiously recurring template pattern](/docs/cpp/language/crtp) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-ranges-subrange:0014 */}
+[Read/write all values of a `std::multimap` with a given key in C++20](https://stackoverflow.com/a/59659686) — SO

@@ -1,0 +1,272 @@
+---
+title: "std::ranges::views::chunk, std::ranges::chunk_view"
+description: "chunk_view takes a view and a number n and produces a range of views (the chunks) of the original view, such that each chunk, except maybe the last one, has the size n."
+source_url: "https://en.cppreference.com/w/cpp/ranges/chunk_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-chunk-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< ranges::view V >
+    requires ranges::input_range<V>
+class chunk_view
+
+    : public ranges::view_interface<chunk_view<V>>`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< ranges::view V >
+    requires ranges::forward_range<V>
+class chunk_view<V>
+
+    : public ranges::view_interface<chunk_view<V>>`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`namespace views {
+    inline constexpr /* unspecified */ chunk = /* unspecified */;
+
+}`} />
+
+Call signature
+
+  <Declaration language="cpp" since="C++23" code={`template< ranges::viewable_range R >
+constexpr ranges::view auto chunk( R&& r, ranges::range_difference_t<R> n );`} />
+  <Declaration language="cpp" since="C++23" code={`template< class DifferenceType >
+constexpr /*range adaptor closure*/ chunk( DifferenceType&& n );`} />
+
+Helper templates
+
+  <Declaration id="4" language="cpp" code={`template< class I > 
+constexpr I /*div-ceil*/( I num, I denom );`} />
+  (4) (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-chunk-view:0001 */}
+`chunk_view` takes a [`view`](/docs/cpp/library/ranges/view) and a number `n` and produces a range of views (the *chunks*) of the original view, such that each *chunk*, except maybe the last one, has the size `n`. These *chunks* are non-overlapping, successive sub-ranges of the elements of the original view, in order.
+
+{/* source:cpp-ranges-chunk-view:0002 */}
+Let `s` be the size of the original view. If `s` is not the multiple of `n`, the size of the *last* produced view is exactly `s % n` (the remainder). Otherwise, the size of each *chunk*, including the last one, is `n`.
+
+{/* source:cpp-ranges-chunk-view:0003 */}
+The size of produced view is `/*div-ceil*/(s)`.
+
+{/* source:cpp-ranges-chunk-view:0004 */}
+If the `n` is not greater than `0` the behavior is undefined.
+
+{/* source:cpp-ranges-chunk-view:0005 */}
+1. 1) An implementation that supports the underlying view `V` that models only [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-ranges-chunk-view:0006 */}
+2. 2) A partial specialization that supports the underlying view `V` that models [`forward_range`](/docs/cpp/library/ranges/forward_range) or stronger. Models [`common_range`](/docs/cpp/library/ranges/common_range) if the underlying view `V` is [`forward_range`](/docs/cpp/library/ranges/forward_range), [`common_range`](/docs/cpp/library/ranges/common_range), and either [`sized_range`](/docs/cpp/library/ranges/sized_range) or non [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range).
+
+{/* source:cpp-ranges-chunk-view:0007 */}
+3. 3) The name `views::chunk` denotes a *[RangeAdaptorObject](/docs/cpp/library/named_req/RangeAdaptorObject)*. Given subexpressions `e` and `n`, the expression `views::chunk(e, n)` is [*expression-equivalent*](/docs/cpp/language/expressions#Expression-equivalence) to `chunk_view(e, n)`.
+
+{/* source:cpp-ranges-chunk-view:0008 */}
+4. 4) Computes the smallest integer value that is not less than the quotient of dividing `num` by `denom`. Equivalent to:
+
+```cpp
+I r = num / denom;
+if (num % denom)
+    ++r;
+return r;
+```
+
+### Data members
+
+{/* source:cpp-ranges-chunk-view:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`base_` (private)</DescriptionTerm>
+    <DescriptionBody>The underlying [`view`](/docs/cpp/library/ranges/view) of type `V`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`n_` (private)</DescriptionTerm>
+    <DescriptionBody>The "chunk size" of type `ranges::range_difference_t<V>`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-ranges-chunk-view:0010 */}
+##### If `V` models exactly [`input_range`](/docs/cpp/library/ranges/input_range) [(1)](/docs/cpp/library/ranges/chunk_view#Version_1)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`remainder_` (private) (conditionally present)</DescriptionTerm>
+    <DescriptionBody>The number of elements left in the current chunk, of type `ranges::range_difference_t<V>`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`current_` (private) (conditionally present)</DescriptionTerm>
+    <DescriptionBody>An [*optional-like*](/docs/cpp/library/ranges#Non-propagating_cache) object of type `/*non-propagating-cache*/<ranges::iterator_t<V>>` that caches current underlying iterator. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-chunk-view:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/chunk_view/chunk_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `chunk_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`base`](/docs/cpp/library/ranges/chunk_view/base)</DescriptionTerm>
+    <DescriptionBody>returns a copy of the underlying (adapted) view (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/chunk_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/chunk_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/chunk_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if the underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Deduction guides
+
+### Nested classes
+
+{/* source:cpp-ranges-chunk-view:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`outer_iterator`](/docs/cpp/library/ranges/chunk_view/outer_iterator) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>the output ("chunk-wise") iterator type when `V` models [`input_range`](/docs/cpp/library/ranges/input_range) [(1)](/docs/cpp/library/ranges/chunk_view#Version_1) (exposition-only member class*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inner_iterator`](/docs/cpp/library/ranges/chunk_view/inner_iterator) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>the inner ("element-wise") iterator type when `V` models [`input_range`](/docs/cpp/library/ranges/input_range) [(1)](/docs/cpp/library/ranges/chunk_view#Version_1) (exposition-only member class*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/chunk_view/iterator) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>the iterator type when `V` models [`forward_range`](/docs/cpp/library/ranges/forward_range) [(2)](/docs/cpp/library/ranges/chunk_view#Version_2) (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper templates
+
+{/* source:cpp-ranges-chunk-view:0013 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class V >
+constexpr bool ranges::enable_borrowed_range<chunk_view<V>> =
+
+    ranges::forward_range<V> && ranges::enable_borrowed_range<V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-chunk-view:0014 */}
+This specialization of [`ranges::enable_borrowed_range`](/docs/cpp/library/ranges/borrowed_range) makes `chunk_view` satisfy [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) when the underlying view `V` satisfies both, the [`forward_range`](/docs/cpp/library/ranges/forward_range) and the [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range).
+
+### Notes
+
+{/* source:cpp-ranges-chunk-view:0015 */}
+If `V` models [`input_range`](/docs/cpp/library/ranges/input_range) [(1)](/docs/cpp/library/ranges/chunk_view#Version_1), `chunk_view`'s iterator has a dedicated type: [`outer_iterator::value_type`](/docs/cpp/library/ranges/chunk_view/outer_iterator/value_type) that is itself an input view.
+
+{/* source:cpp-ranges-chunk-view:0016 */}
+If `V` models [`forward_range`](/docs/cpp/library/ranges/forward_range) or stronger [(2)](/docs/cpp/library/ranges/chunk_view#Version_2), `chunk_view` defers to `views::take` for its `value_type`.
+
+{/* source:cpp-ranges-chunk-view:0017 */}
+If `V` models [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) or stronger ranges [(2)](/docs/cpp/library/ranges/chunk_view#Version_2), the need to calculate size the last chunk correctly (from the end [`iterator`](/docs/cpp/library/ranges/chunk_view/iterator)) requires the underlying range type `V` to be [`sized_range`](/docs/cpp/library/ranges/sized_range).
+
+{/* source:cpp-ranges-chunk-view:0018 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_chunk`](/docs/cpp/library/feature_test#cpp_lib_ranges_chunk) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_chunk_202202L) | (C++23) | `std::ranges::chunk_view` |
+
+### Example
+
+{/* source:cpp-ranges-chunk-view:0019 */}
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <ranges>
+ 
+auto print_subrange = [](std::ranges::viewable_range auto&& r)
+{
+    std::cout << '[';
+    for (int pos{}; auto elem : r)
+        std::cout << (pos++ ? " " : "") << elem;
+    std::cout << "] ";
+};
+ 
+int main()
+{
+    const auto v = {1, 2, 3, 4, 5, 6};
+ 
+    for (const unsigned width : std::views::iota(1U, 2U + v.size()))
+    {
+        auto const chunks = v | std::views::chunk(width);
+        std::cout << "chunk(" << width << "): ";
+        std::ranges::for_each(chunks, print_subrange);
+        std::cout << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+chunk(1): [1] [2] [3] [4] [5] [6]
+chunk(2): [1 2] [3 4] [5 6]
+chunk(3): [1 2 3] [4 5 6]
+chunk(4): [1 2 3 4] [5 6]
+chunk(5): [1 2 3 4 5] [6]
+chunk(6): [1 2 3 4 5 6]
+chunk(7): [1 2 3 4 5 6]
+```
+
+### References
+
+{/* source:cpp-ranges-chunk-view:0020 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 26.7.28 Chunk view [range.chunk]
+
+### See also
+
+{/* source:cpp-ranges-chunk-view:0021 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::chunk_by_view views::chunk_by`](/docs/cpp/library/ranges/chunk_by_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>splits the [`view`](/docs/cpp/library/ranges/view) into subranges between each pair of adjacent elements for which the given predicate returns `false` (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::adjacent_view views::adjacent`](/docs/cpp/library/ranges/adjacent_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of references to adjacent elements of the adapted [`view`](/docs/cpp/library/ranges/view) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::slide_view views::slide`](/docs/cpp/library/ranges/slide_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) whose Mth element is a [`view`](/docs/cpp/library/ranges/view) over the Mth through (M + N - 1)th elements of another [`view`](/docs/cpp/library/ranges/view) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

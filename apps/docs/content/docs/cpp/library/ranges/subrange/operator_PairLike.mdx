@@ -1,0 +1,174 @@
+---
+title: "std::ranges::subrange<I,S,K>::operator PairLike"
+description: "Converts the subrange to a pair-like type."
+source_url: "https://en.cppreference.com/w/cpp/ranges/subrange/operator_PairLike"
+language: "C++"
+---
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`template< /*different-from*/<subrange> PairLike >
+    requires /*pair-like-convertible-from*/<PairLike, const I&, const S&>
+
+constexpr operator PairLike() const;`} />
+  (1)
+
+Helper concepts
+
+  <Declaration id="2" language="cpp" code={`template< class T >
+concept /*pair-like*/ = /* see description */;`} />
+  (2) (exposition only*)
+
+  <Declaration id="3" language="cpp" code={`template< class T, class U, class V >
+concept /*pair-like-convertible-from*/ = /* see description */;`} />
+  (3) (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0001 */}
+1. 1) Converts `subrange` to a pair-like type.
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0002 */}
+For the definition of `/*different-from*/`, see [`different-from`](/docs/cpp/library/ranges#different-from).
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0003 */}
+2. 2) Determines whether a type is `pair-like`.
+
+<Revision until="C++23">
+Equivalent to:
+
+```cpp
+template< class T >
+concept /*pair-like*/ =
+    !std::is_reference_v<T> && requires(T t)
+    {
+        typename std::tuple_size<T>::type;
+        requires std::derived_from<std::tuple_size<T>,
+                                   std::integral_constant<std::size_t, 2>>;
+        typename std::tuple_element_t<0, std::remove_const_t<T>>;
+        typename std::tuple_element_t<1, std::remove_const_t<T>>;
+        { std::get<0>(t) } -> std::convertible_to<
+                                  const std::tuple_element_t<0, T>&>;
+        { std::get<1>(t) } -> std::convertible_to<
+                                  const std::tuple_element_t<1, T>&>;
+    };
+```
+</Revision>
+
+<Revision since="C++23">
+This concept is equivalent to the library-wide exposition-only concept [`pair-like`](/docs/cpp/library/utility/tuple/tuple-like).
+</Revision>
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0004 */}
+3. 3) Determines whether a pair-like type can be constructed from two values of possibly different given types.
+
+<Revision until="C++23">
+Equivalent to:
+
+```cpp
+template< class T, class U, class V >
+concept /*pair-like-convertible-from*/ =
+    !ranges::range<T> && /*pair-like*/<T> &&
+    std::constructible_from<T, U, V> &&
+    /*convertible-to-non-slicing*/<U, std::tuple_element_t<0, T>> &&
+    std::convertible_to<V, std::tuple_element_t<1, T>>;
+```
+</Revision>
+
+<Revision since="C++23">
+Equivalent to:
+
+```cpp
+template< class T, class U, class V >
+concept /*pair-like-convertible-from*/ =
+    !ranges::range<T> && !std::is_reference_v<T> && /*pair-like*/<T> &&
+    std::constructible_from<T, U, V> &&
+    /*convertible-to-non-slicing*/<U, std::tuple_element_t<0, T>> &&
+    std::convertible_to<V, std::tuple_element_t<1, T>>;
+```
+</Revision>
+
+### Return value
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0005 */}
+`PairLike(`[`begin_`](/docs/cpp/library/ranges/subrange#begin)`, `[`end_`](/docs/cpp/library/ranges/subrange#end)`)`
+
+### Notes
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0006 */}
+Following types in the standard library are pair-like:
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0007 */}
+- `std::pair<T, U>`
+- `std::tuple<T, U>`
+- `std::array<T, 2>`
+- `std::ranges::subrange<I, S, K>`
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0008 */}
+<Revision since="C++26">
+- `std::complex<T>`
+</Revision>
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0009 */}
+<Revision until="C++23">
+A program-defined type derived from one of these types can be a pair-like type, if
+
+- [`std::tuple_size`](/docs/cpp/library/utility/tuple_size) and [`std::tuple_element`](/docs/cpp/library/utility/tuple_element) are correctly specialized for it, and
+- calls to `std::get<0>` and `std::get<1>` for its value are well-formed.
+</Revision>
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0010 */}
+Since `subrange` specializations are [`range`](/docs/cpp/library/ranges/range) types, conversion to them are not performed via this conversion function.
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0011 */}
+[`std::array`](/docs/cpp/library/container/array) specializations cannot be converted from `subrange`, since they are [`range`](/docs/cpp/library/ranges/range) types.
+
+### Example
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0012 */}
+```cpp
+#include <iostream>
+#include <ranges>
+#include <string>
+#include <utility>
+
+using striter = std::string::const_iterator;
+
+using legacy_strview = std::pair<striter, striter>;
+
+void legacy_print(legacy_strview p)
+{
+    for (; p.first != p.second; ++p.first)
+        std::cout << *p.first << ' ';
+    std::cout << '\n';
+}
+
+int main()
+{
+    std::string dat{"ABCDE"};
+    for (auto v{std::ranges::subrange{dat}}; v; v = {v.begin(), v.end() - 1})
+    {
+        /*...*/
+        legacy_print(legacy_strview{v});
+    }
+}
+```
+
+Output:
+
+```text
+A B C D E 
+A B C D 
+A B C 
+A B 
+A
+```
+
+### See also
+
+{/* source:cpp-ranges-subrange-operator-pairlike:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`tuple-like pair-like`](/docs/cpp/library/utility/tuple/tuple-like) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type implemented the tuple protocol ([`std::get`](/docs/cpp/library/utility/tuple/get), [`std::tuple_element`](/docs/cpp/library/utility/tuple_element), [`std::tuple_size`](/docs/cpp/library/utility/tuple_size)) (exposition-only concept*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

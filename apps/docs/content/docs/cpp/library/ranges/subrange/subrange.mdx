@@ -1,0 +1,86 @@
+---
+title: "std::ranges::subrange<I,S,K>::subrange"
+description: "Constructs a subrange."
+source_url: "https://en.cppreference.com/w/cpp/ranges/subrange/subrange"
+language: "C++"
+---
+
+{/* source:cpp-ranges-subrange-subrange:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`subrange() requires std::default_initializable<I> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr subrange( /*convertible-to-non-slicing*/<I> auto i, S s )
+    requires (!/*StoreSize*/);`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr subrange( /*convertible-to-non-slicing*/<I> auto i, S s,
+              /*make-unsigned-like-t*/<std::iter_difference_t<I>> n )
+
+    requires (K == ranges::subrange_kind::sized);`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< /*different-from*/<subrange> R >
+    requires ranges::borrowed_range<R> &&
+             /*convertible-to-non-slicing*/<ranges::iterator_t<R>, I> &&
+             std::convertible_to<ranges::sentinel_t<R>, S>
+constexpr subrange( R&& r )
+
+    requires (!/*StoreSize*/ || ranges::sized_range<R>);`} />
+  <Declaration id="5" language="cpp" since="C++20" code={`template< ranges::borrowed_range R>
+    requires /*convertible-to-non-slicing*/<ranges::iterator_t<R>, I> &&
+             std::convertible_to<ranges::sentinel_t<R>, S>
+constexpr subrange( R&& r,
+              /*make-unsigned-like-t*/<std::iter_difference_t<I>> n )
+    requires (K == ranges::subrange_kind::sized)
+
+    : subrange{ranges::begin(r), ranges::end(r), n} {}`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange-subrange:0001 */}
+Constructs a `subrange`.
+
+{/* source:cpp-ranges-subrange-subrange:0002 */}
+For the definitions of `/*make-unsigned-like-t*/` and `/*different-from*/`, see [`make-unsigned-like-t`](/docs/cpp/library/ranges#make-unsigned-like-t) and [`different-from`](/docs/cpp/library/ranges#different-from) respectively.
+
+{/* source:cpp-ranges-subrange-subrange:0003 */}
+| | [Data members](/docs/cpp/library/ranges/subrange#Data_members) | | |
+| --- | --- | --- | --- |
+| Overload | `begin_` | `end_` | `size_` (only if [`StoreSize`](/docs/cpp/library/ranges/subrange#StoreSize) is `true`) |
+| (1) | [value-initialized](/docs/cpp/language/initialization/value_initialization) | [value-initialized](/docs/cpp/language/initialization/value_initialization) | initialized with `0` |
+| (2) | initialized with `std::move(i)` | initialized with `s` | N/A |
+| (3) | initialized with `std::move(i)` | initialized with `s` | initialized with `n` |
+| (4) | initialized with `std::move(ranges::begin(r))` | initialized with `ranges::end(r)` | initialized with `static_cast<decltype(`[`size_`](/docs/cpp/library/ranges/subrange#size)`)>(ranges::size(r))` |
+| (5) | initialized with `std::move(ranges::begin(r))` | initialized with `ranges::end(r)` | initialized with `n` |
+
+{/* source:cpp-ranges-subrange-subrange:0004 */}
+2. 2) If `[i, s)` is not a [valid range](/docs/cpp/library/iterator#Ranges), the behavior is undefined.
+
+{/* source:cpp-ranges-subrange-subrange:0005 */}
+3. 3) If any of the following conditions is satisfied, the behavior is undefined:
+   - `[i, s)` is not a valid range.
+   - `n ==` [`to-unsigned-like`](/docs/cpp/library/ranges#to-unsigned-like)`(ranges::distance(i, s))` is `false`.
+
+### Parameters
+
+{/* source:cpp-ranges-subrange-subrange:0006 */}
+<ParameterList>
+  <Parameter name="i">iterator that denotes the beginning of the range</Parameter>
+  <Parameter name="s">sentinel that denotes the end of the range</Parameter>
+  <Parameter name="r">range</Parameter>
+  <Parameter name="n">size hint, must be equal to the size of the range</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-ranges-subrange-subrange:0007 */}
+This section is incomplete
+
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-ranges-subrange-subrange:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-subrange-subrange:0009 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2393R1" standard="C++20">
+    <PublishedBehavior>for overload ([4](/docs/cpp/library/ranges/subrange/subrange#Version_4)), [`size_`](/docs/cpp/library/ranges/subrange#size) might be initialized with `ranges::size(r)`, but it is not always implicitly convertible to the corresponding [unsigned-integer-like](/docs/cpp/library/iterator/is-integer-like#Integer-like_type) type</PublishedBehavior>
+    <CorrectedBehavior>made the conversion explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

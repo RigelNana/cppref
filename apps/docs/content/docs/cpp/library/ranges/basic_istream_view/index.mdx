@@ -1,0 +1,235 @@
+---
+title: "std::ranges::views::istream, std::ranges::basic_istream_view, std::ranges::istream_view, std::ranges::wistream_view"
+description: "std::ranges::basic_istream_view is a range factory that generates a sequence of elements by repeatedly calling operator>>."
+source_url: "https://en.cppreference.com/w/cpp/ranges/basic_istream_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-basic-istream-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::movable Val, class CharT,
+          class Traits = std::char_traits<CharT> >
+    requires std::default_initializable<Val> &&
+             /*stream-extractable*/<Val, CharT, Traits>
+class basic_istream_view
+
+    : public ranges::view_interface<basic_istream_view<Val, CharT, Traits>>`} />
+  Helper templates
+
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class Val >
+using istream_view = ranges::basic_istream_view<Val, char>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class Val >
+using wistream_view = ranges::basic_istream_view<Val, wchar_t>;`} />
+  Customization point objects
+
+  <Declaration id="4" language="cpp" since="C++20" code={`namespace views {
+    template< class T >
+    constexpr /* unspecified */ istream = /* unspecified */;
+
+}`} />
+  Helper concepts
+
+  <Declaration id="5" language="cpp" code={`template< class Val, class CharT, class Traits >
+concept /*stream-extractable*/ =
+    requires(std::basic_istream<CharT, Traits>& is, Val& t) {
+        is >> t;
+
+    };`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-ranges-basic-istream-view:0001 */}
+    1) A range factory that generates a sequence of elements by repeatedly calling `operator>>`.
+
+    {/* source:cpp-ranges-basic-istream-view:0002 */}
+    2,3) Convenience alias templates for character types `char` and `wchar_t`.
+
+    {/* source:cpp-ranges-basic-istream-view:0003 */}
+    4) `views::istream<T>(e)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `ranges::basic_istream_view<T, typename U::char_type, typename U::traits_type>(e)` for any suitable subexpressions `e`, where `U` is `std::remove_reference_t<decltype(e)>`.
+
+    {/* source:cpp-ranges-basic-istream-view:0004 */}
+    The program is ill-formed if `U` is not both publicly and unambiguously derived from `std::basic_istream<typename U::char_type, typename U::traits_type>`, which may result in a [substitution failure](/docs/cpp/language/templates/sfinae).
+
+    {/* source:cpp-ranges-basic-istream-view:0005 */}
+    5) The exposition-only concept `/*stream-extractable*/<Val, CharT, Traits>` is satisfied when lvalue of type `Val` can be extracted from lvalue of type `std::basic_istream<CharT, Traits>`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-ranges-basic-istream-view:0006 */}
+The iterator type of `basic_istream_view` is move-only: it does not meet the [`LegacyIterator`](/docs/cpp/library/named_req/Iterator) requirements, and thus does not work with pre-C++20 [`algorithms`](/docs/cpp/library/algorithm).
+
+### Customization point objects
+
+{/* source:cpp-ranges-basic-istream-view:0007 */}
+The name `views::istream<T>` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__istream_fn<T>`.
+
+{/* source:cpp-ranges-basic-istream-view:0008 */}
+All instances of `__istream_fn<T>` are equal. The effects of invoking different instances of type `__istream_fn<T>` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `views::istream<T>` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-basic-istream-view:0009 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `views::istream<T>` above, `__istream_fn<T>` models
+
+{/* source:cpp-ranges-basic-istream-view:0010 */}
+- `std::invocable<__istream_fn<T>, Args...>`,
+- `std::invocable<const __istream_fn<T>, Args...>`,
+- `std::invocable<__istream_fn<T>&, Args...>`, and
+- `std::invocable<const __istream_fn<T>&, Args...>`.
+
+{/* source:cpp-ranges-basic-istream-view:0011 */}
+Otherwise, no function call operator of `__istream_fn<T>` participates in overload resolution.
+
+### Data members
+
+{/* source:cpp-ranges-basic-istream-view:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::basic_istream<CharT, Traits>*` `stream_`</DescriptionTerm>
+    <DescriptionBody>a pointer to the input stream (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Val` `value_`</DescriptionTerm>
+    <DescriptionBody>the stored value (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-basic-istream-view:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/basic_istream_view#ctor)</DescriptionTerm>
+    <DescriptionBody>constructs a `basic_istream_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/basic_istream_view#begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/basic_istream_view#end)</DescriptionTerm>
+    <DescriptionBody>returns [`std::default_sentinel`](/docs/cpp/library/iterator/default_sentinel) (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-ranges-basic-istream-view:0014 */}
+<Revision until="C++23">
+Although [`basic_istream_view`](/docs/cpp/library/ranges/basic_istream_view#top) is derived from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface), it cannot use any of inherited member functions.
+</Revision>
+
+{/* source:cpp-ranges-basic-istream-view:0015 */}
+#### `std::ranges::basic_istream_view::basic_istream_view`
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr explicit
+    basic_istream_view( std::basic_istream<CharT, Traits>& stream );`} />
+</DeclarationDoc>
+
+Initializes [`stream_`](/docs/cpp/library/ranges/basic_istream_view#stream) with `std::addressof(stream)`, and value-initializes [`value_`](/docs/cpp/library/ranges/basic_istream_view#value).
+
+{/* source:cpp-ranges-basic-istream-view:0016 */}
+#### `std::ranges::basic_istream_view::begin`
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr auto begin();`} />
+</DeclarationDoc>
+
+Equivalent to `*`[`stream_`](/docs/cpp/library/ranges/basic_istream_view#stream) `>>` [`value_`](/docs/cpp/library/ranges/basic_istream_view#value)`; return` [`iterator`](/docs/cpp/library/ranges/basic_istream_view/iterator)`{*this};`.
+
+{/* source:cpp-ranges-basic-istream-view:0017 */}
+#### `std::ranges::basic_istream_view::end`
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`constexpr std::default_sentinel_t end() const noexcept;`} />
+</DeclarationDoc>
+
+Returns `std::default_sentinel`.
+
+### Nested classes
+
+{/* source:cpp-ranges-basic-istream-view:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/basic_istream_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type of `basic_istream_view` (exposition-only member class*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-ranges-basic-istream-view:0019 */}
+```cpp
+#include <algorithm>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+#include <sstream>
+#include <string>
+ 
+int main()
+{
+    auto words = std::istringstream{"today is yesterday’s tomorrow"};
+    for (const auto& s : std::views::istream<std::string>(words))
+        std::cout << std::quoted(s, '/') << ' ';
+    std::cout << '\n';
+ 
+    auto floats = std::istringstream{"1.1  2.2\t3.3\v4.4\f55\n66\r7.7  8.8"};
+    std::ranges::copy
+    (
+        std::views::istream<float>(floats),
+        std::ostream_iterator<float>{std::cout, ", "}
+    );
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+/today/ /is/ /yesterday’s/ /tomorrow/
+1.1, 2.2, 3.3, 4.4, 55, 66, 7.7, 8.8,
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-basic-istream-view:0020 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-basic-istream-view:0021 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3568} standard="C++20">
+    <PublishedBehavior>P2325R3 accidentally made the stored value default-initialized</PublishedBehavior>
+    <CorrectedBehavior>restored to value-initialization</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2325R3" standard="C++20">
+    <PublishedBehavior>default constructor was provided as [`view`](/docs/cpp/library/ranges/view) must be [`default_initializable`](/docs/cpp/library/concepts/default_initializable)</PublishedBehavior>
+    <CorrectedBehavior>removed along with the requirement</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2432R1" standard="C++20">
+    <PublishedBehavior>`ranges::istream_view` was a function template and did not follow the naming convention</PublishedBehavior>
+    <CorrectedBehavior>made an alias template; customization point objects added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-basic-istream-view:0022 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`istream_iterator`](/docs/cpp/library/iterator/istream_iterator)</DescriptionTerm>
+    <DescriptionBody>input iterator that reads from [`std::basic_istream`](/docs/cpp/library/io/basic_istream) (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,109 @@
+---
+title: "std::ranges::view, std::ranges::enable_view, std::ranges::view_base"
+description: "The view concept specifies the requirements of a range type that has suitable semantic properties for use in constructing range adaptor pipelines."
+source_url: "https://en.cppreference.com/w/cpp/ranges/view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template<class T>
+concept view = ranges::range<T> && std::movable<T> && ranges::enable_view<T>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template<class T>
+constexpr bool enable_view =
+
+    std::derived_from<T, view_base> || /*is-derived-from-view-interface*/<T>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`struct view_base { };`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-view:0001 */}
+1. 1) The `view` concept specifies the requirements of a [`range`](/docs/cpp/library/ranges/range) type that has suitable semantic properties for use in constructing range adaptor pipelines.
+
+{/* source:cpp-ranges-view:0002 */}
+2. 2) The `enable_view` variable template is used to indicate whether a [`range`](/docs/cpp/library/ranges/range) is a `view`. `/*is-derived-from-view-interface*/<T>` is `true` if and only if `T` has exactly one public base class `ranges::view_interface<U>` for some type `U`, and `T` has no base classes of type `ranges::view_interface<V>` for any other type `V`. Users may specialize `enable_view` to `true` for cv-unqualified program-defined types which model `view`, and `false` for types which do not. Such specializations must be [usable in constant expressions](/docs/cpp/language/expressions/constant_expression#Usable_in_constant_expressions) and have type `const bool`.
+
+{/* source:cpp-ranges-view:0003 */}
+3. 3) Deriving from `view_base` enables [`range`](/docs/cpp/library/ranges/range) types to model `view`.
+
+### Semantic requirements
+
+{/* source:cpp-ranges-view:0004 */}
+1. 1) `T` models `view` only if:
+   - move construction of `T` has constant time complexity, and
+   - if `N` copies and/or moves are made from a `T` object holding `M` elements, then these `N` objects have 𝓞(N+M) destruction (which implies that a moved-from `view` object has 𝓞(1) destruction), and
+   - either `std::copy_constructible<T>` is `false`, or copy construction of `T` has constant time complexity, and
+   - either `std::copyable<T>` is `false`, or copy assignment of `T` has no more time complexity than destruction followed by copy construction.
+
+### Specializations
+
+{/* source:cpp-ranges-view:0005 */}
+Specializations of `enable_view` for all specializations of the following standard templates are defined as `true`:
+
+{/* source:cpp-ranges-view:0006 */}
+- [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view)
+- [`std::span`](/docs/cpp/library/container/span)
+
+{/* source:cpp-ranges-view:0007 */}
+<Revision since="C++26">
+- [`std::optional`](/docs/cpp/library/utility/optional)
+</Revision>
+
+### Notes
+
+{/* source:cpp-ranges-view:0008 */}
+Examples of `view` types are:
+
+{/* source:cpp-ranges-view:0009 */}
+- A [`range`](/docs/cpp/library/ranges/range) type that wraps a pair of iterators, e.g., `std::ranges::subrange<I>`.
+- A [`range`](/docs/cpp/library/ranges/range) type that holds its elements by [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) and shares ownership with all its copies.
+- A [`range`](/docs/cpp/library/ranges/range) type that generates its elements on demand, e.g., [`std::ranges::iota_view`](/docs/cpp/library/ranges/iota_view).
+
+{/* source:cpp-ranges-view:0010 */}
+A copyable container such as `std::vector<std::string>` generally does not meet the semantic requirements of `view` since copying the container copies all of the elements, which cannot be done in constant time.
+
+{/* source:cpp-ranges-view:0011 */}
+While views were originally described as cheaply copyable and non-owning ranges, a type is not required to be copyable or non-owning for it to model `view`. However, it must still be cheap to copy (if it is copyable), move, assign, and destroy, so that [range adaptors](/docs/cpp/library/ranges#Range_adaptors) will not have unexpected complexity.
+
+{/* source:cpp-ranges-view:0012 */}
+By default, a type modeling [`movable`](/docs/cpp/library/concepts/movable) and [`range`](/docs/cpp/library/ranges/range) is considered a view if it is publicly and unambiguously derived from `view_base`, or exactly one specialization of `std::ranges::view_interface`.
+
+### Example
+
+{/* source:cpp-ranges-view:0013 */}
+A minimum view.
+
+{/* source:cpp-ranges-view:0014 */}
+```cpp
+#include <ranges>
+ 
+struct ArchetypalView : std::ranges::view_interface<ArchetypalView>
+{
+    int* begin();
+    int* end();
+};
+ 
+static_assert(std::ranges::view<ArchetypalView>);
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-view:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-view:0016 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2325R3" standard="C++20">
+    <PublishedBehavior>`view` required [`default_initializable`](/docs/cpp/library/concepts/default_initializable)</PublishedBehavior>
+    <CorrectedBehavior>does not require</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3549} standard="C++20">
+    <PublishedBehavior>`enable_view` did not detect inheritance from `view_interface`</PublishedBehavior>
+    <CorrectedBehavior>detects</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2415R2" standard="C++20">
+    <PublishedBehavior>the restriction on the time complexity of destruction was too strict</PublishedBehavior>
+    <CorrectedBehavior>relaxed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

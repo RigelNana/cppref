@@ -1,0 +1,191 @@
+---
+title: "std::ranges::join_with_view<V,Pattern>::iterator"
+description: "ranges::join_with_view<V, Pattern>::iterator is the type of the iterators returned by begin() and end() of ranges::join_with_view<V, Pattern>."
+source_url: "https://en.cppreference.com/w/cpp/ranges/join_with_view/iterator"
+language: "C++"
+---
+
+{/* source:cpp-ranges-join-with-view-iterator:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< bool Const >
+class /*iterator*/`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-join-with-view-iterator:0001 */}
+`ranges::join_with_view<V, Pattern>::iterator` is the type of the iterators returned by [`begin()`](/docs/cpp/library/ranges/join_with_view/begin) and [`end()`](/docs/cpp/library/ranges/join_with_view/end) of `ranges::join_with_view<V, Pattern>`.
+
+{/* source:cpp-ranges-join-with-view-iterator:0002 */}
+The state of an iterator of this class is managed as if there are two nested iterators:
+
+{/* source:cpp-ranges-join-with-view-iterator:0003 */}
+- an *outer iterator* into the parent range `*`[`parent_`](/docs/cpp/library/ranges/join_with_view/iterator#parent)
+
+{/* source:cpp-ranges-join-with-view-iterator:0004 */}
+  - If `Base` models [`forward_range`](/docs/cpp/library/ranges/forward_range), it is [`outer_it_`](/docs/cpp/library/ranges/join_with_view/iterator#outer_it).
+  - Otherwise, it is [`parent_`](/docs/cpp/library/ranges/join_with_view/iterator#parent)`->`[`outer_it_`](/docs/cpp/library/ranges/join_with_view#outer_it).
+
+{/* source:cpp-ranges-join-with-view-iterator:0005 */}
+- an *inner iterator* [`inner_it_`](/docs/cpp/library/ranges/join_with_view/iterator#inner_it) into the pattern range [`parent_`](/docs/cpp/library/ranges/join_with_view/iterator#parent)`->`[`pattern_`](/docs/cpp/library/ranges/join_with_view#pattern) or into a child range of the parent range
+
+{/* source:cpp-ranges-join-with-view-iterator:0006 */}
+This iterator class has the invariant that the inner iterator is always dereferenceable unless the outer iterator is not dereferenceable. When an iterator is constructed, incremented or decremented, its outer iterator might be adjusted to hold the invariant.
+
+### Template parameters
+
+{/* source:cpp-ranges-join-with-view-iterator:0007 */}
+<ParameterList>
+  <Parameter name="Const">whether the iterator is a constant iterator</Parameter>
+</ParameterList>
+
+### Nested types
+
+{/* source:cpp-ranges-join-with-view-iterator:0008 */}
+#### Exposition-only types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`Parent`</DescriptionTerm>
+    <DescriptionBody>[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, ranges::join_with_view<V, Pattern>>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Base`</DescriptionTerm>
+    <DescriptionBody>[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, V>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`InnerBase`</DescriptionTerm>
+    <DescriptionBody>`ranges::range_reference_t<Base>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`PatternBase`</DescriptionTerm>
+    <DescriptionBody>[`maybe-const`](/docs/cpp/library/ranges#maybe-const)`<Const, Pattern>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`OuterIter`</DescriptionTerm>
+    <DescriptionBody>`ranges::iterator_t<Base>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`InnerIter`</DescriptionTerm>
+    <DescriptionBody>`ranges::iterator_t<InnerBase>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`PatternIter`</DescriptionTerm>
+    <DescriptionBody>`ranges::iterator_t<PatternBase>` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Iterator property types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_concept`</DescriptionTerm>
+    <DescriptionBody>an [iterator tag](/docs/cpp/library/iterator/iterator_tags), [see below](/docs/cpp/library/ranges/join_with_view/iterator#Determining_the_iterator_concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator_category` (conditionally present)</DescriptionTerm>
+    <DescriptionBody>an iterator tag, [see below](/docs/cpp/library/ranges/join_with_view/iterator#Determining_the_iterator_category)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`std::common_type_t<ranges::range_value_t<InnerBase>, ranges::range_value_t<PatternBase>>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`</DescriptionTerm>
+    <DescriptionBody>`std::common_type_t<ranges::range_difference_t<Base>, ranges::range_difference_t<InnerBase>, ranges::range_difference_t<PatternBase>>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Determining the iterator concept
+
+{/* source:cpp-ranges-join-with-view-iterator:0009 */}
+`iterator_concept` is defined as follows:
+
+{/* source:cpp-ranges-join-with-view-iterator:0010 */}
+- If all following conditions are satisfied, `iterator_concept` denotes [`std::bidirectional_iterator_tag`](/docs/cpp/library/iterator/iterator_tags):
+
+  - `std::is_reference_v<InnerBase>` is `true`.
+  - `Base` models [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range).
+  - `InnerBase` and `PatternBase` each model [`common_range`](/docs/cpp/library/ranges/common_range).
+
+- Otherwise, if all following conditions are satisfied, `iterator_concept` denotes [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags):
+
+  - `std::is_reference_v<InnerBase>` is `true`.
+  - `Base` and `InnerBase` each model [`forward_range`](/docs/cpp/library/ranges/forward_range).
+
+- Otherwise, `iterator_concept` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+
+### Determining the iterator category
+
+{/* source:cpp-ranges-join-with-view-iterator:0011 */}
+Given the following types:
+
+{/* source:cpp-ranges-join-with-view-iterator:0012 */}
+- Let `OuterC` be `std::iterator_traits<OuterIter>::iterator_category`.
+- Let `InnerC` be `std::iterator_traits<InnerIter>::iterator_category`.
+- Let `PatternC` be `std::iterator_traits<PatternIter>::iterator_category`.
+
+{/* source:cpp-ranges-join-with-view-iterator:0013 */}
+`iterator_category` is defined if and only if `std::is_reference_v<InnerBase>` is `true`, and `Base` and `InnerBase` each model [`forward_range`](/docs/cpp/library/ranges/forward_range). In this case, it is defined as follows:
+
+{/* source:cpp-ranges-join-with-view-iterator:0014 */}
+- If `std::is_reference_v<std::common_reference_t<ranges::range_reference_t<InnerBase>, ranges::range_reference_t<PatternBase>>>` is `false`, `iterator_category` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, if all following conditions are satisfied, `iterator_category` denotes [`std::bidirectional_iterator_tag`](/docs/cpp/library/iterator/iterator_tags):
+
+  - `OuterC`, `InnerC`, and `PatternC` each model `std::derived_from<std::bidirectional_iterator_tag>`.
+  - `InnerBase` and `PatternBase` each model [`common_range`](/docs/cpp/library/ranges/common_range).
+
+- Otherwise, if `OuterC`, `InnerC`, and `PatternC` each model `std::derived_from<std::forward_iterator_tag>`, `iterator_category` denotes [`std::forward_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+- Otherwise, `iterator_category` denotes [`std::input_iterator_tag`](/docs/cpp/library/iterator/iterator_tags).
+
+### Data members
+
+{/* source:cpp-ranges-join-with-view-iterator:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`Parent*` `parent_`</DescriptionTerm>
+    <DescriptionBody>the pointer to the parent [`join_with_view`](/docs/cpp/library/ranges/join_with_view) (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`OuterIter` `outer_it_` (present only if `Base` models [`forward_range`](/docs/cpp/library/ranges/forward_range))</DescriptionTerm>
+    <DescriptionBody>the outer iterator (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::variant<PatternIter, InnerIter>` `inner_it_`</DescriptionTerm>
+    <DescriptionBody>the inner iterator (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-join-with-view-iterator:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/join_with_view/iterator/iterator)</DescriptionTerm>
+    <DescriptionBody>constructs an iterator (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator*`](/docs/cpp/library/ranges/join_with_view/iterator/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the element (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++ operator++(int) operator-- operator--(int)`](/docs/cpp/library/ranges/join_with_view/iterator/operator_arith)</DescriptionTerm>
+    <DescriptionBody>advances or decrements the underlying iterator (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-ranges-join-with-view-iterator:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`](/docs/cpp/library/ranges/join_with_view/iterator/operator_cmp) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>compares the underlying iterators (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_move`](/docs/cpp/library/ranges/join_with_view/iterator/iter_move) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>casts the result of dereferencing the underlying iterator to its associated rvalue reference type (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iter_swap`](/docs/cpp/library/ranges/join_with_view/iterator/iter_swap) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>swaps the objects pointed to by two underlying iterators (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

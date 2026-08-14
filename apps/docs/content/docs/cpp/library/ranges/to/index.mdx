@@ -1,0 +1,345 @@
+---
+title: "std::ranges::to"
+description: "The overloads of the range conversion function construct a new non-view object from a source range as its first argument by calling a constructor taking a range, a std::from_range_t tagged ranged constructor, a constructor taking an iterator-sentinel pair, or by back inserting each element of the source range into the arguments-constructed object."
+source_url: "https://en.cppreference.com/w/cpp/ranges/to"
+language: "C++"
+---
+
+{/* source:cpp-ranges-to:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class C, ranges::input_range R, class... Args >
+    requires (!ranges::view<C>)
+
+constexpr C to( R&& r, Args&&... args );`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< template< class... > class C,
+          ranges::input_range R, class... Args >
+
+constexpr auto to( R&& r, Args&&... args );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class C, class... Args >
+    requires (!ranges::view<C>)
+
+constexpr /*range adaptor closure*/ to( Args&&... args );`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< template< class... > class C, class... Args >
+constexpr /*range adaptor closure*/ to( Args&&... args );`} />
+
+Helper templates
+
+  <Declaration id="5" language="cpp" code={`template< class Container >
+constexpr bool /*reservable-container*/ =
+    ranges::sized_range<Container> &&
+    requires (Container& c, ranges::range_size_t<Container> n)
+    {
+        c.reserve(n);
+        { c.capacity() } -> std::same_as<decltype(n)>;
+        { c.max_size() } -> std::same_as<decltype(n)>;
+
+    };`} />
+  (5) (exposition only*)
+  <Declaration id="6" language="cpp" code={`template< class Container, class Reference >
+constexpr bool /*container-appendable*/ =
+    requires (Container& c, Reference&& ref)
+    {
+        requires
+        (
+            requires { c.emplace_back(std::forward<Reference>(ref)); }     ||
+            requires { c.push_back(std::forward<Reference>(ref)); }        ||
+            requires { c.emplace(c.end(), std::forward<Reference>(ref)); } ||
+            requires { c.insert(c.end(), std::forward<Reference>(ref)); }
+        );
+
+    };`} />
+  (6) (exposition only*)
+  <Declaration id="7" language="cpp" code={`template< class Reference, class C >
+constexpr auto /*container-appender*/( C& c );`} />
+  (7) (exposition only*)
+  <Declaration id="8" language="cpp" code={`template< class R, class T >
+concept /*container-compatible-range*/ =
+    ranges::input_range<R> &&
+
+    std::convertible_to<ranges::range_reference_t<R>, T>;`} />
+  (8) (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-to:0001 */}
+The overloads of the range conversion function construct a new non-view object from a source range as its first argument by calling a constructor taking a range, a `std::from_range_t` tagged ranged constructor, a constructor taking an iterator-sentinel pair, or by back inserting each element of the source range into the arguments-constructed object.
+
+{/* source:cpp-ranges-to:0002 */}
+1) Constructs an object of type `C` from the elements of `r` in the following:
+
+{/* source:cpp-ranges-to:0003 */}
+a) If `C` does not satisfy [`input_range`](/docs/cpp/library/ranges/input_range) or `std::convertible_to<ranges::range_reference_t<R>, ranges::range_value_t<C>>` is `true`:
+
+{/* source:cpp-ranges-to:0004 */}
+1) Constructing a non-view object as if [direct-initializing](/docs/cpp/language/initialization/direct_initialization) (but not direct-list-initializing) an object of type `C` from the source range `std::forward<R>(r)` and the rest of the functional arguments `std::forward<Args>(args)...` if `std::constructible_from<C, R, Args...>` is `true`.
+
+{/* source:cpp-ranges-to:0005 */}
+2) Otherwise, constructing a non-view object as if [direct-initializing](/docs/cpp/language/initialization/direct_initialization) (but not direct-list-initializing) an object of type `C` from additional disambiguation tag `std::from_range`, the source range `std::forward<R>(r)` and the rest of the functional arguments `std::forward<Args>(args)...` if `std::constructible_from<C, std::from_range_t, R, Args...>` is `true`.
+
+{/* source:cpp-ranges-to:0006 */}
+3) Otherwise, constructing a non-view object as if [direct-initializing](/docs/cpp/language/initialization/direct_initialization) (but not direct-list-initializing) an object of type `C` from the iterator-sentinel pair (`ranges::begin(r)` as an iterator and `ranges::end(r)` as sentinel, where iterator and sentinel have the same type. In other words, the source range must be a common range), and the rest of the function arguments `std::forward<Args>(args)...` if all of the conditions below are `true`:
+- `ranges::common_range<R>`
+- If `std::iterator_traits<ranges::iterator_t<R>>::iterator_category` is valid and denotes a type that satisfies `std::derived_from<std::input_iterator_tag>`
+- `std::constructible_from<C, ranges::iterator_t<R>, ranges::sentinel_t<R>, Args...>`
+
+{/* source:cpp-ranges-to:0007 */}
+4) Otherwise, constructing a non-view range object as if [direct-initializing](/docs/cpp/language/initialization/direct_initialization) (but not direct-list-initializing) an object of type `C` from the rest of the function arguments `std::forward<Args>(args)...` with the following equivalent call below after the construction:
+
+```cpp
+if constexpr (ranges::sized_range<R> && /*reservable-container*/<C>)
+    c.reserve(static_cast<ranges::range_size_t<C>>(ranges::size(r)));
+ranges::for_each(r, /*container-appender*/(c));
+```
+
+If the `R` satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) and `C` satisfies [`reservable-container`](/docs/cpp/library/ranges/to#reservable-container), the constructed object `c` of type `C` is able to reserve storage with the initial storage size `ranges::size(r)` to prevent additional allocations during inserting new elements. Each element of `r` is appended to `c`. The operations above are valid if both of the conditions below are `true`:
+- `std::constructible_from<C, Args...>`
+- [`container-appendable`](/docs/cpp/library/ranges/to#container-appendable)`<C, ranges::range_reference_t<R>>`
+
+{/* source:cpp-ranges-to:0008 */}
+b) Otherwise, the return expression is equivalent to:
+
+```cpp
+to<C>(ranges::ref_view(r) | views::transform([](auto&& elem)
+{
+    return to<ranges::range_value_t<C>>(std::forward<decltype(elem)>(elem));
+}), std::forward<Args>(args)...)
+```
+
+Which allows nested range constructions within the range if `ranges::input_range<ranges::range_reference_t<C>>` is `true`. Otherwise, the program is ill-formed.
+
+{/* source:cpp-ranges-to:0009 */}
+2) Constructs an object of deduced type from the elements of `r`. Let `/*input-iterator*/` be an exposition only type that satisfies [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator):
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`struct /*input-iterator*/
+{
+    using iterator_category = std::input_iterator_tag;
+    using value_type = ranges::range_value_t<R>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = std::add_pointer_t<ranges::range_reference_t<R>>;
+    using reference = ranges::range_reference_t<R>;
+    reference operator*() const;                      // not defined
+    pointer operator->() const;                       // not defined
+    /*input-iterator*/& operator++();                 // not defined
+    /*input-iterator*/ operator++(int);               // not defined
+    bool operator==(const /*input-iterator*/&) const; // not defined
+
+};`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Let `/*DEDUCE-EXPR*/` be defined as follows:
+- `C(std::declval<R>(), std::declval<Args>()...)`, if that expression is valid.
+- Otherwise, `C(std::from_range, std::declval<R>(),  std::declval<Args>()...)`, if that expression is valid.
+- Otherwise, `C(std::declval</*input-iterator*/>(),  std::declval</*input-iterator*/>(),  std::declval<Args>()...)`, if that expression is valid.
+- Otherwise, the program is ill-formed.
+
+The call is equivalent to `to<decltype(/*DEDUCE-EXPR*/)>    (std::forward<R>(r), std::forward<Args>(args)...)`.
+
+{/* source:cpp-ranges-to:0010 */}
+3,4) Returns a perfect forwarding call wrapper that is also a [RangeAdaptorClosureObject](/docs/cpp/library/named_req/RangeAdaptorClosureObject).
+
+{/* source:cpp-ranges-to:0011 */}
+5) Is `true` if it satisfies `ranges::sized_range` and is eligible to be reservable.
+
+{/* source:cpp-ranges-to:0012 */}
+6) Is `true` if one element of type `Reference` can be appended to `Container` through a member function call `emplace_back`, `push_back`, `emplace` or `insert`.
+
+{/* source:cpp-ranges-to:0013 */}
+7) Returns a function object where a call to the returned function object is expression-equivalent to appending one element to a container. The return expression is equivalent to:
+
+```cpp
+return [&c]<class Reference>(Reference&& ref)
+{
+    if constexpr (requires { c.emplace_back(std::declval<Reference>()); })
+        c.emplace_back(std::forward<Reference>(ref));
+    else if constexpr (requires { c.push_back(std::declval<Reference>()); })
+        c.push_back(std::forward<Reference>(ref));
+    else if constexpr (requires { c.emplace(c.end(),
+                                            std::declval<Reference>()); })
+        c.emplace(c.end(), std::forward<Reference>(ref));
+    else
+        c.insert(c.end(), std::forward<Reference>(ref));
+};
+```
+
+{/* source:cpp-ranges-to:0014 */}
+8) Is used in the definition of containers in constructing an input range `R` whose range reference type must be convertible to `T`.
+
+### Parameters
+
+{/* source:cpp-ranges-to:0015 */}
+<ParameterList>
+  <Parameter name="r">a source range object</Parameter>
+  <Parameter name="args">list of the arguments to [(1,2)](/docs/cpp/library/ranges/to#Version_1) construct a range or [(3,4)](/docs/cpp/library/ranges/to#Version_3) bind to the last parameters of range adaptor closure object</Parameter>
+</ParameterList>
+
+Type requirements
+
+- `C` must be cv-unqualified class type [(1,3)](/docs/cpp/library/ranges/to#Version_1)
+
+### Return value
+
+{/* source:cpp-ranges-to:0016 */}
+1,2) A constructed non-view object.
+
+{/* source:cpp-ranges-to:0017 */}
+3,4) A range adaptor closure object of unspecified type, with the following properties:
+
+#### ranges::to return type
+
+##### Member objects
+
+The returned object behaves as if it has no target object, and an [`std::tuple`](/docs/cpp/library/utility/tuple) object `tup` constructed with `std::tuple<std::decay_t<Args>...>(std::forward<Args>(args)...)`, except that the returned object's assignment behavior is unspecified and the names are for exposition only.
+
+##### Constructors
+
+The return type of `ranges::to` [(3,4)](/docs/cpp/library/ranges/to#Version_3) behaves as if its copy/move constructors perform a memberwise copy/move. It is [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible) if all of its member objects (specified above) are *CopyConstructible*, and is [*MoveConstructible*](/docs/cpp/library/named_req/MoveConstructible) otherwise.
+
+##### Member function `operator()`
+
+Given an object `G` obtained from an earlier call to `range::to</* see below */>(args...)`, when a glvalue `g` designating `G` is invoked in a function call expression `g(r)`, an invocation of the stored object takes place, as if by
+
+- `ranges::to</* see below */>(r, std::get<Ns>(g.tup)...)`, where
+  - `r` is a source range object that must satisfy [`input_range`](/docs/cpp/library/ranges/input_range).
+  - `Ns` is an integer pack `0, 1, ..., (sizeof...(Args) - 1)`.
+  - `g` is an lvalue in the call expression if it is an lvalue in the call expression, and is an rvalue otherwise. Thus `std::move(g)(r)` can move the bound arguments into the call, where `g(r)` would copy.
+  - The specified template argument is [(3)](/docs/cpp/library/ranges/to#Version_3) `C` or [(4)](/docs/cpp/library/ranges/to#Version_4) the deduced type from a class template `C` that must not satisfy [`view`](/docs/cpp/library/ranges/view).
+
+The program is ill-formed if `g` has volatile-qualified type.
+
+### Exceptions
+
+{/* source:cpp-ranges-to:0018 */}
+Only throws if construction of a non-view object throws.
+
+### Notes
+
+{/* source:cpp-ranges-to:0019 */}
+The insertion of elements into the container may involve copy which can be less efficient than move because lvalue references are produced during the indirection call. Users can opt-in to use `views::as_rvalue` to adapt the range in order for their elements to always produce an rvalue reference during the indirection call which implies move.
+
+{/* source:cpp-ranges-to:0020 */}
+The parentheses are mandatory when using the pipe syntax.
+
+{/* source:cpp-ranges-to:0021 */}
+```cpp
+auto vec = r | std::ranges::to<std::vector>;   // Error
+auto vec = r | std::ranges::to<std::vector>(); // OK
+```
+
+{/* source:cpp-ranges-to:0022 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_ranges_to_container`](/docs/cpp/library/feature_test#cpp_lib_ranges_to_container) | [`202202L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_to_container_202202L) | (C++23) | `std::ranges::to` |
+
+### Example
+
+{/* source:cpp-ranges-to:0023 */}
+A preview link: [Compiler Explorer](https://godbolt.org/z/s4E3n8ed5)
+
+```cpp
+#include <boost/container/devector.hpp>
+#include <concepts>
+#include <list>
+#include <initializer_list>
+#include <iostream>
+#include <print>
+#include <ranges>
+#include <regex>
+#include <string>
+#include <vector>
+ 
+int main()
+{
+    auto vec = std::views::iota(1, 5)
+             | std::views::transform([](int v){ return v * 2; })
+             | std::ranges::to<std::vector>();
+ 
+    static_assert(std::same_as<decltype(vec), std::vector<int>>);
+    std::println("{}", vec);
+ 
+    auto list = vec | std::views::take(3) | std::ranges::to<std::list<double>>();
+    std::println("{}", list);
+}
+ 
+void ctor_demos()
+{
+    // 1.a.1) Direct init
+    {
+        char array[]{'a', 'b', '\0', 'c'};
+ 
+        // Argument type is convertible to result value type:
+        auto str_to = std::ranges::to<std::string>(array);
+        // Equivalent to
+        std::string str(array);
+ 
+        // Result type is not an input range:
+        auto re_to = std::ranges::to<std::regex>(array);
+        // Equivalent to
+        std::regex re(array);
+    }
+ 
+    // 1.a.2) from_range ctor
+    {
+        auto list = {'a', 'b', '\0', 'c'};
+ 
+        // Argument type is convertible to result value type:
+        auto str_to = std::ranges::to<std::string>(list);
+        // Equivalent to
+        std::string str(std::from_range, list);
+ 
+        // Result type is not an input range:
+        auto pair_to = std::ranges::to<std::pair<std::from_range_t, bool>>(true);
+        // Equivalent to
+        std::pair<std::from_range_t, bool> pair(std::from_range, true);
+    }
+ 
+    // 1.a.3) iterator pair ctor
+    {
+        auto list = {'a', 'b', '\0', 'c'};
+ 
+        // Argument type is convertible to result value type:
+        auto devector_to = std::ranges::to<boost::container::devector<char>>(list);
+        // Equivalent to
+        boost::container::devector<char> devector(std::ranges::begin(list), 
+                                                  std::ranges::end(list));
+ 
+        // Result type is not an input range:
+        std::regex re;
+        auto it_to = std::ranges::to<std::cregex_iterator>(list, re);
+        // Equivalent to
+        std::cregex_iterator it(std::ranges::begin(list), std::ranges::end(list), re);
+    }
+}
+```
+
+Output:
+
+```text
+[2, 4, 6, 8]
+[2, 4, 6]
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-to:0024 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-to:0025 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3984} standard="C++23">
+    <PublishedBehavior>the nested construction branch of `ranges::to` resulted to program ill-formed if `R&` does not model [`viewable_range`](/docs/cpp/library/ranges/viewable_range)</PublishedBehavior>
+    <CorrectedBehavior>made well-formed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={4016} standard="C++23">
+    <PublishedBehavior>the container insertion branch of `ranges::to` involved use of insert iterators</PublishedBehavior>
+    <CorrectedBehavior>replaced with direct appending of elements to container</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### References
+
+{/* source:cpp-ranges-to:0026 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 26.5.7 Range conversions [range.utility.conv]

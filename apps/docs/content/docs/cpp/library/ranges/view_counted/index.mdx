@@ -1,0 +1,125 @@
+---
+title: "std::ranges::views::counted"
+description: "A counted view presents a view of the elements of the counted range [i, n) for some iterator i and non-negative integer n."
+source_url: "https://en.cppreference.com/w/cpp/ranges/view_counted"
+language: "C++"
+---
+
+{/* source:cpp-ranges-view-counted:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`inline constexpr /*unspecified*/ counted = /*unspecified*/;`} />
+Call signature
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class Iterator, class DifferenceType >
+    requires /* see below */
+
+constexpr /*span-or-subrange*/ counted( Iterator&& it, DifferenceType&& count );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-view-counted:0001 */}
+A counted view presents a [`view`](/docs/cpp/library/ranges/view) of the elements of the *counted range* `[i, n)` for some iterator `i` and non-negative integer `n`.
+
+{/* source:cpp-ranges-view-counted:0002 */}
+A counted range `[i, n)` is the `n` elements starting with the element pointed to by `i` and up to but not including the element, if any, pointed to by the result of `n` applications of `++i`.
+
+{/* source:cpp-ranges-view-counted:0003 */}
+If `n == 0`, the counted range is valid and empty. Otherwise, the counted range is only valid if `n` is positive, `i` is dereferenceable, and `[++i, --n)` is a valid counted range.
+
+{/* source:cpp-ranges-view-counted:0004 */}
+Formally, if `it` and `count` are expressions, `T` is `std::decay_t<decltype((it))>`, and `D` is `std::iter_difference_t<T>`, then
+
+{/* source:cpp-ranges-view-counted:0005 */}
+- if `T` models [`input_or_output_iterator`](/docs/cpp/library/iterator/input_or_output_iterator) and `decltype((count))` models `std::convertible_to<D>`:
+  - if `T` models [`contiguous_iterator`](/docs/cpp/library/iterator/contiguous_iterator), then `views::counted(it, count)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `std::span(std::to_address(it), static_cast<std::size_t>(static_cast<D>(count)))`,
+  - otherwise, if `T` models [`random_access_iterator`](/docs/cpp/library/iterator/random_access_iterator), then `views::counted(it, count)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `ranges::subrange(it, it + static_cast<D>(count))`,
+  - otherwise, `views::counted(it, count)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `ranges::subrange(std::counted_iterator(it, count), std::default_sentinel)`.
+- Otherwise, `views::counted(it, count)` is ill-formed.
+
+### Customization point objects
+
+{/* source:cpp-ranges-view-counted:0006 */}
+The name `views::counted` denotes a *customization point object*, which is a const [function object](/docs/cpp/library/named_req/FunctionObject) of a [literal](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__counted_fn`.
+
+{/* source:cpp-ranges-view-counted:0007 */}
+All instances of `__counted_fn` are equal. The effects of invoking different instances of type `__counted_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `views::counted` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-view-counted:0008 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `views::counted` above, `__counted_fn` models
+
+{/* source:cpp-ranges-view-counted:0009 */}
+- `std::invocable<__counted_fn, Args...>`,
+- `std::invocable<const __counted_fn, Args...>`,
+- `std::invocable<__counted_fn&, Args...>`, and
+- `std::invocable<const __counted_fn&, Args...>`.
+
+{/* source:cpp-ranges-view-counted:0010 */}
+Otherwise, no function call operator of `__counted_fn` participates in overload resolution.
+
+### Notes
+
+{/* source:cpp-ranges-view-counted:0011 */}
+[`views::counted`](/docs/cpp/library/ranges/counted_view#top) does not check if the range is long enough to provide all `count` elements: use `views::take` if that check is necessary.
+
+### Example
+
+{/* source:cpp-ranges-view-counted:0012 */}
+```cpp
+#include <iostream>
+#include <ranges>
+ 
+int main()
+{
+    const int a[]{1, 2, 3, 4, 5, 6, 7};
+    for (int i : std::views::counted(a, 3))
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    const auto il = {1, 2, 3, 4, 5};
+    for (int i : std::views::counted(il.begin() + 1, 3))
+        std::cout << i << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1 2 3
+2 3 4
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-view-counted:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-view-counted:0014 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2393R1" standard="C++20">
+    <PublishedBehavior>implicit conversion from an integer-class type to `std::size_t` might be invalid</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-view-counted:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::take_view`, `views::take`](/docs/cpp/library/ranges/take_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the first N elements of another [`view`](/docs/cpp/library/ranges/view) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::subrange`](/docs/cpp/library/ranges/subrange) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>combines an iterator-sentinel pair into a [`view`](/docs/cpp/library/ranges/view) (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`counted_iterator`](/docs/cpp/library/iterator/counted_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>iterator adaptor that tracks the distance to the end of the range (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::count`, `ranges::count_if`](/docs/cpp/library/algorithm/ranges/count) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns the number of elements satisfying specific criteria (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

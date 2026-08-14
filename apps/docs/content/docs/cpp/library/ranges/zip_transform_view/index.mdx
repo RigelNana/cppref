@@ -1,0 +1,245 @@
+---
+title: "std::ranges::views::zip_transform, std::ranges::zip_transform_view"
+description: "zip_transform_view is a range adaptor that takes an invocable object and one or more views, and produces a view whose i-th element is the result of applying the invocable object to the i-th elements of all views."
+source_url: "https://en.cppreference.com/w/cpp/ranges/zip_transform_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-zip-transform-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< std::move_constructible F, ranges::input_range... Views >
+    requires (ranges::view<Views> && ...) && (sizeof...(Views) > 0) &&
+              std::is_object_v<F> && std::regular_invocable<
+                  F&, ranges::range_reference_t<Views>...> &&
+              /*can-reference*/<std::invoke_result_t<
+                  F&, ranges::range_reference_t<Views>...>>
+class zip_transform_view
+
+     : public ranges::view_interface<zip_transform_view<F, Views...>>`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`namespace views {
+    inline constexpr /*unspecified*/ zip_transform = /*unspecified*/;
+
+}`} />
+
+  Call signature
+
+  <Declaration language="cpp" since="C++23" code={`template< class F, ranges::viewable_range... Rs >
+    requires /* see below */
+
+constexpr auto zip_transform( F&& f, Rs&&... rs );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-zip-transform-view:0001 */}
+1) `zip_transform_view` is a range adaptor that takes an invocable object and one or more [`view`](/docs/cpp/library/ranges/view)s, and produces a [`view`](/docs/cpp/library/ranges/view) whose `i`th element is the result of applying the invocable object to the `i`th elements of all views.
+
+A type `T` models the exposition-only concept `/*can-reference*/` if and only if `T&` is a valid type.
+
+{/* source:cpp-ranges-zip-transform-view:0002 */}
+2) `views::zip_transform` is a customization point object.
+
+When calling with one argument `f`, let `FD` be `std::decay_t<decltype(f)>`, if:
+
+- `FD` models [`copy_constructible`](/docs/cpp/library/concepts/copy_constructible),
+- `FD&` models [`regular_invocable`](/docs/cpp/library/concepts/invocable), and
+- `std::invoke_result_t<FD&>` is an object type,
+
+then `views::zip_transform(f)` is [`expression-equivalent`](/docs/cpp/language/expressions#Expression-equivalence) to `((void)f, auto(views::empty<std::decay_t<std::invoke_result_t<FD&>>>))`. Otherwise, the call to `views::zip_transform` is ill-formed.
+
+When calling with more than one arguments `f` and `rs...`, `views::zip_transform(f, rs...)` is [`expression-equivalent`](/docs/cpp/language/expressions#Expression-equivalence) to `ranges::zip_transform_view(f, rs...)`.
+
+{/* source:cpp-ranges-zip-transform-view:0003 */}
+`zip_transform_view` models the concepts [`random_access_range`](/docs/cpp/library/ranges/random_access_range), [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range), [`forward_range`](/docs/cpp/library/ranges/forward_range), [`input_range`](/docs/cpp/library/ranges/input_range), [`common_range`](/docs/cpp/library/ranges/common_range), and [`sized_range`](/docs/cpp/library/ranges/sized_range) when the underlying `ranges::zip_view<Views...>` models respective concepts.
+
+### Customization point objects
+
+{/* source:cpp-ranges-zip-transform-view:0004 */}
+The name `views::zip_transform` denotes a *customization point object*, which is a const [`function object`](/docs/cpp/library/named_req/FunctionObject) of a [`literal`](/docs/cpp/library/named_req/LiteralType) [`semiregular`](/docs/cpp/library/concepts/semiregular) class type. For exposition purposes, the cv-unqualified version of its type is denoted as `__zip_transform_fn`.
+
+{/* source:cpp-ranges-zip-transform-view:0005 */}
+All instances of `__zip_transform_fn` are equal. The effects of invoking different instances of type `__zip_transform_fn` on the same arguments are equivalent, regardless of whether the expression denoting the instance is an lvalue or rvalue, and is const-qualified or not (however, a volatile-qualified instance is not required to be invocable). Thus, `views::zip_transform` can be copied freely and its copies can be used interchangeably.
+
+{/* source:cpp-ranges-zip-transform-view:0006 */}
+Given a set of types `Args...`, if `std::declval<Args>()...` meet the requirements for arguments to `views::zip_transform` above, `__zip_transform_fn` models
+
+{/* source:cpp-ranges-zip-transform-view:0007 */}
+- `std::invocable<__zip_transform_fn, Args...>`,
+- `std::invocable<const __zip_transform_fn, Args...>`,
+- `std::invocable<__zip_transform_fn&, Args...>`, and
+- `std::invocable<const __zip_transform_fn&, Args...>`.
+
+{/* source:cpp-ranges-zip-transform-view:0008 */}
+Otherwise, no function call operator of `__zip_transform_fn` participates in overload resolution.
+
+### Member functions
+
+{/* source:cpp-ranges-zip-transform-view:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/zip_transform_view/zip_transform_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `zip_transform_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/zip_transform_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/zip_transform_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/zip_transform_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if each underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/ranges/zip_transform_view/deduction_guides)
+
+### Member types
+
+{/* source:cpp-ranges-zip-transform-view:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`InnerView` (private)</DescriptionTerm>
+    <DescriptionBody>`ranges::zip_view<Views...>`. (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`ziperator` (private)</DescriptionTerm>
+    <DescriptionBody>`ranges::iterator_t<const InnerView>` if `Const` is `true`, otherwise `ranges::iterator_t<InnerView>`. (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`zentinel` (private)</DescriptionTerm>
+    <DescriptionBody>`ranges::sentinel_t<const InnerView>` if `Const` is `true`, otherwise `ranges::sentinel_t<InnerView>`. (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Data members
+
+{/* source:cpp-ranges-zip-transform-view:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`zip_` (private)</DescriptionTerm>
+    <DescriptionBody>An underlying view object of type `InnerView` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`fun_` (private)</DescriptionTerm>
+    <DescriptionBody>A wrapped invocable object of type [`movable-box`](/docs/cpp/library/ranges/copyable_wrapper)`<F>` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Nested classes
+
+{/* source:cpp-ranges-zip-transform-view:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/zip_transform_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sentinel`](/docs/cpp/library/ranges/zip_transform_view/sentinel)</DescriptionTerm>
+    <DescriptionBody>the sentinel type used when the underlying `zip_view` is not a [`common_range`](/docs/cpp/library/ranges/common_range) (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-ranges-zip-transform-view:0013 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_zip`](/docs/cpp/library/feature_test#cpp_lib_ranges_zip) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_zip_202110L) | (C++23) | `ranges::zip_view`, `std::ranges::zip_transform_view`, `ranges::adjacent_view`, `ranges::adjacent_transform_view` |
+
+### Example
+
+{/* source:cpp-ranges-zip-transform-view:0014 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <list>
+#include <ranges>
+#include <vector>
+ 
+void print(auto const rem, auto const& r)
+{
+    std::cout << rem << '{'; 
+    for (char o[]{0,' ',0}; auto const& e : r)
+        std::cout << o << e, *o = ',';
+    std::cout << "}\n";
+}
+ 
+int main()
+{
+    auto v1 = std::vector<float>{1, 2, 3};
+    auto v2 = std::list<short>{1, 2, 3, 4};
+    auto v3 = std::to_array({1, 2, 3, 4, 5});
+ 
+    auto add = [](auto a, auto b, auto c) { return a + b + c; };
+ 
+    auto sum = std::views::zip_transform(add, v1, v2, v3);
+ 
+    print("v1:  ", v1);
+    print("v2:  ", v2);
+    print("v3:  ", v3);
+    print("sum: ", sum);
+}
+```
+
+Output:
+
+```text
+v1:  {1, 2, 3}
+v2:  {1, 2, 3, 4}
+v3:  {1, 2, 3, 4, 5}
+sum: {3, 6, 9}
+```
+
+### See also
+
+{/* source:cpp-ranges-zip-transform-view:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::zip_view` `views::zip`](/docs/cpp/library/ranges/zip_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of references to corresponding elements of the adapted views (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform_view` `views::transform`](/docs/cpp/library/ranges/transform_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) of a sequence that applies a transformation function to each element (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::elements_view` `views::elements`](/docs/cpp/library/ranges/elements_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>takes a [`view`](/docs/cpp/library/ranges/view) consisting of [`tuple-like`](/docs/cpp/library/utility/tuple/tuple-like) values and a number N and produces a [`view`](/docs/cpp/library/ranges/view) of Nth element of each tuple (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

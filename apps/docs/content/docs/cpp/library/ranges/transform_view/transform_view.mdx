@@ -1,0 +1,90 @@
+---
+title: "std::ranges::transform_view<V,F>::transform_view"
+description: "Constructs a transform_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/transform_view/transform_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-transform-view-transform-view:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`transform_view() requires std::default_initializable<V> &&
+                          std::default_initializable<F> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit transform_view( V base, F fun );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-transform-view-transform-view:0001 */}
+Constructs a `transform_view`.
+
+{/* source:cpp-ranges-transform-view-transform-view:0002 */}
+1. 1) Default constructor. [Value-initializes](/docs/cpp/language/initialization/value_initialization) the underlying view [`base_`](/docs/cpp/library/ranges/transform_view#Data_members) and the transformation function [`fun_`](/docs/cpp/library/ranges/transform_view#Data_members).
+
+{/* source:cpp-ranges-transform-view-transform-view:0003 */}
+2. 2) Move constructs the underlying view `base_` from `base` and the transformation function `fun_` from `fun`.
+
+### Parameters
+
+{/* source:cpp-ranges-transform-view-transform-view:0004 */}
+<ParameterList>
+  <Parameter name="base">view</Parameter>
+  <Parameter name="fun">transformation function</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-ranges-transform-view-transform-view:0005 */}
+Demonstrates π approximation using serial expansion of arc tangent of 1: `atan(1) = π/4 ≈ 1 - 1/3 + 1/5 - 1/7 + 1/9 - 1/11 + ...`
+
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <numbers>
+#include <numeric>
+#include <ranges>
+ 
+int main()
+{
+    std::cout << std::setprecision(15) << std::fixed;
+    auto atan1term = std::ranges::views::transform(
+        [](int n) { return ((n % 2) ? -1 : 1) * 1.0 / (2 * n + 1); }
+    );
+    for (const int iterations : {1, 2, 3, 4, 5, 10, 100, 1000, 1'000'000})
+    {
+        auto seq = std::ranges::views::iota(0, iterations) | atan1term;
+        const double accum = std::accumulate(seq.begin(), seq.end(), 0.0);
+        std::cout << "π ≈ " << 4 * accum << " (iterations: " << iterations << ")\n";
+    }
+    std::cout << "π ≈ " << std::numbers::pi << " (std::numbers::pi)\n";
+}
+```
+
+Possible output:
+
+```text
+π ≈ 4.000000000000000 (iterations: 1)
+π ≈ 2.666666666666667 (iterations: 2)
+π ≈ 3.466666666666667 (iterations: 3)
+π ≈ 2.895238095238096 (iterations: 4)
+π ≈ 3.339682539682540 (iterations: 5)
+π ≈ 3.041839618929403 (iterations: 10)
+π ≈ 3.131592903558554 (iterations: 100)
+π ≈ 3.140592653839794 (iterations: 1000)
+π ≈ 3.141591653589774 (iterations: 1000000)
+π ≈ 3.141592653589793 (std::numbers::pi)
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-transform-view-transform-view:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-transform-view-transform-view:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3714} standard="C++20">
+    <PublishedBehavior>the multi-parameter constructor was not explicit (P2711R1)</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2325R3" standard="C++20">
+    <PublishedBehavior>if `F` is not [`default_initializable`](/docs/cpp/library/concepts/default_initializable), the default constructor constructs a `transform_view` which does not contain an `F`</PublishedBehavior>
+    <CorrectedBehavior>the `transform_view` is also not [`default_initializable`](/docs/cpp/library/concepts/default_initializable)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

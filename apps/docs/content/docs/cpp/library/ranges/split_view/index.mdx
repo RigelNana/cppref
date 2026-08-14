@@ -1,0 +1,197 @@
+---
+title: "std::ranges::views::split, std::ranges::split_view"
+description: "split_view takes a view and a delimiter, and splits the view into subranges on the delimiter."
+source_url: "https://en.cppreference.com/w/cpp/ranges/split_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-split-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< ranges::forward_range V, ranges::forward_range Pattern >
+requires ranges::view<V> &&
+         ranges::view<Pattern> &&
+         std::indirectly_comparable<ranges::iterator_t<V>,
+                                    ranges::iterator_t<Pattern>,
+                                    ranges::equal_to>
+class split_view
+
+    : public ranges::view_interface<split_view<V, Pattern>>`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`namespace views {
+    inline constexpr /* unspecified */ split = /* unspecified */;
+
+}`} />
+
+Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< ranges::viewable_range R, class Pattern >
+    requires /* see below */
+
+constexpr ranges::view auto split( R&& r, Pattern&& pattern );`} />
+  <Declaration language="cpp" since="C++20" code={`template< class Pattern >
+constexpr /* range adaptor closure */ split( Pattern&& pattern );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-split-view:0001 */}
+1. 1) `split_view` takes a [`view`](/docs/cpp/library/ranges/view) and a delimiter, and splits the [`view`](/docs/cpp/library/ranges/view) into subranges on the delimiter.
+
+{/* source:cpp-ranges-split-view:0002 */}
+2. 2) *[RangeAdaptorObject](/docs/cpp/library/named_req/RangeAdaptorObject)*. The expression `views::split(e, p)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to `split_view(e, p)` for any suitable subexpressions `e` and `p`.
+
+{/* source:cpp-ranges-split-view:0003 */}
+`split_view` models the concepts [`forward_range`](/docs/cpp/library/ranges/forward_range), and [`common_range`](/docs/cpp/library/ranges/common_range) when the underlying [`view`](/docs/cpp/library/ranges/view) `V` models respective concepts.
+
+{/* source:cpp-ranges-split-view:0004 */}
+The inner range (`ranges::range_reference_t<split_view>`) is a `ranges::subrange<ranges::iterator_t<V>>`, which models [`common_range`](/docs/cpp/library/ranges/common_range), models [`sized_range`](/docs/cpp/library/ranges/sized_range) when `ranges::iterator_t<V>` models `std::sized_sentinel_for<ranges::iterator_t<V>>`, and models [`contiguous_range`](/docs/cpp/library/ranges/contiguous_range), [`random_access_range`](/docs/cpp/library/ranges/random_access_range), [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range), and [`forward_range`](/docs/cpp/library/ranges/forward_range) when `V` models respective concepts.
+
+{/* source:cpp-ranges-split-view:0005 */}
+Unlike [`lazy_split_view`](/docs/cpp/library/ranges/lazy_split_view), `split_view` maintains the continuity of the subrange, making it suitable for string splitting.
+
+### Data members
+
+{/* source:cpp-ranges-split-view:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`V` `base_` (private)</DescriptionTerm>
+    <DescriptionBody>the underlying (adapted) [`view`](/docs/cpp/library/ranges/view) (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`Pattern` `pattern_` (private)</DescriptionTerm>
+    <DescriptionBody>the pattern object that is used as a delimiter to split the underlying [`view`](/docs/cpp/library/ranges/view) (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`non-propagating-cache`](/docs/cpp/library/ranges/non-propagating-cache)`<ranges::subrange<ranges::iterator_t<V>>>` `cached_begin_` (private)</DescriptionTerm>
+    <DescriptionBody>an object that caches the result of the first call to [`begin()`](/docs/cpp/library/ranges/split_view/begin) (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-split-view:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[(constructor)](/docs/cpp/library/ranges/split_view/split_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `split_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`base`](/docs/cpp/library/ranges/split_view/base)</DescriptionTerm>
+    <DescriptionBody>returns a copy of the underlying (adapted) view (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/split_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/split_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`find_next`](/docs/cpp/library/ranges/split_view/find_next)</DescriptionTerm>
+    <DescriptionBody>searches for the next occurrence of the pattern (exposition-only member function*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Nested classes
+
+{/* source:cpp-ranges-split-view:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/split_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sentinel`](/docs/cpp/library/ranges/split_view/sentinel)</DescriptionTerm>
+    <DescriptionBody>the sentinel type (exposition-only member class*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/ranges/split_view/deduction_guides)
+
+### Notes
+
+{/* source:cpp-ranges-split-view:0009 */}
+Before [P2210R2](https://wg21.link/P2210R2), `split_view` used a *lazy* mechanism for splitting, and thus could not keep the bidirectional, random access, or contiguous properties of the underlying view, or make the iterator type of the inner range same as that of the underlying view. Consequently, it is redesigned by [P2210R2](https://wg21.link/P2210R2), and the lazy mechanism is moved to [`lazy_split_view`](/docs/cpp/library/ranges/lazy_split_view).
+
+{/* source:cpp-ranges-split-view:0010 */}
+The delimiter pattern generally should not be an ordinary string literal, as it will consider the null terminator to be necessary part of the delimiter; therefore, it is advisable to use a [`std::string_view`](/docs/cpp/library/string/basic_string_view) literal instead.
+
+### Example
+
+{/* source:cpp-ranges-split-view:0011 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+ 
+int main()
+{
+    using std::operator""sv;
+    constexpr auto words{"Hello^_^C++^_^20^_^!"sv};
+    constexpr auto delim{"^_^"sv};
+ 
+    for (const auto word : std::views::split(words, delim))
+        // with string_view's C++23 range constructor:
+        std::cout << std::quoted(std::string_view(word)) << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+"Hello" "C++" "20" "!"
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-split-view:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-split-view:0013 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2210R2" standard="C++20">
+    <PublishedBehavior>the old `split_view` was too lazy to be easily used</PublishedBehavior>
+    <CorrectedBehavior>it is redesigned</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-split-view:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::lazy_split_view views::lazy_split`](/docs/cpp/library/ranges/lazy_split_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) over the subranges obtained from splitting another [`view`](/docs/cpp/library/ranges/view) using a delimiter (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::join_view views::join`](/docs/cpp/library/ranges/join_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the sequence obtained from flattening a [`view`](/docs/cpp/library/ranges/view) of [`ranges`](/docs/cpp/library/ranges/range) (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

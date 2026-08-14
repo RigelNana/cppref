@@ -1,0 +1,98 @@
+---
+title: "std::ranges::viewable_range"
+description: "The viewable_range concept is a refinement of range that describes a range that can be converted into a view through views::all."
+source_url: "https://en.cppreference.com/w/cpp/ranges/viewable_range"
+language: "C++"
+---
+
+{/* source:cpp-ranges-viewable-range:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+concept viewable_range =
+    ranges::range<T> &&
+    ((ranges::view<std::remove_cvref_t<T>> &&
+      std::constructible_from<std::remove_cvref_t<T>, T>) ||
+     (!ranges::view<std::remove_cvref_t<T>> &&
+      (std::is_lvalue_reference_v<T> ||
+
+       (std::movable<std::remove_reference_t<T>> && !/*is-initializer-list*/<T>))));`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-viewable-range:0001 */}
+The `viewable_range` concept is a refinement of [`range`](/docs/cpp/library/ranges/range) that describes a range that can be converted into a [`view`](/docs/cpp/library/ranges/view) through [`views::all`](/docs/cpp/library/ranges/all_view).
+
+{/* source:cpp-ranges-viewable-range:0002 */}
+The constant `/*is-initializer-list*/<T>` is `true` if and only if `std::remove_cvref_t<T>` is a specialization of [`std::initializer_list`](/docs/cpp/library/utility/initializer_list).
+
+### Example
+
+{/* source:cpp-ranges-viewable-range:0003 */}
+```cpp
+#include <ranges>
+#include <string>
+#include <vector>
+ 
+struct valid_result {};
+struct invalid_result {};
+ 
+template <typename T>
+concept valid_viewable_range = std::same_as<T, valid_result>;
+ 
+template <typename T>
+concept invalid_viewable_range = std::same_as<T, invalid_result>;
+ 
+auto test_viewable_range(std::ranges::viewable_range auto &&) -> valid_result;
+auto test_viewable_range(auto&&) -> invalid_result;
+ 
+int main()
+{
+    auto il = {1, 2, 3};
+    int arr []{1, 2, 3};
+    std::vector vec{1, 2, 3};
+    std::ranges::ref_view r{arr};
+    std::ranges::owning_view o{std::string("Hello")};
+ 
+    static_assert(requires {
+        { test_viewable_range(il) } -> valid_viewable_range;
+        { test_viewable_range(std::move(il)) } -> invalid_viewable_range;
+        { test_viewable_range(arr) } -> valid_viewable_range;
+        { test_viewable_range(std::move(arr)) } -> invalid_viewable_range;
+        { test_viewable_range(vec) } -> valid_viewable_range;
+        { test_viewable_range(std::move(vec)) } -> valid_viewable_range;
+        { test_viewable_range(r) } -> valid_viewable_range;
+        { test_viewable_range(std::move(r)) } -> valid_viewable_range;
+        { test_viewable_range(o) } -> invalid_viewable_range;
+        { test_viewable_range(std::move(o)) } -> valid_viewable_range;
+        { test_viewable_range(std::ranges::ref_view(o)) } -> valid_viewable_range;
+    });
+}
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-viewable-range:0004 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-viewable-range:0005 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3481} standard="C++20">
+    <PublishedBehavior>`viewable_range` accepted an lvalue of a move-only view</PublishedBehavior>
+    <CorrectedBehavior>rejects</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2415R2" standard="C++20">
+    <PublishedBehavior>`viewable_range` only accepted non-[`view`](/docs/cpp/library/ranges/view) rvalues that are [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range)</PublishedBehavior>
+    <CorrectedBehavior>accepts more types</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-viewable-range:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`views::all_t views::all`](/docs/cpp/library/ranges/all_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) that includes all elements of a [`range`](/docs/cpp/library/ranges/range) (alias template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

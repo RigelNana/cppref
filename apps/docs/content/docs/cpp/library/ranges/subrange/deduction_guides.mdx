@@ -1,0 +1,78 @@
+---
+title: "Deduction guides for std::ranges::subrange"
+description: "These deduction guides are provided for std::ranges::subrange."
+source_url: "https://en.cppreference.com/w/cpp/ranges/subrange/deduction_guides"
+language: "C++"
+---
+
+{/* source:cpp-ranges-subrange-deduction-guides:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+subrange(I, S) -> subrange<I, S>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< std::input_or_output_iterator I, std::sentinel_for<I> S >
+subrange(I, S, /*make-unsigned-like-t*/<std::iter_difference_t<I>>) ->
+
+    subrange<I, S, ranges::subrange_kind::sized>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< ranges::borrowed_range<R> >
+subrange(R&&) ->
+    subrange<ranges::iterator_t<R>, ranges::sentinel_t<R>,
+             (ranges::sized_range<R> ||
+             std::sized_sentinel_for<ranges::sentinel_t<R>,
+             ranges::iterator_t<R>>) ?
+
+             ranges::subrange_kind::sized : ranges::subrange_kind::unsized>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< ranges::borrowed_range<R> >
+subrange(R&&, /*make-unsigned-like-t*/<ranges::range_difference_t<R>>) ->
+    subrange<ranges::iterator_t<R>, ranges::sentinel_t<R>,
+
+             ranges::subrange_kind::sized>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-subrange-deduction-guides:0001 */}
+These [deduction guides](/docs/cpp/language/templates/ctad) are provided for [`std::ranges::subrange`](/docs/cpp/library/ranges/subrange).
+
+{/* source:cpp-ranges-subrange-deduction-guides:0002 */}
+1. 1) Deduces the template arguments from the type of iterator and sentinel. The `subrange` is sized if `std::sized_sentinel_for<S, I>` is satisfied, as determined by the default template argument.
+
+{/* source:cpp-ranges-subrange-deduction-guides:0003 */}
+2. 2) Deduces the template arguments from the type of iterator and sentinel, while the size of range is specified. The `subrange` is always sized.
+
+{/* source:cpp-ranges-subrange-deduction-guides:0004 */}
+3. 3) Deduces the template arguments from the type of range. The `subrange` is sized if the size can be obtained from the range or its iterator and sentinel.
+
+{/* source:cpp-ranges-subrange-deduction-guides:0005 */}
+4. 4) Deduces the template arguments from the type of range, while the size of range is specified. The `subrange` is always sized.
+
+{/* source:cpp-ranges-subrange-deduction-guides:0006 */}
+For the definition of `/* make-unsigned-like-t */`, see [`make-unsigned-like-t`](/docs/cpp/library/ranges#make-unsigned-like-t).
+
+### Notes
+
+{/* source:cpp-ranges-subrange-deduction-guides:0007 */}
+While constructing the `subrange` object,
+
+{/* source:cpp-ranges-subrange-deduction-guides:0008 */}
+- for (1,2), the behavior is undefined if the iterator-sentinel pair does not denote a valid range,
+- for (2,4), the behavior is undefined if the given size is not equal to the size of the range.
+
+### Example
+
+{/* source:cpp-ranges-subrange-deduction-guides:0009 */}
+This section is incomplete
+
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-ranges-subrange-deduction-guides:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-subrange-deduction-guides:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3404} standard="C++20">
+    <PublishedBehavior>meaningless deduction guides from pair-like types were provided</PublishedBehavior>
+    <CorrectedBehavior>removed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

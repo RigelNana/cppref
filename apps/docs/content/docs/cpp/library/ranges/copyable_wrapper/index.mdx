@@ -1,0 +1,276 @@
+---
+title: "Assignable wrapper (C++20)"
+description: "ranges::single_view, ranges::repeat_view, and range adaptors that store an invocable object are specified in terms of an exposition-only class template copyable-box (until C++23) or movable-box (since C++23)."
+source_url: "https://en.cppreference.com/w/cpp/ranges/copyable_wrapper"
+language: "C++"
+---
+
+{/* source:cpp-ranges-copyable-wrapper:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" until="C++23" code={`template< class T >
+    requires std::copy_constructible<T> && std::is_object_v<T>
+
+class /*copyable-box*/;`} />
+  (exposition only*)
+  <Declaration language="cpp" since="C++23" code={`template< class T >
+    requires std::move_constructible<T> && std::is_object_v<T>
+
+class /*movable-box*/;`} />
+  (exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-ranges-copyable-wrapper:0001 */}
+[`ranges::single_view`](/docs/cpp/library/ranges/single_view)<InlineRevision since="C++23">, [`ranges::repeat_view`](/docs/cpp/library/ranges/repeat_view),</InlineRevision> and range adaptors that store an invocable object are specified in terms of an exposition-only class template <InlineRevision until="C++23">`copyable-box`</InlineRevision><InlineRevision since="C++23">`movable-box`</InlineRevision>. The name shown here is for exposition purposes only.
+
+{/* source:cpp-ranges-copyable-wrapper:0002 */}
+The wrapper behaves exactly like [`std::optional<T>`](/docs/cpp/library/utility/optional), except that the default constructor, copy assignment operator, and move assignment operator are (conditionally) different from those of [`std::optional`](/docs/cpp/library/utility/optional), which augments `T` with assignability when needed and makes it always satisfy [`copyable`](/docs/cpp/library/concepts/copyable)<InlineRevision since="C++23"> or [`movable`](/docs/cpp/library/concepts/movable)</InlineRevision>.
+
+{/* source:cpp-ranges-copyable-wrapper:0003 */}
+<Revision until="C++23">
+If `T` is already [`copyable`](/docs/cpp/library/concepts/copyable), or both `std::is_nothrow_move_constructible_v<T>` and `std::is_nothrow_copy_constructible_v<T>` are `true`, `/*copyable-box*/<T>` may store only a `T` object, because it always contains a value.
+</Revision>
+
+<Revision since="C++23">
+If `T`
+
+- is already [`copyable`](/docs/cpp/library/concepts/copyable), or
+- is [`copy_constructible`](/docs/cpp/library/concepts/copy_constructible) and both `std::is_nothrow_move_constructible_v<T>` and `std::is_nothrow_copy_constructible_v<T>` are `true`, or
+- does not satisfy [`copy_constructible`](/docs/cpp/library/concepts/copy_constructible) but satisfies [`movable`](/docs/cpp/library/concepts/movable), or
+- does not satisfy [`copy_constructible`](/docs/cpp/library/concepts/copy_constructible) but `std::is_nothrow_move_constructible_v<T>` is `true`,
+
+`/*movable-box*/<T>` may store only a `T` object, because it always contains a value.
+</Revision>
+
+### Template parameters
+
+{/* source:cpp-ranges-copyable-wrapper:0004 */}
+<ParameterList>
+  <Parameter name="T">the type of the contained value, must be an object type that models <InlineRevision until="C++23">[`copy_constructible`](/docs/cpp/library/concepts/copy_constructible)</InlineRevision><InlineRevision since="C++23">[`move_constructible`](/docs/cpp/library/concepts/move_constructible)</InlineRevision></Parameter>
+</ParameterList>
+
+### Member functions
+
+## Default constructor
+
+{/* source:cpp-ranges-copyable-wrapper:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" until="C++23" code={`constexpr /*copyable-box*/() noexcept(std::is_nothrow_default_constructible_v<T>)
+    requires std::default_initializable<T>
+
+    : /*copyable-box*/(std::in_place) { }`} />
+  <Declaration language="cpp" since="C++23" code={`constexpr /*movable-box*/() noexcept(std::is_nothrow_default_constructible_v<T>)
+    requires std::default_initializable<T>
+
+    : /*movable-box*/(std::in_place) { }`} />
+</DeclarationDoc>
+
+The default constructor is provided if and only if `T` models [`default_initializable`](/docs/cpp/library/concepts/default_initializable).
+
+A default-constructed wrapper contains a value-initialized `T` object.
+
+## Assignment operators
+
+{/* source:cpp-ranges-copyable-wrapper:0006 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" until="C++23" code={`constexpr /*copyable-box*/& operator=(const /*copyable-box*/& other);
+    noexcept(/* see below */);`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr /*movable-box*/& operator=(const /*movable-box*/& other);
+    noexcept(/* see below */) requires std::copy_constructible<T>;`} />
+  <Declaration id="2" language="cpp" since="C++20" until="C++23" code={`constexpr /*copyable-box*/& operator=(/*copyable-box*/&& other)
+    noexcept(std::is_nothrow_move_constructible_v<T>);`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr /*movable-box*/& operator=(/*movable-box*/&& other)
+    noexcept(std::is_nothrow_move_constructible_v<T>);`} />
+</DeclarationDoc>
+
+1) If `std::copyable<T>` is not modeled, the copy assignment operator is equivalently defined as:
+
+<Revision until="C++23">
+```cpp
+constexpr /*copyable-box*/& operator=(const /*copyable-box*/& other)
+    noexcept(std::is_nothrow_copy_constructible_v<T>)
+{
+    if (this != std::addressof(other))
+        if (other)
+            emplace(*other);
+        else
+            reset();
+
+    return *this;
+}
+```
+</Revision>
+
+<Revision since="C++23">
+```cpp
+constexpr /*movable-box*/& operator=(const /*movable-box*/& other)
+    noexcept(std::is_nothrow_copy_constructible_v<T>)
+    requires std::copy_constructible<T>
+{
+    if (this != std::addressof(other))
+        if (other)
+            emplace(*other);
+        else
+            reset();
+
+    return *this;
+}
+```
+</Revision>
+
+Otherwise, it is identical to [the copy assignment operator of `std::optional`](/docs/cpp/library/utility/optional/operator_assignment).
+
+2) If `std::movable<T>` is not modeled, the move assignment operator is equivalently defined as:
+
+<Revision until="C++23">
+```cpp
+constexpr /*copyable-box*/& operator=(/*copyable-box*/&& other)
+    noexcept(std::is_nothrow_move_constructible_v<T>)
+{
+    if (this != std::addressof(other))
+        if (other)
+            emplace(std::move(*other));
+        else
+            reset();
+
+    return *this;
+}
+```
+</Revision>
+
+<Revision since="C++23">
+```cpp
+constexpr /*movable-box*/& operator=(/*movable-box*/&& other)
+    noexcept(std::is_nothrow_move_constructible_v<T>)
+{
+    if (this != std::addressof(other))
+        if (other)
+            emplace(std::move(*other));
+        else
+            reset();
+
+    return *this;
+}
+```
+</Revision>
+
+Otherwise, it is identical to [the move assignment operator of `std::optional`](/docs/cpp/library/utility/optional/operator_assignment).
+
+## Members identical to `std::optional`
+
+### Member functions
+
+{/* source:cpp-ranges-copyable-wrapper:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/optional/optional)</DescriptionTerm>
+    <DescriptionBody>constructs the `optional` object (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/utility/optional/~optional)</DescriptionTerm>
+    <DescriptionBody>destroys the contained value, if there is one (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/utility/optional/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns contents (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Observers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator->`, `operator*`](/docs/cpp/library/utility/optional/operator_star_)</DescriptionTerm>
+    <DescriptionBody>accesses the contained value (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`, `has_value`](/docs/cpp/library/utility/optional/operator_bool)</DescriptionTerm>
+    <DescriptionBody>checks whether the object contains a value (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/utility/optional/reset)</DescriptionTerm>
+    <DescriptionBody>destroys any contained value (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`emplace`](/docs/cpp/library/utility/optional/emplace)</DescriptionTerm>
+    <DescriptionBody>constructs the contained value in-place (public member function of `std::optional<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-ranges-copyable-wrapper:0008 */}
+A <InlineRevision until="C++23">`copyable-box`</InlineRevision><InlineRevision since="C++23">`movable-box`</InlineRevision> does not contain a value only if
+
+{/* source:cpp-ranges-copyable-wrapper:0009 */}
+- `T` does not model [`movable`](/docs/cpp/library/concepts/movable) or [`copyable`](/docs/cpp/library/concepts/copyable), and an exception is thrown on move assignment or copy assignment respectively, or
+- it is initialized/assigned from another valueless wrapper.
+
+{/* source:cpp-ranges-copyable-wrapper:0010 */}
+Before [P2325R3](https://wg21.link/P2325R3), the wrapper was called `semiregular-box` in the standard and always satisfied [`semiregular`](/docs/cpp/library/concepts/semiregular), as the default constructor was always provided (which might construct a valueless wrapper).
+
+{/* source:cpp-ranges-copyable-wrapper:0011 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges`](/docs/cpp/library/feature_test#cpp_lib_ranges) | [`201911L`](/docs/cpp/library/compiler_support/20#cpp_lib_ranges_201911L) | (C++20) | [Ranges library](/docs/cpp/library/ranges) and [constrained algorithms](/docs/cpp/library/algorithm/ranges) |
+| | [`202106L`](/docs/cpp/library/compiler_support/20#cpp_lib_ranges_202106L) | (C++20) (DR) | Non-[default-initializable](/docs/cpp/library/concepts/default_initializable) [views](/docs/cpp/library/ranges/view) |
+| | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_202207L) | (C++23) | Relaxing [range adaptors](/docs/cpp/library/ranges#Range_adaptors) to allow for move-only types |
+
+### Defect reports
+
+{/* source:cpp-ranges-copyable-wrapper:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-copyable-wrapper:0013 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2325R3" standard="C++20">
+    <PublishedBehavior>if `T` is not [`default_initializable`](/docs/cpp/library/concepts/default_initializable), the default constructor constructs a wrapper which does not contain a value</PublishedBehavior>
+    <CorrectedBehavior>the wrapper is also not [`default_initializable`](/docs/cpp/library/concepts/default_initializable)</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3572} standard="C++20">
+    <PublishedBehavior>conditionally different assignment operators were not constexpr</PublishedBehavior>
+    <CorrectedBehavior>made constexpr</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-copyable-wrapper:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::single_view`, `views::single`](/docs/cpp/library/ranges/single_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) that contains a single element of a specified value (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::repeat_view`, `views::repeat`](/docs/cpp/library/ranges/repeat_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of a generated sequence by repeatedly producing the same value (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::filter_view`, `views::filter`](/docs/cpp/library/ranges/filter_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) that consists of the elements of a [`range`](/docs/cpp/library/ranges/range) that satisfies a predicate (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform_view`, `views::transform`](/docs/cpp/library/ranges/transform_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) of a sequence that applies a transformation function to each element (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::take_while_view`, `views::take_while`](/docs/cpp/library/ranges/take_while_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the initial elements of another [`view`](/docs/cpp/library/ranges/view), until the first element on which a predicate returns `false` (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::drop_while_view`, `views::drop_while`](/docs/cpp/library/ranges/drop_while_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of the elements of another [`view`](/docs/cpp/library/ranges/view), skipping the initial subsequence of elements until the first element where the predicate returns `false` (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::zip_transform_view`, `views::zip_transform`](/docs/cpp/library/ranges/zip_transform_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of results of application of a transformation function to corresponding elements of the adapted views (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::adjacent_transform_view`, `views::adjacent_transform`](/docs/cpp/library/ranges/adjacent_transform_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of results of application of a transformation function to adjacent elements of the adapted view (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

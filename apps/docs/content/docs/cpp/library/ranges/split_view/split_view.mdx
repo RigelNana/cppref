@@ -1,0 +1,138 @@
+---
+title: "std::ranges::split_view<V,Pattern>::split_view"
+description: "Constructs a split_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/split_view/split_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-split-view-split-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`split_view()
+    requires std::default_initializable<V> && 
+
+             std::default_initializable<Pattern> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit split_view( V base, Pattern pattern );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< ranges::forward_range R >
+    requires std::constructible_from<V, views::all_t<R>> &&
+             std::constructible_from<Pattern, ranges::single_view<
+                                                  ranges::range_value_t<R>>>
+
+constexpr explicit split_view( R&& r, ranges::range_value_t<R> e );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-split-view-split-view:0001 */}
+Constructs a `split_view`.
+
+{/* source:cpp-ranges-split-view-split-view:0002 */}
+Let [`base_`](/docs/cpp/library/ranges/split_view#base) be the underlying view and [`pattern_`](/docs/cpp/library/ranges/split_view#pattern) be the delimiter.
+
+{/* source:cpp-ranges-split-view-split-view:0003 */}
+1. 1) Default constructor. [Value-initializes](/docs/cpp/language/initialization/value_initialization) `base_` and `pattern_` with their default member initializers respectively.
+
+{/* source:cpp-ranges-split-view-split-view:0004 */}
+2. 2) Initializes `base_` with `std::move(base)` and `pattern_` with `std::move(pattern)`.
+
+{/* source:cpp-ranges-split-view-split-view:0005 */}
+3. 3) Initializes `base_` with `views::all(std::forward<R>(r))` and `pattern_` with `ranges::single_view{std::move(e)}`.
+
+### Parameters
+
+{/* source:cpp-ranges-split-view-split-view:0006 */}
+<ParameterList>
+  <Parameter name="base">the view (to be split)</Parameter>
+  <Parameter name="pattern">view to be used as the delimiter</Parameter>
+  <Parameter name="e">element to be used as the delimiter</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-ranges-split-view-split-view:0007 */}
+```cpp
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+#include <string_view>
+#include <vector>
+ 
+int main()
+{
+    {
+        auto view = std::views::iota(1, 20)
+                  | std::views::transform([](int x) { return x % 5; });
+        auto splitts = std::views::split(view, 0); // (2)
+        for (const auto& split : splitts)
+        {
+            std::cout << "{ ";
+            std::ranges::copy(split, std::ostream_iterator<int>(std::cout, " "));
+            std::cout << "} ";
+        }
+    }
+    std::cout << '\n';
+ 
+    {
+        const std::vector nums{1, -1, -1, 2, 3, -1, -1, 4, 5, 6};
+        const std::array delim{-1, -1};
+        auto splitter = std::views::split(nums, delim); // (3)
+        for (const auto& split : splitter)
+        {
+            std::cout << "{ ";
+            std::ranges::copy(split, std::ostream_iterator<int>(std::cout, " "));
+            std::cout << "} ";
+        }
+    }
+    std::cout << '\n';
+ 
+    {
+        constexpr std::string_view JupiterMoons
+        {
+            "Callisto, Europa, Ganymede, Io, and 91 more"
+        };
+        constexpr std::string_view delim{", "};
+        std::ranges::split_view moons_extractor{JupiterMoons, delim}; // (3)
+        auto is_moon = std::views::filter([](auto str)
+        {
+            return std::isupper(str[0]);
+        });
+        std::cout << "Some moons of Jupiter: ";
+        for (const auto moon : moons_extractor | is_moon)
+            std::cout << std::string_view(moon) << ' ';
+    }
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+{ 1 2 3 4 } { 1 2 3 4 } { 1 2 3 4 } { 1 2 3 4 }
+{ 1 } { 2 3 } { 4 5 6 }
+Some moons of Jupiter: Callisto Europa Ganymede Io
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-split-view-split-view:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-split-view-split-view:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3714} standard="C++20">
+    <PublishedBehavior>the multi-parameter constructor was not explicit</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-split-view-split-view:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[(constructor)](/docs/cpp/library/ranges/lazy_split_view/lazy_split_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `lazy_split_view` (public member function of `std::ranges::lazy_split_view<V,Pattern>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,64 @@
+---
+title: "std::ranges::concat_view<Views...>::end"
+description: "Returns an iterator or std::default_sentinel that compares equal to the past-the-end iterator of the concat_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/concat_view/end"
+language: "C++"
+---
+
+{/* source:cpp-ranges-concat-view-end:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++26" code={`constexpr auto end()
+    requires (!(/*simple-view*/<Views> && ...));`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`constexpr auto end() const
+    requires (ranges::range<const Views> && ...) &&
+
+                 /*concatable*/<const Views...>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-concat-view-end:0001 */}
+Returns an [`iterator`](/docs/cpp/library/ranges/concat_view/iterator) or [`std::default_sentinel`](/docs/cpp/library/iterator/default_sentinel) that compares equal to the past-the-end iterator of the [`concat_view`](/docs/cpp/library/ranges/concat_view).
+
+{/* source:cpp-ranges-concat-view-end:0002 */}
+1) Equivalent to `constexpr auto N = sizeof...(Views); if constexpr (ranges::common_range<Views...[N - 1]>) return `[`iterator`](/docs/cpp/library/ranges/concat_view)`<false>(this, std::in_place_index<N - 1>, ranges::end(std::get<N - 1>([`views_`](/docs/cpp/library/ranges/concat_view#views))); else return std::default_sentinel;`.
+
+{/* source:cpp-ranges-concat-view-end:0003 */}
+2) Equivalent to `constexpr auto N = sizeof...(Views); if constexpr (ranges::common_range<const Views...[N - 1]>) return `[`iterator`](/docs/cpp/library/ranges/concat_view)`<true>(this, std::in_place_index<N - 1>, ranges::end(std::get<N - 1>([`views_`](/docs/cpp/library/ranges/concat_view#views))); else return std::default_sentinel;`.
+
+### Return value
+
+{/* source:cpp-ranges-concat-view-end:0004 */}
+As described above.
+
+### Example
+
+{/* source:cpp-ranges-concat-view-end:0005 */}
+The preliminary version can be checked out on [Compiler Explorer](https://godbolt.org/z/voza5z5dv).
+
+```cpp
+#include <concepts>
+#include <iterator>
+#include <ranges>
+ 
+int main()
+{
+    static constexpr int p[]{37, 42, 69};
+    static constexpr auto q = {19937, 1729};
+    constexpr auto cat = std::ranges::views::concat(p, q);
+    static_assert(not std::same_as<std::default_sentinel_t, decltype(cat.end())>);
+    static_assert(cat.end()[-1] == 1729);
+}
+```
+
+### See also
+
+{/* source:cpp-ranges-concat-view-end:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/concat_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::end`](/docs/cpp/library/ranges/end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel indicating the end of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

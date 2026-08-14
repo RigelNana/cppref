@@ -1,0 +1,272 @@
+---
+title: "std::ranges::views::reverse, std::ranges::reverse_view"
+description: "std::ranges::views::reverse is a range adaptor that represents a view of the underlying view with reversed order."
+source_url: "https://en.cppreference.com/w/cpp/ranges/reverse_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-reverse-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< ranges::view V >
+    requires ranges::bidirectional_range<V>
+class reverse_view
+
+    : public ranges::view_interface<reverse_view<V>>`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`namespace views {
+    inline constexpr /* unspecified */ reverse = /* unspecified */;
+
+}`} />
+  Call signature
+
+  <Declaration language="cpp" since="C++20" code={`template< ranges::viewable_range R >
+    requires /* see below */
+
+constexpr ranges::view auto reverse( R&& r );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-ranges-reverse-view:0001 */}
+    1) A range adaptor that represents a view of underlying [`view`](/docs/cpp/library/ranges/view) with reversed order.
+
+    {/* source:cpp-ranges-reverse-view:0002 */}
+    2) [RangeAdaptorObject](/docs/cpp/library/named_req/RangeAdaptorObject). The expression `views::reverse(e)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to one of the following expressions, except that `e` is evaluated only once:
+
+    - `e.base()`, if the type of `e` is a (possibly cv-qualified) specialization of `reverse_view`;
+    - otherwise, if the type of `e` is (possibly cv-qualified) `ranges::subrange<std::reverse_iterator<I>, std::reverse_iterator<I>, K>` for some iterator type `I` and value `K` of type `ranges::subrange_kind`:
+
+      - `ranges::subrange<I, I, K>(e.end().base(), e.begin().base(), e.size())`, if `K` is `ranges::subrange_kind::sized`;
+      - otherwise `ranges::subrange<I, I, K>(e.end().base(), e.begin().base())`;
+    - otherwise `ranges::reverse_view{e}`.
+
+    In other words, `views::reverse` unwraps reversed views if possible.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-ranges-reverse-view:0003 */}
+A `reverse_view` always models [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range), and it models [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range), [`sized_range`](/docs/cpp/library/ranges/sized_range), or [`random_access_range`](/docs/cpp/library/ranges/random_access_range) if the underlying view type `V` models the corresponding concept.
+
+### Data members
+
+{/* source:cpp-ranges-reverse-view:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`base_` (private)</DescriptionTerm>
+    <DescriptionBody>The underlying view of type `V`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`cached_end_` (private)</DescriptionTerm>
+    <DescriptionBody>An [`optional-like`](/docs/cpp/library/ranges#Non-propagating_cache) cache object that holds either no value or the end iterator/position of the underlying view, which exists only if the underlying view type `V` does not model [`common_range`](/docs/cpp/library/ranges/common_range). (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-ranges-reverse-view:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/reverse_view#constructor)</DescriptionTerm>
+    <DescriptionBody>constructs a `reverse_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`base`](/docs/cpp/library/ranges/reverse_view#base)</DescriptionTerm>
+    <DescriptionBody>returns the underlying view `V` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/reverse_view#begin)</DescriptionTerm>
+    <DescriptionBody>returns the beginning iterator of the `reverse_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/reverse_view#end)</DescriptionTerm>
+    <DescriptionBody>returns the end iterator of the `reverse_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/reverse_view#size)</DescriptionTerm>
+    <DescriptionBody>returns the size of the view if it is bounded (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-ranges-reverse-view:0006 */}
+#### `std::ranges::reverse_view::reverse_view`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`reverse_view() requires std::default_initializable<V> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr reverse_view( V r );`} />
+</DeclarationDoc>
+
+1. Value-initializes `base_` via its default member initializer (`= V()`).
+2. Initializes `base_` with `std::move(r)`.
+
+##### Parameters
+
+<ParameterList>
+  <Parameter name="r">range to reverse</Parameter>
+</ParameterList>
+
+{/* source:cpp-ranges-reverse-view:0007 */}
+#### `std::ranges::reverse_view::base`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr V base() const& requires std::copy_constructible<V>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr V base() &&;`} />
+</DeclarationDoc>
+
+Returns the underlying view.
+
+1. Copy-constructs the result from the underlying view. Equivalent to `return base_;`.
+2. Move-constructs the result from the underlying view. Equivalent to `return std::move(base_);`.
+
+{/* source:cpp-ranges-reverse-view:0008 */}
+#### `std::ranges::reverse_view::begin`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr std::reverse_iterator<ranges::iterator_t<V>> begin();`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr std::reverse_iterator<ranges::iterator_t<V>> begin()
+    requires ranges::common_range<V>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr auto begin() const requires ranges::common_range<const V>;`} />
+</DeclarationDoc>
+
+1. Returns `std::make_reverse_iterator(ranges::next(ranges::begin(base_), ranges::end(base_)))`. In order to provide the amortized constant time complexity required by the [`range`](/docs/cpp/library/ranges/range) concept, this function caches the result within the cache object for use on subsequent calls.
+2,3) Equivalent to `return std::make_reverse_iterator(ranges::end(base_));`.
+
+{/* source:cpp-ranges-reverse-view:0009 */}
+#### `std::ranges::reverse_view::end`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr std::reverse_iterator<ranges::iterator_t<V>> end();`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr auto end() const requires ranges::common_range<const V>;`} />
+</DeclarationDoc>
+
+Equivalent to `return std::make_reverse_iterator(ranges::begin(base_));`.
+
+{/* source:cpp-ranges-reverse-view:0010 */}
+#### `std::ranges::reverse_view::size`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr auto size() requires ranges::sized_range<V>;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr auto size() const requires ranges::sized_range<const V>;`} />
+</DeclarationDoc>
+
+Returns the size of the view if the view is bounded.
+
+1,2) Equivalent to `return ranges::size(base_);`.
+
+### Deduction guides
+
+{/* source:cpp-ranges-reverse-view:0011 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class R >
+reverse_view( R&& ) -> reverse_view<views::all_t<R>>;`} />
+</DeclarationDoc>
+
+### Helper templates
+
+{/* source:cpp-ranges-reverse-view:0012 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+constexpr bool enable_borrowed_range<std::ranges::reverse_view<T>> =
+
+    ranges::enable_borrowed_range<T>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-reverse-view:0013 */}
+This specialization of [`std::ranges::enable_borrowed_range`](/docs/cpp/library/ranges/borrowed_range) makes `reverse_view` satisfy [`borrowed_range`](/docs/cpp/library/ranges/borrowed_range) when the underlying view satisfies it.
+
+### Example
+
+{/* source:cpp-ranges-reverse-view:0014 */}
+```cpp
+#include <iostream>
+#include <ranges>
+ 
+int main()
+{
+    static constexpr auto il = {3, 1, 4, 1, 5, 9};
+ 
+    std::ranges::reverse_view rv{il};
+    for (int i : rv)
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    for (int i : il | std::views::reverse)
+        std::cout << i << ' ';
+    std::cout << '\n';
+ 
+    // operator[] is inherited from std::view_interface
+    for (auto i{0U}; i != rv.size(); ++i)
+        std::cout << rv[i] << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+9 5 1 4 1 3
+9 5 1 4 1 3
+9 5 1 4 1 3
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-reverse-view:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-reverse-view:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3494} standard="C++20">
+    <PublishedBehavior>`reverse_view` was never a `borrowed_range`</PublishedBehavior>
+    <CorrectedBehavior>it is a `borrowed_range` if its underlying view is</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-reverse-view:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`reverse_iterator`](/docs/cpp/library/iterator/reverse_iterator)</DescriptionTerm>
+    <DescriptionBody>iterator adaptor for reverse-order traversal (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse`](/docs/cpp/library/algorithm/ranges/reverse) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>reverses the order of elements in a range (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::reverse_copy`](/docs/cpp/library/algorithm/ranges/reverse_copy) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a copy of a range that is reversed (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

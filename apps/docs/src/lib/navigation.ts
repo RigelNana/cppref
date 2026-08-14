@@ -34,41 +34,44 @@ function readMeta(relativeDirectory: string): MetaFile | undefined {
   return JSON.parse(readFileSync(path, "utf8")) as MetaFile;
 }
 
-function directoryEntries(relativeDirectory: string, meta: MetaFile | undefined): string[] {
+function directoryEntries(relativeDirectory: string, meta: MetaFile | undefined, ids: ReadonlySet<string>): string[] {
   if (meta?.pages) return meta.pages;
   const path = `${contentRoot}/${relativeDirectory}`;
-  return readdirSync(path, { withFileTypes: true })
+  const entries = readdirSync(path, { withFileTypes: true })
     .flatMap((entry) => {
       if (entry.isDirectory()) return [entry.name];
-      if (entry.isFile() && entry.name.endsWith(".mdx") && entry.name !== "index.mdx") {
-        return [entry.name.slice(0, -4)];
-      }
-      return [];
-    })
-    .sort((left, right) => left.localeCompare(right));
+      if (!entry.isFile() || !entry.name.endsWith(".mdx")) return [];
+      if (entry.name === "index.mdx") return ids.has(relativeDirectory) ? ["index"] : [];
+      return [entry.name.slice(0, -4)];
+    });
+  return [...new Set(entries)].sort((left, right) => left.localeCompare(right));
 }
 
-function buildDirectory(relativeDirectory: string, titles: ReadonlyMap<string, string>): NavNode[] {
+function buildDirectory(
+  relativeDirectory: string,
+  titles: ReadonlyMap<string, string>,
+  ids: ReadonlySet<string>,
+): NavNode[] {
   const meta = readMeta(relativeDirectory);
-  return directoryEntries(relativeDirectory, meta).flatMap<NavNode>((name) => {
+  return directoryEntries(relativeDirectory, meta, ids).flatMap<NavNode>((name) => {
     const id = relativeDirectory ? `${relativeDirectory}/${name}` : name;
     const directoryPath = `${contentRoot}/${id}`;
     if (existsSync(directoryPath)) {
       const childMeta = readMeta(id);
       const indexId = `${id}/index`;
-      const hasIndex = titles.has(indexId);
+      const pageId = titles.has(id) ? id : titles.has(indexId) ? indexId : undefined;
       return [{
-        children: buildDirectory(id, titles),
-        href: hasIndex ? docHref(indexId) : undefined,
+        children: buildDirectory(id, titles, ids),
+        href: pageId ? docHref(pageId, ids) : undefined,
         id,
         kind: "folder" as const,
-        title: childMeta?.title ?? titles.get(indexId) ?? name.replaceAll("_", " "),
+        title: childMeta?.title ?? (pageId ? titles.get(pageId) : undefined) ?? name.replaceAll("_", " "),
       }];
     }
 
     if (!titles.has(id)) return [];
     return [{
-      href: docHref(id),
+      href: docHref(id, ids),
       id,
       kind: "page" as const,
       title: titles.get(id) ?? name.replaceAll("_", " "),
@@ -79,7 +82,8 @@ function buildDirectory(relativeDirectory: string, titles: ReadonlyMap<string, s
 export function buildNavigation(entries: DocEntry[]): NavNode[] {
   if (cachedNavigation) return cachedNavigation;
   const titles = new Map(entries.map((entry) => [entry.id, entry.data.title]));
-  cachedNavigation = buildDirectory("", titles);
+  const ids = new Set(titles.keys());
+  cachedNavigation = buildDirectory("", titles, ids);
   return cachedNavigation;
 }
 
@@ -106,14 +110,18 @@ function flattenPages(nodes: NavNode[], pages: NavNode[]): void {
   }
 }
 
-export function adjacentPages(nodes: NavNode[], currentId: string): { next?: NavNode | undefined; previous?: NavNode | undefined } {
+export function adjacentPages(
+  nodes: NavNode[],
+  currentId: string,
+  ids: ReadonlySet<string>,
+): { next?: NavNode | undefined; previous?: NavNode | undefined } {
   let pages = pageCache.get(nodes);
   if (!pages) {
     pages = [];
     flattenPages(nodes, pages);
     pageCache.set(nodes, pages);
   }
-  const href = docHref(currentId);
+  const href = docHref(currentId, ids);
   const index = pages.findIndex((page) => page.href === href);
   return {
     next: index >= 0 ? pages[index + 1] : undefined,

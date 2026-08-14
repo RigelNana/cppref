@@ -1,0 +1,129 @@
+---
+title: "std::ranges::iota_view<W, Bound>::iota_view"
+description: "Constructs an iota_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/iota_view/iota_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-iota-view-iota-view:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`iota_view() requires std::default_initializable<W> = default;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr explicit iota_view( W value );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`constexpr explicit iota_view( std::type_identity_t<W> value,
+                              std::type_identity_t<Bound> bound );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`constexpr explicit iota_view( /*iterator*/ first, /* see below */ last );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-iota-view-iota-view:0001 */}
+Constructs an [`iota_view`](/docs/cpp/library/ranges/iota_view).
+
+{/* source:cpp-ranges-iota-view-iota-view:0002 */}
+| Overload | [Data members](/docs/cpp/library/ranges/iota_view#Data_members) | |
+| --- | --- | --- |
+| | `value_` | `bound_` |
+| (1) | [value-initialized](/docs/cpp/language/initialization/value_initialization) | [value-initialized](/docs/cpp/language/initialization/value_initialization) |
+| (2) | initialized with `value` | |
+| (3) | | initialized with `bound` |
+| (4) | initialized with `first.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) | see below |
+
+{/* source:cpp-ranges-iota-view-iota-view:0003 */}
+2,3) If any of the following conditions is satisfied, the behavior is undefined:
+- `Bound()` is unreachable from `value`, unless `Bound` denotes [`std::unreachable_sentinel_t`](/docs/cpp/library/iterator/unreachable_sentinel_t).
+- `W` and `Bound` model [`totally_ordered_with`](/docs/cpp/library/concepts/totally_ordered), and `bool(value <= bound)` is `false`.
+
+{/* source:cpp-ranges-iota-view-iota-view:0004 */}
+4) If any of the following conditions is satisfied, the behavior is undefined:
+- `Bound()` is unreachable from `value`, unless `Bound` denotes [`std::unreachable_sentinel_t`](/docs/cpp/library/iterator/unreachable_sentinel_t).
+- `W` and `Bound` model [`totally_ordered_with`](/docs/cpp/library/concepts/totally_ordered), and `bool(first.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value)` <= bound)` is `false`.
+
+{/* source:cpp-ranges-iota-view-iota-view:0005 */}
+The type of `last` and the method of initializing [`bound_`](/docs/cpp/library/ranges/iota_view#bound) are determined by the type `Bound` denotes:
+
+| The type `Bound` denotes | The type of `last` | [`bound_`](/docs/cpp/library/ranges/iota_view#bound) |
+| --- | --- | --- |
+| `W` | [`iterator`](/docs/cpp/library/ranges/iota_view/iterator) | initialized with `last.`[`value_`](/docs/cpp/library/ranges/iota_view/iterator#value) |
+| [`std::unreachable_sentinel_t`](/docs/cpp/library/iterator/unreachable_sentinel_t) | `Bound` | initialized with `last` |
+| any other type | [`sentinel`](/docs/cpp/library/ranges/iota_view/sentinel) | initialized with `last.`[`bound_`](/docs/cpp/library/ranges/iota_view/sentinel#bound) |
+
+### Parameters
+
+{/* source:cpp-ranges-iota-view-iota-view:0006 */}
+<ParameterList>
+  <Parameter name="value">the starting value</Parameter>
+  <Parameter name="bound">the bound</Parameter>
+  <Parameter name="first">the iterator denoting the starting value</Parameter>
+  <Parameter name="last">the iterator or sentinel denoting the bound</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-ranges-iota-view-iota-view:0007 */}
+```cpp
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+ 
+int main()
+{
+    const auto l = {1, 2, 3, 4};
+ 
+    auto i1 = std::ranges::iota_view<int, int>(); // overload (1)
+    assert(i1.empty() and i1.size() == 0);
+ 
+    auto i2 = std::ranges::iota_view(1); // overload (2)
+    assert(not i2.empty() and i2.front() == 1);
+    for (std::cout << "1) "; auto e : i2 | std::views::take(3))
+        std::cout << e << ' ';
+    std::cout << '\n';
+ 
+    auto i3 = std::ranges::iota_view(std::begin(l)); // overload (2)
+    assert(not i3.empty() and i3.front() == l.begin());
+    for (std::cout << "2) "; auto e : i3 | std::views::take(4))
+        std::cout << *e << ' ';
+    std::cout << '\n';
+ 
+    auto i4 = std::ranges::iota_view(1, 8); // overload (3)
+    assert(not i4.empty() and i4.front() == 1 and i4.back() == 7);
+    for (std::cout << "3) "; auto e : i4)
+        std::cout << e << ' ';
+    std::cout << '\n';
+ 
+    auto i5 = std::ranges::iota_view(l.begin(), l.end()); // overload (4)
+    for (std::cout << "4) "; auto e : i5)
+        std::cout << *e << ' ';
+    std::cout << '\n';
+ 
+    auto i6 = std::ranges::iota_view(l.begin(), std::unreachable_sentinel); // (4)
+    for (std::cout << "5) "; auto e : i6 | std::views::take(3))
+        std::cout << *e << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+1) 1 2 3
+2) 1 2 3 4
+3) 1 2 3 4 5 6 7
+4) 1 2 3 4
+5) 1 2 3
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-iota-view-iota-view:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-iota-view-iota-view:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3523} standard="C++20">
+    <PublishedBehavior>overload (4) might use wrong sentinel type</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2711R1" standard="C++20">
+    <PublishedBehavior>overloads (3,4) were not explicit</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

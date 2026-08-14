@@ -1,0 +1,88 @@
+---
+title: "std::ranges::chunk_view<V>::end"
+description: "Returns an iterator or a std::default_sentinel that compares equal to the end iterator of the chunk_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/chunk_view/end"
+language: "C++"
+---
+
+{/* source:cpp-ranges-chunk-view-end:0000 */}
+<DeclarationDoc>
+`V` models only [`input_range`](/docs/cpp/library/ranges/input_range)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr std::default_sentinel_t end() const noexcept;`} />
+
+`V` models [`forward_range`](/docs/cpp/library/ranges/forward_range)
+
+  <Declaration id="2" language="cpp" since="C++23" code={`constexpr auto end() requires (!__simple_view<V>);`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`constexpr auto end() const requires ranges::forward_range<const V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-chunk-view-end:0001 */}
+Returns an [`iterator`](/docs/cpp/library/ranges/chunk_view#Nested_classes) or a [`std::default_sentinel`](/docs/cpp/library/iterator/default_sentinel) that compares equal to the end iterator of the [`chunk_view`](/docs/cpp/library/ranges/chunk_view).
+
+{/* source:cpp-ranges-chunk-view-end:0002 */}
+1. 1) Available only if `V` models [`input_range`](/docs/cpp/library/ranges/input_range). Equivalent to: `return std::default_sentinel`.
+
+{/* source:cpp-ranges-chunk-view-end:0003 */}
+2. 2,3) Available if `V` models [`forward_range`](/docs/cpp/library/ranges/forward_range). Let [`base_`](/docs/cpp/library/ranges/chunk_view#Data_members) denote the underlying adapted view, [`n_`](/docs/cpp/library/ranges/chunk_view#Data_members) denote the stored chunk size, and [`iterator`](/docs/cpp/library/ranges/chunk_view#Nested_classes) denote the nested iterator class.
+
+{/* source:cpp-ranges-chunk-view-end:0004 */}
+2. 2) Equivalent to:
+
+```cpp
+if constexpr (ranges::common_range<V> && ranges::sized_range<V>)
+{
+    auto missing = (n_ - ranges::distance(base_) % n_) % n_;
+    return iterator<false>(this, ranges::end(base_), missing);
+}
+else if constexpr (ranges::common_range<V> && !ranges::bidirectional_range<V>)
+    return iterator<false>(this, ranges::end(base_));
+else
+    return std::default_sentinel;
+```
+
+{/* source:cpp-ranges-chunk-view-end:0005 */}
+3. 3) Equivalent to:
+
+```cpp
+if constexpr (ranges::common_range<const V> && ranges::sized_range<const V>)
+{
+    auto missing = (n_ - ranges::distance(base_) % n_) % n_;
+    return iterator<true>(this, ranges::end(base_), missing);
+}
+else if constexpr (ranges::common_range<const V> && !ranges::bidirectional_range<const V>)
+    return iterator<true>(this, ranges::end(base_));
+else
+    return std::default_sentinel;
+```
+
+### Parameters
+
+{/* source:cpp-ranges-chunk-view-end:0006 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-chunk-view-end:0007 */}
+An iterator or sentinel representing the end of the [`chunk_view`](/docs/cpp/library/ranges/chunk_view), as described above.
+
+### Example
+
+{/* source:cpp-ranges-chunk-view-end:0008 */}
+This section is incomplete
+
+Reason: no example
+
+### See also
+
+{/* source:cpp-ranges-chunk-view-end:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/chunk_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::end`](/docs/cpp/library/ranges/end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel indicating the end of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

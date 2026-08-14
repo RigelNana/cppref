@@ -1,0 +1,123 @@
+---
+title: "std::ranges::take_view<V>::begin"
+description: "Returns an iterator to the first element of the take_view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/take_view/begin"
+language: "C++"
+---
+
+{/* source:cpp-ranges-take-view-begin:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr auto begin() requires (!/*simple-view*/<V>);`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr auto begin() const requires ranges::range<const V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-take-view-begin:0001 */}
+Returns an iterator to the first element of the `take_view`.
+
+{/* source:cpp-ranges-take-view-begin:0002 */}
+1. 1) Returns a `std::counted_iterator` or a `ranges::iterator_t<V>`.
+
+{/* source:cpp-ranges-take-view-begin:0003 */}
+2. 2) Returns a `std::counted_iterator` or a `ranges::iterator_t<const V>`.
+
+{/* source:cpp-ranges-take-view-begin:0004 */}
+Overload (1) does not participate in overload resolution if `V` is a [simple view](/docs/cpp/library/ranges#Helper_concepts) (that is, if `V` and `const V` are views with the same iterator and sentinel types).
+
+### Parameters
+
+{/* source:cpp-ranges-take-view-begin:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-take-view-begin:0006 */}
+The result depends on the concepts satisfied by possibly const-qualified underlying view type `Base`, which is `V` for ([1](/docs/cpp/library/ranges/take_view/begin#Version_1)) or `const V` for ([2](/docs/cpp/library/ranges/take_view/begin#Version_2)).
+
+{/* source:cpp-ranges-take-view-begin:0007 */}
+Let [`base_`](/docs/cpp/library/ranges/take_view#Data_members) be the underlying view, [`count_`](/docs/cpp/library/ranges/take_view#Data_members) be the underlying counter (equals to `0` if `take_view` was default initialized).
+
+{/* source:cpp-ranges-take-view-begin:0008 */}
+| The underlying view type satisfies ... | [`random_access_range`](/docs/cpp/library/ranges/random_access_range) | yes | no |
+| --- | --- | --- | --- |
+| [`sized_range`](/docs/cpp/library/ranges/sized_range) | yes | `ranges::begin(base_)` | `std::counted_iterator(ranges::begin(base_), ranges::range_difference_t<Base_>(this->size()))` |
+| | no | `std::counted_iterator(ranges::begin(base_), count_)` | `std::counted_iterator(ranges::begin(base_), count_)` |
+
+### Example
+
+{/* source:cpp-ranges-take-view-begin:0009 */}
+```cpp
+#include <concepts>
+#include <forward_list>
+#include <iostream>
+#include <ranges>
+#include <string_view>
+#include <type_traits>
+using namespace std::literals;
+ 
+int main()
+{
+    {
+        static constexpr auto v = {"∀x"sv, "∃y"sv, "ε"sv, "δ"sv};
+        auto view = std::ranges::take_view(v, 8);
+        auto iter = view.begin();
+        std::cout << *iter << '\n';
+        static_assert(
+            std::ranges::sized_range<decltype(v)> and
+            std::ranges::random_access_range<decltype(v)> and
+            std::is_same_v<decltype(iter), decltype(std::ranges::begin(v))>
+        );
+    }
+ 
+    {
+        std::forward_list v = {"Ax"sv, "Ey"sv, "p"sv, "q"sv};
+        auto view = std::ranges::take_view(v, 8);
+        auto iter = view.begin();
+        std::cout << *iter << '\n';
+        static_assert(
+            not std::ranges::sized_range<decltype(v)> and
+            not std::ranges::random_access_range<decltype(v)> and
+            std::is_same_v<decltype(iter),
+                std::counted_iterator<
+                    std::forward_list<std::string_view>::iterator>>
+        );
+    }
+}
+```
+
+Output:
+
+```text
+∀x
+Ax
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-take-view-begin:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-take-view-begin:0011 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2393R1" standard="C++20">
+    <PublishedBehavior>implicit conversions between signed and unsigned integer-class types might fail</PublishedBehavior>
+    <CorrectedBehavior>made explicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-take-view-begin:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/take_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`counted_iterator`](/docs/cpp/library/iterator/counted_iterator) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>iterator adaptor that tracks the distance to the end of the range (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`](/docs/cpp/library/ranges/take_view/sentinel/operator_cmp) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>compares a sentinel with an iterator returned from `take_view::begin` (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

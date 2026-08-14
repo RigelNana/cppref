@@ -1,0 +1,127 @@
+---
+title: "std::ranges::concat_view<Views...>::iterator<Const>::satisfy, prev, advance-fwd, advance-bwd"
+description: "The following exposition-only member function templates simplify the description."
+source_url: "https://en.cppreference.com/w/cpp/ranges/concat_view/iterator/helpers"
+language: "C++"
+---
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0000 */}
+The following exposition-only member function templates simplify the description.
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0001 */}
+Each helper function template has a non-type template parameter of type [`std::size_t`](/docs/cpp/library/utility/types/size_t).
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0002 */}
+- If the name of the template parameter is `N`, the template argument is always [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it)`.index()`.
+- If the name of the template parameter is `I`, the template argument can be any [`std::size_t`](/docs/cpp/library/utility/types/size_t) value in `[0, sizeof...(Views))`.
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0003 */}
+However, the template argument might not be a compile-time constant, therefore the actual effect of `helper<non_const>(/* arguments */)` is similar to `if (non_const == 0) helper<0>(/* arguments */); else if (non_const == 1) helper<1>(/* arguments */); /* other indices */ else if (non_const == (sizeof...(Views) - 1)) helper<sizeof...(Views) - 1>(/* arguments */);`.
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0004 */}
+## Mini helper templates
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< std::size_t N >
+constexpr auto /*get-iter*/();`} />
+  (exposition only*)
+  <Declaration id="2" language="cpp" code={`template< std::size_t I >
+constexpr auto /*get-view*/();`} />
+  (exposition only*)
+  <Declaration id="3" language="cpp" code={`template< std::size_t I >
+constexpr auto /*get-begin*/();`} />
+  (exposition only*)
+  <Declaration id="4" language="cpp" code={`template< std::size_t I >
+constexpr auto /*get-end*/();`} />
+  (exposition only*)
+  <Declaration id="5" language="cpp" code={`template< std::size_t N >
+constexpr auto /*to-underlying-diff-type*/( difference_type value );`} />
+  (exposition only*)
+</DeclarationDoc>
+
+The mini helper templates simplify the description of the main helper templates and member functions. They are not included in the C++ standard documents.
+
+1. 1) Obtains the underlying iterator contained in [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it).
+    Returns [`std::get`](/docs/cpp/library/utility/variant/get)`<N>(`[`it_`](/docs/cpp/library/ranges/concat_view/iterator#it)`).
+2. 2) Obtains the Ith view in the parent `concat_view`.
+    Returns [`std::get`](/docs/cpp/library/utility/tuple/get)`<I>(`[`parent_`](/docs/cpp/library/ranges/concat_view/iterator#parent)`->`[`views_`](/docs/cpp/library/ranges/concat_view#views)`).
+3. 3) Obtains an iterator to the beginning of the Ith view in the parent `concat_view`.
+    Returns `ranges::begin(`get-view`<I>())`.
+4. 4) Obtains a past-the-end iterator or a sentinel of the Ith view in the parent `concat_view`.
+    Returns `ranges::end(`get-view`<I>())`.
+5. 5) Converts `value` to the underlying difference type of the underlying iterator contained in [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it).
+    Returns `static_cast<std::iter_difference_t<std::variant_alternative_t<N,` [`base-iter`](/docs/cpp/library/ranges/concat_view/iterator#base-iter)`>>>(value)`.
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0005 */}
+## std::ranges::concat_view::iterator::`satisfy`\<N>
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< std::size_t N >
+constexpr void /*satisfy*/();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Adjusts the current (global) position of [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it).
+
+- If `N` is `sizeof...(Views) - 1`, does nothing.
+- Otherwise, equivalent to `if (`[`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<N>() == `[`get-end`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-end)`<N>()) { [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it)`.template emplace\<N + 1>(`[`get-begin`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-begin)`\<N + 1>()); `[`satisfy`](/docs/cpp/library/ranges/concat_view/iterator/helpers#satisfy)`\<N + 1>(); }`.
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0006 */}
+## std::ranges::concat_view::iterator::`prev`\<N>
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< size_t N >
+constexpr void /*prev*/();`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Moves [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it) to the previous (global) position.
+
+- If `N` is 0, equivalent to `--`[`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<0>();`.
+- Otherwise, equivalent to `if (`[`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<N>() == `[`get-begin`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-begin)`<N>()) { [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it)`.template emplace\<N - 1>(`[`get-end`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-end)`\<N - 1>()); `[`prev`](/docs/cpp/library/ranges/concat_view/iterator/helpers#prev)`\<N - 1>(); } else --`[`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`\<0>();`.
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0007 */}
+## std::ranges::concat_view::iterator::`advance-fwd`\<N>
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< size_t N >
+constexpr void /*advance-fwd*/( difference_type offset,
+
+                                difference_type steps );`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Advances the current (global) position `step` steps forward.
+
+- If `N` is `sizeof...(Views) - 1`, equivalent to [`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<N>() += `[`to-underlying-diff-type`](/docs/cpp/library/ranges/concat_view/iterator/helpers#to-underlying-diff-type)`(steps);`.
+- Otherwise, equivalent to `auto n_size = ranges::distance(`[`get-view`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-view)`<N>())); if (offset + steps < n_size) `[`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<N>() += `[`to-underlying-diff-type`](/docs/cpp/library/ranges/concat_view/iterator/helpers#to-underlying-diff-type)`(steps); else { [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it)`.template emplace\<N + 1>(`[`get-begin`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-begin)`\<N + 1>()); `[`advance-fwd`](/docs/cpp/library/ranges/concat_view/iterator/helpers#advance-fwd)`\<N + 1>(0, offset + steps - n_size); }`.
+
+### Parameters
+
+<ParameterList>
+  <Parameter name="offset">the offset of the current (global) position from the beginning of range [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it) currently refers into</Parameter>
+  <Parameter name="steps">the number of steps to advance forward</Parameter>
+</ParameterList>
+
+{/* source:cpp-ranges-concat-view-iterator-helpers:0008 */}
+## std::ranges::concat_view::iterator::`advance-bwd`\<N>
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< size_t N >
+constexpr void /*advance-bwd*/( difference_type offset,
+
+                                difference_type steps );`} />
+  (exposition only*)
+</DeclarationDoc>
+
+Advances the current (global) position `steps` steps backward.
+
+- If `N` is 0, equivalent to [`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<N>() -= `[`to-underlying-diff-type`](/docs/cpp/library/ranges/concat_view/iterator/helpers#to-underlying-diff-type)`(steps);`.
+- Otherwise, equivalent to `if (offset >= steps) `[`get-iter`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-iter)`<N>() -= `[`to-underlying-diff-type`](/docs/cpp/library/ranges/concat_view/iterator/helpers#to-underlying-diff-type)`(steps); else { auto prev_size = ranges::distance(`[`get-view`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-view)`\<N - 1>()); [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it)`.template emplace\<N - 1>(`[`get-end`](/docs/cpp/library/ranges/concat_view/iterator/helpers#get-end)`\<N - 1>()); `[`advance-bwd`](/docs/cpp/library/ranges/concat_view/iterator/helpers#advance-bwd)`\<N - 1>(prev_size, steps - offset); }`.
+
+### Parameters
+
+<ParameterList>
+  <Parameter name="offset">the offset of the current (global) position from the beginning of range [`it_`](/docs/cpp/library/ranges/concat_view/iterator#it) currently refers into</Parameter>
+  <Parameter name="steps">the number of steps to advance backward</Parameter>
+</ParameterList>

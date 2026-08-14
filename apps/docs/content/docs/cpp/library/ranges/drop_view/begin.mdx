@@ -1,0 +1,104 @@
+---
+title: "std::ranges::drop_view<V>::begin"
+description: "Returns an iterator to the first element of the drop_view, that is, an iterator to the Nth element of the underlying view, or to the end of the underlying view if it has less than N elements."
+source_url: "https://en.cppreference.com/w/cpp/ranges/drop_view/begin"
+language: "C++"
+---
+
+{/* source:cpp-ranges-drop-view-begin:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++20" code={`constexpr auto begin()
+    requires (!(/*simple-view*/<V> &&
+                 ranges::random_access_range<const V> &&
+
+                 ranges::sized_range<const V>));`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`constexpr auto begin() const
+    requires ranges::random_access_range<const V> &&
+
+             ranges::sized_range<const V>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-drop-view-begin:0001 */}
+Returns an iterator to the first element of the `drop_view`, that is, an iterator to the *N*th element of the underlying view, or to the end of the underlying view if it has less than *N* elements.
+
+{/* source:cpp-ranges-drop-view-begin:0002 */}
+If `V` is not a [`random_access_range`](/docs/cpp/library/ranges/random_access_range) or a [`sized_range`](/docs/cpp/library/ranges/sized_range), in order to provide the amortized constant time complexity required by the [`range`](/docs/cpp/library/ranges/range) concept, the overload (1) caches the result within the `drop_view` object for use on subsequent calls.
+
+### Parameters
+
+{/* source:cpp-ranges-drop-view-begin:0003 */}
+(none)
+
+### Return value
+
+{/* source:cpp-ranges-drop-view-begin:0004 */}
+`ranges::next(ranges::begin(base_), count_, ranges::end(base_))`, where [`base_`](/docs/cpp/library/ranges/drop_view#Data_members) is the underlying view, and [`count_`](/docs/cpp/library/ranges/drop_view#Data_members) is the number of elements to skip.
+
+### Example
+
+{/* source:cpp-ranges-drop-view-begin:0005 */}
+```cpp
+#include <array>
+#include <concepts>
+#include <iostream>
+#include <iterator>
+#include <ranges>
+ 
+void println(std::ranges::range auto const& range)
+{
+    for (auto const& elem : range)
+        std::cout << elem;
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::array hi{'H', 'e', 'l', 'l', 'o', ',', ' ', 'C', '+', '+', '2', '0', '!'};
+    println(hi);
+ 
+    const auto pos = std::distance(hi.begin(), std::ranges::find(hi, 'C'));
+    auto cxx = std::ranges::drop_view{hi, pos};
+    std::cout << "*drop_view::begin() == '" << *cxx.begin() << "'\n";
+//  *cxx.begin() = 'c'; // undefined: 'views' are to be used as observers
+    println(cxx);
+}
+```
+
+Output:
+
+```text
+Hello, C++20!
+*drop_view::begin() == 'C'
+C++20!
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-drop-view-begin:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-drop-view-begin:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3482} standard="C++20">
+    <PublishedBehavior>the const overload can be called with unsized ranges</PublishedBehavior>
+    <CorrectedBehavior>the const overload requires `sized_range`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-ranges-drop-view-begin:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/drop_view/end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::begin`](/docs/cpp/library/ranges/begin) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::end`](/docs/cpp/library/ranges/end) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel indicating the end of a range (customization point object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

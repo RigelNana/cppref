@@ -1,0 +1,268 @@
+---
+title: "std::ranges::views::adjacent_transform, std::ranges::adjacent_transform_view, std::ranges::views::pairwise_transform"
+description: "adjacent_transform_view is a range adaptor that takes a view and an invocable object fun, and produces a view whose i-th element is a value that is the result of applying fun to each element in [i, i + N) of the original view."
+source_url: "https://en.cppreference.com/w/cpp/ranges/adjacent_transform_view"
+language: "C++"
+---
+
+{/* source:cpp-ranges-adjacent-transform-view:0000 */}
+<DeclarationDoc>
+Defined in header [`<ranges>`](/docs/cpp/library/headers/ranges)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< ranges::forward_range V, std::move_constructible F, std::size_t N >
+    requires ranges::view<V> && (N > 0) && std::is_object_v<F> &&
+           std::regular_invocable<F&,
+               /*REPEAT*/(ranges::range_reference_t<V>, N)...> &&
+           /*can-reference*/<std::invoke_result_t<F&,
+               /*REPEAT*/(ranges::range_reference_t<V>, N)...>>
+class adjacent_transform_view
+
+    : public ranges::view_interface<adjacent_transform_view<V, F, N>>`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`namespace views {
+    template< std::size_t N >
+    constexpr /* unspecified */ adjacent_transform = /* unspecified */;
+
+}`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`namespace views {
+    inline constexpr auto pairwise_transform = adjacent_transform<2>;
+
+}`} />
+
+Call signature
+
+  <Declaration id="4" language="cpp" since="C++23" code={`template< ranges::viewable_range R, class F >
+    requires /* see below */
+
+constexpr ranges::view auto adjacent_transform<N>( R&& r, F&& fun );`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< class F >
+constexpr /*range adaptor closure*/ adjacent_transform<N>( F&& fun );`} />
+</DeclarationDoc>
+
+{/* source:cpp-ranges-adjacent-transform-view:0001 */}
+1) `adjacent_transform_view` is a range adaptor that takes a [`view`](/docs/cpp/library/ranges/view) and an invocable object `fun`, and produces a [`view`](/docs/cpp/library/ranges/view) whose `i`th element is a value that is the result of applying `fun` to each element in `[i, i + N)` of the original view. `F` always has [arity](https://en.wikipedia.org/wiki/arity) `N`.
+
+{/* source:cpp-ranges-adjacent-transform-view:0002 */}
+Let `S` be the size of the original view. Then the size of produced view is:
+
+- `S - N + 1`, if `S >= N`,
+- `0` otherwise, and the resulting view is empty.
+
+{/* source:cpp-ranges-adjacent-transform-view:0003 */}
+2) The name `views::adjacent_transform<N>` denotes a [RangeAdaptorObject](/docs/cpp/library/named_req/RangeAdaptorObject). Given subexpressions `e` and `f`, and a constant expression `N`, the expression `views::adjacent_transform<N>(e, f)` is [expression-equivalent](/docs/cpp/language/expressions#Expression-equivalence) to:
+
+- `((void)e, views::zip_transform(f))`, if `N` is equal to `0` and `decltype((e))` models [`forward_range`](/docs/cpp/library/ranges/forward_range) (except that the evaluations of `e` and `f` are [indeterminately sequenced](/docs/cpp/language/expressions/eval_order#Ordering)),
+- `adjacent_transform_view<views::all_t<decltype((e))>, std::decay_t<decltype((f))>, N>(e, f)` otherwise.
+
+{/* source:cpp-ranges-adjacent-transform-view:0004 */}
+3) The name `views::pairwise_transform` denotes a [RangeAdaptorObject](/docs/cpp/library/named_req/RangeAdaptorObject) that behaves exactly as `views::adjacent_transform<2>`. In particular, the arity of `F` is also `2` and `fun` is a binary invocable object.
+
+{/* source:cpp-ranges-adjacent-transform-view:0005 */}
+`adjacent_transform_view` always models [`forward_range`](/docs/cpp/library/ranges/forward_range), and models [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range), [`random_access_range`](/docs/cpp/library/ranges/random_access_range), or [`sized_range`](/docs/cpp/library/ranges/sized_range), if adapted [`view`](/docs/cpp/library/ranges/view) type models the corresponding concept.
+
+### Member functions
+
+{/* source:cpp-ranges-adjacent-transform-view:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/adjacent_transform_view/adjacent_transform_view)</DescriptionTerm>
+    <DescriptionBody>constructs a `adjacent_transform_view` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/adjacent_transform_view/begin)</DescriptionTerm>
+    <DescriptionBody>returns an iterator to the beginning (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/adjacent_transform_view/end)</DescriptionTerm>
+    <DescriptionBody>returns an iterator or a sentinel to the end (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`size`](/docs/cpp/library/ranges/adjacent_transform_view/size)</DescriptionTerm>
+    <DescriptionBody>returns the number of elements. Provided only if the underlying (adapted) range satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range). (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`front`](/docs/cpp/library/ranges/view_interface/front)</DescriptionTerm>
+    <DescriptionBody>returns the first element in the derived view. Provided if it satisfies [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`back`](/docs/cpp/library/ranges/view_interface/back)</DescriptionTerm>
+    <DescriptionBody>returns the last element in the derived view. Provided if it satisfies [`bidirectional_range`](/docs/cpp/library/ranges/bidirectional_range) and [`common_range`](/docs/cpp/library/ranges/common_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator[]`](/docs/cpp/library/ranges/view_interface/operator_at)</DescriptionTerm>
+    <DescriptionBody>returns the `n`th element in the derived view. Provided if it satisfies [`random_access_range`](/docs/cpp/library/ranges/random_access_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Deduction guides
+
+{/* source:cpp-ranges-adjacent-transform-view:0007 */}
+(none)
+
+### Member types
+
+{/* source:cpp-ranges-adjacent-transform-view:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`InnerView` (private)</DescriptionTerm>
+    <DescriptionBody>`ranges::adjacent_view<V, N>`. (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`inner_iterator` (private)</DescriptionTerm>
+    <DescriptionBody>
+
+    - `ranges::iterator_t<const InnerView>`, if `Const` is `true`. Otherwise,
+    - `ranges::iterator_t<InnerView>`. (exposition-only member type*)
+
+</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`inner_sentinel` (private)</DescriptionTerm>
+    <DescriptionBody>
+
+    - `ranges::sentinel_t<const InnerView>`, if `Const` is `true`. Otherwise,
+    - `ranges::sentinel_t<InnerView>`. (exposition-only member type*)
+
+</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Data members
+
+{/* source:cpp-ranges-adjacent-transform-view:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`fun_` (private)</DescriptionTerm>
+    <DescriptionBody>`/*movable-box*/<F>` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`inner_` (private)</DescriptionTerm>
+    <DescriptionBody>`ranges::adjacent_view<V,N>` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Nested classes
+
+{/* source:cpp-ranges-adjacent-transform-view:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/adjacent_transform_view/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sentinel`](/docs/cpp/library/ranges/adjacent_transform_view/sentinel)</DescriptionTerm>
+    <DescriptionBody>the sentinel type used when `adjacent_transform_view` is not a [`common_range`](/docs/cpp/library/ranges/common_range) (exposition-only member class template*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-ranges-adjacent-transform-view:0011 */}
+`views::adjacent_transform` only accepts foward ranges even when `N` is `0`.
+
+{/* source:cpp-ranges-adjacent-transform-view:0012 */}
+| [`Feature-test`](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_ranges_zip`](/docs/cpp/library/feature_test#cpp_lib_ranges_zip) | [`202110L`](/docs/cpp/library/compiler_support/23#cpp_lib_ranges_zip_202110L) | (C++23) | [`ranges::zip_view`](/docs/cpp/library/ranges/zip_view), [`ranges::zip_transform_view`](/docs/cpp/library/ranges/zip_transform_view), [`ranges::adjacent_view`](/docs/cpp/library/ranges/adjacent_view), `ranges::adjacent_transform_view` |
+
+### Example
+
+{/* source:cpp-ranges-adjacent-transform-view:0013 */}
+```cpp
+#include <array>
+#include <iostream>
+#include <ranges>
+ 
+int main()
+{
+    constexpr static std::array data{1, 2, 3, 4, 5, 6};
+    constexpr int window{3};
+ 
+    auto Fun = [](auto... ints) { return (... + ints); };
+    // Alternatively, the Fun could be any ternary (if window == 3) callable, e.g.:
+    // auto Fun = [](int x, int y, int z) { return x + y + z; };
+ 
+    constexpr auto view = data | std::views::adjacent_transform<window>(Fun);
+ 
+    static_assert(
+        view.size() == (data.size() - window + 1)
+        && std::array{6, 9, 12, 15}
+        == std::array{view[0], view[1], view[2], view[3]}
+        && view[0] == Fun(data[0], data[1], data[2])
+        && view[1] == Fun(data[1], data[2], data[3])
+        && view[2] == Fun(data[2], data[3], data[4])
+        && view[3] == Fun(data[3], data[4], data[5])
+    );
+ 
+    for (int x : view)
+        std::cout << x << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+6 9 12 15
+```
+
+### Defect reports
+
+{/* source:cpp-ranges-adjacent-transform-view:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-ranges-adjacent-transform-view:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={4098} standard="C++23">
+    <PublishedBehavior>`views::adjacent_transform<0>` used to accept input-only ranges</PublishedBehavior>
+    <CorrectedBehavior>made rejected</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### References
+
+{/* source:cpp-ranges-adjacent-transform-view:0016 */}
+- C++23 standard (ISO/IEC 14882:2024):
+  - 26.7.27 Adjacent transform view [range.adjacent.transform]
+
+### See also
+
+{/* source:cpp-ranges-adjacent-transform-view:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::adjacent_view`, `views::adjacent`](/docs/cpp/library/ranges/adjacent_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of tuples of references to adjacent elements of the adapted view (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform_view`, `views::transform`](/docs/cpp/library/ranges/transform_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) of a sequence that applies a transformation function to each element (class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::zip_transform_view`, `views::zip_transform`](/docs/cpp/library/ranges/zip_transform_view) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) consisting of results of application of a transformation function to corresponding elements of the adapted views (class template) (customization point object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::transform`](/docs/cpp/library/algorithm/ranges/transform) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
