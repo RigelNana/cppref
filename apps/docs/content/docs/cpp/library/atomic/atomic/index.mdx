@@ -1,0 +1,566 @@
+---
+title: "std::atomic"
+description: "Each instantiation and full specialization of the std::atomic template defines an atomic type. If one thread writes to an atomic object while another thread reads from it, the behavior is well-defined (see memory model for details on data races)."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct atomic;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class U >
+struct atomic<U*>;`} />
+
+Defined in header [`<memory>`](/docs/cpp/library/headers/memory)
+
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class U >
+struct atomic<std::shared_ptr<U>>;`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class U >
+struct atomic<std::weak_ptr<U>>;`} />
+
+Defined in header [`<stdatomic.h>`](/docs/cpp/library/headers/stdatomic.h)
+
+  <Declaration id="5" language="cpp" since="C++23" code={`#define _Atomic(T) /* see below */`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic:0001 */}
+Each instantiation and full specialization of the `std::atomic` template defines an atomic type. If one thread writes to an atomic object while another thread reads from it, the behavior is well-defined (see [memory model](/docs/cpp/language/basic_concepts/memory_model) for details on data races).
+
+{/* source:cpp-atomic-atomic:0002 */}
+In addition, accesses to atomic objects may establish inter-thread synchronization and order non-atomic memory accesses as specified by [`std::memory_order`](/docs/cpp/library/atomic/memory_order).
+
+{/* source:cpp-atomic-atomic:0003 */}
+`std::atomic` is neither copyable nor movable.
+
+{/* source:cpp-atomic-atomic:0004 */}
+<Revision since="C++23">
+The compatibility macro `_Atomic` is provided in [`<stdatomic.h>`](/docs/cpp/library/headers/stdatomic.h) such that `_Atomic(T)` is identical to `std::atomic<T>` while both are well-formed.
+
+It is unspecified whether any declaration in namespace `std` is available when [`<stdatomic.h>`](/docs/cpp/library/headers/stdatomic.h) is included.
+</Revision>
+
+### Specializations
+
+#### Primary template
+
+{/* source:cpp-atomic-atomic:0005 */}
+The primary `std::atomic` template may be instantiated with any [`TriviallyCopyable`](/docs/cpp/library/named_req/TriviallyCopyable) type `T` satisfying both [`CopyConstructible`](/docs/cpp/library/named_req/CopyConstructible) and [`CopyAssignable`](/docs/cpp/library/named_req/CopyAssignable). The program is ill-formed if any of following values is `false`:
+
+{/* source:cpp-atomic-atomic:0006 */}
+- `std::is_trivially_copyable<T>::value`
+- `std::is_copy_constructible<T>::value`
+- `std::is_move_constructible<T>::value`
+- `std::is_copy_assignable<T>::value`
+- `std::is_move_assignable<T>::value`
+- `std::is_same<T, typename std::remove_cv<T>::type>::value`
+
+{/* source:cpp-atomic-atomic:0007 */}
+```cpp
+struct Counters { int a; int b; }; // user-defined trivially-copyable type
+std::atomic<Counters> cnt;         // specialization for the user-defined type
+```
+
+{/* source:cpp-atomic-atomic:0008 */}
+`std::atomic<bool>` uses the primary template. It is guaranteed to be a [standard layout struct](/docs/cpp/language/classes#Standard-layout_class) and has a [trivial destructor](/docs/cpp/language/classes/destructor#Trivial_destructor).
+
+#### Partial specializations
+
+{/* source:cpp-atomic-atomic:0009 */}
+The standard library provides partial specializations of the `std::atomic` template for the following types with additional properties that the primary template does not have:
+
+{/* source:cpp-atomic-atomic:0010 */}
+2) Partial specializations `std::atomic<U*>` for all pointer types. These specializations have standard layout<InlineRevision until="C++20">, trivial default constructors,</InlineRevision> and trivial destructors. Besides the operations provided for all atomic types, these specializations additionally support atomic arithmetic operations appropriate to pointer types, such as [`fetch_add`](/docs/cpp/library/atomic/atomic/fetch_add), [`fetch_sub`](/docs/cpp/library/atomic/atomic/fetch_sub).
+
+{/* source:cpp-atomic-atomic:0011 */}
+<Revision since="C++20">
+3,4) Partial specializations `std::atomic<std::shared_ptr<U>>` and `std::atomic<std::weak_ptr<U>>` are provided for [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) and [`std::weak_ptr`](/docs/cpp/library/memory/weak_ptr). See [`std::atomic<std::shared_ptr>`](/docs/cpp/library/memory/shared_ptr/atomic2) and [`std::atomic<std::weak_ptr>`](/docs/cpp/library/memory/weak_ptr/atomic2) for details.
+</Revision>
+
+#### Specializations for integral types
+
+{/* source:cpp-atomic-atomic:0012 */}
+When instantiated with one of the following integral types, `std::atomic` provides additional atomic operations appropriate to integral types such as [`fetch_add`](/docs/cpp/library/atomic/atomic/fetch_add), [`fetch_sub`](/docs/cpp/library/atomic/atomic/fetch_sub), [`fetch_and`](/docs/cpp/library/atomic/atomic/fetch_and), [`fetch_or`](/docs/cpp/library/atomic/atomic/fetch_or), [`fetch_xor`](/docs/cpp/library/atomic/atomic/fetch_xor):
+
+{/* source:cpp-atomic-atomic:0013 */}
+- The character types `char`<InlineRevision since="C++20">, `char8_t`</InlineRevision>, `char16_t`, `char32_t`, and `wchar_t`;
+- The standard signed integer types: `signed char`, `short`, `int`, `long`, and `long long`;
+- The standard unsigned integer types: `unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, and `unsigned long long`;
+- Any additional integral types needed by the typedefs in the header [`<cstdint>`](/docs/cpp/library/headers/cstdint).
+
+{/* source:cpp-atomic-atomic:0014 */}
+Additionally, the resulting `std::atomic<Integral>` specialization has standard layout<InlineRevision until="C++20">, a trivial default constructor,</InlineRevision> and a trivial destructor. Signed integer arithmetic is defined to use two's complement; there are no undefined results.
+
+{/* source:cpp-atomic-atomic:0015 */}
+<Revision since="C++20">
+#### Specializations for floating-point types
+
+When instantiated with one of the cv-unqualified floating-point types (`float`, `double`, `long double`<InlineRevision since="C++23"> and cv-unqualified [extended floating-point types](/docs/cpp/language/basic_concepts/types#Extended_floating-point_types)</InlineRevision>), `std::atomic` provides additional atomic operations appropriate to floating-point types such as [`fetch_add`](/docs/cpp/library/atomic/atomic/fetch_add), [`fetch_sub`](/docs/cpp/library/atomic/atomic/fetch_sub).
+
+Additionally, the resulting `std::atomic<Floating>` specialization has standard layout and a trivial destructor.
+
+No operations result in undefined behavior even if the result is not representable in the floating-point type. The [floating-point environment](/docs/cpp/library/numeric/fenv) in effect may be different from the calling thread's floating-point environment.
+</Revision>
+
+### Member types
+
+{/* source:cpp-atomic-atomic:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T` (regardless of whether specialized or not)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`difference_type`[1]</DescriptionTerm>
+    <DescriptionBody>`value_type` (only for `atomic<Integral>`<InlineRevision since="C++20"> and `atomic<Floating>`</InlineRevision> specializations) <br /> [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t) (only for `std::atomic<U*>` specializations)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic-atomic:0017 */}
+1. ↑ `difference_type` is not defined in the primary `std::atomic` template or in the partial specializations for [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) and [`std::weak_ptr`](/docs/cpp/library/memory/weak_ptr).
+
+### Member functions
+
+{/* source:cpp-atomic-atomic:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/atomic/atomic/atomic)</DescriptionTerm>
+    <DescriptionBody>constructs an atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/atomic/atomic/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>stores a value into an atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_lock_free`](/docs/cpp/library/atomic/atomic/is_lock_free)</DescriptionTerm>
+    <DescriptionBody>checks if the atomic object is lock-free <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`store`](/docs/cpp/library/atomic/atomic/store)</DescriptionTerm>
+    <DescriptionBody>atomically replaces the value of the atomic object with a non-atomic argument <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`load`](/docs/cpp/library/atomic/atomic/load)</DescriptionTerm>
+    <DescriptionBody>atomically obtains the value of the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator T`](/docs/cpp/library/atomic/atomic/operator_T)</DescriptionTerm>
+    <DescriptionBody>loads a value from an atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exchange`](/docs/cpp/library/atomic/atomic/exchange)</DescriptionTerm>
+    <DescriptionBody>atomically replaces the value of the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare_exchange_weak`, `compare_exchange_strong`](/docs/cpp/library/atomic/atomic/compare_exchange)</DescriptionTerm>
+    <DescriptionBody>atomically compares the value of the atomic object with non-atomic argument and performs atomic exchange if equal or atomic load if not <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/atomic/atomic/wait) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>blocks the thread until notified and the atomic value changes <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_one`](/docs/cpp/library/atomic/atomic/notify_one) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies at least one thread waiting on the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_all`](/docs/cpp/library/atomic/atomic/notify_all) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked waiting on the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_always_lock_free`](/docs/cpp/library/atomic/atomic/is_always_lock_free) [static] <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>indicates that the type is always lock-free <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Specialized member functions
+
+{/* source:cpp-atomic-atomic:0019 */}
+##### Specialized for integral<InlineRevision since="C++20">, floating-point</InlineRevision> and pointer types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_add`](/docs/cpp/library/atomic/atomic/fetch_add)</DescriptionTerm>
+    <DescriptionBody>atomically adds the argument to the value stored in the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_sub`](/docs/cpp/library/atomic/atomic/fetch_sub)</DescriptionTerm>
+    <DescriptionBody>atomically subtracts the argument from the value stored in the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+=`, `operator-=`](/docs/cpp/library/atomic/atomic/operator_arith2)</DescriptionTerm>
+    <DescriptionBody>adds to or subtracts from the atomic value <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Specialized for integral and pointer types only
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_max`](/docs/cpp/library/atomic/atomic/fetch_max) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>atomically performs [`std::max`](/docs/cpp/library/algorithm/max) between the argument and the value of the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_min`](/docs/cpp/library/atomic/atomic/fetch_min) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>atomically performs [`std::min`](/docs/cpp/library/algorithm/min) between the argument and the value of the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator--`, `operator--(int)`](/docs/cpp/library/atomic/atomic/operator_arith)</DescriptionTerm>
+    <DescriptionBody>increments or decrements the atomic value by one <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Specialized for integral types only
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_and`](/docs/cpp/library/atomic/atomic/fetch_and)</DescriptionTerm>
+    <DescriptionBody>atomically performs bitwise AND between the argument and the value of the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_or`](/docs/cpp/library/atomic/atomic/fetch_or)</DescriptionTerm>
+    <DescriptionBody>atomically performs bitwise OR between the argument and the value of the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_xor`](/docs/cpp/library/atomic/atomic/fetch_xor)</DescriptionTerm>
+    <DescriptionBody>atomically performs bitwise XOR between the argument and the value of the atomic object and obtains the value held previously <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator&=`, `operator|=`, `operator^=`](/docs/cpp/library/atomic/atomic/operator_arith3)</DescriptionTerm>
+    <DescriptionBody>performs bitwise AND, OR, XOR with the atomic value <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Type aliases
+
+{/* source:cpp-atomic-atomic:0020 */}
+Type aliases are provided for `bool` and all integral types listed above, as follows:
+
+{/* source:cpp-atomic-atomic:0021 */}
+##### Aliases for all `std::atomic<Integral>`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_bool` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<bool>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_char` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<char>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_schar` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<signed char>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uchar` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<unsigned char>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_short` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<short>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_ushort` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<unsigned short>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<int>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<unsigned int>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_long` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<long>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_ulong` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<unsigned long>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_llong` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<long long>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_ullong` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<unsigned long long>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_char8_t` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<char8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_char16_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<char16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_char32_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<char32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_wchar_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<wchar_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int8_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint8_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int16_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint16_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int32_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint32_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int64_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int64_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint64_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint64_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_least8_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_least8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_least8_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_least8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_least16_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_least16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_least16_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_least16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_least32_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_least32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_least32_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_least32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_least64_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_least64_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_least64_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_least64_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_fast8_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_fast8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_fast8_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_fast8_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_fast16_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_fast16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_fast16_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_fast16_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_fast32_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_fast32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_fast32_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_fast32_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_int_fast64_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::int_fast64_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uint_fast64_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uint_fast64_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_intptr_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::intptr_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uintptr_t` <InlineRevision since="C++11" /> (optional)</DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uintptr_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_size_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::size_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_ptrdiff_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::ptrdiff_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_intmax_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::intmax_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_uintmax_t` <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>`std::atomic<std::uintmax_t>` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Aliases for special-purpose types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_signed_lock_free` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a signed integral atomic type that is lock-free and for which waiting/notifying is most efficient <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`atomic_unsigned_lock_free` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>an unsigned integral atomic type that is lock-free and for which waiting/notifying is most efficient <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic-atomic:0022 */}
+<Revision since="C++20">
+`std::atomic_signed_lock_free` and `std::atomic_unsigned_lock_free` are optional in freestanding implementations.
+</Revision>
+
+### Notes
+
+{/* source:cpp-atomic-atomic:0023 */}
+There are non-member function template equivalents for all member functions of `std::atomic`. Those non-member functions may be additionally overloaded for types that are not specializations of `std::atomic`, but are able to guarantee atomicity. The only such type in the standard library is `std::shared_ptr<U>`.
+
+{/* source:cpp-atomic-atomic:0024 */}
+`_Atomic` is a [keyword](/docs/c/language/keyword/_Atomic) and used to provide [atomic types](/docs/c/language/declarations/atomic) in C.
+
+{/* source:cpp-atomic-atomic:0025 */}
+Implementations are recommended to ensure that the representation of `_Atomic(T)` in C is same as that of `std::atomic<T>` in C++ for every possible type `T`. The mechanisms used to ensure atomicity and memory ordering should be compatible.
+
+{/* source:cpp-atomic-atomic:0026 */}
+On GCC and Clang, some of the functionality described here requires linking against `-latomic`.
+
+{/* source:cpp-atomic-atomic:0027 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_atomic_ref`](/docs/cpp/library/feature_test#cpp_lib_atomic_ref) | [`201806L`](/docs/cpp/library/compiler_support/20#cpp_lib_atomic_ref_201806L) | (C++20) | `std::atomic_ref` |
+| [`__cpp_lib_constexpr_atomic`](/docs/cpp/library/feature_test#cpp_lib_constexpr_atomic) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_atomic_202411L) | (C++26) | `constexpr` `std::atomic` and `std::atomic_ref` |
+
+### Example
+
+{/* source:cpp-atomic-atomic:0028 */}
+```cpp
+#include <atomic>
+#include <iostream>
+#include <thread>
+#include <vector>
+
+std::atomic_int acnt;
+int cnt;
+
+void f()
+{
+    for (auto n{10000}; n; --n)
+    {
+        ++acnt;
+        ++cnt;
+        // Note: for this example, relaxed memory order is sufficient,
+        // e.g. acnt.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+int main()
+{
+    {
+        std::vector<std::jthread> pool;
+        for (int n = 0; n < 10; ++n)
+            pool.emplace_back(f);
+    }
+
+    std::cout << "The atomic counter is " << acnt << '\n'
+              << "The non-atomic counter is " << cnt << '\n';
+}
+```
+
+Possible output:
+
+```text
+The atomic counter is 100000
+The non-atomic counter is 69696
+```
+
+### Defect reports
+
+{/* source:cpp-atomic-atomic:0029 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-atomic-atomic:0030 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2441} standard="C++11">
+    <PublishedBehavior>typedefs for atomic versions of optional [fixed width integer types](/docs/cpp/library/utility/types/integer) were missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3012} standard="C++11">
+    <PublishedBehavior>`std::atomic<T>` was permitted for any `T` that is trivially copyable but not copyable</PublishedBehavior>
+    <CorrectedBehavior>such specializations are forbidden</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3949} standard="C++17">
+    <PublishedBehavior>the wording requiring `std::atomic<bool>` to have a trivial destructor was accidently dropped in C++17</PublishedBehavior>
+    <CorrectedBehavior>added back</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={4069} standard="C++11">
+    <PublishedBehavior>support for cv-qualified `T` was questionable</PublishedBehavior>
+    <CorrectedBehavior>disallow `T` being cv-qualified</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P0558R1" standard="C++11">
+    <PublishedBehavior>template argument deduction for some functions for atomic types might accidently fail; invalid pointer operations were provided</PublishedBehavior>
+    <CorrectedBehavior>specification was substantially rewritten: member typedefs `value_type` and `difference_type` are added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-atomic-atomic:0031 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag`](/docs/cpp/library/atomic/atomic_flag) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>the lock-free boolean atomic type <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::atomic<std::shared_ptr>`](/docs/cpp/library/memory/shared_ptr/atomic2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>atomic shared pointer <br /> (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::atomic<std::weak_ptr>`](/docs/cpp/library/memory/weak_ptr/atomic2) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>atomic weak pointer <br /> (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/language/declarations/atomic) for `Atomic types`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

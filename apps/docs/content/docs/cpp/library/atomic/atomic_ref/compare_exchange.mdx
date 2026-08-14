@@ -1,0 +1,104 @@
+---
+title: "std::atomic_ref<T>::compare_exchange_weak, std::atomic_ref<T>::compare_exchange_strong"
+description: "Atomically compares the value representation of the referenced object with that of expected, and if those are bitwise-equal, replaces the former with desired (performs a read-modify-write operation). Otherwise, loads the actual value stored in the referenced object into expected (performs a load operation)."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_ref/compare_exchange"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" code={`bool compare_exchange_weak
+    ( value_type& expected, value_type desired,
+      std::memory_order success, 
+      std::memory_order failure ) const noexcept;`} /> (constexpr since C++26)
+  <Declaration language="cpp" id="2" code={`bool compare_exchange_weak
+    ( value_type& expected, value_type desired,
+      std::memory_order order =
+          std::memory_order_seq_cst ) const noexcept;`} /> (constexpr since C++26)
+  <Declaration language="cpp" id="3" code={`bool compare_exchange_strong
+    ( value_type& expected, value_type desired,
+      std::memory_order success,
+      std::memory_order failure ) const noexcept;`} /> (constexpr since C++26)
+  <Declaration language="cpp" id="4" code={`bool compare_exchange_strong
+    ( value_type& expected, value_type desired,
+      std::memory_order order =
+          std::memory_order_seq_cst ) const noexcept;`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-atomic-atomic-ref-compare-exchange:0001 */}
+    Atomically compares the [value representation](/docs/cpp/language/basic_concepts/objects) of the referenced object with that of `expected`, and if those are bitwise-equal, replaces the former with `desired` (performs a read-modify-write operation). Otherwise, loads the actual value stored in the referenced object into `expected` (performs a load operation).
+
+    {/* source:cpp-atomic-atomic-ref-compare-exchange:0002 */}
+    1,3) The memory models for the read-modify-write and load operations are `success` and `failure` respectively.
+
+    {/* source:cpp-atomic-atomic-ref-compare-exchange:0003 */}
+    2,4) `order` is used for both read-modify-write and load operations, except that `std::memory_order_acquire` and `std::memory_order_relaxed` are used for the load operation if `order` is `std::memory_order_acq_rel` or `std::memory_order_release` respectively.
+
+    {/* source:cpp-atomic-atomic-ref-compare-exchange:0004 */}
+    These overloads participate in overload resolution only if `std::is_const_v<T>` is `false`.
+
+    {/* source:cpp-atomic-atomic-ref-compare-exchange:0005 */}
+    If `failure` is not `std::memory_order_relaxed`, `std::memory_order_consume`, `std::memory_order_acquire` or `std::memory_order_seq_cst`, the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+
+### Parameters
+
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0006 */}
+<ParameterList>
+  <Parameter name="expected">reference to the value expected to be found in the object referenced by the `atomic_ref` object</Parameter>
+  <Parameter name="desired">the value to store in the referenced object if it is as expected</Parameter>
+  <Parameter name="success">the memory synchronization ordering for the read-modify-write operation if the comparison succeeds</Parameter>
+  <Parameter name="failure">the memory synchronization ordering for the load operation if the comparison fails</Parameter>
+  <Parameter name="order">the memory synchronization ordering for both operations</Parameter>
+</ParameterList>
+
+
+### Return value
+
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0007 */}
+`true` if the referenced object was successfully changed, `false` otherwise.
+
+
+### Notes
+
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0008 */}
+The comparison and copying are bitwise (similar to [`std::memcmp`](/docs/cpp/library/text/byte/memcmp) and [`std::memcpy`](/docs/cpp/library/text/byte/memcpy)); no constructor, assignment operator, or comparison operator are used.
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0009 */}
+The weak forms (1,2) of the functions are allowed to fail spuriously, that is, act as if `*this != expected` even if they are equal. When a compare-and-exchange is in a loop, the weak version will yield better performance on some platforms.
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0010 */}
+When a weak compare-and-exchange would require a loop and a strong one would not, the strong one is preferable unless the object representation of `value_type` may include trap bits, or offers multiple object representations for the same value (e.g. floating-point NaN). In those cases, weak compare-and-exchange typically works because it quickly converges on some stable object representation.
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0011 */}
+For a union with bits that participate in the value representations of some members but not the others, compare-and-exchange might always fail because such padding bits have indeterminate values when they do not participate in the value representation of the active member.
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0012 */}
+Padding bits that never participate in an object's value representation are ignored.
+
+
+### Defect reports
+
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3508} standard="C++20">
+    <PublishedBehavior>`compare_exchange_weak` and `compare_exchange_strong` were meaningless for `const T`</PublishedBehavior>
+    <CorrectedBehavior>constrained to accept only non-const `T`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+
+### Example
+
+
+{/* source:cpp-atomic-atomic-ref-compare-exchange:0015 */}
+This section is incomplete Reason: no example

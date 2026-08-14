@@ -1,0 +1,105 @@
+---
+title: "std::atomic_wait, std::atomic_wait_explicit"
+description: "Performs atomic waiting operations. Behaves as if it repeatedly performs the following steps: Compare the value representation of object->load() (for overloads (1,2)) or object->load(order) (for overloads (3,4)) with that of old."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_wait"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-wait:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class T >
+void atomic_wait( const std::atomic<T>* object,
+
+                 typename std::atomic<T>::value_type old );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class T >
+void atomic_wait( const volatile std::atomic<T>* object,
+
+                 typename std::atomic<T>::value_type old );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class T >
+void atomic_wait_explicit( const std::atomic<T>* object,
+                           typename std::atomic<T>::value_type old,
+
+                           std::memory_order order );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class T >
+void atomic_wait_explicit( const volatile std::atomic<T>* object,
+                           typename std::atomic<T>::value_type old,
+
+                           std::memory_order order );`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-wait:0001 */}
+Performs atomic waiting operations. Behaves as if it repeatedly performs the following steps:
+
+{/* source:cpp-atomic-atomic-wait:0002 */}
+- Compare the [value representation](/docs/cpp/language/basic_concepts/objects) of `object->load()` (for overloads (1,2)) or `object->load(order)` (for overloads (3,4)) with that of `old`. If those are bitwise equal, then blocks until `*object` is notified by `std::atomic::notify_one()` or `std::atomic::notify_all()`, or the thread is unblocked spuriously. Otherwise, returns.
+
+{/* source:cpp-atomic-atomic-wait:0003 */}
+These functions are guaranteed to return only if `value` has changed, even if the underlying implementation unblocks spuriously.
+
+{/* source:cpp-atomic-atomic-wait:0004 */}
+1,2) Equivalent to `object->wait(old)`.
+
+{/* source:cpp-atomic-atomic-wait:0005 */}
+3,4) Equivalent to `object->wait(old, order)`.
+
+{/* source:cpp-atomic-atomic-wait:0006 */}
+If `order` is one of `std::memory_order::release` and `std::memory_order::acq_rel`, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-wait:0007 */}
+<ParameterList>
+  <Parameter name="object">pointer to the atomic object to check and wait on</Parameter>
+  <Parameter name="old">the value to check the atomic object no longer contains</Parameter>
+  <Parameter name="order">the memory synchronization ordering</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-wait:0008 */}
+(none)
+
+### Notes
+
+{/* source:cpp-atomic-atomic-wait:0009 */}
+This form of change-detection is often more efficient than simple polling or pure spinlocks.
+
+{/* source:cpp-atomic-atomic-wait:0010 */}
+Due to the [ABA problem](https://en.wikipedia.org/wiki/ABA_problem), transient changes from `old` to another value and back to `old` might be missed, and not unblock.
+
+{/* source:cpp-atomic-atomic-wait:0011 */}
+The comparison is bitwise (similar to [`std::memcmp`](/docs/cpp/library/text/byte/memcmp)); no comparison operator is used. Padding bits that never participate in an object's value representation are ignored.
+
+### Example
+
+{/* source:cpp-atomic-atomic-wait:0012 */}
+This section is incomplete
+Reason: no example
+
+### See also
+
+{/* source:cpp-atomic-atomic-wait:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/atomic/atomic/wait) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>blocks the thread until notified and the atomic value changes <br /> (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_one`](/docs/cpp/library/atomic/atomic/notify_one) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies at least one thread waiting on the atomic object <br /> (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_all`](/docs/cpp/library/atomic/atomic/notify_all) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked waiting on the atomic object <br /> (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_notify_one`](/docs/cpp/library/atomic/atomic_notify_one) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies a thread blocked in atomic_wait <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_notify_all`](/docs/cpp/library/atomic/atomic_notify_all) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked in atomic_wait <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

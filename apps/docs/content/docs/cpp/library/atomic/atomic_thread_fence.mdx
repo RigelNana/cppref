@@ -1,0 +1,168 @@
+---
+title: "std::atomic_thread_fence"
+description: "Establishes memory synchronization ordering of non-atomic and relaxed atomic accesses, as instructed by order, without an associated atomic operation. Note however, that at least one atomic operation is required to set up the synchronization, as described below."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_thread_fence"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-thread-fence:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration language="cpp" since="C++11" code={`extern "C" void atomic_thread_fence( std::memory_order order ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-thread-fence:0001 */}
+Establishes [memory synchronization ordering](/docs/cpp/library/atomic/memory_order) of non-atomic and relaxed atomic accesses, as instructed by `order`, without an associated atomic operation. Note however, that at least one atomic operation is required to set up the synchronization, as described below.
+
+#### Fence-atomic synchronization
+
+{/* source:cpp-atomic-atomic-thread-fence:0002 */}
+A release fence F in thread A synchronizes-with atomic [acquire operation](/docs/cpp/library/atomic/memory_order) Y in thread B, if
+
+{/* source:cpp-atomic-atomic-thread-fence:0003 */}
+- there exists an atomic store X (with any memory order),
+- Y reads the value written by X (or the value would be written by [release sequence headed by X](/docs/cpp/library/atomic/memory_order) if X were a release operation),
+- F is sequenced-before X in thread A.
+
+{/* source:cpp-atomic-atomic-thread-fence:0004 */}
+In this case, all non-atomic and relaxed atomic stores that are [sequenced-before](/docs/cpp/library/atomic/memory_order) F in thread A will [happen-before](/docs/cpp/library/atomic/memory_order) all non-atomic and relaxed atomic loads from the same locations made in thread B after Y.
+
+#### Atomic-fence synchronization
+
+{/* source:cpp-atomic-atomic-thread-fence:0005 */}
+An atomic [release operation](/docs/cpp/library/atomic/memory_order) X in thread A synchronizes-with an acquire fence F in thread B, if
+
+{/* source:cpp-atomic-atomic-thread-fence:0006 */}
+- there exists an atomic read Y (with any memory order),
+- Y reads the value written by X (or by the [release sequence headed by X](/docs/cpp/library/atomic/memory_order)),
+- Y is sequenced-before F in thread B.
+
+{/* source:cpp-atomic-atomic-thread-fence:0007 */}
+In this case, all non-atomic and relaxed atomic stores that are [sequenced-before](/docs/cpp/library/atomic/memory_order) X in thread A will [happen-before](/docs/cpp/library/atomic/memory_order) all non-atomic and relaxed atomic loads from the same locations made in thread B after F.
+
+#### Fence-fence synchronization
+
+{/* source:cpp-atomic-atomic-thread-fence:0008 */}
+A release fence FA in thread A synchronizes-with an acquire fence FB in thread B, if
+
+{/* source:cpp-atomic-atomic-thread-fence:0009 */}
+- there exists an atomic object M,
+- there exists an atomic write X (with any memory order) that modifies M in thread A,
+- FA is sequenced-before X in thread A,
+- there exists an atomic read Y (with any memory order) in thread B,
+- Y reads the value written by X (or the value would be written by [release sequence headed by X](/docs/cpp/library/atomic/memory_order) if X were a release operation),
+- Y is sequenced-before FB in thread B.
+
+{/* source:cpp-atomic-atomic-thread-fence:0010 */}
+In this case, all non-atomic and relaxed atomic stores that are [sequenced-before](/docs/cpp/library/atomic/memory_order) FA in thread A will [happen-before](/docs/cpp/library/atomic/memory_order) all non-atomic and relaxed atomic loads from the same locations made in thread B after FB.
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-thread-fence:0011 */}
+<ParameterList>
+  <Parameter name="order">the memory ordering executed by this fence</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-thread-fence:0012 */}
+(none)
+
+### Notes
+
+{/* source:cpp-atomic-atomic-thread-fence:0013 */}
+On x86 (including x86-64), `atomic_thread_fence` functions issue no CPU instructions and only affect compile-time code motion, except for `std::atomic_thread_fence(std::memory_order_seq_cst)`.
+
+{/* source:cpp-atomic-atomic-thread-fence:0014 */}
+`atomic_thread_fence` imposes stronger synchronization constraints than an atomic store operation with the same [`std::memory_order`](/docs/cpp/library/atomic/memory_order). While an atomic store-release operation prevents all preceding reads and writes from moving past the store-release, an `atomic_thread_fence` with `std::memory_order_release` ordering prevents all preceding reads and writes from moving past all subsequent stores.
+
+{/* source:cpp-atomic-atomic-thread-fence:0015 */}
+Fence-fence synchronization can be used to add synchronization to a sequence of several relaxed atomic operations, for example:
+
+{/* source:cpp-atomic-atomic-thread-fence:0016 */}
+```cpp
+// Global
+std::string computation(int);
+void print(std::string);
+
+std::atomic<int> arr[3] = {-1, -1, -1};
+std::string data[1000]; //non-atomic data
+
+// Thread A, compute 3 values.
+void ThreadA(int v0, int v1, int v2)
+{
+//  assert(0 <= v0, v1, v2 < 1000);
+    data[v0] = computation(v0);
+    data[v1] = computation(v1);
+    data[v2] = computation(v2);
+    std::atomic_thread_fence(std::memory_order_release);
+    std::atomic_store_explicit(&arr[0], v0, std::memory_order_relaxed);
+    std::atomic_store_explicit(&arr[1], v1, std::memory_order_relaxed);
+    std::atomic_store_explicit(&arr[2], v2, std::memory_order_relaxed);
+}
+
+// Thread B, prints between 0 and 3 values already computed.
+void ThreadB()
+{
+    int v0 = std::atomic_load_explicit(&arr[0], std::memory_order_relaxed);
+    int v1 = std::atomic_load_explicit(&arr[1], std::memory_order_relaxed);
+    int v2 = std::atomic_load_explicit(&arr[2], std::memory_order_relaxed);
+    std::atomic_thread_fence(std::memory_order_acquire);
+//  v0, v1, v2 might turn out to be -1, some or all of them.
+//  Otherwise it is safe to read the non-atomic data because of the fences:
+    if (v0 != -1)
+        print(data[v0]);
+    if (v1 != -1)
+        print(data[v1]);
+    if (v2 != -1)
+        print(data[v2]);
+}
+```
+
+### Example
+
+{/* source:cpp-atomic-atomic-thread-fence:0017 */}
+Scan an array of mailboxes, and process only the ones intended for us, without unnecessary synchronization. This example uses atomic-fence synchronization.
+
+{/* source:cpp-atomic-atomic-thread-fence:0018 */}
+```cpp
+const int num_mailboxes = 32;
+std::atomic<int> mailbox_receiver[num_mailboxes];
+std::string mailbox_data[num_mailboxes];
+
+// The writer threads update non-atomic shared data 
+// and then update mailbox_receiver[i] as follows:
+mailbox_data[i] = ...;
+std::atomic_store_explicit(&mailbox_receiver[i], receiver_id, std::memory_order_release);
+
+// Reader thread needs to check all mailbox[i], but only needs to sync with one.
+for (int i = 0; i < num_mailboxes; ++i)
+    if (std::atomic_load_explicit(&mailbox_receiver[i],
+        std::memory_order_relaxed) == my_id)
+    {
+        // synchronize with just one writer
+        std::atomic_thread_fence(std::memory_order_acquire);
+        // guaranteed to observe everything done in the writer thread
+        // before the atomic_store_explicit()
+        do_work(mailbox_data[i]);
+    }
+```
+
+### See also
+
+{/* source:cpp-atomic-atomic-thread-fence:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`memory_order`](/docs/cpp/library/atomic/memory_order) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>defines memory ordering constraints for the given atomic operation <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_signal_fence`](/docs/cpp/library/atomic/atomic_signal_fence) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>fence between a thread and a signal handler executed in the same thread <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/atomic_thread_fence) for `atomic_thread_fence`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

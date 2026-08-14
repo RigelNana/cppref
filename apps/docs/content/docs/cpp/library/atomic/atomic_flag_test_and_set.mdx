@@ -1,0 +1,110 @@
+---
+title: "std::atomic_flag_test_and_set, std::atomic_flag_test_and_set_explicit"
+description: "Atomically changes the state of a std::atomic_flag pointed to by obj to set (true) and returns the value it held before."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_flag_test_and_set"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-flag-test-and-set:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`bool atomic_flag_test_and_set( volatile std::atomic_flag* obj ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`bool atomic_flag_test_and_set( std::atomic_flag* obj ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`bool atomic_flag_test_and_set_explicit( volatile std::atomic_flag* obj, 
+                                        std::memory_order order ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`bool atomic_flag_test_and_set_explicit( std::atomic_flag* obj, 
+                                        std::memory_order order ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-atomic-atomic-flag-test-and-set:0001 */}
+    Atomically changes the state of a [`std::atomic_flag`](/docs/cpp/library/atomic/atomic_flag) pointed to by `obj` to set (`true`) and returns the value it held before.
+
+    {/* source:cpp-atomic-atomic-flag-test-and-set:0002 */}
+    1,2) The memory synchronization order is `std::memory_order_seq_cst`.
+
+    {/* source:cpp-atomic-atomic-flag-test-and-set:0003 */}
+    3,4) The memory synchronization order is `order`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-flag-test-and-set:0004 */}
+<ParameterList>
+  <Parameter name="obj">pointer to [`std::atomic_flag`](/docs/cpp/library/atomic/atomic_flag) to access</Parameter>
+  <Parameter name="order">the memory synchronization order</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-flag-test-and-set:0005 */}
+The value previously held by the flag pointed to by `obj`.
+
+### Notes
+
+{/* source:cpp-atomic-atomic-flag-test-and-set:0006 */}
+`std::atomic_flag_test_and_set` and `std::atomic_flag_test_and_set_explicit` can be implemented as `obj->test_and_set()` and `obj->test_and_set(order)` respectively.
+
+### Example
+
+{/* source:cpp-atomic-atomic-flag-test-and-set:0007 */}
+A spinlock mutex can be implemented in userspace using an `std::atomic_flag`.
+
+```cpp
+#include <atomic>
+#include <iostream>
+#include <thread>
+#include <vector>
+ 
+std::atomic_flag lock = ATOMIC_FLAG_INIT;
+ 
+void f(int n)
+{
+    for (int cnt = 0; cnt < 100; ++cnt)
+    {
+        while (std::atomic_flag_test_and_set_explicit(&lock, std::memory_order_acquire))
+            ; // spin until the lock is acquired
+        std::cout << "Output from thread " << n << '\n';
+        std::atomic_flag_clear_explicit(&lock, std::memory_order_release);
+    }
+}
+ 
+int main()
+{
+    std::vector<std::thread> v;
+    for (int n = 0; n < 10; ++n)
+        v.emplace_back(f, n);
+    for (auto& t : v)
+        t.join();
+}
+```
+
+Output:
+
+```text
+Output from thread 2
+Output from thread 6
+Output from thread 7
+...<exactly 1000 lines>...
+```
+
+### See also
+
+{/* source:cpp-atomic-atomic-flag-test-and-set:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag`](/docs/cpp/library/atomic/atomic_flag)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>the lock-free boolean atomic type <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_clear`, `atomic_flag_clear_explicit`](/docs/cpp/library/atomic/atomic_flag_clear)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically sets the value of the flag to `false` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`memory_order`](/docs/cpp/library/atomic/memory_order)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>defines memory ordering constraints for the given atomic operation <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**[C documentation](/docs/c/library/thread/atomic_flag_test_and_set) for `atomic_flag_test_and_set`, `atomic_flag_test_and_set_explicit`**

@@ -1,0 +1,143 @@
+---
+title: "std::atomic_exchange, std::atomic_exchange_explicit"
+description: "Atomically replaces the value pointed to by obj with the value of desired and returns the value obj held previously, as if by obj->exchange(desired)."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_exchange"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-exchange:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+T atomic_exchange( std::atomic<T>* obj,
+
+                  typename std::atomic<T>::value_type desired ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+T atomic_exchange( volatile std::atomic<T>* obj,
+
+                  typename std::atomic<T>::value_type desired ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+T atomic_exchange_explicit( std::atomic<T>* obj,
+                            typename std::atomic<T>::value_type desired,
+
+                            std::memory_order order ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class T >
+T atomic_exchange_explicit( volatile std::atomic<T>* obj,
+                            typename std::atomic<T>::value_type desired,
+
+                            std::memory_order order ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-atomic-atomic-exchange:0001 */}
+    1,2) Atomically replaces the value pointed to by `obj` with the value of `desired` and returns the value `obj` held previously, as if by `obj->exchange(desired)`.
+
+    {/* source:cpp-atomic-atomic-exchange:0002 */}
+    3,4) Atomically replaces the value pointed to by `obj` with the value of `desired` and returns the value `obj` held previously, as if by `obj->exchange(desired, order)`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-exchange:0003 */}
+<ParameterList>
+  <Parameter name="obj">pointer to the atomic object to modify</Parameter>
+  <Parameter name="desired">the value to store in the atomic object</Parameter>
+  <Parameter name="order">the memory synchronization ordering</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-exchange:0004 */}
+The value held previously by the atomic object pointed to by `obj`.
+
+### Example
+
+{/* source:cpp-atomic-atomic-exchange:0005 */}
+A spinlock mutex can be implemented in userspace using an atomic exchange operation, similar to `std::atomic_flag_test_and_set`:
+
+```cpp
+#include <atomic>
+#include <iostream>
+#include <thread>
+#include <vector>
+
+std::atomic<bool> lock(false); // holds true when locked
+                               // holds false when unlocked
+
+int new_line{1}; // the access is synchronized via atomic lock variable
+
+void f(int n)
+{
+    for (int cnt = 0; cnt < 100; ++cnt)
+    {
+        while (std::atomic_exchange_explicit(&lock, true, std::memory_order_acquire))
+            ; // spin until acquired
+        std::cout << n << (new_line++ % 80 ? "" : "\n");
+        std::atomic_store_explicit(&lock, false, std::memory_order_release);
+    }
+}
+
+int main()
+{
+    std::vector<std::thread> v;
+    for (int n = 0; n < 8; ++n)
+        v.emplace_back(f, n);
+    for (auto& t : v)
+        t.join();
+}
+```
+
+Possible output:
+
+```text
+02222222222222222222222002222222222222222222222222222222222222222222222222222222
+22222222200022222222202222211111111111110000011111111100000000000000110001111111
+00011111000001111110000011111100000111000000001111111111111110000010000001001111
+11011111111011111011000000000000111100000000000001111000011133333333333333333333
+33333333333333333333333333333333333333333333333333333333333333333333333333333333
+44444444444444444444444444444444444444444444444444444444444444444444444444444444
+44444444444444444444555555555555555555555555555555555555555555555555555555555555
+55555555555555555555555555555555555555556666666666666666666666666666666666666666
+66666666666666666666666666666666666666666666666666666666666677777777777777777777
+77777777777777777777777777777777777777777777777777777777777777777777777777777777
+```
+
+### Defect reports
+
+{/* source:cpp-atomic-atomic-exchange:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-atomic-atomic-exchange:0007 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P0558R1" standard="C++11">
+    <PublishedBehavior>exact type match was required because `T` was deduced from multiple arguments</PublishedBehavior>
+    <CorrectedBehavior>`T` is only deduced from `obj`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-atomic-atomic-exchange:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`exchange`](/docs/cpp/library/atomic/atomic/exchange)</DescriptionTerm>
+    <DescriptionBody>atomically replaces the value of the atomic object and obtains the value held previously <br /> (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_compare_exchange_weak`, `atomic_compare_exchange_weak_explicit`, `atomic_compare_exchange_strong`, `atomic_compare_exchange_strong_explicit`](/docs/cpp/library/atomic/atomic_compare_exchange) <InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically compares the value of the atomic object with non-atomic argument and performs atomic exchange if equal or atomic load if not <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic-atomic-exchange:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::atomic_exchange(std::shared_ptr)`, `std::atomic_exchange_explicit(std::shared_ptr)`](/docs/cpp/library/memory/shared_ptr/atomic) <InlineRevision until="C++20" />, <InlineRevision removed="C++26" /></DescriptionTerm>
+    <DescriptionBody>specializes atomic operations for [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/atomic_exchange) for `atomic_exchange`, `atomic_exchange_explicit`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

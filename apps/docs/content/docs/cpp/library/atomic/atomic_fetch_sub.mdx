@@ -1,0 +1,145 @@
+---
+title: "std::atomic_fetch_sub, std::atomic_fetch_sub_explicit"
+description: "Performs atomic subtraction. Atomically subtracts arg from the value pointed to by obj and returns the value obj held previously. The operation is performed as if the following was executed:"
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_fetch_sub"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-fetch-sub:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+T atomic_fetch_sub( std::atomic<T>* obj,
+
+                   typename std::atomic<T>::difference_type arg ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+T atomic_fetch_sub( volatile std::atomic<T>* obj,
+
+                   typename std::atomic<T>::difference_type arg ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+T atomic_fetch_sub_explicit( std::atomic<T>* obj,
+                             typename std::atomic<T>::difference_type arg,
+
+                             std::memory_order order ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class T >
+T atomic_fetch_sub_explicit( volatile std::atomic<T>* obj,
+                             typename std::atomic<T>::difference_type arg,
+
+                             std::memory_order order ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-fetch-sub:0001 */}
+Performs atomic subtraction. Atomically subtracts `arg` from the value pointed to by `obj` and returns the value `obj` held previously. The operation is performed as if the following was executed:
+
+{/* source:cpp-atomic-atomic-fetch-sub:0002 */}
+1,2) `obj->fetch_sub(arg)`
+
+{/* source:cpp-atomic-atomic-fetch-sub:0003 */}
+3,4) `obj->fetch_sub(arg, order)`
+
+{/* source:cpp-atomic-atomic-fetch-sub:0004 */}
+If `std::atomic<T>` has no `fetch_sub` member (this member is only provided for [integral](/docs/cpp/library/atomic/atomic#Specializations_for_integral_types) types<InlineRevision since="C++20">, [floating-point](/docs/cpp/library/atomic/atomic#Specializations_for_floating-point_types)</InlineRevision> and [pointer](/docs/cpp/library/atomic/atomic#Partial_specializations) types except `bool`), the program is ill-formed.
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-fetch-sub:0005 */}
+<ParameterList>
+  <Parameter name="obj">pointer to the atomic object to modify</Parameter>
+  <Parameter name="arg">the value to subtract from the value stored in the atomic object</Parameter>
+  <Parameter name="order">the memory synchronization ordering</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-fetch-sub:0006 */}
+The value immediately preceding the effects of this function in the [modification order](/docs/cpp/library/atomic/memory_order#Modification_order) of `*obj`.
+
+### Example
+
+{/* source:cpp-atomic-atomic-fetch-sub:0007 */}
+Multiple threads may use `std::atomic_fetch_sub` to concurrently process an indexed container.
+
+```cpp
+#include <atomic>
+#include <iostream>
+#include <numeric>
+#include <string>
+#include <thread>
+#include <vector>
+
+const int N = 50;
+std::atomic<int> cnt;
+std::vector<int> data(N);
+
+void reader(int id) 
+{
+    for (;;)
+    {
+        int idx = atomic_fetch_sub_explicit(&cnt, 1, std::memory_order_relaxed);
+        if (idx >= 0)
+            std::cout << "reader " << std::to_string(id) << " processed item "
+                      << std::to_string(data[idx]) << '\n';
+        else
+        {
+            std::cout << "reader " << std::to_string(id) << " done\n";
+            break;
+        }
+    }
+}
+
+int main()
+{
+    std::iota(data.begin(), data.end(), 1);
+    cnt = data.size() - 1;
+
+    std::vector<std::thread> v;
+    for (int n = 0; n < 5; ++n)
+        v.emplace_back(reader, n);
+    for (auto& t : v)
+        t.join();
+}
+```
+
+Output:
+
+```text
+reader 2 processed item 50
+reader 1 processed item 44
+reader 4 processed item 46
+<....>
+reader 0 done
+reader 4 done
+reader 3 done
+```
+
+### Defect reports
+
+{/* source:cpp-atomic-atomic-fetch-sub:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-atomic-atomic-fetch-sub:0009 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P0558R1" standard="C++11">
+    <PublishedBehavior>exact type match was required because `T` was deduced from multiple arguments</PublishedBehavior>
+    <CorrectedBehavior>`T` is only deduced from `obj`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-atomic-atomic-fetch-sub:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`fetch_sub`](/docs/cpp/library/atomic/atomic/fetch_sub)</DescriptionTerm>
+    <DescriptionBody>atomically subtracts the argument from the value stored in the atomic object and obtains the value held previously <br /> (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_add`, `atomic_fetch_add_explicit`](/docs/cpp/library/atomic/atomic_fetch_add) <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>adds a non-atomic value to an atomic object and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/atomic_fetch_sub) for `atomic_fetch_sub`, `atomic_fetch_sub_explicit`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

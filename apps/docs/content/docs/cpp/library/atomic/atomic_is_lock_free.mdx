@@ -1,0 +1,133 @@
+---
+title: "std::atomic_is_lock_free, ATOMIC_xxx_LOCK_FREE"
+description: "Determines if the atomic object pointed to by obj is implemented lock-free, as if by calling obj->is_lock_free(). In any given program execution, the result of the lock-free query is the same for all atomic objects of the same type."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_is_lock_free"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-is-lock-free:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+bool atomic_is_lock_free( const volatile std::atomic<T>* obj ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+bool atomic_is_lock_free( const std::atomic<T>* obj ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`#define ATOMIC_BOOL_LOCK_FREE     /* unspecified */
+#define ATOMIC_CHAR_LOCK_FREE     /* unspecified */
+#define ATOMIC_CHAR16_T_LOCK_FREE /* unspecified */
+#define ATOMIC_CHAR32_T_LOCK_FREE /* unspecified */
+#define ATOMIC_WCHAR_T_LOCK_FREE  /* unspecified */
+#define ATOMIC_SHORT_LOCK_FREE    /* unspecified */
+#define ATOMIC_INT_LOCK_FREE      /* unspecified */
+#define ATOMIC_LONG_LOCK_FREE     /* unspecified */
+#define ATOMIC_LLONG_LOCK_FREE    /* unspecified */
+
+#define ATOMIC_POINTER_LOCK_FREE  /* unspecified */`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`#define ATOMIC_CHAR8_T_LOCK_FREE  /* unspecified */`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-atomic-atomic-is-lock-free:0001 */}
+    1,2) Determines if the atomic object pointed to by `obj` is implemented lock-free, as if by calling `obj->is_lock_free()`. In any given program execution, the result of the lock-free query is the same for all atomic objects of the same type.
+
+    {/* source:cpp-atomic-atomic-is-lock-free:0002 */}
+    3,4) Expands to an integer constant expression with value `0` for the built-in atomic types that are never lock-free, `1` for the built-in atomic types that are sometimes lock-free, `2` for the built-in atomic types that are always lock-free.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-is-lock-free:0003 */}
+<ParameterList>
+  <Parameter name="obj">pointer to the atomic object to examine</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-is-lock-free:0004 */}
+`true` if `*obj` is a lock-free atomic, `false` otherwise.
+
+### Notes
+
+{/* source:cpp-atomic-atomic-is-lock-free:0005 */}
+All atomic types except for [`std::atomic_flag`](/docs/cpp/library/atomic/atomic_flag) may be implemented using mutexes or other locking operations, rather than using the lock-free atomic CPU instructions. Atomic types are also allowed to be sometimes lock-free: for example, if only some subarchitectures support lock-free atomic access for a given type (such as the CMPXCHG16B instruction on x86-64), whether atomics are lock-free may not be known until runtime.
+
+{/* source:cpp-atomic-atomic-is-lock-free:0006 */}
+The C++ standard recommends (but does not require) that lock-free atomic operations are also address-free, that is, suitable for communication between processes using shared memory.
+
+### Example
+
+{/* source:cpp-atomic-atomic-is-lock-free:0007 */}
+```cpp
+#include <atomic>
+#include <iostream>
+#include <utility>
+
+struct A { int a[100]; };
+struct B { int x, y; };
+
+int main()
+{
+    std::atomic<A> a;
+    std::atomic<B> b;
+    std::cout << std::boolalpha
+              << "std::atomic<A> is lock free? "
+              << std::atomic_is_lock_free(&a) << '\n'
+              << "std::atomic<B> is lock free? "
+              << std::atomic_is_lock_free(&b) << '\n';
+}
+```
+
+Possible output:
+
+```text
+std::atomic<A> is lock free? false
+std::atomic<B> is lock free? true
+```
+
+### Defect reports
+
+{/* source:cpp-atomic-atomic-is-lock-free:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-atomic-atomic-is-lock-free:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3249} standard="C++11">
+    <PublishedBehavior>`atomic_is_lock_free` was specified via pointers, which was ambiguous and might accept invalid pointer values</PublishedBehavior>
+    <CorrectedBehavior>specified via atomic objects</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-atomic-atomic-is-lock-free:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_lock_free`](/docs/cpp/library/atomic/atomic/is_lock_free)</DescriptionTerm>
+    <DescriptionBody>checks if the atomic object is lock-free <br /> (public member function of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag`](/docs/cpp/library/atomic/atomic_flag) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>the lock-free boolean atomic type <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_always_lock_free`](/docs/cpp/library/atomic/atomic/is_always_lock_free) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>indicates that the type is always lock-free <br /> (public static member constant of `std::atomic<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic-atomic-is-lock-free:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::atomic_is_lock_free(std::shared_ptr)`](/docs/cpp/library/memory/shared_ptr/atomic) <InlineRevision until="C++20" />, <InlineRevision removed="C++26" /></DescriptionTerm>
+    <DescriptionBody>specializes atomic operations for [`std::shared_ptr`](/docs/cpp/library/memory/shared_ptr) <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/atomic_is_lock_free) for `atomic_is_lock_free`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/ATOMIC_LOCK_FREE_consts) for `ATOMIC_*_LOCK_FREE`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,134 @@
+---
+title: "std::atomic<T>::fetch_add"
+description: "Atomically replaces the current value with the result of arithmetic addition of the value and arg. That is, it performs atomic post-increment. The operation is a read-modify-write operation. Memory is affected according to the value of order."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic/fetch_add"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-fetch-add:0000 */}
+<DeclarationDoc>
+member only of `atomic<Integral>` specializations and <InlineRevision since="C++20">`atomic<Floating>` specializations</InlineRevision>
+
+  <Declaration id="1" language="cpp" since="C++11" code={`T fetch_add( T arg, std::memory_order order =
+                        std::memory_order_seq_cst ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`T fetch_add( T arg, std::memory_order order =
+                        std::memory_order_seq_cst ) volatile noexcept;`} />
+
+member only of `atomic<T*>` partial specialization
+
+  <Declaration id="3" language="cpp" since="C++11" code={`T* fetch_add( std::ptrdiff_t arg, 
+              std::memory_order order =
+
+                  std::memory_order_seq_cst ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`T* fetch_add( std::ptrdiff_t arg, 
+              std::memory_order order =
+
+                  std::memory_order_seq_cst ) volatile noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-fetch-add:0001 */}
+Atomically replaces the current value with the result of arithmetic addition of the value and `arg`. That is, it performs atomic post-increment. The operation is a read-modify-write operation. Memory is affected according to the value of `order`.
+
+{/* source:cpp-atomic-atomic-fetch-add:0002 */}
+1,2) For signed integral types, arithmetic is defined to use two's complement representation. There are no undefined results.
+
+<Revision since="C++20">
+For floating-point types, the [floating-point environment](/docs/cpp/library/numeric/fenv) in effect may be different from the calling thread's floating-point environment. The operation need not conform to the corresponding [`std::numeric_limits`](/docs/cpp/library/utility/types/numeric_limits) traits but is encouraged to do so. If the result is not a representable value for its type, the result is unspecified but the operation otherwise has no undefined behavior.
+</Revision>
+
+{/* source:cpp-atomic-atomic-fetch-add:0003 */}
+3,4) The result may be an undefined address, but the operation otherwise has no undefined behavior.
+
+{/* source:cpp-atomic-atomic-fetch-add:0004 */}
+If `T` is not a complete object type, the program is ill-formed.
+
+{/* source:cpp-atomic-atomic-fetch-add:0005 */}
+<Revision since="C++20">
+It is deprecated if `std::atomic<T>::is_always_lock_free` is `false` and overload (2) or (4) participates in overload resolution.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-fetch-add:0006 */}
+<ParameterList>
+  <Parameter name="arg">the other argument of arithmetic addition</Parameter>
+  <Parameter name="order">memory order constraints to enforce</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-fetch-add:0007 */}
+The value immediately preceding the effects of this function in the [modification order](/docs/cpp/library/atomic/memory_order#Modification_order) of `*this`.
+
+### Example
+
+{/* source:cpp-atomic-atomic-fetch-add:0008 */}
+```cpp
+#include <array>
+#include <atomic>
+#include <iostream>
+#include <thread>
+ 
+std::atomic<long long> data{10};
+std::array<long long, 5> return_values{};
+ 
+void do_work(int thread_num)
+{
+    long long val = data.fetch_add(1, std::memory_order_relaxed);
+    return_values[thread_num] = val;
+}
+ 
+int main()
+{
+    {
+        std::jthread th0{do_work, 0};
+        std::jthread th1{do_work, 1};
+        std::jthread th2{do_work, 2};
+        std::jthread th3{do_work, 3};
+        std::jthread th4{do_work, 4};
+    }
+ 
+    std::cout << "Result : " << data << '\n';
+ 
+    for (long long val : return_values)
+        std::cout << "Seen return value : " << val << std::endl;
+}
+```
+
+Possible output:
+
+```text
+Result : 15
+Seen return value : 11
+Seen return value : 10
+Seen return value : 14
+Seen return value : 12
+Seen return value : 13
+```
+
+### Defect reports
+
+{/* source:cpp-atomic-atomic-fetch-add:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-atomic-atomic-fetch-add:0010 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P0558R1" standard="C++11">
+    <PublishedBehavior>arithmetic permitted on pointers to (possibly cv-qualified) `void` or function</PublishedBehavior>
+    <CorrectedBehavior>made ill-formed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-atomic-atomic-fetch-add:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_add`, `atomic_fetch_add_explicit`](/docs/cpp/library/atomic/atomic_fetch_add)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>adds a non-atomic value to an atomic object and obtains the previous value of the atomic (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator++`, `operator++(int)`, `operator--`, `operator--(int)`](/docs/cpp/library/atomic/atomic/operator_arith)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>increments or decrements the atomic value by one (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

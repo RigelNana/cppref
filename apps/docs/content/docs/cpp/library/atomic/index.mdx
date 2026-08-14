@@ -1,0 +1,550 @@
+---
+title: "Concurrency support library (since C++11)"
+description: "C++ includes built-in support for threads, atomic operations, mutual exclusion, condition variables, and futures."
+source_url: "https://en.cppreference.com/w/cpp/atomic"
+language: "C++"
+---
+
+{/* source:cpp-atomic:0000 */}
+C++ includes built-in support for threads, atomic operations, mutual exclusion, condition variables, and futures.
+
+{/* source:cpp-atomic:0001 */}
+Threads enable programs to execute across several processor cores.
+
+{/* source:cpp-atomic:0002 */}
+Defined in header [`<thread>`](/docs/cpp/library/headers/thread)
+
+**Functions managing the current thread**
+
+Defined in namespace `this_thread`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`thread`](/docs/cpp/library/thread/thread)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>manages a separate thread <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`jthread`](/docs/cpp/library/thread/jthread)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>[`std::thread`](/docs/cpp/library/thread/thread) with support for auto-joining and cancellation <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`yield`](/docs/cpp/library/thread/yield)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>suggests that the implementation reschedule execution of threads <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_id`](/docs/cpp/library/thread/get_id)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns the thread id of the current thread <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sleep_for`](/docs/cpp/library/thread/sleep_for)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>stops the execution of the current thread for a specified time duration <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sleep_until`](/docs/cpp/library/thread/sleep_until)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>stops the execution of the current thread until a specified time point <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0003 */}
+The components *stop source*, *stop token*, and *stop callback* can be used to asynchronously request that an operation stops execution in a timely manner, typically because the result is no longer required. Such a request is called a *stop request*.
+
+{/* source:cpp-atomic:0004 */}
+These components specify the semantics of shared access to a *stop state*. Any object modeling any of these components that refer to the same stop state is an associated stop source, stop token, or stop callback, respectively.
+
+{/* source:cpp-atomic:0005 */}
+<Revision since="C++26">
+
+The concepts [`stoppable-source`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/stoppable-source&action=edit&redlink=1), [`stoppable_token`](/docs/cpp/library/thread/stoppable_token), and [`stoppable-callback-for`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/stoppable-callback-for&action=edit&redlink=1) specify the required syntax and model semantics of stop source, stop token, and stop callback, respectively.
+
+</Revision>
+
+{/* source:cpp-atomic:0006 */}
+They are designed:
+
+{/* source:cpp-atomic:0007 */}
+- to cooperatively cancel the execution such as for [`std::jthread`](/docs/cpp/library/thread/jthread),
+- to interrupt [`std::condition_variable_any`](/docs/cpp/library/thread/condition_variable_any) waiting functions,
+
+{/* source:cpp-atomic:0008 */}
+<Revision since="C++26">
+
+- to perform stopped completion of an asynchronous operation created by execution::connect,
+
+</Revision>
+
+{/* source:cpp-atomic:0009 */}
+- or for a custom execution management implementation.
+
+{/* source:cpp-atomic:0010 */}
+In fact, they do not even need to be used to "stop" anything, but can instead be used for a thread-safe one-time function(s) invocation trigger, for example.
+
+{/* source:cpp-atomic:0011 */}
+Defined in header [`<stop_token>`](/docs/cpp/library/headers/stop_token)
+
+**Stop token types**
+
+**Stop source types**
+
+**Stop callback types**
+
+**Concepts <InlineRevision since="C++20" />**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`stop_token`](/docs/cpp/library/thread/stop_token)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>an interface for querying if a [`std::jthread`](/docs/cpp/library/thread/jthread) cancellation request has been made <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`never_stop_token`](/docs/cpp/library/thread/never_stop_token)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>provides a stop token interface that a stop is never possible nor requested <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inplace_stop_token`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/inplace_stop_token&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>a stop token that references stop state of its associated `std::inplace_stop_source` object <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stop_source`](/docs/cpp/library/thread/stop_source)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>class representing a request to stop one or more [`std::jthreads`](/docs/cpp/library/thread/jthread) <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inplace_stop_source`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/inplace_stop_source&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>a `stoppable-source` that is the sole owner of the stop state <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stop_callback`](/docs/cpp/library/thread/stop_callback)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>an interface for registering callbacks on [`std::jthread`](/docs/cpp/library/thread/jthread) cancellation <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inplace_stop_callback`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/inplace_stop_callback&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>a stop callback for `std::inplace_stop_token` <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stop_callback_for_t`](/docs/cpp/library/thread/stop_callback_for_t)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>obtains the callback type for a given stop token type<br />(alias template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`stoppable_token`](/docs/cpp/library/thread/stoppable_token)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specifies the basic interface of stop tokens which allows queries for stop requests and whether the stop request is possible <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unstoppable_token`](/docs/cpp/library/thread/unstoppable_token)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specifies a stop token that does not allow stopping <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`**stoppable-source**`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/stoppable-source&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is a factory for associated stop tokens and a stop request can be made upon it<br />(exposition-only concept\*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`**stoppable-callback-for**`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/stoppable-callback-for&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>specifies an interface for registering callbacks with a given stop token type<br />(exposition-only concept\*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0012 */}
+Defined in header [`<new>`](/docs/cpp/library/headers/new)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`hardware_destructive_interference_size`, `hardware_constructive_interference_size`](/docs/cpp/library/thread/hardware_destructive_interference_size)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>min offset to avoid false sharing<br />max offset to promote true sharing <br /> (constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0013 */}
+These components are provided for fine-grained atomic operations allowing for lockless concurrent programming. Each atomic operation is indivisible with regards to any other atomic operation that involves the same object. Atomic objects are [free of data races](/docs/cpp/language/basic_concepts/memory_model#Threads_and_data_races).
+
+{/* source:cpp-atomic:0014 */}
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+**Atomic types**
+
+**Operations on atomic types**
+
+**Flag type and operations**
+
+**Initialization**
+
+**Memory synchronization ordering**
+
+Defined in header [`<stdatomic.h>`](/docs/cpp/library/headers/stdatomic.h)
+
+**C compatibility macros <InlineRevision since="C++23" />**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic`](/docs/cpp/library/atomic/atomic)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomic class template and specializations for bool, integral,<InlineRevision since="C++20"> floating-point,</InlineRevision> and pointer types <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_ref`](/docs/cpp/library/atomic/atomic_ref)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>provides atomic operations on non-atomic objects <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_is_lock_free`](/docs/cpp/library/atomic/atomic_is_lock_free)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the atomic type's operations are lock-free <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_store`, `atomic_store_explicit`](/docs/cpp/library/atomic/atomic_store)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically replaces the value of the atomic object with a non-atomic argument <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_load`, `atomic_load_explicit`](/docs/cpp/library/atomic/atomic_load)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically obtains the value stored in an atomic object <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_exchange`, `atomic_exchange_explicit`](/docs/cpp/library/atomic/atomic_exchange)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically replaces the value of the atomic object with non-atomic argument and returns the old value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_compare_exchange_weak`, `atomic_compare_exchange_weak_explicit`, `atomic_compare_exchange_strong`, `atomic_compare_exchange_strong_explicit`](/docs/cpp/library/atomic/atomic_compare_exchange)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically compares the value of the atomic object with non-atomic argument and performs atomic exchange if equal or atomic load if not <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_add`, `atomic_fetch_add_explicit`](/docs/cpp/library/atomic/atomic_fetch_add)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>adds a non-atomic value to an atomic object and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_sub`, `atomic_fetch_sub_explicit`](/docs/cpp/library/atomic/atomic_fetch_sub)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>subtracts a non-atomic value from an atomic object and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_and`, `atomic_fetch_and_explicit`](/docs/cpp/library/atomic/atomic_fetch_and)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>replaces the atomic object with the result of bitwise AND with a non-atomic argument and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_or`, `atomic_fetch_or_explicit`](/docs/cpp/library/atomic/atomic_fetch_or)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>replaces the atomic object with the result of bitwise OR with a non-atomic argument and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_xor`, `atomic_fetch_xor_explicit`](/docs/cpp/library/atomic/atomic_fetch_xor)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>replaces the atomic object with the result of bitwise XOR with a non-atomic argument and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_max`, `atomic_fetch_max_explicit`](/docs/cpp/library/atomic/atomic_fetch_max)<InlineRevision since="C++26" />, <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>replaces the atomic object with the result of [`std::max`](/docs/cpp/library/algorithm/max) with a non-atomic argument and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_fetch_min`, `atomic_fetch_min_explicit`](/docs/cpp/library/atomic/atomic_fetch_min)<InlineRevision since="C++26" />, <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>replaces the atomic object with the result of [`std::min`](/docs/cpp/library/algorithm/min) with a non-atomic argument and obtains the previous value of the atomic <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_wait`, `atomic_wait_explicit`](/docs/cpp/library/atomic/atomic_wait)<InlineRevision since="C++20" />, <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>blocks the thread until notified and the atomic value changes <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_notify_one`](/docs/cpp/library/atomic/atomic_notify_one)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies a thread blocked in atomic_wait <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_notify_all`](/docs/cpp/library/atomic/atomic_notify_all)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked in atomic_wait <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag`](/docs/cpp/library/atomic/atomic_flag)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>the lock-free boolean atomic type <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_test_and_set`, `atomic_flag_test_and_set_explicit`](/docs/cpp/library/atomic/atomic_flag_test_and_set)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically sets the flag to `true` and returns its previous value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_clear`, `atomic_flag_clear_explicit`](/docs/cpp/library/atomic/atomic_flag_clear)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically sets the value of the flag to `false` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_test`, `atomic_flag_test_explicit`](/docs/cpp/library/atomic/atomic_flag_test)<InlineRevision since="C++20" />, <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>atomically returns the value of the flag <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_wait`, `atomic_flag_wait_explicit`](/docs/cpp/library/atomic/atomic_flag_wait)<InlineRevision since="C++20" />, <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>blocks the thread until notified and the flag changes <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_notify_one`](/docs/cpp/library/atomic/atomic_flag_notify_one)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies a thread blocked in atomic_flag_wait <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_notify_all`](/docs/cpp/library/atomic/atomic_flag_notify_all)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked in atomic_flag_wait <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_init`](/docs/cpp/library/atomic/atomic_init)<InlineRevision since="C++11" />(deprecated in C++20)</DescriptionTerm>
+    <DescriptionBody>non-atomic initialization of a default-constructed atomic object <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ATOMIC_VAR_INIT`](/docs/cpp/library/atomic/ATOMIC_VAR_INIT)<InlineRevision since="C++11" />(deprecated in C++20)</DescriptionTerm>
+    <DescriptionBody>constant initialization of an atomic variable of static storage duration <br /> (function macro)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ATOMIC_FLAG_INIT`](/docs/cpp/library/atomic/ATOMIC_FLAG_INIT)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>initializes an [`std::atomic_flag`](/docs/cpp/library/atomic/atomic_flag) to `false` <br /> (macro constant)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`memory_order`](/docs/cpp/library/atomic/memory_order)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>defines memory ordering constraints for the given atomic operation <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`kill_dependency`](/docs/cpp/library/atomic/kill_dependency)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes the specified object from the [`std::memory_order_consume`](/docs/cpp/library/atomic/memory_order) dependency tree <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_thread_fence`](/docs/cpp/library/atomic/atomic_thread_fence)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>generic memory order-dependent fence synchronization primitive <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_signal_fence`](/docs/cpp/library/atomic/atomic_signal_fence)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>fence between a thread and a signal handler executed in the same thread <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`_Atomic`](/docs/cpp/library/atomic/atomic)<InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>compatibility macro such that `_Atomic(T)` is identical to `std::atomic<T>` <br /> (function macro)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0015 */}
+Neither the `_Atomic` macro, nor any of the non-macro global namespace declarations are provided by any C++ standard library header other than `<stdatomic.h>`.
+
+{/* source:cpp-atomic:0016 */}
+Mutual exclusion algorithms prevent multiple threads from simultaneously accessing shared resources. This prevents data races and provides support for synchronization between threads.
+
+{/* source:cpp-atomic:0017 */}
+Defined in header [`<mutex>`](/docs/cpp/library/headers/mutex)
+
+Defined in header [`<shared_mutex>`](/docs/cpp/library/headers/shared_mutex)
+
+**Generic mutex management**
+
+Defined in header [`<mutex>`](/docs/cpp/library/headers/mutex)
+
+**Generic locking algorithms**
+
+**Call once**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`mutex`](/docs/cpp/library/thread/mutex)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides basic mutual exclusion facility <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`timed_mutex`](/docs/cpp/library/thread/timed_mutex)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which implements locking with a timeout <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`recursive_mutex`](/docs/cpp/library/thread/recursive_mutex)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which can be locked recursively by the same thread <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`recursive_timed_mutex`](/docs/cpp/library/thread/recursive_timed_mutex)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which can be locked recursively<br />by the same thread and implements locking with a timeout <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_mutex`](/docs/cpp/library/thread/shared_mutex)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_timed_mutex`](/docs/cpp/library/thread/shared_timed_mutex)<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility and implements locking with a timeout <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock_guard`](/docs/cpp/library/thread/lock_guard)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements a strictly scope-based mutex ownership wrapper <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`scoped_lock`](/docs/cpp/library/thread/scoped_lock)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>deadlock-avoiding RAII wrapper for multiple mutexes <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_lock`](/docs/cpp/library/thread/unique_lock)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements movable mutex ownership wrapper <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_lock`](/docs/cpp/library/thread/shared_lock)<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>implements movable shared mutex ownership wrapper <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`defer_lock`, `try_to_lock`, `adopt_lock`, `defer_lock_t`, `try_to_lock_t`, `adopt_lock_t`](/docs/cpp/library/thread/lock_tag_t)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>tags used to specify locking strategy<br />(tag)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/try_lock)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>attempts to obtain ownership of mutexes via repeated calls to `try_lock` <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock`](/docs/cpp/library/thread/lock)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>locks specified mutexes, blocks if any are unavailable <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`once_flag`](/docs/cpp/library/thread/once_flag)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>helper object to ensure that [`call_once`](/docs/cpp/library/thread/call_once) invokes the function only once <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`call_once`](/docs/cpp/library/thread/call_once)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>invokes a function only once even if called from multiple threads <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0018 */}
+A condition variable is a synchronization primitive that allows multiple threads to communicate with each other. It allows some number of threads to wait (possibly with a timeout) for notification from another thread that they may proceed. A condition variable is always associated with a mutex.
+
+{/* source:cpp-atomic:0019 */}
+Defined in header [`<condition_variable>`](/docs/cpp/library/headers/condition_variable)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`condition_variable`](/docs/cpp/library/thread/condition_variable)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides a condition variable associated with a [`std::unique_lock`](/docs/cpp/library/thread/unique_lock) <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`condition_variable_any`](/docs/cpp/library/thread/condition_variable_any)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides a condition variable associated with any lock type <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_all_at_thread_exit`](/docs/cpp/library/thread/notify_all_at_thread_exit)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>schedules a call to `notify_all` to be invoked when this thread is completely finished <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cv_status`](/docs/cpp/library/thread/cv_status)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>lists the possible results of timed waits on condition variables <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0020 */}
+A semaphore is a lightweight synchronization primitive used to constrain concurrent access to a shared resource. When either would suffice, a semaphore can be more efficient than a condition variable.
+
+{/* source:cpp-atomic:0021 */}
+Defined in header [`<semaphore>`](/docs/cpp/library/headers/semaphore)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`counting_semaphore`](/docs/cpp/library/thread/counting_semaphore)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>semaphore that models a non-negative resource count <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`binary_semaphore`](/docs/cpp/library/thread/counting_semaphore)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>semaphore that has only two states <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0022 */}
+Latches and barriers are thread coordination mechanisms that allow any number of threads to block until an expected number of threads arrive. A latch cannot be reused, while a barrier can be used repeatedly.
+
+{/* source:cpp-atomic:0023 */}
+Defined in header [`<latch>`](/docs/cpp/library/headers/latch)
+
+Defined in header [`<barrier>`](/docs/cpp/library/headers/barrier)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`latch`](/docs/cpp/library/thread/latch)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>single-use thread barrier <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`barrier`](/docs/cpp/library/thread/barrier)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>reusable thread barrier <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0024 */}
+The standard library provides facilities to obtain values that are returned and to catch exceptions that are thrown by asynchronous tasks (i.e. functions launched in separate threads). These values are communicated in a *shared state*, in which the asynchronous task may write its return value or store an exception, and which may be examined, waited for, and otherwise manipulated by other threads that hold instances of [`std::future`](/docs/cpp/library/thread/future) or [`std::shared_future`](/docs/cpp/library/thread/shared_future) that reference that shared state.
+
+{/* source:cpp-atomic:0025 */}
+Defined in header [`<future>`](/docs/cpp/library/headers/future)
+
+**Future errors**
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`promise`](/docs/cpp/library/thread/promise)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>stores a value for asynchronous retrieval <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`packaged_task`](/docs/cpp/library/thread/packaged_task)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>packages a function to store its return value for asynchronous retrieval <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future`](/docs/cpp/library/thread/future)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>waits for a value that is set asynchronously <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_future`](/docs/cpp/library/thread/shared_future)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>waits for a value (possibly referenced by other futures) that is set asynchronously <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`async`](/docs/cpp/library/thread/async)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>runs a function asynchronously (potentially in a new thread) and returns a [`std::future`](/docs/cpp/library/thread/future) that will hold the result <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`launch`](/docs/cpp/library/thread/launch)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies the launch policy for [`std::async`](/docs/cpp/library/thread/async) <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_status`](/docs/cpp/library/thread/future_status)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies the results of timed waits performed on [`std::future`](/docs/cpp/library/thread/future) and [`std::shared_future`](/docs/cpp/library/thread/shared_future) <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_error`](/docs/cpp/library/thread/future_error)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>reports an error related to futures or promises <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_category`](/docs/cpp/library/thread/future_category)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>identifies the future error category <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_errc`](/docs/cpp/library/thread/future_errc)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>identifies the future error codes <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0026 */}
+Safe-reclamation techniques are most frequently used to straightforwardly resolve access-deletion races.
+
+{/* source:cpp-atomic:0027 */}
+**Read-Copy-Update Mechanism**
+
+Defined in header [`<rcu>`](/docs/cpp/library/headers/rcu)
+
+**Hazard Pointers**
+
+Defined in header [`<hazard_pointer>`](/docs/cpp/library/headers/hazard_pointer)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_obj_base`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_obj_base&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>allows an object to be protected by RCU <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_domain`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_domain&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>provides regions of RCU protection <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_default_domain`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_default_domain&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>returns a reference to a static-duration object of type `std::rcu_domain` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_synchronize`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_synchronize&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>blocks until a protection region unlocks on a RCU domain <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_barrier`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_barrier&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>may evaluate scheduled operations on a RCU domain and blocks until all preceding evaluations are complete <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rcu_retire`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/rcu_retire&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>schedules the evaluation of a specified function on a RCU domain, potentially allocating memory, and invoking scheduled evaluations <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`hazard_pointer_obj_base`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/hazard_pointer_obj_base&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>allows an object to be hazard-protectable <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`hazard_pointer`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/hazard_pointer&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>single-writer multi-reader pointer that can be owned by at most one thread at any point of time <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_hazard_pointer`](https://en.cppreference.com/mwiki/index.php?title=cpp/thread/make_hazard_pointer&action=edit&redlink=1)<InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>constructs a hazard pointer <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-atomic:0028 */}
+**[C documentation](/docs/c/library/thread) for Concurrency support library**

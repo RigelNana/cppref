@@ -1,0 +1,82 @@
+---
+title: "std::atomic_ref<T>::wait"
+description: "Performs atomic waiting operations. Behaves as if it repeatedly performs the following steps:"
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_ref/wait"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-ref-wait:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`void wait( value_type old, std::memory_order order =
+                               std::memory_order_seq_cst ) const noexcept;`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-atomic-atomic-ref-wait:0001 */}
+    Performs atomic waiting operations. Behaves as if it repeatedly performs the following steps:
+
+    {/* source:cpp-atomic-atomic-ref-wait:0002 */}
+    - Compare the [value representation](/docs/cpp/language/basic_concepts/objects) of `this->load(order)` with that of `old`.
+      - If those are equal, then blocks until `*this` is notified by `notify_one()` or `notify_all()`, or the thread is unblocked spuriously.
+      - Otherwise, returns.
+
+    {/* source:cpp-atomic-atomic-ref-wait:0003 */}
+    These functions are guaranteed to return only if value has changed, even if underlying implementation unblocks spuriously.
+
+    {/* source:cpp-atomic-atomic-ref-wait:0004 */}
+    If `order` is not `std::memory_order_relaxed`, `std::memory_order_consume`, `std::memory_order_acquire` or `std::memory_order_seq_cst`, the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+
+### Parameters
+
+
+{/* source:cpp-atomic-atomic-ref-wait:0005 */}
+<ParameterList>
+  <Parameter name="old">the value to check the `atomic_ref`'s object no longer contains</Parameter>
+  <Parameter name="order">memory order constraints to enforce</Parameter>
+</ParameterList>
+
+
+### Notes
+
+
+{/* source:cpp-atomic-atomic-ref-wait:0006 */}
+This form of change-detection is often more efficient than simple polling or pure spinlocks.
+
+{/* source:cpp-atomic-atomic-ref-wait:0007 */}
+Due to the [ABA problem](https://en.wikipedia.org/wiki/ABA_problem), transient changes from `old` to another value and back to `old` might be missed, and not unblock.
+
+{/* source:cpp-atomic-atomic-ref-wait:0008 */}
+The comparison is bitwise (similar to [`std::memcmp`](/docs/cpp/library/text/byte/memcmp)); no comparison operator is used. Padding bits that never participate in an object's value representation are ignored.
+
+
+### Example
+
+
+{/* source:cpp-atomic-atomic-ref-wait:0009 */}
+This section is incomplete Reason: no example
+
+
+### See also
+
+
+{/* source:cpp-atomic-atomic-ref-wait:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_one`](/docs/cpp/library/atomic/atomic_ref/notify_one)</DescriptionTerm>
+    <DescriptionBody>notifies at least one thread waiting on the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_all`](/docs/cpp/library/atomic/atomic_ref/notify_all)</DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked waiting on the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_notify_one`](/docs/cpp/library/atomic/atomic_notify_one)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies a thread blocked in atomic_wait <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_notify_all`](/docs/cpp/library/atomic/atomic_notify_all)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked in atomic_wait <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,166 @@
+---
+title: "std::atomic_flag"
+description: "std::atomic_flag is an atomic boolean type. Unlike all specializations of std::atomic, it is guaranteed to be lock-free. Unlike std::atomic<bool>, std::atomic_flag does not provide load or store operations."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic_flag"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-flag:0000 */}
+<DeclarationDoc>
+Defined in header [`<atomic>`](/docs/cpp/library/headers/atomic)
+
+  <Declaration language="cpp" since="C++11" code={`class atomic_flag;`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-flag:0001 */}
+`std::atomic_flag` is an atomic boolean type. Unlike all specializations of [`std::atomic`](/docs/cpp/library/atomic/atomic), it is guaranteed to be lock-free. Unlike `std::atomic<bool>`, `std::atomic_flag` does not provide load or store operations.
+
+### Member functions
+
+{/* source:cpp-atomic-atomic-flag:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/atomic/atomic_flag/atomic_flag)</DescriptionTerm>
+    <DescriptionBody>constructs an atomic_flag <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/atomic/atomic_flag/operator_assignment) [deleted]</DescriptionTerm>
+    <DescriptionBody>the assignment operator (deleted) <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/atomic/atomic_flag/clear)</DescriptionTerm>
+    <DescriptionBody>atomically sets flag to `false` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`test_and_set`](/docs/cpp/library/atomic/atomic_flag/test_and_set)</DescriptionTerm>
+    <DescriptionBody>atomically sets the flag to `true` and obtains its previous value <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`test`](/docs/cpp/library/atomic/atomic_flag/test)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>atomically returns the value of the flag <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/atomic/atomic_flag/wait)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>blocks the thread until notified and the atomic value changes <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_one`](/docs/cpp/library/atomic/atomic_flag/notify_one)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies at least one thread waiting on the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_all`](/docs/cpp/library/atomic/atomic_flag/notify_all)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked waiting on the atomic object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-atomic-atomic-flag:0003 */}
+A [spinlock](https://en.wikipedia.org/wiki/Spinlock) mutex demo can be implemented in userspace using an `atomic_flag`. Do note that spinlock mutexes are [extremely dubious](https://www.realworldtech.com/forum/?threadid=189711&curpostid=189723) in practice.
+
+```cpp
+#include <atomic>
+#include <iostream>
+#include <mutex>
+#include <thread>
+#include <vector>
+ 
+class mutex
+{
+    std::atomic_flag m_{};
+ 
+  public:
+    void lock() noexcept
+    {
+        while (m_.test_and_set(std::memory_order_acquire))
+#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+            // Since C++20, locks can be acquired only after notification in the unlock,
+            // avoiding any unnecessary spinning.
+            // Note that even though wait guarantees it returns only after the value has
+            // changed, the lock is acquired after the next condition check.
+            m_.wait(true, std::memory_order_relaxed)
+#endif
+                ;
+    }
+    bool try_lock() noexcept
+    {
+        return !m_.test_and_set(std::memory_order_acquire);
+    }
+    void unlock() noexcept
+    {
+        m_.clear(std::memory_order_release);
+#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+        m_.notify_one();
+#endif
+    }
+};
+ 
+static mutex m;
+ 
+static int out{};
+ 
+void f(std::size_t n)
+{
+    for (std::size_t cnt{}; cnt < 40; ++cnt)
+    {
+        std::lock_guard lock{m};
+        std::cout << n << ((++out % 40) == 0 ? '\n' : ' ');
+    }
+}
+ 
+int main()
+{
+    std::vector<std::thread> v;
+    for (std::size_t n{}; n < 10; ++n)
+        v.emplace_back(f, n);
+    for (auto &t : v)
+        t.join();
+}
+```
+
+Possible output:
+
+```text
+0 1 1 2 0 1 3 2 3 2 0 1 2 3 2 3 0 1 3 2 0 1 2 3 2 3 0 3 2 3 2 3 2 3 1 2 3 0 1 3
+2 3 2 0 1 2 3 0 1 2 3 2 0 1 2 3 0 1 2 3 2 3 2 3 2 0 1 2 3 2 3 0 1 3 2 3 0 2 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 3 2 0 2 3 2 3 2 3 2 3 2 3 0 3
+2 3 0 3 0 3 2 3 0 3 2 3 2 3 0 2 3 0 3 2 0 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
+```
+
+### See also
+
+{/* source:cpp-atomic-atomic-flag:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_test_and_set`, `atomic_flag_test_and_set_explicit`](/docs/cpp/library/atomic/atomic_flag_test_and_set)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically sets the flag to `true` and returns its previous value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_clear`, `atomic_flag_clear_explicit`](/docs/cpp/library/atomic/atomic_flag_clear)<InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically sets the value of the flag to `false` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_wait`, `atomic_flag_wait_explicit`](/docs/cpp/library/atomic/atomic_flag_wait)<InlineRevision since="C++20" />, <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>blocks the thread until notified and the flag changes <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_notify_one`](/docs/cpp/library/atomic/atomic_flag_notify_one)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies a thread blocked in atomic_flag_wait <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_flag_notify_all`](/docs/cpp/library/atomic/atomic_flag_notify_all)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>notifies all threads blocked in atomic_flag_wait <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ATOMIC_FLAG_INIT`](/docs/cpp/library/atomic/ATOMIC_FLAG_INIT)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>initializes an `std::atomic_flag` to `false` <br /> (macro constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**[C documentation](/docs/c/library/thread/atomic_flag) for `atomic_flag`**

@@ -1,0 +1,123 @@
+---
+title: "std::atomic<T>::exchange"
+description: "Atomically replaces the underlying value with desired (a read-modify-write operation). Memory is affected according to the value of order."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic/exchange"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-exchange:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`T exchange( T desired, std::memory_order order =
+                           std::memory_order_seq_cst ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`T exchange( T desired, std::memory_order order =
+                           std::memory_order_seq_cst ) volatile noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-exchange:0001 */}
+Atomically replaces the underlying value with `desired` (a read-modify-write operation). Memory is affected according to the value of `order`.
+
+{/* source:cpp-atomic-atomic-exchange:0002 */}
+<Revision since="C++20">
+It is deprecated if `std::atomic<T>::is_always_lock_free` is `false` and overload (2) participates in overload resolution.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-exchange:0003 */}
+<ParameterList>
+  <Parameter name="desired">value to assign</Parameter>
+  <Parameter name="order">memory order constraints to enforce</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-exchange:0004 */}
+The value of the atomic variable before the call.
+
+### Example
+
+{/* source:cpp-atomic-atomic-exchange:0005 */}
+```cpp
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <iostream>
+#include <syncstream>
+#include <thread>
+#include <vector>
+ 
+int main()
+{
+    constexpr int thread_count{5};
+    constexpr int sum{5};
+ 
+    std::atomic<int> atom{0};
+    std::atomic<int> counter{0};
+ 
+    auto increment_to_sum = [&](const int id)
+    {
+        for (int next = 0; next < sum;)
+        {
+            // each thread is writing a value from its own knowledge
+            const int current = atom.exchange(next);
+            counter++;
+            // sync writing to prevent from interrupting by other threads
+            std::osyncstream(std::cout)
+                << "Thread #" << id << " (id=" << std::this_thread::get_id()
+                << ") wrote " << next << " replacing the old value "
+                << current << ".\n";
+            next = std::max(current, next) + 1;
+        }
+    };
+ 
+    std::vector<std::thread> v;
+    for (std::size_t i = 0; i < thread_count; ++i)
+        v.emplace_back(increment_to_sum, i);
+ 
+    for (auto& tr : v)
+        tr.join();
+ 
+    std::cout << thread_count << " threads take "
+              << counter << " times in total to "
+              << "increment 0 to " << sum << ".\n";
+}
+```
+
+Possible output:
+
+```text
+Thread #1 (id=139722332333824) wrote 0 replacing the old value 0.
+Thread #2 (id=139722323941120) wrote 0 replacing the old value 0.
+Thread #1 (id=139722332333824) wrote 1 replacing the old value 0.
+Thread #1 (id=139722332333824) wrote 2 replacing the old value 1.
+Thread #1 (id=139722332333824) wrote 3 replacing the old value 2.
+Thread #1 (id=139722332333824) wrote 4 replacing the old value 3.
+Thread #0 (id=139722340726528) wrote 0 replacing the old value 0.
+Thread #3 (id=139722315548416) wrote 0 replacing the old value 0.
+Thread #3 (id=139722315548416) wrote 1 replacing the old value 4.
+Thread #0 (id=139722340726528) wrote 1 replacing the old value 1.
+Thread #4 (id=139722307155712) wrote 0 replacing the old value 1.
+Thread #4 (id=139722307155712) wrote 2 replacing the old value 2.
+Thread #4 (id=139722307155712) wrote 3 replacing the old value 2.
+Thread #4 (id=139722307155712) wrote 4 replacing the old value 3.
+Thread #2 (id=139722323941120) wrote 1 replacing the old value 0.
+Thread #0 (id=139722340726528) wrote 2 replacing the old value 1.
+Thread #2 (id=139722323941120) wrote 2 replacing the old value 4.
+Thread #0 (id=139722340726528) wrote 3 replacing the old value 2.
+Thread #0 (id=139722340726528) wrote 4 replacing the old value 3.
+5 threads take 19 times in total to increment 0 to 5.
+```
+
+### See also
+
+{/* source:cpp-atomic-atomic-exchange:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_exchange`, `atomic_exchange_explicit`](/docs/cpp/library/atomic/atomic_exchange)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically replaces the value of the atomic object with non-atomic argument and returns the old value of the atomic (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exchange`](/docs/cpp/library/utility/exchange)<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>replaces the argument with a new value and returns its previous value (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

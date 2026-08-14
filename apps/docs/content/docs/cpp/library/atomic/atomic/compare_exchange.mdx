@@ -1,0 +1,213 @@
+---
+title: "std::atomic<T>::compare_exchange_weak, std::atomic<T>::compare_exchange_strong"
+description: "Atomically compares the object representation value representation of *this with that of expected. If those are bitwise-equal, replaces the former with desired (performs read-modify-write operation). Otherwise, loads the actual value stored in *this into expected (performs load operation)."
+source_url: "https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange"
+language: "C++"
+---
+
+{/* source:cpp-atomic-atomic-compare-exchange:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`bool compare_exchange_weak( T& expected, T desired,
+                            std::memory_order success, 
+
+                            std::memory_order failure ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`bool compare_exchange_weak( T& expected, T desired,
+                            std::memory_order success, 
+
+                            std::memory_order failure ) volatile noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`bool compare_exchange_weak( T& expected, T desired,
+                            std::memory_order order =
+
+                                std::memory_order_seq_cst ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`bool compare_exchange_weak( T& expected, T desired,
+                            std::memory_order order =
+
+                                std::memory_order_seq_cst ) volatile noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`bool compare_exchange_strong( T& expected, T desired,
+                             std::memory_order success, 
+
+                             std::memory_order failure ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++11" code={`bool compare_exchange_strong( T& expected, T desired,
+                             std::memory_order success, 
+
+                             std::memory_order failure ) volatile noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++11" code={`bool compare_exchange_strong( T& expected, T desired,
+                             std::memory_order order = 
+
+                                 std::memory_order_seq_cst ) noexcept;`} />
+  <Declaration id="8" language="cpp" since="C++11" code={`bool compare_exchange_strong
+    ( T& expected, T desired,
+
+    std::memory_order order = std::memory_order_seq_cst ) volatile noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-atomic-atomic-compare-exchange:0001 */}
+Atomically compares the <InlineRevision until="C++20">[object representation](/docs/cpp/language/basic_concepts/objects)</InlineRevision> <InlineRevision since="C++20">[value representation](/docs/cpp/language/basic_concepts/objects)</InlineRevision> of `*this` with that of `expected`. If those are bitwise-equal, replaces the former with `desired` (performs read-modify-write operation). Otherwise, loads the actual value stored in `*this` into `expected` (performs load operation).
+
+{/* source:cpp-atomic-atomic-compare-exchange:0002 */}
+| Overloads | Memory model for | |
+| --- | --- | --- |
+| | read-modify-write operation | load operation |
+| (1,2,5,6) | `success` | `failure` |
+| (3,4,7,8) | `order` | `std::memory_order_acquire` if `order` is `std::memory_order_acq_rel`<br />`std::memory_order_relaxed` if `order` is `std::memory_order_release`<br />otherwise `order` |
+
+{/* source:cpp-atomic-atomic-compare-exchange:0003 */}
+If `failure` <InlineRevision until="C++17">is stronger than `success` or</InlineRevision> is one of `std::memory_order_release` and `std::memory_order_acq_rel`, the behavior is undefined.
+
+{/* source:cpp-atomic-atomic-compare-exchange:0004 */}
+<Revision since="C++20">
+It is deprecated if `std::atomic<T>::is_always_lock_free` is `false` and any volatile overload participates in overload resolution.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-atomic-atomic-compare-exchange:0005 */}
+<ParameterList>
+  <Parameter name="expected">reference to the value expected to be found in the atomic object</Parameter>
+  <Parameter name="desired">the value to store in the atomic object if it is as expected</Parameter>
+  <Parameter name="success">the memory synchronization ordering for the read-modify-write operation if the comparison succeeds</Parameter>
+  <Parameter name="failure">the memory synchronization ordering for the load operation if the comparison fails</Parameter>
+  <Parameter name="order">the memory synchronization ordering for both operations</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-atomic-atomic-compare-exchange:0006 */}
+`true` if the underlying atomic value was successfully changed, `false` otherwise.
+
+### Notes
+
+{/* source:cpp-atomic-atomic-compare-exchange:0007 */}
+The comparison and copying are bitwise (similar to [`std::memcmp`](/docs/cpp/library/text/byte/memcmp) and [`std::memcpy`](/docs/cpp/library/text/byte/memcpy)); no constructor, assignment operator, or comparison operator are used.
+
+{/* source:cpp-atomic-atomic-compare-exchange:0008 */}
+`compare_exchange_weak` is allowed to fail spuriously, that is, acts as if `*this != expected` even if they are equal. When a compare-and-exchange is in a loop, `compare_exchange_weak` will yield better performance on some platforms.
+
+{/* source:cpp-atomic-atomic-compare-exchange:0009 */}
+When `compare_exchange_weak` would require a loop and `compare_exchange_strong` would not, `compare_exchange_strong` is preferable unless the object representation of `T` may include <InlineRevision until="C++20">padding bits,</InlineRevision> trap bits, or offers multiple object representations for the same value (e.g. floating-point NaN). In those cases, `compare_exchange_weak` typically works because it quickly converges on some stable object representation.
+
+{/* source:cpp-atomic-atomic-compare-exchange:0010 */}
+For a union with bits that participate in the value representations of some members but not the others, compare-and-exchange might always fail because such padding bits have indeterminate values when they do not participate in the value representation of the active member.
+
+{/* source:cpp-atomic-atomic-compare-exchange:0011 */}
+<Revision since="C++20">
+Padding bits that never participate in an object's value representation are ignored.
+</Revision>
+
+### Example
+
+{/* source:cpp-atomic-atomic-compare-exchange:0012 */}
+Compare-and-exchange operations are often used as basic building blocks of [lock-free](https://en.wikipedia.org/wiki/Non-blocking_algorithm) data structures.
+
+```cpp
+#include <atomic>
+ 
+template<typename T>
+struct node
+{
+    T data;
+    node* next;
+    node(const T& data) : data(data), next(nullptr) {}
+};
+ 
+template<typename T>
+class stack
+{
+    std::atomic<node<T>*> head;
+public:
+    void push(const T& data)
+    {
+        node<T>* new_node = new node<T>(data);
+ 
+        // put the current value of head into new_node->next
+        new_node->next = head.load(std::memory_order_relaxed);
+ 
+        // now make new_node the new head, but if the head
+        // is no longer what's stored in new_node->next
+        // (some other thread must have inserted a node just now)
+        // then put that new head into new_node->next and try again
+        while (!head.compare_exchange_weak(new_node->next, new_node,
+                                           std::memory_order_release,
+                                           std::memory_order_relaxed))
+            ; // the body of the loop is empty
+ 
+// Note: the above use is not thread-safe in at least 
+// GCC prior to 4.8.3 (bug 60272), clang prior to 2014-05-05 (bug 18899)
+// MSVC prior to 2014-03-17 (bug 819819). The following is a workaround:
+//      node<T>* old_head = head.load(std::memory_order_relaxed);
+//      do
+//      {
+//          new_node->next = old_head;
+//      }
+//      while (!head.compare_exchange_weak(old_head, new_node,
+//                                         std::memory_order_release,
+//                                         std::memory_order_relaxed));
+    }
+};
+ 
+int main()
+{
+    stack<int> s;
+    s.push(1);
+    s.push(2);
+    s.push(3);
+}
+```
+
+{/* source:cpp-atomic-atomic-compare-exchange:0013 */}
+Demonstrates how `std::compare_exchange_strong` either changes the value of the atomic variable or the variable used for comparison.
+
+This section is incomplete
+Reason: more practical use of the strong CAS would be nice, such as where Concurrency in Action uses it
+
+```cpp
+#include <atomic>
+#include <iostream>
+ 
+std::atomic<int> ai;
+ 
+int tst_val = 4;
+int new_val = 5;
+bool exchanged = false;
+ 
+void valsout()
+{
+    std::cout << "ai = " << ai
+	      << "  tst_val = " << tst_val
+	      << "  new_val = " << new_val
+	      << "  exchanged = " << std::boolalpha << exchanged
+	      << '\n';
+}
+ 
+int main()
+{
+    ai = 3;
+    valsout();
+ 
+    // tst_val != ai   ==>  tst_val is modified
+    exchanged = ai.compare_exchange_strong(tst_val, new_val);
+    valsout();
+ 
+    // tst_val == ai   ==>  ai is modified
+    exchanged = ai.compare_exchange_strong(tst_val, new_val);
+    valsout();
+}
+```
+
+Output:
+
+```text
+ai = 3  tst_val = 4  new_val = 5  exchanged = false
+ai = 3  tst_val = 3  new_val = 5  exchanged = false
+ai = 5  tst_val = 3  new_val = 5  exchanged = true
+```
+
+### See also
+
+{/* source:cpp-atomic-atomic-compare-exchange:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atomic_compare_exchange_weak`, `atomic_compare_exchange_weak_explicit`, `atomic_compare_exchange_strong`, `atomic_compare_exchange_strong_explicit`](/docs/cpp/library/atomic/atomic_compare_exchange)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>atomically compares the value of the atomic object with non-atomic argument and performs atomic exchange if equal or atomic load if not (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
