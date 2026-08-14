@@ -1,0 +1,249 @@
+---
+title: "std::result_of, std::invoke_result"
+description: "Deduces the return type of an INVOKE expression at compile time."
+source_url: "https://en.cppreference.com/w/cpp/types/result_of"
+language: "C++"
+---
+
+{/* source:cpp-types-result-of:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" until="C++20" code={`template< class >
+class result_of; // not defined
+template< class F, class... ArgTypes >
+class result_of<F(ArgTypes...)>;`} /> (deprecated in C++17)
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class F, class... ArgTypes >
+class invoke_result;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-types-result-of:0001 */}
+    Deduces the return type of an [INVOKE expression](/docs/cpp/library/utility/functional) at compile time.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-result-of:0002 */}
+<Revision since="C++11" until="C++14">
+`F` must be a callable type, reference to function, or reference to callable type. Invoking `F` with `ArgTypes...` must be a well-formed expression.
+</Revision>
+<Revision since="C++14">
+`F` and all types in `ArgTypes` can be any complete type, array of unknown bound, or (possibly cv-qualified) `void`.
+</Revision>
+
+{/* source:cpp-types-result-of:0003 */}
+If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+
+### Member types
+
+{/* source:cpp-types-result-of:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the return type of the [`Callable`](/docs/cpp/library/named_req/Callable) type `F` if invoked with the arguments `ArgTypes...`. <InlineRevision since="C++14">Only defined if `F` can be called with the arguments `ArgTypes...` in unevaluated context.</InlineRevision></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-result-of:0005 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++14" until="C++20" code={`template< class T >
+using result_of_t = typename result_of<T>::type;`} /> (deprecated in C++17)
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class F, class... ArgTypes >
+using invoke_result_t = typename invoke_result<F, ArgTypes...>::type;`} />
+</DeclarationDoc>
+
+### Possible implementation
+
+{/* source:cpp-types-result-of:0006 */}
+```cpp
+namespace detail
+{
+    template<class T>
+    struct is_reference_wrapper : std::false_type {};
+    template<class U>
+    struct is_reference_wrapper<std::reference_wrapper<U>> : std::true_type {};
+ 
+    template<class T>
+    struct invoke_impl
+    {
+        template<class F, class... Args>
+        static auto call(F&& f, Args&&... args)
+            -> decltype(std::forward<F>(f)(std::forward<Args>(args)...));
+    };
+ 
+    template<class B, class MT>
+    struct invoke_impl<MT B::*>
+    {
+        template<class T, class Td = typename std::decay<T>::type,
+            class = typename std::enable_if<std::is_base_of<B, Td>::value>::type>
+        static auto get(T&& t) -> T&&;
+ 
+        template<class T, class Td = typename std::decay<T>::type,
+            class = typename std::enable_if<is_reference_wrapper<Td>::value>::type>
+        static auto get(T&& t) -> decltype(t.get());
+ 
+        template<class T, class Td = typename std::decay<T>::type,
+            class = typename std::enable_if<!std::is_base_of<B, Td>::value>::type,
+            class = typename std::enable_if<!is_reference_wrapper<Td>::value>::type>
+        static auto get(T&& t) -> decltype(*std::forward<T>(t));
+ 
+        template<class T, class... Args, class MT1,
+            class = typename std::enable_if<std::is_function<MT1>::value>::type>
+        static auto call(MT1 B::*pmf, T&& t, Args&&... args)
+            -> decltype((invoke_impl::get(
+                std::forward<T>(t)).*pmf)(std::forward<Args>(args)...));
+ 
+        template<class T>
+        static auto call(MT B::*pmd, T&& t)
+            -> decltype(invoke_impl::get(std::forward<T>(t)).*pmd);
+    };
+ 
+    template<class F, class... Args, class Fd = typename std::decay<F>::type>
+    auto INVOKE(F&& f, Args&&... args)
+        -> decltype(invoke_impl<Fd>::call(std::forward<F>(f),
+            std::forward<Args>(args)...));
+} // namespace detail
+ 
+// Minimal C++11 implementation:
+template<class> struct result_of;
+template<class F, class... ArgTypes>
+struct result_of<F(ArgTypes...)>
+{
+    using type = decltype(detail::INVOKE(std::declval<F>(), std::declval<ArgTypes>()...));
+};
+ 
+// Conforming C++14 implementation (is also a valid C++11 implementation):
+namespace detail
+{
+    template<typename AlwaysVoid, typename, typename...>
+    struct invoke_result {};
+    template<typename F, typename...Args>
+    struct invoke_result<
+        decltype(void(detail::INVOKE(std::declval<F>(), std::declval<Args>()...))),
+            F, Args...>
+    {
+        using type = decltype(detail::INVOKE(std::declval<F>(), std::declval<Args>()...));
+    };
+} // namespace detail
+ 
+template<class> struct result_of;
+template<class F, class... ArgTypes>
+struct result_of<F(ArgTypes...)> : detail::invoke_result<void, F, ArgTypes...> {};
+ 
+template<class F, class... ArgTypes>
+struct invoke_result : detail::invoke_result<void, F, ArgTypes...> {};
+```
+
+### Notes
+
+{/* source:cpp-types-result-of:0007 */}
+As formulated in C++11, the behavior of `std::result_of` is undefined when `INVOKE(std::declval<F>(), std::declval<ArgTypes>()...)` is ill-formed (e.g. when `F` is not a callable type at all). C++14 changes that to a [SFINAE](/docs/cpp/language/templates/sfinae) (when `F` is not callable, `std::result_of<F(ArgTypes...)>` simply doesn't have the `type` member).
+
+{/* source:cpp-types-result-of:0008 */}
+The motivation behind `std::result_of` is to determine the result of invoking a [`Callable`](/docs/cpp/library/named_req/Callable), in particular if that result type is different for different sets of arguments.
+
+{/* source:cpp-types-result-of:0009 */}
+`F(Args...)` is a function type with `Args...` being the argument types and `F` being the return type. As such, `std::result_of` suffers from several quirks that led to its deprecation in favor of `std::invoke_result` in C++17:
+
+{/* source:cpp-types-result-of:0010 */}
+- `F` cannot be a function type or an array type (but can be a reference to them);
+- if any of the `Args` has type "array of `T`" or a function type `T`, it is automatically adjusted to `T*`;
+- neither `F` nor any of `Args...` can be an abstract class type;
+- if any of `Args...` has a top-level cv-qualifier, it is discarded;
+- none of `Args...` may be of type `void`.
+
+{/* source:cpp-types-result-of:0011 */}
+To avoid these quirks, `result_of` is often used with reference types as `F` and `Args...`. For example:
+
+{/* source:cpp-types-result-of:0012 */}
+```cpp
+template<class F, class... Args>
+std::result_of_t<F&&(Args&&...)> // instead of std::result_of_t<F(Args...)>, which is wrong
+    my_invoke(F&& f, Args&&... args)
+    {
+        /* implementation */
+    }
+```
+
+### Notes
+
+{/* source:cpp-types-result-of:0013 */}
+| [Feature-test macro](/docs/cpp/library/utility/feature_test) | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_result_of_sfinae`](/docs/cpp/library/feature_test#cpp_lib_result_of_sfinae) | [`201210L`](/docs/cpp/library/compiler_support/14#cpp_lib_result_of_sfinae_201210L) | (C++14) | `std::result_of` and [SFINAE](/docs/cpp/language/templates/sfinae) |
+| [`__cpp_lib_is_invocable`](/docs/cpp/library/feature_test#cpp_lib_is_invocable) | [`201703L`](/docs/cpp/library/compiler_support/17#cpp_lib_is_invocable_201703L) | (C++17) | [`std::is_invocable`](/docs/cpp/library/meta/is_invocable), `std::invoke_result` |
+
+### Examples
+
+{/* source:cpp-types-result-of:0014 */}
+```cpp
+#include <iostream>
+#include <type_traits>
+ 
+struct S
+{
+    double operator()(char, int&);
+    float operator()(int) { return 1.0; }
+};
+ 
+template<class T>
+typename std::result_of<T(int)>::type f(T& t)
+{
+    std::cout << "overload of f for callable T\n";
+    return t(0);
+}
+ 
+template<class T, class U>
+int f(U u)
+{
+    std::cout << "overload of f for non-callable T\n";
+    return u;
+}
+ 
+int main()
+{
+    // the result of invoking S with char and int& arguments is double
+    std::result_of<S(char, int&)>::type d = 3.14; // d has type double
+    static_assert(std::is_same<decltype(d), double>::value, "");
+ 
+    // std::invoke_result uses different syntax (no parentheses)
+    std::invoke_result<S,char,int&>::type b = 3.14;
+    static_assert(std::is_same<decltype(b), double>::value, "");
+ 
+    // the result of invoking S with int argument is float
+    std::result_of<S(int)>::type x = 3.14; // x has type float
+    static_assert(std::is_same<decltype(x), float>::value, "");
+ 
+    // result_of can be used with a pointer to member function as follows
+    struct C { double Func(char, int&); };
+    std::result_of<decltype(&C::Func)(C, char, int&)>::type g = 3.14;
+    static_assert(std::is_same<decltype(g), double>::value, "");
+ 
+    f<C>(1); // may fail to compile in C++11; calls the non-callable overload in C++14
+}
+```
+
+Output:
+
+```text
+overload of f for non-callable T
+```
+
+### See also
+
+{/* source:cpp-types-result-of:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`invoke`, `invoke_r`](/docs/cpp/library/utility/functional/invoke)<InlineRevision since="C++17" />, <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>invokes any [`Callable`](/docs/cpp/library/named_req/Callable) object with given arguments <InlineRevision since="C++23">and possibility to specify return type</InlineRevision> <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_invocable`, `is_invocable_r`, `is_nothrow_invocable`, `is_nothrow_invocable_r`](/docs/cpp/library/meta/is_invocable)<InlineRevision since="C++17" />, <InlineRevision since="C++17" />, <InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks if a type can be invoked (as if by [`std::invoke`](/docs/cpp/library/utility/functional/invoke)) with the given argument types <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`declval`](/docs/cpp/library/utility/declval)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains a reference to an object of the template type argument for use in an unevaluated context <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

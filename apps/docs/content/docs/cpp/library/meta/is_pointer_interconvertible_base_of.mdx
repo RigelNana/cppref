@@ -1,0 +1,137 @@
+---
+title: "std::is_pointer_interconvertible_base_of"
+description: "If Derived is unambiguously derived from Base and every Derived object is pointer-interconvertible with its Base subobject, or if both are the same non-union class (in both cases ignoring cv-qualification), provides the member constant value equal to true. Otherwise value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/is_pointer_interconvertible_base_of"
+language: "C++"
+---
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class Base, class Derived >
+struct is_pointer_interconvertible_base_of;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0001 */}
+If `Derived` is unambiguously derived from `Base` and every `Derived` object is [pointer-interconvertible](/docs/cpp/language/expressions/static_cast#pointer-interconvertible) with its `Base` subobject, or if both are the same non-union class (in both cases ignoring cv-qualification), provides the member constant `value` equal to `true`. Otherwise `value` is `false`.
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0002 */}
+If both `Base` and `Derived` are non-union class types, and they are not the same type (ignoring cv-qualification), `Derived` shall be a [complete type](/docs/cpp/language/basic_concepts/incomplete_type); otherwise the behavior is undefined.
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0003 */}
+If the program adds specializations for `std::is_pointer_interconvertible_base_of` or `std::is_pointer_interconvertible_base_of_v`, the behavior is undefined.
+
+### Helper variable template
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0004 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class Base, class Derived >
+inline constexpr bool is_pointer_interconvertible_base_of_v =
+    is_pointer_interconvertible_base_of<Base, Derived>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0005 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `Derived` is unambiguously derived from `Base` and every `Derived` object is [pointer-interconvertible](/docs/cpp/language/expressions/static_cast#pointer-interconvertible) with its `Base` subobject, or if both are the same non-union class (in both cases ignoring cv-qualification), `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0006 */}
+`std::is_pointer_interconvertible_base_of_v<T, U>` may be `true` even if `T` is a private or protected base class of `U`.
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0007 */}
+Let
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0008 */}
+- `U` be a complete object type,
+- `T` be a complete object type with cv-qualification not less than `U`,
+- `u` be any valid lvalue of `U`,
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0009 */}
+`reinterpret_cast<T&>(u)` always has well-defined result if `std::is_pointer_interconvertible_base_of_v<T, U>` is `true`.
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0010 */}
+If `T` and `U` are not the same type (ignoring cv-qualification) and `T` is a pointer-interconvertible base class of `U`, then both `std::is_standard_layout_v<T>` and `std::is_standard_layout_v<U>` are `true`.
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0011 */}
+If `T` is standard layout class type, then all base classes of `T` (if any) are pointer-interconvertible base class of `T`.
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_is_pointer_interconvertible`](/docs/cpp/library/feature_test#cpp_lib_is_pointer_interconvertible) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_is_pointer_interconvertible_201907L) | (C++20) | Pointer-interconvertibility traits: `std::is_pointer_interconvertible_base_of`, [`std::is_pointer_interconvertible_with_class`](/docs/cpp/library/meta/is_pointer_interconvertible_with_class) |
+
+### Example
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0013 */}
+```cpp
+#include <type_traits>
+
+struct Foo {};
+
+struct Bar {};
+
+class Baz : Foo, public Bar { int x; };
+
+class NonStdLayout : public Baz { int y; };
+
+static_assert(std::is_pointer_interconvertible_base_of_v<Bar, Baz>);
+static_assert(std::is_pointer_interconvertible_base_of_v<Foo, Baz>);
+static_assert(not std::is_pointer_interconvertible_base_of_v<Baz, NonStdLayout>);
+static_assert(std::is_pointer_interconvertible_base_of_v<NonStdLayout, NonStdLayout>);
+
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-is-pointer-interconvertible-base-of:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_base_of`](/docs/cpp/library/meta/is_base_of)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a base of the other type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_empty`](/docs/cpp/library/meta/is_empty)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a class (but not union) type and has no non-static data members (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_standard_layout`](/docs/cpp/library/meta/is_standard_layout)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a [standard-layout](/docs/cpp/language/classes/data_members#Standard-layout) type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

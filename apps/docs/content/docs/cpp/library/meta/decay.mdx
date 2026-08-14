@@ -1,0 +1,114 @@
+---
+title: "std::decay"
+description: "Performs the type conversions equivalent to the ones performed when passing function arguments by value."
+source_url: "https://en.cppreference.com/w/cpp/types/decay"
+language: "C++"
+---
+
+{/* source:cpp-types-decay:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct decay;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-types-decay:0001 */}
+    Performs the type conversions equivalent to the ones performed when passing [function arguments](/docs/cpp/language/functions/function#Parameter_list) by value. Formally:
+
+    {/* source:cpp-types-decay:0002 */}
+    - If `T` is "array of `U`" or reference to it, the member typedef `type` is `U*`.
+
+    {/* source:cpp-types-decay:0003 */}
+    - Otherwise, if `T` is a function type `F` or reference to one, the member typedef `type` is `std::add_pointer<F>::type`.
+
+    {/* source:cpp-types-decay:0004 */}
+    - Otherwise, the member typedef `type` is `std::remove_cv<std::remove_reference<T>::type>::type`.
+
+    {/* source:cpp-types-decay:0005 */}
+    If the program adds specializations for `std::decay`, the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Member types
+
+{/* source:cpp-types-decay:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the result of applying the decay type conversions to `T`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-decay:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++14" code={`template< class T >
+using decay_t = typename decay<T>::type;`} />
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Possible implementation
+
+{/* source:cpp-types-decay:0008 */}
+```cpp
+template<class T>
+struct decay
+{
+private:
+    typedef typename std::remove_reference<T>::type U;
+public:
+    typedef typename std::conditional< 
+        std::is_array<U>::value,
+        typename std::add_pointer<typename std::remove_extent<U>::type>::type,
+        typename std::conditional< 
+            std::is_function<U>::value,
+            typename std::add_pointer<U>::type,
+            typename std::remove_cv<U>::type
+        >::type
+    >::type type;
+};
+```
+
+### Example
+
+{/* source:cpp-types-decay:0009 */}
+```cpp
+#include <type_traits>
+ 
+template<typename T, typename U>
+constexpr bool is_decay_equ = std::is_same_v<std::decay_t<T>, U>;
+ 
+int main()
+{
+    static_assert
+    (
+        is_decay_equ<int, int> &&
+        ! is_decay_equ<int, float> &&
+        is_decay_equ<int&, int> &&
+        is_decay_equ<int&&, int> &&
+        is_decay_equ<const int&, int> &&
+        is_decay_equ<int[2], int*> &&
+        ! is_decay_equ<int[4][2], int*> &&
+        ! is_decay_equ<int[4][2], int**> &&
+        is_decay_equ<int[4][2], int(*)[2]> &&
+        is_decay_equ<int(int), int(*)(int)>
+    );
+}
+```
+
+### See also
+
+{/* source:cpp-types-decay:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_cvref`](/docs/cpp/library/meta/remove_cvref)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>combines [`std::remove_cv`](/docs/cpp/library/meta/remove_cv) and [`std::remove_reference`](/docs/cpp/library/meta/remove_reference) <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[implicit conversion](/docs/cpp/language/expressions/implicit_cast)</DescriptionTerm>
+    <DescriptionBody>array-to-pointer, function-to-pointer, lvalue-to-rvalue conversions</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

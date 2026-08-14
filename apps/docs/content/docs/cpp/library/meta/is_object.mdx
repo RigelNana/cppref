@@ -1,0 +1,157 @@
+---
+title: "std::is_object"
+description: "If T is an object type (that is any possibly cv-qualified type other than function, reference, or void types), provides the member constant value equal true. For any other type, value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/is_object"
+language: "C++"
+---
+
+{/* source:cpp-types-is-object:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct is_object;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-object:0001 */}
+`std::is_object` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-object:0002 */}
+If `T` is an [object type](/docs/cpp/language/basic_concepts/type-id) (that is any possibly cv-qualified type other than function, reference, or `void` types), provides the member constant `value` equal `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-object:0003 */}
+If the program adds specializations for `std::is_object` or `std::is_object_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-object:0004 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-object:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_object_v = is_object<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-object:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is an object type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-object:0007 */}
+```cpp
+template<class T>
+struct is_object : std::integral_constant<bool,
+                       std::is_scalar<T>::value ||
+                       std::is_array<T>::value ||
+                       std::is_union<T>::value ||
+                       std::is_class<T>::value> {};
+```
+
+### Example
+
+{/* source:cpp-types-is-object:0008 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <type_traits>
+
+#define IS_OBJECT(...) \
+    std::cout << std::boolalpha << std::left << std::setw(9) << #__VA_ARGS__ \
+              << (std::is_object_v<__VA_ARGS__> ? " is object\n" \
+                                                : " is not an object\n")
+
+int main()
+{
+    class cls {};
+
+    IS_OBJECT(void);
+    IS_OBJECT(int);
+    IS_OBJECT(int&);
+    IS_OBJECT(int*);
+    IS_OBJECT(int*&);
+    IS_OBJECT(cls);
+    IS_OBJECT(cls&);
+    IS_OBJECT(cls*);
+    IS_OBJECT(int());
+    IS_OBJECT(int(*)());
+    IS_OBJECT(int(&)());
+}
+```
+
+Output:
+
+```text
+void      is not an object
+int       is object
+int&      is not an object
+int*      is object
+int*&     is not an object
+cls       is object
+cls&      is not an object
+cls*      is object
+int()     is not an object
+int(*)()  is object
+int(&)()  is not an object
+```
+
+### See also
+
+{/* source:cpp-types-is-object:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_scalar`](/docs/cpp/library/meta/is_scalar)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a scalar type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_array`](/docs/cpp/library/meta/is_array)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an array type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_union`](/docs/cpp/library/meta/is_union)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a union type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_class`](/docs/cpp/library/meta/is_class)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a non-union class type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

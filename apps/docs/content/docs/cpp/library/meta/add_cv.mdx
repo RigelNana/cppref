@@ -1,0 +1,142 @@
+---
+title: "std::add_cv, std::add_const, std::add_volatile"
+description: "Provides the member typedef type which is the same as T, except it has a cv-qualifier added (unless T is a function, a reference, or already has this cv-qualifier)"
+source_url: "https://en.cppreference.com/w/cpp/types/add_cv"
+language: "C++"
+---
+
+{/* source:cpp-types-add-cv:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct add_cv;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+struct add_const;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+struct add_volatile;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-types-add-cv:0001 */}
+    Provides the member typedef `type` which is the same as `T`, except it has a cv-qualifier added (unless `T` is a function, a reference, or already has this cv-qualifier)
+
+    {/* source:cpp-types-add-cv:0002 */}
+    1) adds both `const` and `volatile`
+
+    {/* source:cpp-types-add-cv:0003 */}
+    2) adds `const`
+
+    {/* source:cpp-types-add-cv:0004 */}
+    3) adds `volatile`
+
+    {/* source:cpp-types-add-cv:0005 */}
+    If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Member types
+
+{/* source:cpp-types-add-cv:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the type `T` with the cv-qualifier</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-add-cv:0007 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++14" code={`template< class T >
+using add_cv_t       = typename add_cv<T>::type;`} />
+  <Declaration id="2" language="cpp" since="C++14" code={`template< class T >
+using add_const_t    = typename add_const<T>::type;`} />
+  <Declaration id="3" language="cpp" since="C++14" code={`template< class T >
+using add_volatile_t = typename add_volatile<T>::type;`} />
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Possible implementation
+
+{/* source:cpp-types-add-cv:0008 */}
+```cpp
+template<class T> struct add_cv { typedef const volatile T type; };
+ 
+template<class T> struct add_const { typedef const T type; };
+ 
+template<class T> struct add_volatile { typedef volatile T type; };
+```
+
+### Notes
+
+{/* source:cpp-types-add-cv:0009 */}
+These transformation traits can be used to establish [non-deduced contexts](/docs/cpp/language/templates/template_argument_deduction#Non-deduced_contexts) in template argument deduction:
+
+{/* source:cpp-types-add-cv:0010 */}
+```cpp
+template<class T>
+void f(const T&, const T&);
+ 
+template<class T>
+void g(const T&, std::add_const_t<T>&);
+ 
+f(4.2, 0); // error, deduced conflicting types for 'T'
+g(4.2, 0); // OK, calls g<double>
+```
+
+### Example
+
+{/* source:cpp-types-add-cv:0011 */}
+```cpp
+#include <iostream>
+#include <type_traits>
+ 
+struct foo
+{
+    void m() { std::cout << "Non-cv\n"; }
+    void m() const { std::cout << "Const\n"; }
+    void m() volatile { std::cout << "Volatile\n"; }
+    void m() const volatile { std::cout << "Const-volatile\n"; }
+};
+ 
+int main()
+{
+    foo{}.m();
+    std::add_const<foo>::type{}.m();
+    std::add_volatile<foo>::type{}.m();
+    std::add_cv<foo>::type{}.m();
+}
+```
+
+Output:
+
+```text
+Non-cv
+Const
+Volatile
+Const-volatile
+```
+
+### See also
+
+{/* source:cpp-types-add-cv:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_const`](/docs/cpp/library/meta/is_const)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is const-qualified <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_volatile`](/docs/cpp/library/meta/is_volatile)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is volatile-qualified <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_cv`, `remove_const`, `remove_volatile`](/docs/cpp/library/meta/remove_cv)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes `const` and/or `volatile` specifiers from the given type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`as_const`](/docs/cpp/library/utility/as_const)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains a reference to `const` to its argument <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

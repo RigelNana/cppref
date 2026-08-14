@@ -1,0 +1,162 @@
+---
+title: "std::is_scalar"
+description: "If T is a scalar type, provides the member constant value equal true. For any other type, value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/is_scalar"
+language: "C++"
+---
+
+{/* source:cpp-types-is-scalar:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct is_scalar;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-scalar:0001 */}
+`std::is_scalar` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-scalar:0002 */}
+If `T` is a [scalar type](/docs/cpp/library/named_req/ScalarType), provides the member constant `value` equal `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-scalar:0003 */}
+If the program adds specializations for `std::is_scalar` or `std::is_scalar_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-scalar:0004 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-scalar:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_scalar_v = is_scalar<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-scalar:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a scalar type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-scalar:0007 */}
+Each individual memory location in the C++ memory model, including the hidden memory locations used by language features (e.g. virtual table pointer), has scalar type (or is a sequence of adjacent bit-fields of non-zero length). Sequencing of side-effects in expression evaluation, inter-thread synchronization, and dependency ordering are all defined in terms of individual scalar objects.
+
+### Possible implementation
+
+{/* source:cpp-types-is-scalar:0008 */}
+```cpp
+template<class T>
+struct is_scalar : std::integral_constant<bool, std::is_arithmetic<T>::value
+                                             || std::is_enum<T>::value
+                                             || std::is_pointer<T>::value
+                                             || std::is_member_pointer<T>::value
+                                             || std::is_null_pointer<T>::value>
+{};
+```
+
+### Example
+
+{/* source:cpp-types-is-scalar:0009 */}
+```cpp
+#include <iostream>
+#include <type_traits>
+#include <typeinfo>
+#include <utility>
+
+template<typename Head, typename... Tail>
+void are_scalars(Head&& head, Tail&&... tail)
+{
+    using T = std::decay_t<decltype(head)>;
+
+    std::cout << typeid(T).name() << " is "
+              << (std::is_scalar_v<T> ? "" : "not ")
+              << "a scalar\n";
+
+    if constexpr (sizeof... (Tail))
+    {
+        are_scalars(std::forward<decltype(tail)>(tail)...);
+    }
+}
+
+int main()
+{
+    struct S { int m; } s;
+    int S::* mp = &S::m;
+    enum class E { e };
+
+    are_scalars(42, 3.14, E::e, "str", mp, nullptr, s);
+}
+```
+
+Possible output:
+
+```text
+int is a scalar
+double is a scalar
+main::E is a scalar
+char const* is a scalar
+int main::S::* is a scalar
+nullptr is a scalar
+main::S is not a scalar
+```
+
+### See also
+
+{/* source:cpp-types-is-scalar:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_arithmetic`](/docs/cpp/library/meta/is_arithmetic)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an arithmetic type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_enum`](/docs/cpp/library/meta/is_enum)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an enumeration type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_pointer`](/docs/cpp/library/meta/is_pointer)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a pointer type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_member_pointer`](/docs/cpp/library/meta/is_member_pointer)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a pointer to a non-static member function or object (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

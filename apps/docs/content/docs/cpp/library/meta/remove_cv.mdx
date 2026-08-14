@@ -1,0 +1,122 @@
+---
+title: "std::remove_cv, std::remove_const, std::remove_volatile"
+description: "Provides the member typedef type which is the same as T, except that its topmost cv-qualifiers are removed."
+source_url: "https://en.cppreference.com/w/cpp/types/remove_cv"
+language: "C++"
+---
+
+{/* source:cpp-types-remove-cv:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct remove_cv;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+struct remove_const;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+struct remove_volatile;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-types-remove-cv:0001 */}
+    Provides the member typedef `type` which is the same as `T`, except that its topmost cv-qualifiers are removed.
+
+    {/* source:cpp-types-remove-cv:0002 */}
+    1. Removes the topmost `const`, or the topmost `volatile`, or both, if present.
+
+    {/* source:cpp-types-remove-cv:0003 */}
+    2. Removes the topmost `const`.
+
+    {/* source:cpp-types-remove-cv:0004 */}
+    3. Removes the topmost `volatile`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-remove-cv:0005 */}
+If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+
+### Member types
+
+{/* source:cpp-types-remove-cv:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the type `T` without cv-qualifier</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-remove-cv:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++14" code={`template< class T >
+using remove_cv_t = typename remove_cv<T>::type;`} />
+  <Declaration language="cpp" since="C++14" code={`template< class T >
+using remove_const_t = typename remove_const<T>::type;`} />
+  <Declaration language="cpp" since="C++14" code={`template< class T >
+using remove_volatile_t = typename remove_volatile<T>::type;`} />
+</DeclarationDoc>
+
+### Possible implementation
+
+{/* source:cpp-types-remove-cv:0008 */}
+```cpp
+template<class T> struct remove_cv { typedef T type; };
+template<class T> struct remove_cv<const T> { typedef T type; };
+template<class T> struct remove_cv<volatile T> { typedef T type; };
+template<class T> struct remove_cv<const volatile T> { typedef T type; };
+ 
+template<class T> struct remove_const { typedef T type; };
+template<class T> struct remove_const<const T> { typedef T type; };
+ 
+template<class T> struct remove_volatile { typedef T type; };
+template<class T> struct remove_volatile<volatile T> { typedef T type; };
+```
+
+### Example
+
+{/* source:cpp-types-remove-cv:0009 */}
+Removing const/volatile from `const volatile int*` does not modify the type, because the pointer itself is neither const nor volatile.
+
+```cpp
+#include <type_traits>
+ 
+template<typename U, typename V>
+constexpr bool same = std::is_same_v<U, V>;
+ 
+static_assert
+(
+    same<std::remove_cv_t<int>, int> &&
+    same<std::remove_cv_t<const int>, int> &&
+    same<std::remove_cv_t<volatile int>, int> &&
+    same<std::remove_cv_t<const volatile int>, int> &&
+    // remove_cv only works on types, not on pointers
+    not same<std::remove_cv_t<const volatile int*>, int*> &&
+    same<std::remove_cv_t<const volatile int*>, const volatile int*> &&
+    same<std::remove_cv_t<const int* volatile>, const int*> &&
+    same<std::remove_cv_t<int* const volatile>, int*>
+);
+ 
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-remove-cv:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_const`](/docs/cpp/library/meta/is_const)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is const-qualified <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_volatile`](/docs/cpp/library/meta/is_volatile)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is volatile-qualified <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`add_cv`, `add_const`, `add_volatile`](/docs/cpp/library/meta/add_cv)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>adds `const` and/or `volatile` specifiers to the given type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_cvref`](/docs/cpp/library/meta/remove_cvref)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>combines `std::remove_cv` and [`std::remove_reference`](/docs/cpp/library/meta/remove_reference) <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,155 @@
+---
+title: "std::is_layout_compatible"
+description: "If T and U are layout-compatible types, provides the member constant value equal to true. Otherwise value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/is_layout_compatible"
+language: "C++"
+---
+
+{/* source:cpp-types-is-layout-compatible:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T, class U >
+struct is_layout_compatible;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-layout-compatible:0001 */}
+If `T` and `U` are [*layout-compatible*](/docs/cpp/language/classes/data_members#Standard-layout) types, provides the member constant `value` equal to `true`. Otherwise `value` is `false`.
+
+{/* source:cpp-types-is-layout-compatible:0002 */}
+Every type is layout-compatible with its any cv-qualified versions, even if it is not an object type.
+
+{/* source:cpp-types-is-layout-compatible:0003 */}
+If `T` or `U` is not a complete type, (possibly cv-qualified) `void`, or an array of unknown bound, the behavior is undefined.
+
+{/* source:cpp-types-is-layout-compatible:0004 */}
+If an instantiation of a template above depends, directly or indirectly, on an incomplete type, and that instantiation could yield a different result if that type were hypothetically completed, the behavior is undefined.
+
+{/* source:cpp-types-is-layout-compatible:0005 */}
+If the program adds specializations for `std::is_layout_compatible` or `std::is_layout_compatible_v`, the behavior is undefined.
+
+### Helper variable template
+
+{/* source:cpp-types-is-layout-compatible:0006 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`template< class T, class U >
+constexpr bool is_layout_compatible_v = is_layout_compatible<T, U>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-layout-compatible:0007 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` and `U` are layout-compatible, `false` otherwise <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>Type</DescriptionTerm>
+    <DescriptionBody>Definition</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-layout-compatible:0008 */}
+A signed integer type and its unsigned counterpart are not layout-compatible. `char` is layout-compatible with neither `signed char` nor `unsigned char`.
+
+{/* source:cpp-types-is-layout-compatible:0009 */}
+[Similar types](/docs/cpp/language/expressions/reinterpret_cast#Type_aliasing) are not layout-compatible if they are not the same type after ignoring top-level cv-qualification.
+
+{/* source:cpp-types-is-layout-compatible:0010 */}
+An enumeration type and its underlying type are not layout-compatible.
+
+{/* source:cpp-types-is-layout-compatible:0011 */}
+Array types of layout-compatible but different element types (ignoring cv-qualification) are not layout-compatible, even if they are of equal length.
+
+{/* source:cpp-types-is-layout-compatible:0012 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_is_layout_compatible`](/docs/cpp/library/feature_test#cpp_lib_is_layout_compatible) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_is_layout_compatible_201907L) | (C++20) | `std::is_layout_compatible` |
+
+### Example
+
+{/* source:cpp-types-is-layout-compatible:0013 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <type_traits>
+
+struct Foo
+{
+    int x;
+    char y;
+};
+
+struct FooNua
+{
+    int x;
+    [[no_unique_address]] char y;
+};
+
+class Bar
+{
+    const int u = 42;
+    volatile char v = '*';
+};
+
+enum E0 : int {};
+enum class E1 : int {};
+
+static_assert
+(
+    std::is_layout_compatible_v<const void, volatile void> == true  and
+    std::is_layout_compatible_v<Foo, Bar>                  == true  and
+    std::is_layout_compatible_v<Foo[2], Bar[2]>            == false and
+    std::is_layout_compatible_v<int, E0>                   == false and
+    std::is_layout_compatible_v<E0, E1>                    == true  and
+    std::is_layout_compatible_v<long, unsigned long>       == false and
+    std::is_layout_compatible_v<char*, const char*>        == false and
+    std::is_layout_compatible_v<char*, char* const>        == true  and
+    std::is_layout_compatible_v<Foo, FooNua>               == false // Note [1]
+);
+
+// [1] MSVC erroneously fails this assert
+
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-is-layout-compatible:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_standard_layout`](/docs/cpp/library/meta/is_standard_layout)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a [standard-layout](/docs/cpp/language/classes/data_members#Standard-layout) type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

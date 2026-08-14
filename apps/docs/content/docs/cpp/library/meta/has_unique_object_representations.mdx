@@ -1,0 +1,155 @@
+---
+title: "std::has_unique_object_representations"
+description: "std::has_unique_object_representations is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/has_unique_object_representations"
+language: "C++"
+---
+
+{/* source:cpp-types-has-unique-object-representations:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+struct has_unique_object_representations;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-types-has-unique-object-representations:0001 */}
+    `std::has_unique_object_representations` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+    {/* source:cpp-types-has-unique-object-representations:0002 */}
+    If `T` is [TriviallyCopyable](/docs/cpp/library/named_req/TriviallyCopyable) and if any two objects of type `T` with the same value have the same [object representation](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation), provides the member constant `value` equal `true`. For any other type, `value` is `false`.
+
+    {/* source:cpp-types-has-unique-object-representations:0003 */}
+    For the purpose of this trait, two arrays have the same value if their elements have the same values, two non-union classes have the same value if their direct subobjects have the same value, and two unions have the same value if they have the same active member and the value of that member is the same.
+
+    {/* source:cpp-types-has-unique-object-representations:0004 */}
+    It is implementation-defined which scalar types satisfy this trait, but <InlineRevision until="C++20">unsigned</InlineRevision> integer types that do not use padding bits are guaranteed to have unique object representations.
+
+    {/* source:cpp-types-has-unique-object-representations:0005 */}
+    The behavior is undefined if `T` is an incomplete type other than (possibly cv-qualified) `void` or array of unknown bound.
+
+    {/* source:cpp-types-has-unique-object-representations:0006 */}
+    If the program adds specializations for `std::has_unique_object_representations` or `std::has_unique_object_representations_v`, the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Template parameters
+
+{/* source:cpp-types-has-unique-object-representations:0007 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-has-unique-object-representations:0008 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool has_unique_object_representations_v =
+
+    has_unique_object_representations<T>::value;`} />
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-has-unique-object-representations:0009 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value`[static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` has unique object representations, `false` otherwise <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-has-unique-object-representations:0010 */}
+This trait was introduced to make it possible to determine whether a type can be correctly hashed by hashing its object representation as a byte array.
+
+{/* source:cpp-types-has-unique-object-representations:0011 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_has_unique_object_representations`](/docs/cpp/library/feature_test#cpp_lib_has_unique_object_representations) | [`201606L`](/docs/cpp/library/compiler_support/17#cpp_lib_has_unique_object_representations_201606L) | (C++17) | `std::has_unique_object_representations` |
+
+### Example
+
+{/* source:cpp-types-has-unique-object-representations:0012 */}
+```cpp
+#include <cstdint>
+#include <type_traits>
+ 
+struct unpadded
+{
+    std::uint32_t a, b;
+};
+ 
+struct likely_padded
+{
+    std::uint8_t c;
+    std::uint16_t st;
+    std::uint32_t i;
+};
+ 
+int main()
+{
+    // Every value of a char corresponds to exactly one object representation.
+    static_assert(std::has_unique_object_representations_v<char>);
+    // For IEC 559 floats, assertion passes because the value NaN has
+    // multiple object representations.
+    static_assert(!std::has_unique_object_representations_v<float>);
+ 
+    // Should succeed in any sane implementation because unpadded
+    // is typically not padded, and std::uint32_t cannot contain padding bits.
+    static_assert(std::has_unique_object_representations_v<unpadded>);
+    // Fails in most implementations because padding bits are inserted
+    // between the data members c and st for the purpose of aligning st to 16 bits.
+    static_assert(!std::has_unique_object_representations_v<likely_padded>);
+ 
+    // Notable architectural divergence:
+    static_assert(std::has_unique_object_representations_v<bool>);  // x86
+ // static_assert(!std::has_unique_object_representations_v<bool>); // ARM
+}
+```
+
+### See also
+
+{/* source:cpp-types-has-unique-object-representations:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_standard_layout`](/docs/cpp/library/meta/is_standard_layout)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a [standard-layout](/docs/cpp/language/classes/data_members#Standard-layout) type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`hash`](/docs/cpp/library/utility/hash)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>hash function object <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

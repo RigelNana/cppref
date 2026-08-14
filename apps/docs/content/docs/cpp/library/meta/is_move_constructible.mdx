@@ -1,0 +1,207 @@
+---
+title: "std::is_move_constructible, std::is_trivially_move_constructible, std::is_nothrow_move_constructible"
+description: "The value of the member constant value is std::is_constructible<T, T&&>::value if T is a referenceable type, and false if T is not a referenceable type."
+source_url: "https://en.cppreference.com/w/cpp/types/is_move_constructible"
+language: "C++"
+---
+
+{/* source:cpp-types-is-move-constructible:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct is_move_constructible;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+struct is_trivially_move_constructible;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+struct is_nothrow_move_constructible;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-move-constructible:0001 */}
+| Type trait | The value of the member constant `value` | |
+| --- | --- | --- |
+| | `T` is a [referenceable type](/docs/cpp/library/meta#Definitions) | `T` is not a referenceable type |
+| (1) | `std::is_constructible<T, T&&>::value` | `false` |
+| (2) | `std::is_trivially_constructible<T, T&&>::value` | `false` |
+| (3) | `std::is_nothrow_constructible<T, T&&>::value` | `false` |
+
+{/* source:cpp-types-is-move-constructible:0002 */}
+If `T` is not a complete type, (possibly cv-qualified) `void`, or an array of unknown bound, the behavior is undefined.
+
+{/* source:cpp-types-is-move-constructible:0003 */}
+If an instantiation of a template above depends, directly or indirectly, on an incomplete type, and that instantiation could yield a different result if that type were hypothetically completed, the behavior is undefined.
+
+{/* source:cpp-types-is-move-constructible:0004 */}
+If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+
+### Helper variable templates
+
+{/* source:cpp-types-is-move-constructible:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+inline constexpr bool is_move_constructible_v =
+    is_move_constructible<T>::value;`} />
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+inline constexpr bool is_trivially_move_constructible_v =
+    is_trivially_move_constructible<T>::value;`} />
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+inline constexpr bool is_nothrow_move_constructible_v =
+    is_nothrow_move_constructible<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-move-constructible:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is move-constructible, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-move-constructible:0007 */}
+```cpp
+template<class T>
+struct is_move_constructible :
+    std::is_constructible<T, typename std::add_rvalue_reference<T>::type> {};
+
+template<class T>
+struct is_trivially_move_constructible :
+    std::is_trivially_constructible<T, typename std::add_rvalue_reference<T>::type> {};
+
+template<class T>
+struct is_nothrow_move_constructible :
+    std::is_nothrow_constructible<T, typename std::add_rvalue_reference<T>::type> {};
+```
+
+### Notes
+
+{/* source:cpp-types-is-move-constructible:0008 */}
+Types without a move constructor, but with a copy constructor that accepts `const T&` arguments, satisfy `std::is_move_constructible`.
+
+{/* source:cpp-types-is-move-constructible:0009 */}
+Move constructors are usually `noexcept`, since otherwise they are unusable in any code that provides strong exception guarantee.
+
+{/* source:cpp-types-is-move-constructible:0010 */}
+In many implementations, `std::is_nothrow_move_constructible` also checks if the destructor throws because it is effectively `noexcept(T(arg))`. Same applies to `std::is_trivially_move_constructible`, which, in these implementations, also requires that the destructor is trivial: [GCC bug 51452](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51452), [LWG issue 2116](https://cplusplus.github.io/LWG/issue2116).
+
+### Example
+
+{/* source:cpp-types-is-move-constructible:0011 */}
+```cpp
+#include <string>
+#include <type_traits>
+
+struct Ex1
+{
+    std::string str; // member has a non-trivial but non-throwing move constructor
+};
+static_assert(std::is_move_constructible_v<Ex1>);
+static_assert(!std::is_trivially_move_constructible_v<Ex1>);
+static_assert(std::is_nothrow_move_constructible_v<Ex1>);
+
+struct Ex2
+{
+    int n;
+    Ex2(Ex2&&) = default; // trivial and non-throwing
+};
+static_assert(std::is_move_constructible_v<Ex2>);
+static_assert(std::is_trivially_move_constructible_v<Ex2>);
+static_assert(std::is_nothrow_move_constructible_v<Ex2>);
+
+struct NoMove1
+{
+    // prevents implicit declaration of default move constructor;
+    // however, the class is still move-constructible because its
+    // copy constructor can bind to an rvalue argument
+    NoMove1(const NoMove1&) {}
+};
+static_assert(std::is_move_constructible_v<NoMove1>);
+static_assert(!std::is_trivially_move_constructible_v<NoMove1>);
+static_assert(!std::is_nothrow_move_constructible_v<NoMove1>);
+
+struct NoMove2
+{
+    // Not move-constructible since the lvalue reference
+    // can't bind to the rvalue argument
+    NoMove2(NoMove2&) {}
+};
+static_assert(!std::is_move_constructible_v<NoMove2>);
+static_assert(!std::is_trivially_move_constructible_v<NoMove2>);
+static_assert(!std::is_nothrow_move_constructible_v<NoMove2>);
+
+int main() {}
+```
+
+### Defect reports
+
+{/* source:cpp-types-is-move-constructible:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-is-move-constructible:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2196} standard="C++11">
+    <PublishedBehavior>the behavior was unclear if `T&&` cannot be formed</PublishedBehavior>
+    <CorrectedBehavior>the value produced is `false` in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-types-is-move-constructible:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_constructible`, `is_trivially_constructible`, `is_nothrow_constructible`](/docs/cpp/library/meta/is_constructible)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has a constructor for specific arguments (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_default_constructible`, `is_trivially_default_constructible`, `is_nothrow_default_constructible`](/docs/cpp/library/meta/is_default_constructible)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has a default constructor (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_copy_constructible`, `is_trivially_copy_constructible`, `is_nothrow_copy_constructible`](/docs/cpp/library/meta/is_copy_constructible)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has a copy constructor (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_constructible`](/docs/cpp/library/concepts/move_constructible)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be move constructed (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move`](/docs/cpp/library/utility/move)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts the argument to an xvalue (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`move_if_noexcept`](/docs/cpp/library/utility/move_if_noexcept)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts the argument to an xvalue if the move constructor does not throw (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

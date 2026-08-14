@@ -1,0 +1,170 @@
+---
+title: "std::is_copy_assignable, std::is_trivially_copy_assignable, std::is_nothrow_copy_assignable"
+description: "The value of the member constant value is std::is_assignable<T&, const T&>::value if T is a referenceable type, and false if T is not a referenceable type."
+source_url: "https://en.cppreference.com/w/cpp/types/is_copy_assignable"
+language: "C++"
+---
+
+{/* source:cpp-types-is-copy-assignable:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct is_copy_assignable;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+struct is_trivially_copy_assignable;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class T >
+struct is_nothrow_copy_assignable;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-copy-assignable:0001 */}
+| Type trait | The value of the member constant `value` | |
+| --- | --- | --- |
+| | `T` is a [referenceable type](/docs/cpp/library/meta#Definitions) | `T` is not a referenceable type |
+| (1) | `std::is_assignable<T&, const T&>::value` | `false` |
+| (2) | `std::is_trivially_assignable<T&, const T&>::value` | `false` |
+| (3) | `std::is_nothrow_assignable<T&, const T&>::value` | `false` |
+
+{/* source:cpp-types-is-copy-assignable:0002 */}
+If `T` is not a complete type, (possibly cv-qualified) `void`, or an array of unknown bound, the behavior is undefined.
+
+{/* source:cpp-types-is-copy-assignable:0003 */}
+If an instantiation of a template above depends, directly or indirectly, on an incomplete type, and that instantiation could yield a different result if that type were hypothetically completed, the behavior is undefined.
+
+{/* source:cpp-types-is-copy-assignable:0004 */}
+If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+
+### Helper variable templates
+
+{/* source:cpp-types-is-copy-assignable:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+inline constexpr bool is_copy_assignable_v =
+    is_copy_assignable<T>::value;`} />
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+inline constexpr bool is_trivially_copy_assignable_v =
+    is_trivially_copy_assignable<T>::value;`} />
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+inline constexpr bool is_nothrow_copy_assignable_v =
+    is_nothrow_copy_assignable<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-copy-assignable:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is copy-assignable, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-copy-assignable:0007 */}
+```cpp
+template<class T>
+struct is_copy_assignable
+    : std::is_assignable<typename std::add_lvalue_reference<T>::type,
+                         typename std::add_lvalue_reference<const T>::type> {};
+ 
+template<class T>
+struct is_trivially_copy_assignable
+    : std::is_trivially_assignable<typename std::add_lvalue_reference<T>::type,
+                                   typename std::add_lvalue_reference<const T>::type> {};
+ 
+template<class T>
+struct is_nothrow_copy_assignable
+    : std::is_nothrow_assignable<typename std::add_lvalue_reference<T>::type,
+                                 typename std::add_lvalue_reference<const T>::type> {};
+```
+
+### Notes
+
+{/* source:cpp-types-is-copy-assignable:0008 */}
+The trait `std::is_copy_assignable` is less strict than [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) because it does not check the type of the result of the assignment (which, for a [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) type, must be an lvalue of type `T`) and does not check the semantic requirement that the argument expression remains unchanged. It also does not check that `T` satisfies [MoveAssignable](/docs/cpp/library/named_req/MoveAssignable), which is required of all [CopyAssignable](/docs/cpp/library/named_req/CopyAssignable) types.
+
+### Example
+
+{/* source:cpp-types-is-copy-assignable:0009 */}
+```cpp
+#include <iostream>
+#include <type_traits>
+#include <utility>
+ 
+struct Foo { int n; };
+ 
+int main()
+{
+    std::cout << std::boolalpha
+              << "Foo is trivially copy-assignable? "
+              << std::is_trivially_copy_assignable<Foo>::value << '\n'
+              << "int[2] is copy-assignable? "
+              << std::is_copy_assignable<int[2]>::value << '\n'
+              << "int is nothrow copy-assignable? "
+              << std::is_nothrow_copy_assignable<int>::value << '\n';
+}
+```
+
+Output:
+
+```text
+Foo is trivially copy-assignable? true
+int[2] is copy-assignable? false
+int is nothrow copy-assignable? true
+```
+
+### Defect reports
+
+{/* source:cpp-types-is-copy-assignable:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-is-copy-assignable:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2196} standard="C++11">
+    <PublishedBehavior>the behavior was unclear if `const T&` cannot be formed</PublishedBehavior>
+    <CorrectedBehavior>the value produced is `false` in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-types-is-copy-assignable:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_assignable`, `is_trivially_assignable`, `is_nothrow_assignable`](/docs/cpp/library/meta/is_assignable)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has an assignment operator for a specific argument (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_move_assignable`, `is_trivially_move_assignable`, `is_nothrow_move_assignable`](/docs/cpp/library/meta/is_move_assignable)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has a move assignment operator (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

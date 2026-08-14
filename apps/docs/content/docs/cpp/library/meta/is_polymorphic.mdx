@@ -1,0 +1,161 @@
+---
+title: "std::is_polymorphic"
+description: "If T is a polymorphic class (that is, a non-union class that declares or inherits at least one virtual function), provides the member constant value equal to true. For any other type, value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/is_polymorphic"
+language: "C++"
+---
+
+{/* source:cpp-types-is-polymorphic:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct is_polymorphic;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-polymorphic:0001 */}
+`std::is_polymorphic` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-polymorphic:0002 */}
+If `T` is a [polymorphic class](/docs/cpp/language/basic_concepts/objects#Polymorphic_objects) (that is, a non-union class that declares or inherits at least one virtual function), provides the member constant `value` equal to `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-polymorphic:0003 */}
+If `T` is an incomplete non-union class type, the behavior is undefined.
+
+{/* source:cpp-types-is-polymorphic:0004 */}
+If the program adds specializations for `std::is_polymorphic` or `std::is_polymorphic_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-polymorphic:0005 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-polymorphic:0006 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_polymorphic_v = is_polymorphic<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-polymorphic:0007 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a polymorphic class type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-polymorphic:0008 */}
+```cpp
+namespace detail
+{
+    template<class T>
+    std::true_type detect_is_polymorphic(
+        decltype(dynamic_cast<const volatile void*>(static_cast<T*>(nullptr)))
+    );
+    template<class T>
+    std::false_type detect_is_polymorphic(...);
+} // namespace detail
+
+template<class T>
+struct is_polymorphic : decltype(detail::detect_is_polymorphic<T>(nullptr)) {};
+```
+
+### Example
+
+{/* source:cpp-types-is-polymorphic:0009 */}
+```cpp
+#include <type_traits>
+
+struct A { int m; };
+static_assert(!std::is_polymorphic_v<A>);
+
+struct B { virtual void foo(); };
+static_assert(std::is_polymorphic_v<B>);
+
+struct C : B {};
+static_assert(std::is_polymorphic_v<C>);
+
+struct D { virtual ~D() = default; };
+static_assert(std::is_polymorphic_v<D>);
+
+// Uses inheritance, but not the virtual keyword:
+struct E : A {};
+static_assert(!std::is_polymorphic_v<E>);
+
+struct F : virtual A {};
+static_assert(!std::is_polymorphic_v<F>);
+
+struct AX : A {};
+struct AY : A {};
+struct XY : virtual AX, virtual AY {};
+static_assert(!std::is_polymorphic_v<XY>);
+
+int main() {}
+```
+
+### Defect reports
+
+{/* source:cpp-types-is-polymorphic:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-is-polymorphic:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2015} standard="C++11">
+    <PublishedBehavior>the behavior was undefined if `T` is an incomplete union type</PublishedBehavior>
+    <CorrectedBehavior>the base characteristic is [`std::false_type`](/docs/cpp/library/meta/integral_constant) in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-types-is-polymorphic:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_class`](/docs/cpp/library/meta/is_class)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a non-union class type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_abstract`](/docs/cpp/library/meta/is_abstract)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an abstract class type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`has_virtual_destructor`](/docs/cpp/library/meta/has_virtual_destructor)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has a virtual destructor (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

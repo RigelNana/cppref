@@ -1,0 +1,134 @@
+---
+title: "std::is_trivially_copyable"
+description: "std::is_trivially_copyable is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/is_trivially_copyable"
+language: "C++"
+---
+
+{/* source:cpp-types-is-trivially-copyable:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct is_trivially_copyable;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-trivially-copyable:0001 */}
+`std::is_trivially_copyable` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-trivially-copyable:0002 */}
+If `T` is a [trivially copyable](/docs/cpp/library/named_req/TriviallyCopyable) type, provides the member constant `value` equal to `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-trivially-copyable:0003 */}
+If `std::remove_all_extents_t<T>` is an incomplete type and not (possibly cv-qualified) `void`, the behavior is undefined.
+
+{/* source:cpp-types-is-trivially-copyable:0004 */}
+If the program adds specializations for `std::is_trivially_copyable` or `std::is_trivially_copyable_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-trivially-copyable:0005 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-trivially-copyable:0006 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_trivially_copyable_v = is_trivially_copyable<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-trivially-copyable:0007 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a trivially copyable type, `false` otherwise <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-trivially-copyable:0008 */}
+Objects of trivially-copyable types that are not potentially-overlapping subobjects are the only C++ objects that may be safely copied with [`std::memcpy`](/docs/cpp/library/text/byte/memcpy) or serialized to/from binary files with [`std::ofstream::write()`](/docs/cpp/library/io/basic_ostream/write) / [`std::ifstream::read()`](/docs/cpp/library/io/basic_istream/read).
+
+### Example
+
+{/* source:cpp-types-is-trivially-copyable:0009 */}
+```cpp
+#include <type_traits>
+
+struct A { int m; };
+static_assert(std::is_trivially_copyable_v<A> == true);
+
+struct B { B(B const&) {} };
+static_assert(std::is_trivially_copyable_v<B> == false);
+
+struct C { virtual void foo(); };
+static_assert(std::is_trivially_copyable_v<C> == false);
+
+struct D
+{
+    int m;
+
+    D(D const&) = default; // -> trivially copyable
+    D(int x) : m(x + 1) {}
+};
+static_assert(std::is_trivially_copyable_v<D> == true);
+
+int main() {}
+```
+
+### Defect reports
+
+{/* source:cpp-types-is-trivially-copyable:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-is-trivially-copyable:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2015} standard="C++11">
+    <PublishedBehavior>`T` could be an array of incomplete class type with unknown bound</PublishedBehavior>
+    <CorrectedBehavior>the behavior is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-types-is-trivially-copyable:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_trivial`](/docs/cpp/library/meta/is_trivial)<InlineRevision since="C++11" /> (deprecated in C++26)</DescriptionTerm>
+    <DescriptionBody>checks if a type is trivial <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

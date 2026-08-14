@@ -1,0 +1,146 @@
+---
+title: "std::is_same"
+description: "If T and U name the same type (taking into account const/volatile qualifications), provides the member constant value equal to true. Otherwise value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/is_same"
+language: "C++"
+---
+
+{/* source:cpp-types-is-same:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T, class U >
+struct is_same;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-same:0001 */}
+If `T` and `U` name the same type (taking into account const/volatile qualifications), provides the member constant `value` equal to `true`. Otherwise `value` is `false`.
+
+{/* source:cpp-types-is-same:0002 */}
+Commutativity is satisfied, i.e. for any two types `T` and `U`, `is_same<T, U>::value == true` if and only if `is_same<U, T>::value == true`.
+
+{/* source:cpp-types-is-same:0003 */}
+If the program adds specializations for `std::is_same` <InlineRevision since="C++17">or `std::is_same_v`</InlineRevision>, the behavior is undefined.
+
+### Helper variable template
+
+{/* source:cpp-types-is-same:0004 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T, class U >
+constexpr bool is_same_v = is_same<T, U>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-same:0005 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` and `U` are the same type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-same:0006 */}
+```cpp
+template<class T, class U>
+struct is_same : std::false_type {};
+
+template<class T>
+struct is_same<T, T> : std::true_type {};
+```
+
+### Example
+
+{/* source:cpp-types-is-same:0007 */}
+```cpp
+#include <cstdint>
+#include <iostream>
+#include <type_traits>
+
+int main()
+{
+    std::cout << std::boolalpha;
+
+    // some implementation-defined facts
+
+    // usually true if 'int' is 32 bit
+    std::cout << std::is_same<int, std::int32_t>::value << ' '; // maybe true
+    // possibly true if ILP64 data model is used
+    std::cout << std::is_same<int, std::int64_t>::value << ' '; // maybe false
+
+    // same tests as above, except using C++17's std::is_same_v<T, U> format
+    std::cout << std::is_same_v<int, std::int32_t> << ' ';  // maybe true
+    std::cout << std::is_same_v<int, std::int64_t> << '\n'; // maybe false
+
+    // compare the types of a couple variables
+    long double num1 = 1.0;
+    long double num2 = 2.0;
+    static_assert( std::is_same_v<decltype(num1), decltype(num2)> == true );
+
+    // 'float' is never an integral type
+    static_assert( std::is_same<float, std::int32_t>::value == false );
+
+    // 'int' is implicitly 'signed'
+    static_assert( std::is_same_v<int, int> == true );
+    static_assert( std::is_same_v<int, unsigned int> == false );
+    static_assert( std::is_same_v<int, signed int> == true );
+
+    // unlike other types, 'char' is neither 'unsigned' nor 'signed'
+    static_assert( std::is_same_v<char, char> == true );
+    static_assert( std::is_same_v<char, unsigned char> == false );
+    static_assert( std::is_same_v<char, signed char> == false );
+
+    // const-qualified type T is not same as non-const T
+    static_assert( !std::is_same<const int, int>() );
+}
+```
+
+Possible output:
+
+```text
+true false true false
+```
+
+### See also
+
+{/* source:cpp-types-is-same:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`same_as`](/docs/cpp/library/concepts/same_as)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is the same as another type (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`decltype` specifier](/docs/cpp/language/declarations/decltype)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the type of an expression or an entity</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

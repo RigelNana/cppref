@@ -1,0 +1,133 @@
+---
+title: "std::is_class"
+description: "std::is_class is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/is_class"
+language: "C++"
+---
+
+{/* source:cpp-types-is-class:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct is_class;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-class:0001 */}
+`std::is_class` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-class:0002 */}
+Checks whether `T` is a non-union class type. Provides the member constant `value` which is equal to `true`, if `T` is a class type (but not union). Otherwise, `value` is equal to `false`.
+
+{/* source:cpp-types-is-class:0003 */}
+If the program adds specializations for `std::is_class` or `std::is_class_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-class:0004 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-class:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_class_v = is_class<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-class:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a non-union class type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-class:0007 */}
+```cpp
+namespace detail
+{
+    template<class T>
+    std::integral_constant<bool, !std::is_union<T>::value> test(int T::*);
+ 
+    template<class>
+    std::false_type test(...);
+}
+ 
+template<class T>
+struct is_class : decltype(detail::test<T>(nullptr)) {};
+```
+
+### Example
+
+{/* source:cpp-types-is-class:0008 */}
+```cpp
+#include <type_traits>
+ 
+struct A {};
+static_assert(std::is_class<A>::value);
+ 
+class B {};
+static_assert(std::is_class_v<B>);
+static_assert(not std::is_class_v<B*>);
+static_assert(not std::is_class_v<B&>);
+static_assert(std::is_class_v<const B>);
+ 
+enum class E {};
+static_assert(not std::is_class<E>::value);
+ 
+union U { class UC {}; };
+static_assert(not std::is_class_v<U>);
+static_assert(std::is_class_v<U::UC>);
+ 
+static_assert(not std::is_class_v<int>);
+ 
+static_assert(std::is_class_v<struct S>, "incomplete class");
+static_assert(std::is_class_v<class C>, "incomplete class");
+ 
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-is-class:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_union`](/docs/cpp/library/meta/is_union)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a union type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

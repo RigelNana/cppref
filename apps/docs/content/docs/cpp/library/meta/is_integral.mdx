@@ -1,0 +1,159 @@
+---
+title: "std::is_integral"
+description: "std::is_integral is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/is_integral"
+language: "C++"
+---
+
+{/* source:cpp-types-is-integral:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct is_integral;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-integral:0001 */}
+`std::is_integral` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-integral:0002 */}
+Checks whether `T` is an [integral type](/docs/cpp/language/basic_concepts/type-id). Provides the member constant `value` which is equal to `true`, if `T` is the type `bool`, `char`<InlineRevision since="C++20">, `char8_t`</InlineRevision>, `char16_t`, `char32_t`, `wchar_t`, `short`, `int`, `long`, `long long`, or any implementation-defined extended integer types, including any signed, unsigned, and cv-qualified variants. Otherwise, `value` is equal to `false`.
+
+{/* source:cpp-types-is-integral:0003 */}
+If the program adds specializations for `std::is_integral` or `std::is_integral_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-integral:0004 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-integral:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_integral_v = is_integral<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-integral:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is an integral type, `false` otherwise <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>Type</DescriptionTerm>
+    <DescriptionBody>Definition</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-is-integral:0007 */}
+```cpp
+// Note: this implementation uses C++20 facilities
+template<class T>
+struct is_integral : std::bool_constant<
+    requires (T t, T* p, void (*f)(T)) // T* parameter excludes reference types
+    {
+        reinterpret_cast<T>(t); // Exclude class types
+        f(0); // Exclude enumeration types
+        p + t; // Exclude everything not yet excluded but integral types
+    }> {};
+```
+
+### Example
+
+{/* source:cpp-types-is-integral:0008 */}
+```cpp
+#include <type_traits>
+
+static_assert
+(
+    std::is_integral_v<float> == false &&
+    std::is_integral_v<int*> == false &&
+    std::is_integral_v<int> == true &&
+    std::is_integral_v<const int> == true &&
+    std::is_integral_v<bool> == true &&
+    std::is_integral_v<char> == true
+);
+
+class A {};
+static_assert(std::is_integral_v<A> == false);
+
+struct B { int x:4; };
+static_assert(std::is_integral_v<B> == false);
+using BF = decltype(B::x); // bit-field's type
+static_assert(std::is_integral_v<BF> == true);
+
+enum E : int {};
+static_assert(std::is_integral_v<E> == false);
+
+template <class T>
+constexpr T same(T i)
+{
+    static_assert(std::is_integral<T>::value, "Integral required.");
+    return i;
+}
+static_assert(same('"') == 042);
+
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-is-integral:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`integral`](/docs/cpp/library/concepts/integral)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an integral type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_integer`](/docs/cpp/library/utility/types/numeric_limits/is_integer)[static]</DescriptionTerm>
+    <DescriptionBody>identifies integer types <br /> (public static member constant of `std::numeric_limits<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_floating_point`](/docs/cpp/library/meta/is_floating_point)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a floating-point type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_arithmetic`](/docs/cpp/library/meta/is_arithmetic)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an arithmetic type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_enum`](/docs/cpp/library/meta/is_enum)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an enumeration type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

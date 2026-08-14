@@ -1,0 +1,128 @@
+---
+title: "std::remove_all_extents"
+description: "If T is a multidimensional array of some type X, provides the member typedef type equal to X, otherwise type is T."
+source_url: "https://en.cppreference.com/w/cpp/types/remove_all_extents"
+language: "C++"
+---
+
+{/* source:cpp-types-remove-all-extents:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct remove_all_extents;`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-remove-all-extents:0001 */}
+If `T` is a multidimensional array of some type `X`, provides the member typedef `type` equal to `X`, otherwise `type` is `T`.
+
+{/* source:cpp-types-remove-all-extents:0002 */}
+If the program adds specializations for `std::remove_all_extents`, the behavior is undefined.
+
+### Member types
+
+{/* source:cpp-types-remove-all-extents:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>the type of the element of `T`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-remove-all-extents:0004 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++14" code={`template< class T >
+using remove_all_extents_t = typename remove_all_extents<T>::type;`} />
+</DeclarationDoc>
+
+### Possible implementation
+
+{/* source:cpp-types-remove-all-extents:0005 */}
+```cpp
+template<class T>
+struct remove_all_extents { typedef T type; };
+ 
+template<class T>
+struct remove_all_extents<T[]> {
+    typedef typename remove_all_extents<T>::type type;
+};
+ 
+template<class T, std::size_t N>
+struct remove_all_extents<T[N]> {
+    typedef typename remove_all_extents<T>::type type;
+};
+```
+
+### Example
+
+{/* source:cpp-types-remove-all-extents:0006 */}
+```cpp
+#include <iostream>
+#include <type_traits>
+#include <typeinfo>
+ 
+template<class A>
+void info(const A&)
+{
+    typedef typename std::remove_all_extents<A>::type Type;
+    std::cout << "underlying type: " << typeid(Type).name() << '\n';
+}
+ 
+int main()
+{
+    float a0;
+    float a1[1][2][3];
+    float a2[1][1][1][1][2];
+    float* a3;
+    int a4[3][2];
+    double a5[2][3];
+    struct X { int m; } x0[3][3];
+ 
+    info(a0);
+    info(a1);
+    info(a2);
+    info(a3);
+    info(a4);
+    info(a5);
+    info(x0);
+}
+```
+
+Possible output:
+
+```text
+underlying type: float
+underlying type: float
+underlying type: float
+underlying type: float*
+underlying type: int
+underlying type: double
+underlying type: main::X
+```
+
+### See also
+
+{/* source:cpp-types-remove-all-extents:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_array`](/docs/cpp/library/meta/is_array)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rank`](/docs/cpp/library/meta/rank)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the number of dimensions of an array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`extent`](/docs/cpp/library/meta/extent)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the size of an array type along a specified dimension <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_extent`](/docs/cpp/library/meta/remove_extent)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes one extent from the given array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

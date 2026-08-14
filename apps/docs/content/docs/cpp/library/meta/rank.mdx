@@ -1,0 +1,126 @@
+---
+title: "std::rank"
+description: "If T is an array type, provides the member constant value equal to the number of dimensions of the array. For any other type, value is 0."
+source_url: "https://en.cppreference.com/w/cpp/types/rank"
+language: "C++"
+---
+
+{/* source:cpp-types-rank:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct rank;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-rank:0001 */}
+If `T` is an array type, provides the member constant `value` equal to the number of dimensions of the array. For any other type, `value` is `0`.
+
+{/* source:cpp-types-rank:0002 */}
+If the program adds specializations for `std::rank`<InlineRevision since="C++17"> or `std::rank_v`</InlineRevision>, the behavior is undefined.
+
+### Helper variable template
+
+{/* source:cpp-types-rank:0003 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr std::size_t rank_v = rank<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-rank:0004 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>the number of dimensions of `T` or zero <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator std::size_t`</DescriptionTerm>
+    <DescriptionBody>converts the object to `std::size_t`, returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`std::size_t`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<std::size_t, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Possible implementation
+
+{/* source:cpp-types-rank:0005 */}
+```cpp
+template<class T>
+struct rank : public std::integral_constant<std::size_t, 0> {};
+
+template<class T>
+struct rank<T[]> : public std::integral_constant<std::size_t, rank<T>::value + 1> {};
+
+template<class T, std::size_t N>
+struct rank<T[N]> : public std::integral_constant<std::size_t, rank<T>::value + 1> {};
+```
+
+### Example
+
+{/* source:cpp-types-rank:0006 */}
+```cpp
+#include <type_traits>
+
+static_assert(std::rank<int>{} == 0);
+static_assert(std::rank<int[5]>{} == 1);
+static_assert(std::rank<int[5][5]>{} == 2);
+static_assert(std::rank<int[][5][5]>{} == 3);
+
+int main()
+{
+    [[maybe_unused]] int ary[][3] = {{1, 2, 3}};
+
+    // The rank of reference type, e.g., ary[0], that is int(&)[3], is 0:
+    static_assert(std::rank_v<decltype(ary[0])> == 0);
+    static_assert(std::is_same_v<decltype(ary[0]), int(&)[3]>);
+
+    // The solution is to remove the reference type.
+    static_assert(std::rank_v<std::remove_cvref_t<decltype(ary[0])>> == 1);
+}
+```
+
+### See also
+
+{/* source:cpp-types-rank:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_array`](/docs/cpp/library/meta/is_array)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`extent`](/docs/cpp/library/meta/extent)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the size of an array type along a specified dimension <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_extent`](/docs/cpp/library/meta/remove_extent)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes one extent from the given array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_all_extents`](/docs/cpp/library/meta/remove_all_extents)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes all extents from the given array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

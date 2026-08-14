@@ -1,0 +1,155 @@
+---
+title: "std::is_implicit_lifetime"
+description: "std::is_implicit_lifetime is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/is_implicit_lifetime"
+language: "C++"
+---
+
+{/* source:cpp-types-is-implicit-lifetime:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++23" code={`template< class T >
+struct is_implicit_lifetime;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-implicit-lifetime:0001 */}
+`std::is_implicit_lifetime` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-implicit-lifetime:0002 */}
+If `T` is an [implicit-lifetime type](/docs/cpp/library/named_req/ImplicitLifetimeType), provides the member constant `value` equal to `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-implicit-lifetime:0003 */}
+The behavior is undefined if `T` is an incomplete type other than an array type or (possibly cv-qualified) `void`.
+
+{/* source:cpp-types-is-implicit-lifetime:0004 */}
+If the program adds specializations for `std::is_implicit_lifetime` or `std::is_implicit_lifetime_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-implicit-lifetime:0005 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-implicit-lifetime:0006 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class T >
+constexpr bool is_implicit_lifetime_v = is_implicit_lifetime<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-implicit-lifetime:0007 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is an implicit-lifetime type, `false` otherwise <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>Type</DescriptionTerm>
+    <DescriptionBody>Definition</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-implicit-lifetime:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_is_implicit_lifetime`](/docs/cpp/library/feature_test#cpp_lib_is_implicit_lifetime) | [`202302L`](/docs/cpp/library/compiler_support/23#cpp_lib_is_implicit_lifetime_202302L) | (C++23) | `std::is_implicit_lifetime` |
+
+### Example
+
+{/* source:cpp-types-is-implicit-lifetime:0009 */}
+```cpp
+// The following types are collectively called implicit-lifetime types:
+// * scalar types:
+//     * arithmetic types
+//     * enumeration types
+//     * pointer types
+//     * pointer-to-member types
+//     * std::nullptr_t
+// * implicit-lifetime class types
+//     * is an aggregate whose destructor is not user-provided
+//     * has at least one trivial eligible constructor and a trivial,
+//       non-deleted destructor
+// * array types
+// * cv-qualified versions of these types.
+#include <type_traits>
+
+static_assert(std::is_implicit_lifetime_v<int>); // arithmetic type is a scalar type
+static_assert(std::is_implicit_lifetime_v<const int>); // cv-qualified a scalar type
+
+enum E { e };
+static_assert(std::is_implicit_lifetime_v<E>); // enumeration type is a scalar type
+static_assert(std::is_implicit_lifetime_v<int*>); // pointer type is a scalar type
+static_assert(std::is_implicit_lifetime_v<std::nullptr_t>); // scalar type
+
+struct S { int x, y; };
+// S is an implicit-lifetime class: an aggregate without user-provided destructor
+static_assert(std::is_implicit_lifetime_v<S>);
+
+static_assert(std::is_implicit_lifetime_v<int S::*>); // pointer-to-member
+
+struct X { ~X() = delete; };
+// X is not implicit-lifetime class due to deleted destructor
+static_assert(!std::is_implicit_lifetime_v<X>);
+
+static_assert(std::is_implicit_lifetime_v<int[8]>); // array type
+static_assert(std::is_implicit_lifetime_v<volatile int[8]>); // cv-qualified array type
+
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-is-implicit-lifetime:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_scalar`](/docs/cpp/library/meta/is_scalar)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a scalar type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_array`](/docs/cpp/library/meta/is_array)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an array type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_aggregate`](/docs/cpp/library/meta/is_aggregate)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is an aggregate type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`start_lifetime_as`, `start_lifetime_as_array`](/docs/cpp/library/memory/start_lifetime_as)<InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>implicitly creates objects in given storage with the object representation reused <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,169 @@
+---
+title: "std::aligned_storage"
+description: "Provides the nested type type, which satisfies TrivialType and StandardLayoutType and suitable for use as uninitialized storage for any object whose size is at most Len and whose alignment requirement is a divisor of Align."
+source_url: "https://en.cppreference.com/w/cpp/types/aligned_storage"
+language: "C++"
+---
+
+{/* source:cpp-types-aligned-storage:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< std::size_t Len, std::size_t Align = /* default-alignment */ >
+struct aligned_storage;`} /> (deprecated in C++23)
+
+  <DeclarationDescription>
+    {/* source:cpp-types-aligned-storage:0001 */}
+    Provides the nested type `type`, which satisfies [TrivialType](/docs/cpp/library/named_req/TrivialType) and [StandardLayoutType](/docs/cpp/library/named_req/StandardLayoutType) and suitable for use as uninitialized storage for any object whose size is at most `Len` and whose [alignment requirement](/docs/cpp/language/basic_concepts/objects#Alignment) is a divisor of `Align`.
+
+    {/* source:cpp-types-aligned-storage:0002 */}
+    The default value of `Align` is the most stringent (the largest) alignment requirement for any object whose size is at most `Len`. If the default value is not used, `Align` must be the value of `alignof(T)` for some type `T`, or the behavior is undefined.
+
+    {/* source:cpp-types-aligned-storage:0003 */}
+    The behavior is undefined if `Len == 0`.
+
+    {/* source:cpp-types-aligned-storage:0004 */}
+    It is implementation-defined whether any [extended alignment](/docs/cpp/language/basic_concepts/objects#Alignment) is supported.
+
+    {/* source:cpp-types-aligned-storage:0005 */}
+    If the program adds specializations for `std::aligned_storage`, the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Member types
+
+{/* source:cpp-types-aligned-storage:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>a [trivial](/docs/cpp/library/named_req/TrivialType) and [standard-layout](/docs/cpp/library/named_req/StandardLayoutType) type of at least size `Len` with alignment requirement `Align`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-aligned-storage:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++14" code={`template< std::size_t Len, std::size_t Align = /* default-alignment */ >
+using aligned_storage_t = typename aligned_storage<Len, Align>::type;`} /> (deprecated in C++23)
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Notes
+
+{/* source:cpp-types-aligned-storage:0008 */}
+The type defined by `std::aligned_storage<>::type` can be used to create uninitialized memory blocks suitable to hold the objects of given type, optionally aligned stricter than their natural alignment requirement, for example on a cache or page boundary.
+
+{/* source:cpp-types-aligned-storage:0009 */}
+As with any other uninitialized storage, the objects are created using [placement new](/docs/cpp/language/expressions/new) and destroyed with explicit destructor calls.
+
+### Possible implementation
+
+{/* source:cpp-types-aligned-storage:0010 */}
+Except for default argument, `aligned_storage` is expressible in terms of `alignas`:
+
+{/* source:cpp-types-aligned-storage:0011 */}
+```cpp
+template<std::size_t Len, std::size_t Align = /* default alignment not implemented */>
+struct aligned_storage
+{
+    struct type
+    {
+        alignas(Align) unsigned char data[Len];
+    };
+};
+```
+
+### Example
+
+{/* source:cpp-types-aligned-storage:0012 */}
+A primitive static vector class, demonstrating creation, access, and destruction of objects in aligned storage.
+
+```cpp
+#include <cstddef>
+#include <iostream>
+#include <new>
+#include <string>
+#include <type_traits>
+ 
+template<class T, std::size_t N>
+class static_vector
+{
+    // Properly aligned uninitialized storage for N T's
+    std::aligned_storage_t<sizeof(T), alignof(T)> data[N];
+    std::size_t m_size = 0;
+ 
+public:
+    // Create an object in aligned storage
+    template<typename ...Args> void emplace_back(Args&&... args)
+    {
+        if (m_size >= N) // Possible error handling
+            throw std::bad_alloc{};
+ 
+        // Construct value in memory of aligned storage using inplace operator new
+        ::new(&data[m_size]) T(std::forward<Args>(args)...);
+        ++m_size;
+    }
+ 
+    // Access an object in aligned storage
+    const T& operator[](std::size_t pos) const
+    {
+        // Note: std::launder is needed after the change of object model in P0137R1
+        return *std::launder(reinterpret_cast<const T*>(&data[pos]));
+    }
+ 
+    // Destroy objects from aligned storage
+    ~static_vector()
+    {
+        for (std::size_t pos = 0; pos < m_size; ++pos)
+            // Note: std::launder is needed after the change of object model in P0137R1
+            std::destroy_at(std::launder(reinterpret_cast<T*>(&data[pos])));
+    }
+};
+ 
+int main()
+{
+    static_vector<std::string, 10> v1;
+    v1.emplace_back(5, '*');
+    v1.emplace_back(10, '*');
+    std::cout << v1[0] << '\n' << v1[1] << '\n';
+}
+```
+
+Output:
+
+```text
+*****
+**********
+```
+
+### See also
+
+{/* source:cpp-types-aligned-storage:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[alignas](/docs/cpp/language/declarations/alignas)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies that the storage for the variable should be aligned by specific amount <br /> (specifier)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`alignment_of`](/docs/cpp/library/meta/alignment_of)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the type's alignment requirements <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`aligned_alloc`](/docs/cpp/library/memory/c/aligned_alloc)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>allocates aligned memory <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`aligned_union`](/docs/cpp/library/meta/aligned_union)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>defines the type suitable for use as uninitialized storage for all given types <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max_align_t`](/docs/cpp/library/utility/types/max_align_t)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>trivial type with alignment requirement as great as any other scalar type <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`launder`](/docs/cpp/library/memory/new/launder)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>pointer optimization barrier <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

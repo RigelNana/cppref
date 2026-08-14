@@ -1,0 +1,143 @@
+---
+title: "std::add_lvalue_reference, std::add_rvalue_reference"
+description: "Creates an lvalue or rvalue reference type of T."
+source_url: "https://en.cppreference.com/w/cpp/types/add_reference"
+language: "C++"
+---
+
+{/* source:cpp-types-add-reference:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T >
+struct add_lvalue_reference;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T >
+struct add_rvalue_reference;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-types-add-reference:0001 */}
+    Creates an lvalue or rvalue reference type of `T`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-add-reference:0002 */}
+| Type trait | The type referred by the nested type `type` | |
+| --- | --- | --- |
+| | `T` is a [referenceable type](/docs/cpp/library/meta#Definitions) | `T` is not a referenceable type |
+| (1) | `T&`[[1]](/docs/cpp/library/meta/add_reference#cite_note-1) | `T` |
+| (2) | `T&&`[[2]](/docs/cpp/library/meta/add_reference#cite_note-2) | `T` |
+
+{/* source:cpp-types-add-reference:0003 */}
+1. ↑ This rule reflects the semantics of [reference collapsing](/docs/cpp/language/declarations/reference#Reference_collapsing).
+2. ↑ This rule reflects the semantics of [reference collapsing](/docs/cpp/language/declarations/reference#Reference_collapsing). Note that `std::add_rvalue_reference<T&>::type` is `T&`, which is not an rvalue reference type.
+
+{/* source:cpp-types-add-reference:0004 */}
+If the program adds specializations for any of the templates described on this page, the behavior is undefined.
+
+### Nested types
+
+{/* source:cpp-types-add-reference:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>determined as above</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper types
+
+{/* source:cpp-types-add-reference:0006 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++14" code={`template< class T >
+using add_lvalue_reference_t = typename add_lvalue_reference<T>::type;`} />
+  <Declaration id="2" language="cpp" since="C++14" code={`template< class T >
+using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;`} />
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Notes
+
+{/* source:cpp-types-add-reference:0007 */}
+The major difference to directly using `T&` or `T&&` is that `T` can be a non-[referenceable](/docs/cpp/library/meta#Definitions) type. For example, `std::add_lvalue_reference<void>::type` is `void`, while `void&` leads to a compilation error.
+
+### Possible implementation
+
+{/* source:cpp-types-add-reference:0008 */}
+```cpp
+namespace detail
+{
+    template<class T>
+    struct type_identity { using type = T; }; // or use std::type_identity (since C++20)
+ 
+    template<class T> // Note that “cv void&” is a substitution failure
+    auto try_add_lvalue_reference(int) -> type_identity<T&>;
+    template<class T> // Handle T = cv void case
+    auto try_add_lvalue_reference(...) -> type_identity<T>;
+ 
+    template<class T>
+    auto try_add_rvalue_reference(int) -> type_identity<T&&>;
+    template<class T>
+    auto try_add_rvalue_reference(...) -> type_identity<T>;
+} // namespace detail
+ 
+template<class T>
+struct add_lvalue_reference
+    : decltype(detail::try_add_lvalue_reference<T>(0)) {};
+ 
+template<class T>
+struct add_rvalue_reference
+    : decltype(detail::try_add_rvalue_reference<T>(0)) {};
+```
+
+### Example
+
+{/* source:cpp-types-add-reference:0009 */}
+```cpp
+#include <type_traits>
+ 
+using non_ref = int;
+static_assert(std::is_lvalue_reference_v<non_ref> == false);
+ 
+using l_ref = std::add_lvalue_reference_t<non_ref>;
+static_assert(std::is_lvalue_reference_v<l_ref> == true);
+ 
+using r_ref = std::add_rvalue_reference_t<non_ref>;
+static_assert(std::is_rvalue_reference_v<r_ref> == true);
+ 
+using void_ref = std::add_lvalue_reference_t<void>;
+static_assert(std::is_reference_v<void_ref> == false);
+ 
+int main() {}
+```
+
+### Defect reports
+
+{/* source:cpp-types-add-reference:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-add-reference:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2101} standard="C++11">
+    <PublishedBehavior>the program was ill-formed if `T` is a [function type](/docs/cpp/language/functions/function#Function_type) with *cv* or *ref*</PublishedBehavior>
+    <CorrectedBehavior>the type produced is `T` in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-types-add-reference:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_reference`](/docs/cpp/library/meta/is_reference)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is either an lvalue reference or rvalue reference <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_reference`](/docs/cpp/library/meta/remove_reference)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>removes a reference from the given type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_cvref`](/docs/cpp/library/meta/remove_cvref)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>combines [`std::remove_cv`](/docs/cpp/library/meta/remove_cv) and [`std::remove_reference`](/docs/cpp/library/meta/remove_reference) <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

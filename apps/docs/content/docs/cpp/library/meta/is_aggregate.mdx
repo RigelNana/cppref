@@ -1,0 +1,149 @@
+---
+title: "std::is_aggregate"
+description: "std::is_aggregate is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/is_aggregate"
+language: "C++"
+---
+
+{/* source:cpp-types-is-aggregate:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+struct is_aggregate;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-aggregate:0001 */}
+`std::is_aggregate` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-aggregate:0002 */}
+If `T` is an [aggregate type](/docs/cpp/language/initialization/aggregate_initialization), provides the member constant `value` equal `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-aggregate:0003 */}
+If `T` is an incomplete type other than an array type or (possibly cv-qualified) `void`, the behavior is undefined.
+
+{/* source:cpp-types-is-aggregate:0004 */}
+If the program adds specializations for `std::is_aggregate` or `std::is_aggregate_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-aggregate:0005 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-aggregate:0006 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_aggregate_v = is_aggregate<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-aggregate:0007 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is an aggregate type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-aggregate:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_is_aggregate`](/docs/cpp/library/feature_test#cpp_lib_is_aggregate) | [`201703L`](/docs/cpp/library/compiler_support/17#cpp_lib_is_aggregate_201703L) | (C++17) | `std::is_agregate` |
+
+### Example
+
+{/* source:cpp-types-is-aggregate:0009 */}
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <new>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+ 
+// Constructs a T at the uninitialized memory pointed to by p using
+// list-initialization for aggregates and non-list initialization otherwise.
+template<class T, class... Args>
+T* construct(T* p, Args&&... args)
+{
+    if constexpr (std::is_aggregate_v<T>)
+        return ::new (static_cast<void*>(p)) T{std::forward<Args>(args)...};
+    else
+        return ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+}
+ 
+struct A { int x, y; };
+static_assert(std::is_aggregate_v<A>);
+ 
+struct B
+{
+    int i;
+    std::string_view str;
+ 
+    B(int i, std::string_view str) : i(i), str(str) {}
+};
+static_assert(not std::is_aggregate_v<B>);
+ 
+template <typename... Ts>
+using aligned_storage_t = alignas(Ts...) std::byte[std::max({sizeof(Ts)...})];
+ 
+int main()
+{
+    aligned_storage_t<A, B> storage;
+ 
+    A& a = *construct(reinterpret_cast<A*>(&storage), 1, 2);
+    assert(a.x == 1 and a.y == 2);
+ 
+    B& b = *construct(reinterpret_cast<B*>(&storage), 3, "4");
+    assert(b.i == 3 and b.str == "4");
+}
+```
+
+### Defect reports
+
+{/* source:cpp-types-is-aggregate:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-is-aggregate:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3823} standard="C++17">
+    <PublishedBehavior>The behavior is undefined if `T` is an array type but `std::remove_all_extents_t<T>` is an incomplete type.</PublishedBehavior>
+    <CorrectedBehavior>The behavior is defined regardless of the incompleteness of `std::remove_all_extents_t<T>` as long as `T` is an array type.</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

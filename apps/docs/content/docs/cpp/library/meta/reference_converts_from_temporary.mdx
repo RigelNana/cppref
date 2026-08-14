@@ -1,0 +1,132 @@
+---
+title: "std::reference_converts_from_temporary"
+description: "Let V be std::remove_cv_t<U> if U is a scalar type or cv void, or U otherwise. If T is a reference type, and given a hypothetical expression e such that decltype(e) is V, the variable definition T ref = e; is well-formed and binds a temporary object to ref, then provides the member constant value equal to true. Otherwise, value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/reference_converts_from_temporary"
+language: "C++"
+---
+
+{/* source:cpp-types-reference-converts-from-temporary:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++23" code={`template< class T, class U >
+struct reference_converts_from_temporary;`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-reference-converts-from-temporary:0001 */}
+Let `V` be [`std::remove_cv_t<U>`](/docs/cpp/library/meta/remove_cv) if `U` is a scalar type or *cv* `void`, or `U` otherwise. If `T` is a reference type, and given a hypothetical expression `e` such that `decltype(e)` is `V`, the variable definition `T ref = e;` is well-formed and [binds a temporary object](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) to `ref`, then provides the member constant `value` equal to `true`. Otherwise, `value` is `false`.
+
+{/* source:cpp-types-reference-converts-from-temporary:0002 */}
+If `T` is an lvalue reference type to a const- but not volatile-qualified object type or an rvalue reference type, both [`std::remove_reference_t<T>`](/docs/cpp/library/meta/remove_reference) and [`std::remove_reference_t<U>`](/docs/cpp/library/meta/remove_reference) shall be [complete types](/docs/cpp/language/basic_concepts/type-id#Incomplete_type), *cv* `void`, or an [arrays of unknown bound](/docs/cpp/language/declarations/array#Arrays_of_unknown_bound); otherwise the behavior is undefined.
+
+{/* source:cpp-types-reference-converts-from-temporary:0003 */}
+If an instantiation of a template above depends, directly or indirectly, on an incomplete type, and that instantiation could yield a different result if that type were hypothetically completed, the behavior is undefined.
+
+{/* source:cpp-types-reference-converts-from-temporary:0004 */}
+If the program adds specializations for `std::reference_converts_from_temporary` or `std::reference_converts_from_temporary_v`, the behavior is undefined.
+
+### Helper variable template
+
+{/* source:cpp-types-reference-converts-from-temporary:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class T, class U >
+inline constexpr bool reference_converts_from_temporary_v =
+    std::reference_converts_from_temporary<T, U>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-reference-converts-from-temporary:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a reference type, a `U` value can be bound to `T` in copy-initialization, and a temporary object would be bound to the reference, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()` <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-reference-converts-from-temporary:0007 */}
+`std::reference_converts_from_temporary` can be used for rejecting some cases that always produce dangling references.
+
+### Example
+
+{/* source:cpp-types-reference-converts-from-temporary:0008 */}
+```cpp
+#include <type_traits>
+ 
+int main() {}
+ 
+static_assert(
+    std::reference_converts_from_temporary_v<int&&, int> == true &&
+    std::reference_converts_from_temporary_v<const int&, int> == true &&
+    std::reference_converts_from_temporary_v<int&&, int&&> == false &&
+    std::reference_converts_from_temporary_v<const int&, int&&> == false &&
+    std::reference_converts_from_temporary_v<int&&, long&&> == true &&
+    std::reference_converts_from_temporary_v<int&&, long> == true);
+```
+
+### See also
+
+{/* source:cpp-types-reference-converts-from-temporary:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_convertible`, `is_nothrow_convertible`](/docs/cpp/library/meta/is_convertible)<InlineRevision since="C++11" />, <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if a type can be converted to the other type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`invoke`, `invoke_r`](/docs/cpp/library/utility/functional/invoke)<InlineRevision since="C++17" />, <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>invokes any [`Callable`](/docs/cpp/library/named_req/Callable) object with given arguments <InlineRevision since="C++23">and possibility to specify return type</InlineRevision> <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`bind`](/docs/cpp/library/utility/functional/bind)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>binds one or more arguments to a function object <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`visit`](/docs/cpp/library/utility/variant/visit2)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>calls the provided functor with the arguments held by one or more variants <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/functional/function/function)</DescriptionTerm>
+    <DescriptionBody>constructs a new `std::function` instance <br /> (public member function of `std::function<R(Args...)>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/functional/move_only_function/move_only_function)</DescriptionTerm>
+    <DescriptionBody>constructs a new `std::move_only_function` object <br /> (public member function of `std::move_only_function`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/packaged_task/packaged_task)</DescriptionTerm>
+    <DescriptionBody>constructs the task object <br /> (public member function of `std::packaged_task<R(Args...)>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

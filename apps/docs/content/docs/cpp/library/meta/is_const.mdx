@@ -1,0 +1,148 @@
+---
+title: "std::is_const"
+description: "std::is_const is a UnaryTypeTrait."
+source_url: "https://en.cppreference.com/w/cpp/types/is_const"
+language: "C++"
+---
+
+{/* source:cpp-types-is-const:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++11" code={`template< class T >
+struct is_const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-const:0001 */}
+`std::is_const` is a [UnaryTypeTrait](/docs/cpp/library/named_req/UnaryTypeTrait).
+
+{/* source:cpp-types-is-const:0002 */}
+If `T` is a const-qualified type (that is, `const`, or `const volatile`), provides the member constant `value` equal to `true`. For any other type, `value` is `false`.
+
+{/* source:cpp-types-is-const:0003 */}
+If the program adds specializations for `std::is_const` or `std::is_const_v`, the behavior is undefined.
+
+### Template parameters
+
+{/* source:cpp-types-is-const:0004 */}
+<ParameterList>
+  <Parameter name="T">a type to check</Parameter>
+</ParameterList>
+
+### Helper variable template
+
+{/* source:cpp-types-is-const:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr bool is_const_v = is_const<T>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-const:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a const-qualified type, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()`<InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-is-const:0007 */}
+If `T` is a reference type then `is_const<T>::value` is always `false`. The proper way to check a potentially-reference type for constness is to remove the reference: `is_const<typename remove_reference<T>::type>`.
+
+### Possible implementation
+
+{/* source:cpp-types-is-const:0008 */}
+```cpp
+template<class T> struct is_const          : std::false_type {};
+template<class T> struct is_const<const T> : std::true_type {};
+```
+
+### Example
+
+{/* source:cpp-types-is-const:0009 */}
+```cpp
+#include <type_traits>
+ 
+static_assert(std::is_same_v<const int*, int const*>,
+    "Remember, constness binds tightly inside pointers.");
+static_assert(!std::is_const_v<int>);
+static_assert(std::is_const_v<const int>);
+static_assert(!std::is_const_v<int*>);
+static_assert(std::is_const_v<int* const>,
+    "Because the pointer itself can't be changed but the int pointed at can.");
+static_assert(!std::is_const_v<const int*>,
+    "Because the pointer itself can be changed but not the int pointed at.");
+static_assert(!std::is_const_v<const int&>);
+static_assert(std::is_const_v<std::remove_reference_t<const int&>>);
+ 
+struct S
+{
+    void foo() const {}
+    void bar() const {}
+};
+ 
+int main()
+{
+    // A const member function is const in a different way:
+ 
+    static_assert(!std::is_const_v<decltype(&S::foo)>,
+        "Because &S::foo is a pointer.");
+ 
+    using S_mem_fun_ptr = void(S::*)() const;
+ 
+    S_mem_fun_ptr sfp = &S::foo;
+    sfp = &S::bar; // OK, can be re-pointed
+    static_assert(!std::is_const_v<decltype(sfp)>,
+        "Because sfp is the same pointer type and thus can be re-pointed.");
+ 
+    const S_mem_fun_ptr csfp = &S::foo;
+    // csfp = &S::bar; // Error
+    static_assert(std::is_const_v<decltype(csfp)>,
+        "Because csfp cannot be re-pointed.");
+}
+```
+
+### See also
+
+{/* source:cpp-types-is-const:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_volatile`](/docs/cpp/library/meta/is_volatile)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is volatile-qualified (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`as_const`](/docs/cpp/library/utility/as_const)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>obtains a reference to `const` to its argument (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

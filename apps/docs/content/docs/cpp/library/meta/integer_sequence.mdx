@@ -1,0 +1,198 @@
+---
+title: "std::integer_sequence"
+description: "The class template std::integer_sequence represents a compile-time sequence of integers. When used as an argument to a function template, the parameter pack Ints can be deduced and used in pack expansion."
+source_url: "https://en.cppreference.com/w/cpp/utility/integer_sequence"
+language: "C++"
+---
+
+{/* source:cpp-utility-integer-sequence:0000 */}
+<DeclarationDoc>
+Defined in header [`<utility>`](/docs/cpp/library/headers/utility)
+
+  <Declaration language="cpp" since="C++14" code={`template< class T, T... Ints >
+class integer_sequence;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-integer-sequence:0001 */}
+The class template `std::integer_sequence` represents a compile-time sequence of integers. When used as an argument to a [function template](/docs/cpp/language/templates/function_template), the [parameter pack](/docs/cpp/language/templates/parameter_pack) `Ints` can be deduced and used in pack expansion.
+
+### Template parameters
+
+{/* source:cpp-utility-integer-sequence:0002 */}
+<ParameterList>
+  <Parameter name="T">an integer type to use for the elements of the sequence</Parameter>
+  <Parameter name="...Ints">a non-type parameter pack representing the sequence</Parameter>
+</ParameterList>
+
+### Member types
+
+{/* source:cpp-utility-integer-sequence:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-utility-integer-sequence:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`size` [static]</DescriptionTerm>
+    <DescriptionBody>returns the number of elements in `Ints` (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-integer-sequence:0005 */}
+#### std::integer_sequence::size
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`static constexpr std::size_t size() noexcept;`} />
+</DeclarationDoc>
+
+Returns the number of elements in `Ints`. Equivalent to `sizeof...(Ints)`.
+
+##### Parameters
+
+(none)
+
+##### Return value
+
+The number of elements in `Ints`.
+
+### Helper templates
+
+{/* source:cpp-utility-integer-sequence:0006 */}
+A helper alias template `std::index_sequence` is defined for the common case where `T` is [`std::size_t`](/docs/cpp/library/utility/types/size_t):
+
+{/* source:cpp-utility-integer-sequence:0007 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< std::size_t... Ints >
+using index_sequence = std::integer_sequence<std::size_t, Ints...>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-integer-sequence:0008 */}
+Helper alias templates `std::make_integer_sequence` and `std::make_index_sequence` are defined to simplify creation of `std::integer_sequence` and `std::index_sequence` types, respectively, with `0`, `1`, `2`, `...`, `N - 1` as `Ints`:
+
+{/* source:cpp-utility-integer-sequence:0009 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class T, T N >
+using make_integer_sequence = std::integer_sequence<T, /* a sequence 0, 1, 2, ..., N-1 */>;`} />
+  <Declaration language="cpp" code={`template< std::size_t N >
+using make_index_sequence = std::make_integer_sequence<std::size_t, N>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-integer-sequence:0010 */}
+The program is ill-formed if `N` is negative. If `N` is zero, the indicated type is `integer_sequence<T>`.
+
+{/* source:cpp-utility-integer-sequence:0011 */}
+A helper alias template `std::index_sequence_for` is defined to convert any type parameter pack into an index sequence of the same length:
+
+{/* source:cpp-utility-integer-sequence:0012 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class... T >
+using index_sequence_for = std::make_index_sequence<sizeof...(T)>;`} />
+</DeclarationDoc>
+
+### Notes
+
+{/* source:cpp-utility-integer-sequence:0013 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_integer_sequence`](/docs/cpp/library/feature_test#cpp_lib_integer_sequence) | [`201304L`](/docs/cpp/library/compiler_support/14#cpp_lib_integer_sequence_201304L) | (C++14) | Compile-time integer sequences |
+
+### Example
+
+{/* source:cpp-utility-integer-sequence:0014 */}
+See also [`std::apply`](/docs/cpp/library/utility/apply) possible implementation for another example.
+
+```cpp
+#include <array>
+#include <cstddef>
+#include <iostream>
+#include <tuple>
+#include <utility>
+ 
+namespace details {
+template <typename Array, std::size_t... I>
+constexpr auto array_to_tuple_impl(const Array& a, std::index_sequence<I...>)
+{
+    return std::make_tuple(a[I]...);
+}
+ 
+template <class Ch, class Tr, class Tuple, std::size_t... Is>
+void print_tuple_impl(std::basic_ostream<Ch, Tr>& os,
+                      const Tuple& t,
+                      std::index_sequence<Is...>)
+{
+    ((os << (Is ? ", " : "") << std::get<Is>(t)), ...);
+}
+}
+ 
+template <typename T, T... ints>
+void print_sequence(int id, std::integer_sequence<T, ints...> int_seq)
+{
+    std::cout << id << ") The sequence of size " << int_seq.size() << ": ";
+    ((std::cout << ints << ' '), ...);
+    std::cout << '\n';
+}
+ 
+template <typename T, std::size_t N, typename Indx = std::make_index_sequence<N>>
+constexpr auto array_to_tuple(const std::array<T, N>& a)
+{
+    return details::array_to_tuple_impl(a, Indx{});
+}
+ 
+template <class Ch, class Tr, class... Args>
+auto& operator<<(std::basic_ostream<Ch, Tr>& os, const std::tuple<Args...>& t)
+{
+    os << '(';
+    details::print_tuple_impl(os, t, std::index_sequence_for<Args...>{});
+    return os << ')';
+}
+ 
+int main()
+{
+    print_sequence(1, std::integer_sequence<unsigned, 9, 2, 5, 1, 9, 1, 6>{});
+    print_sequence(2, std::make_integer_sequence<int, 12>{});
+    print_sequence(3, std::make_index_sequence<10>{});
+    print_sequence(4, std::index_sequence_for<std::ios, float, signed>{});
+ 
+    constexpr std::array<int, 4> array{1, 2, 3, 4};
+ 
+    auto tuple1 = array_to_tuple(array);
+    static_assert(std::is_same_v<decltype(tuple1),
+                                 std::tuple<int, int, int, int>>, "");
+    std::cout << "5) tuple1: " << tuple1 << '\n';
+ 
+    constexpr auto tuple2 = array_to_tuple<int, 4,
+        std::integer_sequence<std::size_t, 1, 0, 3, 2>>(array);
+    std::cout << "6) tuple2: " << tuple2 << '\n';
+}
+```
+
+Output:
+
+```text
+1) The sequence of size 7: 9 2 5 1 9 1 6 
+2) The sequence of size 12: 0 1 2 3 4 5 6 7 8 9 10 11 
+3) The sequence of size 10: 0 1 2 3 4 5 6 7 8 9 
+4) The sequence of size 3: 0 1 2 
+5) tuple1: (1, 2, 3, 4)
+6) tuple2: (2, 1, 4, 3)
+```
+
+### See also
+
+{/* source:cpp-utility-integer-sequence:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_array`](/docs/cpp/library/container/array/to_array)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a `std::array` object from a built-in array (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`integral_constant`, `bool_constant`](/docs/cpp/library/meta/integral_constant)<InlineRevision since="C++11" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>compile-time constant of specified type with specified value (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

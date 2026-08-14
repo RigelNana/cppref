@@ -1,0 +1,122 @@
+---
+title: "std::reference_constructs_from_temporary"
+description: "Let V be std::remove_cv_t<U> if U is a scalar type or cv void, or U otherwise. If T is a reference type, and given a hypothetic expression e such that decltype(e) is V, the variable definition T ref(e); is well-formed and binds a temporary object to ref, then provides the member constant value equal to true. Otherwise, value is false."
+source_url: "https://en.cppreference.com/w/cpp/types/reference_constructs_from_temporary"
+language: "C++"
+---
+
+{/* source:cpp-types-reference-constructs-from-temporary:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++23" code={`template< class T, class U >
+struct reference_constructs_from_temporary;`} />
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-types-reference-constructs-from-temporary:0001 */}
+Let `V` be [`std::remove_cv_t<U>`](/docs/cpp/library/meta/remove_cv) if `U` is a scalar type or *cv* `void`, or `U` otherwise. If `T` is a reference type, and given a hypothetic expression `e` such that `decltype(e)` is `V`, the variable definition `T ref(e);` is well-formed and [binds a temporary object](/docs/cpp/language/initialization/reference_initialization#Lifetime_of_a_temporary) to `ref`, then provides the member constant `value` equal to `true`. Otherwise, `value` is `false`.
+
+{/* source:cpp-types-reference-constructs-from-temporary:0002 */}
+If `T` is an lvalue reference type to a const- but not volatile-qualified object type or an rvalue reference type, both [`std::remove_reference_t<T>`](/docs/cpp/library/meta/remove_reference) and [`std::remove_reference_t<U>`](/docs/cpp/library/meta/remove_reference) shall be [complete types](/docs/cpp/language/basic_concepts/type-id#Incomplete_type), *cv* `void`, or an [arrays of unknown bound](/docs/cpp/language/declarations/array#Arrays_of_unknown_bound); otherwise the behavior is undefined.
+
+{/* source:cpp-types-reference-constructs-from-temporary:0003 */}
+If an instantiation of a template above depends, directly or indirectly, on an incomplete type, and that instantiation could yield a different result if that type were hypothetically completed, the behavior is undefined.
+
+{/* source:cpp-types-reference-constructs-from-temporary:0004 */}
+If the program adds specializations for `std::reference_constructs_from_temporary` or `std::reference_constructs_from_temporary_v`, the behavior is undefined.
+
+### Helper variable template
+
+{/* source:cpp-types-reference-constructs-from-temporary:0005 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++23" code={`template< class T, class U >
+inline constexpr bool reference_constructs_from_temporary_v =
+    std::reference_constructs_from_temporary<T, U>::value;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-reference-constructs-from-temporary:0006 */}
+## Inherited from [`std::integral_constant`](/docs/cpp/library/meta/integral_constant)
+
+### Member constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` [static]</DescriptionTerm>
+    <DescriptionBody>`true` if `T` is a reference type, a `U` value can be bound to `T` in direct-initialization, and a temporary object would be bound to the reference, `false` otherwise (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`operator bool`</DescriptionTerm>
+    <DescriptionBody>converts the object to `bool`, returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator()` <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>returns `value` (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member types
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`bool`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`type`</DescriptionTerm>
+    <DescriptionBody>`std::integral_constant<bool, value>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-types-reference-constructs-from-temporary:0007 */}
+`std::reference_constructs_from_temporary` can be used for rejecting some cases that always produce dangling references.
+
+{/* source:cpp-types-reference-constructs-from-temporary:0008 */}
+It is also possible to use member initializer list to reject binding a temporary object to a reference if the compiler has implemented [CWG1696](https://cplusplus.github.io/CWG/issues/1696.html).
+
+### Example
+
+{/* source:cpp-types-reference-constructs-from-temporary:0009 */}
+```cpp
+#include <type_traits>
+ 
+static_assert(std::reference_constructs_from_temporary_v<int&&, int> == true);
+static_assert(std::reference_constructs_from_temporary_v<const int&, int> == true);
+static_assert(std::reference_constructs_from_temporary_v<int&&, int&&> == false);
+static_assert(std::reference_constructs_from_temporary_v<const int&, int&&> == false);
+static_assert(std::reference_constructs_from_temporary_v<int&&, long&&> == true);
+static_assert(std::reference_constructs_from_temporary_v<int&&, long> == true);
+ 
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-types-reference-constructs-from-temporary:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_constructible`, `is_trivially_constructible`, `is_nothrow_constructible`](/docs/cpp/library/meta/is_constructible)<InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has a constructor for specific arguments <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/tuple/tuple)</DescriptionTerm>
+    <DescriptionBody>constructs a new `tuple` <br /> (public member function of `std::tuple<Types...>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/utility/pair/pair)</DescriptionTerm>
+    <DescriptionBody>constructs new `pair` <br /> (public member function of `std::pair<T1,T2>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_from_tuple`](/docs/cpp/library/utility/make_from_tuple)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>construct an object with a tuple of arguments <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
