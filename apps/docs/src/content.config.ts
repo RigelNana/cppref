@@ -4,7 +4,7 @@ import { z } from "astro/zod";
 
 const docs = defineCollection({
   loader: glob({
-    base: "../docs/content/docs",
+    base: "./content/docs",
     generateId: ({ entry }) => entry.replace(/\.mdx$/u, ""),
     pattern: ["index.mdx", "c/**/*.mdx", "cpp/**/*.mdx"],
   }),

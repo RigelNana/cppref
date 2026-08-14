@@ -23,7 +23,7 @@ interface MetaFile {
   title?: string | undefined;
 }
 
-const contentRoot = resolve(process.cwd(), "../docs/content/docs");
+const contentRoot = resolve(process.cwd(), "content/docs");
 let cachedNavigation: NavNode[] | undefined;
 const pageCache = new WeakMap<NavNode[], NavNode[]>();
 

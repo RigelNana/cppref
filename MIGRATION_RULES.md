@@ -1,13 +1,13 @@
 # cppreference 迁移完整规则
 
-本文档是把本地英文 cppreference HTML 迁移为本项目 Fumadocs MDX 的规范性规则。它约束外置 Agent、人工迁移、迁移脚本、验证器和最终页面审查。仓库本身不内置模型 SDK、Provider、Agent 运行时、Prompt 循环或编排器。本文中的“必须”“不得”“应该”分别表示强制要求、禁止事项和默认要求。
+本文档是把本地英文 cppreference HTML 迁移为本项目 Astro MDX 的规范性规则。它约束外置 Agent、人工迁移、迁移脚本、验证器和最终页面审查。仓库本身不内置模型 SDK、Provider、Agent 运行时、Prompt 循环或编排器。本文中的“必须”“不得”“应该”分别表示强制要求、禁止事项和默认要求。
 
 ## 1. 目标与适用范围
 
 - 当前源语料是 `ref/cppreference-en/reference/en` 下的英文 HTML。
 - 当前目标内容目录是 `apps/docs/content/docs`。
 - C 页面写入 `apps/docs/content/docs/c/...`；C++ 页面写入 `apps/docs/content/docs/cpp/...`。
-- 目标格式是可由 Fumadocs 编译的 MDX，不是源 HTML 的视觉复刻，也不是内容摘要。
+- 目标格式是可由 Astro 内容集合编译的 MDX，不是源 HTML 的视觉复刻，也不是内容摘要。
 - 迁移只改变表示形式，不改变技术事实、标准版本、代码、链接含义、条目关系或顺序。
 - 页面必须可追溯、可验证、可审查；“能渲染”不等于“迁移完成”。
 
@@ -130,6 +130,7 @@ bun run packages/migrate/src/cli.ts validate-mdx \
 ### 4.6 运行回归和实际页面检查
 
 ```bash
+bun run check
 bun run typecheck
 bun test
 bun run build
@@ -205,7 +206,7 @@ language: "C++"
 - 页面标题只放在 frontmatter；正文不得重复一级标题。
 - 每个源章节标题只输出一次，并保持原始层级。
 - 不得把 H3 提升为 H2 以追求视觉效果。
-- Fumadocs 自动生成标题锚点时，不写不受支持的 `{#Anchor}` 语法。
+- Astro Markdown 渲染器自动生成标题锚点；不得写未配置插件支持的 `{#Anchor}` 语法。
 - 源 fragment 链接依赖特定锚点时，必须验证最终渲染 ID；不得假设大小写和下划线会原样保留。
 
 ## 7. 普通 Markdown 与组件边界
@@ -231,7 +232,7 @@ language: "C++"
 - `<script>`、`<style>`；
 - 复制源 HTML 作为迁移结果；
 - 通用 flex table 或布局逃生组件；
-- 未在 `apps/docs/components/mdx.tsx` 注册的组件；
+- 未在 `apps/docs/src/components/mdx/index.ts` 注册的组件；
 - 用对象或数组 prop 承载本应由子组件表达的语义内容。
 
 ## 8. 声明文档
@@ -530,7 +531,7 @@ WG21 paper 缺陷报告（如 `P2372R3`）使用同一结构，`kind="paper"`、
 - 比较运算符在普通 MDX 文本中使用安全转义，如 `\<`、`\<=`；不得向读者显示 `&lt;`。
 - JSX prop 中的字符串使用双引号。
 - 多行代码 prop 使用 template literal，并确保反引号和 `${` 不破坏表达式。
-- 不得使用 Fumadocs 当前解析器不支持的 Markdown 标题锚点语法。
+- 不得使用 Astro MDX 集成未配置支持的 Markdown 标题锚点语法。
 - 不得把数学 LaTeX 直接写入尚未配置数学插件的 MDX；复杂度可保留为代码形式 `O(1)`、`O(n)`。
 - 组件必须正确闭合，父子层级必须符合注册契约。
 - JSX 与 Markdown 混排时必须保留必要空行，避免内容被解析为纯文本。
@@ -723,6 +724,7 @@ WG21 paper 缺陷报告（如 `P2372R3`）使用同一结构，`kind="paper"`、
 ### 验证
 
 - [ ] `validate-mdx` 已运行并审查报告。
+- [ ] `bun run check` 通过。
 - [ ] `bun run typecheck` 通过。
 - [ ] `bun test` 通过。
 - [ ] `bun run build` 通过。

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository extracts the local cppreference HTML corpus into typed semantic IR and deterministically validates and renders Fumadocs MDX. Migration Agents run outside this repository.
+This repository extracts the local cppreference HTML corpus into typed semantic IR and deterministically validates and renders Astro MDX. Migration Agents run outside this repository.
 
 Before any migration, the external Agent must read and follow [`MIGRATION_RULES.md`](./MIGRATION_RULES.md). It is the complete normative migration specification; this file is only its repository-level summary.
 
@@ -16,15 +16,15 @@ Before any migration, the external Agent must read and follow [`MIGRATION_RULES.
 
 - Use normal document primitives for headings, paragraphs, lists, code blocks, and ordinary examples.
 - Use domain objects for declaration docs, description lists, parameter lists, revisions, defect reports, feature-test macros, typed references, and behavior terms.
-- A domain object is emitted as a complete parent/child structure. MDX slots and React component names are renderer details.
+- A domain object is emitted as a complete parent/child structure. MDX slots and renderer component names are implementation details.
 - Revision is a cross-cutting modifier over inline or block content.
 - Do not introduce untyped layout escape hatches such as generic flex tables.
 
 ## MDX authoring rules
 
-- Use the registered semantic components in `apps/docs/components/mdx.tsx`; do not create page-local components or copy source HTML into MDX.
+- Use the registered semantic components in `apps/docs/src/components/mdx/index.ts`; do not create page-local components or copy source HTML into MDX.
 - Use Markdown headings, paragraphs, lists, fenced code blocks, and ordinary tables for ordinary document structure.
-- Use `<DeclarationDoc>`, `<Declaration>`, and `<DeclarationDescription>` for declaration grammar and its description. When the source numbers multiple declaration variants, put each number on the matching declaration as `id="1"`, `id="2"`, and so on; never render declaration numbers as loose prose outside the component. Render the corresponding numbered descriptions as an ordinary Markdown ordered list (`1.`, `2.`), preserving their one-to-one order. Use the highlighted declaration list component in `apps/docs/components/declaration.tsx` for function signatures with standard ranges.
+- Use `<DeclarationDoc>`, `<Declaration>`, and `<DeclarationDescription>` for declaration grammar and its description. When the source numbers multiple declaration variants, put each number on the matching declaration as `id="1"`, `id="2"`, and so on; never render declaration numbers as loose prose outside the component. Render the corresponding numbered descriptions as an ordinary Markdown ordered list (`1.`, `2.`), preserving their one-to-one order. Use the highlighted declaration component in `apps/docs/src/components/mdx/Declaration.astro` for function signatures with standard ranges.
 - Use `<DescriptionList>` for semantic name/description pairs and `<DefectReportList>` for structured defect reports. Ordinary Markdown tables use flat row separators, never an outer frame or boxed cell grid. Do not substitute generic layout tables.
 - Use `<Revision since="...">`, `until`, or `removed` when the revision modifies a block of content. Use `<InlineRevision since="...">`, `until`, or `removed` around the exact inline phrase represented by cppreference `t-rev-inl`; do not flatten its marker into parenthesized prose. Declaration-specific revisions belong on the declaration or declaration variant.
 - Revision ranges use the shared rounded `RevisionMark`: sans-serif label, semantic icon, restrained color, and no border or shadow. In declaration lists, all `since` and `until` marks share one fixed width so their edges align. Never use monospace revision labels or ad hoc badges.
@@ -41,4 +41,5 @@ Before any migration, the external Agent must read and follow [`MIGRATION_RULES.
 - Zod schemas are the source of truth for external Agent outputs and renderer inputs.
 - Core packages must remain Node.js-compatible. Bun-only APIs belong behind adapters.
 - Keep model SDKs, provider credentials, prompt loops, retries, and orchestration outside this repository. The repository seam is file-based: Lossless Page IR/task manifest in, candidate semantic IR or MDX out.
-- Run `bun run typecheck`, `bun test`, and the relevant CLI smoke command after changes.
+- Run `bun run check`, `bun run typecheck`, `bun test`, `bun run build`, and the relevant CLI smoke command after changes.
+- `apps/docs` is the production Astro static application. Content remains under `apps/docs/content/docs`; framework code lives under `apps/docs/src`.
