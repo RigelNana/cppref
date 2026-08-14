@@ -1,0 +1,142 @@
+---
+title: "std::recursive_mutex"
+description: "The recursive_mutex class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads."
+source_url: "https://en.cppreference.com/w/cpp/thread/recursive_mutex"
+language: "C++"
+---
+
+{/* source:cpp-thread-recursive-mutex:0000 */}
+<DeclarationDoc>
+Defined in header [`<mutex>`](/docs/cpp/library/headers/mutex)
+
+  <Declaration language="cpp" since="C++11" code={`class recursive_mutex;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-recursive-mutex:0001 */}
+The `recursive_mutex` class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads.
+
+{/* source:cpp-thread-recursive-mutex:0002 */}
+`recursive_mutex` offers exclusive, recursive ownership semantics:
+
+{/* source:cpp-thread-recursive-mutex:0003 */}
+- A calling thread *owns* a `recursive_mutex` for a period of time that starts when it successfully calls either [`lock`](/docs/cpp/library/thread/recursive_mutex/lock) or [`try_lock`](/docs/cpp/library/thread/mutex/try_lock). During this period, the thread may make additional calls to [`lock`](/docs/cpp/library/thread/recursive_mutex/lock) or [`try_lock`](/docs/cpp/library/thread/recursive_mutex/try_lock). The period of ownership ends when the thread makes a matching number of calls to [`unlock`](/docs/cpp/library/thread/recursive_mutex/unlock).
+- When a thread owns a `recursive_mutex`, all other threads will block (for calls to [`lock`](/docs/cpp/library/thread/recursive_mutex/lock)) or receive a `false` return value (for [`try_lock`](/docs/cpp/library/thread/recursive_mutex/try_lock)) if they attempt to claim ownership of the `recursive_mutex`.
+- The maximum number of times that a `recursive_mutex` may be locked is unspecified, but after that number is reached, calls to [`lock`](/docs/cpp/library/thread/recursive_mutex/lock) will throw [`std::system_error`](/docs/cpp/library/error/system_error) and calls to [`try_lock`](/docs/cpp/library/thread/mutex/try_lock) will return `false`.
+
+{/* source:cpp-thread-recursive-mutex:0004 */}
+The behavior of a program is undefined if a `recursive_mutex` is destroyed while still owned by some thread. The `recursive_mutex` class satisfies all requirements of [Mutex](/docs/cpp/library/named_req/Mutex) and [StandardLayoutType](/docs/cpp/library/named_req/StandardLayoutType).
+
+### Member types
+
+{/* source:cpp-thread-recursive-mutex:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`native_handle_type` (optional*)</DescriptionTerm>
+    <DescriptionBody>implementation-defined</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-thread-recursive-mutex:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/recursive_mutex/recursive_mutex)</DescriptionTerm>
+    <DescriptionBody>constructs the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/recursive_mutex/~recursive_mutex)</DescriptionTerm>
+    <DescriptionBody>destroys the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>not copy-assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Locking
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock`](/docs/cpp/library/thread/recursive_mutex/lock)</DescriptionTerm>
+    <DescriptionBody>locks the mutex, blocks if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/recursive_mutex/try_lock)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock`](/docs/cpp/library/thread/recursive_mutex/unlock)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Native handle
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`native_handle`](/docs/cpp/library/thread/recursive_mutex/native_handle)</DescriptionTerm>
+    <DescriptionBody>returns the underlying implementation-defined native handle object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-thread-recursive-mutex:0007 */}
+One use case for `recursive_mutex` is protecting shared state in a class whose member functions may call each other.
+
+```cpp
+#include <iostream>
+#include <mutex>
+#include <thread>
+ 
+class X
+{
+    std::recursive_mutex m;
+    std::string shared;
+public:
+    void fun1()
+    {
+        std::lock_guard<std::recursive_mutex> lk(m);
+        shared = "fun1";
+        std::cout << "in fun1, shared variable is now " << shared << '\n';
+    }
+    void fun2()
+    {
+        std::lock_guard<std::recursive_mutex> lk(m);
+        shared = "fun2";
+        std::cout << "in fun2, shared variable is now " << shared << '\n';
+        fun1(); // recursive lock becomes useful here
+        std::cout << "back in fun2, shared variable is " << shared << '\n';
+    }
+};
+ 
+int main() 
+{
+    X x;
+    std::thread t1(&X::fun1, &x);
+    std::thread t2(&X::fun2, &x);
+    t1.join();
+    t2.join();
+}
+```
+
+Possible output:
+
+```text
+in fun1, shared variable is now fun1
+in fun2, shared variable is now fun2
+in fun1, shared variable is now fun1
+back in fun2, shared variable is fun1
+```
+
+### See also
+
+{/* source:cpp-thread-recursive-mutex:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`mutex`](/docs/cpp/library/thread/mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides basic mutual exclusion facility (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

@@ -1,0 +1,191 @@
+---
+title: "std::condition_variable_any::wait_for"
+description: "wait_for causes the current thread to block until the condition variable is notified, the given duration has been elapsed, or a spurious wakeup occurs."
+source_url: "https://en.cppreference.com/w/cpp/thread/condition_variable_any/wait_for"
+language: "C++"
+---
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class Lock, class Rep, class Period >
+std::cv_status wait_for( Lock& lock,
+
+                         const std::chrono::duration<Rep, Period>& rel_time );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class Lock, class Rep, class Period, class Predicate >
+bool wait_for( Lock& lock, const std::chrono::duration<Rep, Period>& rel_time,
+
+               Predicate pred );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class Lock, class Rep, class Period, class Predicate >
+bool wait_for( Lock& lock, std::stop_token stoken,
+               const std::chrono::duration<Rep, Period>& rel_time,
+
+               Predicate pred );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-thread-condition-variable-any-wait-for:0001 */}
+    `wait_for` causes the current thread to block until the condition variable is notified, the given duration has been elapsed, or a spurious wakeup occurs. `pred` can be optionally provided to detect spurious wakeup.
+
+    {/* source:cpp-thread-condition-variable-any-wait-for:0002 */}
+    1. 1) Equivalent to `return wait_until(lock, std::chrono::steady_clock::now() + rel_time);`.
+
+    {/* source:cpp-thread-condition-variable-any-wait-for:0003 */}
+    2. 2,3) Waiting for a specific condition to become `true`, can be used to ignore spurious awakenings.
+
+    {/* source:cpp-thread-condition-variable-any-wait-for:0004 */}
+    3. 2) Equivalent to `return wait_until(lock, std::chrono::steady_clock::now() + rel_time, std::move(pred));`.
+
+    {/* source:cpp-thread-condition-variable-any-wait-for:0005 */}
+    4. 3) Registers `*this` for the duration of this call, to be notified if a stop request is made on `stoken`'s associated stop-state; it is then equivalent to
+
+    ```cpp
+    return wait_until(lock, std::move(stoken),
+                      std::chrono::steady_clock::now() + rel_time, std::move(pred));
+    ```
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0006 */}
+Right after `wait_for` returns, `lock` is locked by the calling thread. If this postcondition cannot be satisfied[^1], calls [`std::terminate`](/docs/cpp/library/error/terminate).
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0007 */}
+[^1]: ↑ This can happen if the re-locking of the mutex throws an exception.
+
+### Parameters
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0008 */}
+<ParameterList>
+  <Parameter name="lock">an lock which must be locked by the calling thread</Parameter>
+  <Parameter name="stoken">a stop token to register interruption for</Parameter>
+  <Parameter name="rel_time">the maximum duration to wait</Parameter>
+  <Parameter name="pred">the predicate to check whether the waiting can be completed</Parameter>
+</ParameterList>
+
+Type requirements
+- `Lock` must meet the requirements of [*BasicLockable*](/docs/cpp/library/named_req/BasicLockable).
+- `Predicate` must meet the requirements of [*FunctionObject*](/docs/cpp/library/named_req/FunctionObject).
+- `pred()` must be a valid expression, and its type and value category must meet the [*BooleanTestable*](/docs/cpp/library/named_req/BooleanTestable) requirements.
+
+### Return value
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0009 */}
+1. 1) `std::cv_status::timeout` if `rel_time` has been elapsed since the beginning of this call, otherwise `std::cv_status::no_timeout`.
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0010 */}
+2. 2,3) The latest result of `pred()` before returning to the caller.
+
+### Exceptions
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0011 */}
+1. 1) Timeout-related exceptions.
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0012 */}
+2. 2,3) Timeout-related exceptions, and any exception thrown by `pred`.
+
+### Notes
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0013 */}
+Even if notified under lock, overload (1) makes no guarantees about the state of the associated predicate when returning due to timeout.
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0014 */}
+The effects of `notify_one()`/`notify_all()` and each of the three atomic parts of `wait()`/`wait_for()`/`wait_until()` (unlock+wait, wakeup, and lock) take place in a single total order that can be viewed as [modification order](/docs/cpp/library/atomic/memory_order#Modification_order) of an atomic variable: the order is specific to this individual condition variable. This makes it impossible for `notify_one()` to, for example, be delayed and unblock a thread that started waiting just after the call to `notify_one()` was made.
+
+### Example
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0015 */}
+```cpp
+#include <chrono>
+#include <condition_variable>
+#include <iostream>
+#include <thread>
+ 
+std::condition_variable_any cv;
+std::mutex cv_m; // This mutex is used for three purposes:
+                 // 1) to synchronize accesses to i
+                 // 2) to synchronize accesses to std::cerr
+                 // 3) for the condition variable cv
+int i = 0;
+ 
+void waits()
+{
+    std::unique_lock<std::mutex> lk(cv_m);
+    std::cerr << "Waiting... \n";
+    cv.wait(lk, []{ return i == 1; });
+    std::cerr << "...finished waiting. i == 1\n";
+}
+ 
+void signals()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    {
+        std::lock_guard<std::mutex> lk(cv_m);
+        std::cerr << "Notifying...\n";
+    }
+    cv.notify_all();
+ 
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+ 
+    {
+        std::lock_guard<std::mutex> lk(cv_m);
+        i = 1;
+        std::cerr << "Notifying again...\n";
+    }
+    cv.notify_all();
+}
+ 
+int main()
+{
+    std::thread t1(waits), t2(waits), t3(waits), t4(signals);
+    t1.join(); 
+    t2.join(); 
+    t3.join();
+    t4.join();
+}
+```
+
+Possible output:
+
+```text
+Waiting...
+Waiting...
+Waiting...
+Notifying...
+Notifying again...
+...finished waiting. i == 1
+...finished waiting. i == 1
+...finished waiting. i == 1
+```
+
+### Defect reports
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0017 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2093} standard="C++11">
+    <PublishedBehavior>timeout-related exceptions were missing in the specification</PublishedBehavior>
+    <CorrectedBehavior>mentions these exceptions</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2114} standard="C++11">
+    <PublishedBehavior>convertibility to `bool` was too weak to reflect the expectation of implementations ([P2167R3](https://wg21.link/P2167R3))</PublishedBehavior>
+    <CorrectedBehavior>requirements strengthened</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2135} standard="C++11">
+    <PublishedBehavior>the behavior was unclear if `lock.lock()` throws an exception</PublishedBehavior>
+    <CorrectedBehavior>calls [`std::terminate`](/docs/cpp/library/error/terminate) in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-condition-variable-any-wait-for:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/condition_variable_any/wait)</DescriptionTerm>
+    <DescriptionBody>blocks the current thread until the condition variable is awakened (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_until`](/docs/cpp/library/thread/condition_variable_any/wait_until)</DescriptionTerm>
+    <DescriptionBody>blocks the current thread until the condition variable is awakened or until specified time point has been reached (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

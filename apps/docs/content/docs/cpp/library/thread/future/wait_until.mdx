@@ -1,0 +1,134 @@
+---
+title: "std::future<T>::wait_until"
+description: "wait_until waits for a result to become available. It blocks until specified timeout_time has been reached or the result becomes available, whichever comes first."
+source_url: "https://en.cppreference.com/w/cpp/thread/future/wait_until"
+language: "C++"
+---
+
+{/* source:cpp-thread-future-wait-until:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`template< class Clock, class Duration >
+std::future_status wait_until( const std::chrono::time_point<Clock,Duration>& timeout_time ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-future-wait-until:0001 */}
+`wait_until` waits for a result to become available. It blocks until specified `timeout_time` has been reached or the result becomes available, whichever comes first. The return value indicates why `wait_until` returned.
+
+{/* source:cpp-thread-future-wait-until:0002 */}
+If the future is the result of a call to [`async`](/docs/cpp/library/thread/async) that used lazy evaluation, this function returns immediately without waiting.
+
+{/* source:cpp-thread-future-wait-until:0003 */}
+The behavior is undefined if [`valid()`](/docs/cpp/library/thread/future/valid) is `false` before the call to this function, or `Clock` does not meet the [`Clock`](/docs/cpp/library/named_req/Clock) requirements. <InlineRevision since="C++20">The programs is ill-formed if [`std::chrono::is_clock_v<Clock>`](/docs/cpp/library/chrono/is_clock) is `false`.</InlineRevision>
+
+### Parameters
+
+{/* source:cpp-thread-future-wait-until:0004 */}
+<ParameterList>
+  <Parameter name="timeout_time">maximum time point to block until</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-future-wait-until:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_status::deferred`](/docs/cpp/library/thread/future_status)</DescriptionTerm>
+    <DescriptionBody>The shared state contains a deferred function using lazy evaluation, so the result will be computed only when explicitly requested</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_status::ready`](/docs/cpp/library/thread/future_status)</DescriptionTerm>
+    <DescriptionBody>The result is ready</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future_status::timeout`](/docs/cpp/library/thread/future_status)</DescriptionTerm>
+    <DescriptionBody>The timeout has expired</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Exceptions
+
+{/* source:cpp-thread-future-wait-until:0006 */}
+Any exception thrown by `clock`, `time_point`, or `duration` during the execution (clocks, time points, and durations provided by the standard library never throw).
+
+### Notes
+
+{/* source:cpp-thread-future-wait-until:0007 */}
+The implementations are encouraged to detect the case when `valid() == false` before the call and throw a [`std::future_error`](/docs/cpp/library/thread/future_error) with an error condition of [`future_errc::no_state`](/docs/cpp/library/thread/future_errc).
+
+{/* source:cpp-thread-future-wait-until:0008 */}
+The standard recommends that the clock tied to `timeout_time` be used to measure time; that clock is not required to be a monotonic clock. There are no guarantees regarding the behavior of this function if the clock is adjusted discontinuously, but the existing implementations convert `timeout_time` from `Clock` to [`std::chrono::system_clock`](/docs/cpp/library/chrono/system_clock) and delegate to POSIX [`pthread_cond_timedwait`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_cond_timedwait.html) so that the wait honors adjustments to the system clock, but not to the user-provided `Clock`. In any case, the function also may wait for longer than until after `timeout_time` has been reached due to scheduling or resource contention delays.
+
+### Example
+
+{/* source:cpp-thread-future-wait-until:0009 */}
+```cpp
+#include <chrono>
+#include <future>
+#include <iostream>
+#include <thread>
+ 
+int main()
+{
+    std::chrono::system_clock::time_point two_seconds_passed
+        = std::chrono::system_clock::now() + std::chrono::seconds(2);
+ 
+    // Make a future that takes 1 second to complete
+    std::promise<int> p1;
+    std::future<int> f_completes = p1.get_future();
+    std::thread([](std::promise<int> p1)
+                { 
+                    std::this_thread::sleep_for(std::chrono::seconds(1)); 
+                    p1.set_value_at_thread_exit(9); 
+                }, 
+                std::move(p1)
+    ).detach();
+ 
+    // Make a future that takes 5 seconds to complete
+    std::promise<int> p2;
+    std::future<int> f_times_out = p2.get_future();
+    std::thread([](std::promise<int> p2)
+                { 
+                    std::this_thread::sleep_for(std::chrono::seconds(5)); 
+                    p2.set_value_at_thread_exit(8); 
+                }, 
+                std::move(p2)
+    ).detach();
+ 
+    std::cout << "Waiting for 2 seconds..." << std::endl;
+ 
+    if (std::future_status::ready == f_completes.wait_until(two_seconds_passed))
+        std::cout << "f_completes: " << f_completes.get() << "\n";
+    else
+        std::cout << "f_completes did not complete!\n";
+ 
+    if (std::future_status::ready == f_times_out.wait_until(two_seconds_passed))
+        std::cout << "f_times_out: " << f_times_out.get() << "\n";
+    else
+        std::cout << "f_times_out did not complete!\n";
+ 
+    std::cout << "Done!\n";
+}
+```
+
+Possible output:
+
+```text
+Waiting for 2 seconds...
+f_completes: 9
+f_times_out did not complete!
+Done!
+```
+
+### See also
+
+{/* source:cpp-thread-future-wait-until:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/future/wait)</DescriptionTerm>
+    <DescriptionBody>waits for the result to become available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_for`](/docs/cpp/library/thread/future/wait_for)</DescriptionTerm>
+    <DescriptionBody>waits for the result, returns if it is not available for the specified timeout duration (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

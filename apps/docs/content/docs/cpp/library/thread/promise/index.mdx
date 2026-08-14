@@ -1,0 +1,169 @@
+---
+title: "std::promise"
+description: "The class template std::promise provides a facility to store a value or an exception that is later acquired asynchronously via a std::future object created by the std::promise object."
+source_url: "https://en.cppreference.com/w/cpp/thread/promise"
+language: "C++"
+---
+
+{/* source:cpp-thread-promise:0000 */}
+<DeclarationDoc>
+Defined in header [`<future>`](/docs/cpp/library/headers/future)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class R > class promise;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class R > class promise<R&>;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template<> class promise<void>;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-thread-promise:0001 */}
+    1. Base template.
+
+    {/* source:cpp-thread-promise:0002 */}
+    2. Non-void specialization, used to communicate objects between threads.
+
+    {/* source:cpp-thread-promise:0003 */}
+    3. void specialization, used to communicate stateless events.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-thread-promise:0004 */}
+The class template `std::promise` provides a facility to store a value or an exception that is later acquired asynchronously via a [`std::future`](/docs/cpp/library/thread/future) object created by the `std::promise` object. Note that the `std::promise` object is meant to be used only once.
+
+{/* source:cpp-thread-promise:0005 */}
+Each promise is associated with a shared state, which contains some state information and a result which may be not yet evaluated, evaluated to a value (possibly void) or evaluated to an exception. A promise may do three things with the shared state:
+
+{/* source:cpp-thread-promise:0006 */}
+- *make ready*: the promise stores the result or the exception in the shared state. Marks the state ready and unblocks any thread waiting on a future associated with the shared state.
+- *release*: the promise gives up its reference to the shared state. If this was the last such reference, the shared state is destroyed. Unless this was a shared state created by `std::async` which is not yet ready, this operation does not block.
+- *abandon*: the promise stores the exception of type [`std::future_error`](/docs/cpp/library/thread/future_error) with error code [`std::future_errc::broken_promise`](/docs/cpp/library/thread/future_errc), makes the shared state ready, and then releases it.
+
+{/* source:cpp-thread-promise:0007 */}
+The promise is the "push" end of the promise-future communication channel: the operation that stores a value in the shared state synchronizes-with (as defined in [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) the successful return from any function that is waiting on the shared state (such as [`std::future::get`](/docs/cpp/library/thread/future/get)). Concurrent access to the same shared state may conflict otherwise: for example multiple callers of [`std::shared_future::get`](/docs/cpp/library/thread/shared_future/get) must either all be read-only or provide external synchronization.
+
+### Member functions
+
+{/* source:cpp-thread-promise:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/promise/promise)</DescriptionTerm>
+    <DescriptionBody>constructs the promise object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/promise/~promise)</DescriptionTerm>
+    <DescriptionBody>destructs the promise object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/thread/promise/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns the shared state (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/thread/promise/swap)</DescriptionTerm>
+    <DescriptionBody>swaps two promise objects (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Getting the result
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_future`](/docs/cpp/library/thread/promise/get_future)</DescriptionTerm>
+    <DescriptionBody>returns a [`future`](/docs/cpp/library/thread/future) associated with the promised result (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Setting the result
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_value`](/docs/cpp/library/thread/promise/set_value)</DescriptionTerm>
+    <DescriptionBody>sets the result to specific value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_value_at_thread_exit`](/docs/cpp/library/thread/promise/set_value_at_thread_exit)</DescriptionTerm>
+    <DescriptionBody>sets the result to specific value while delivering the notification only at thread exit (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_exception`](/docs/cpp/library/thread/promise/set_exception)</DescriptionTerm>
+    <DescriptionBody>sets the result to indicate an exception (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_exception_at_thread_exit`](/docs/cpp/library/thread/promise/set_exception_at_thread_exit)</DescriptionTerm>
+    <DescriptionBody>sets the result to indicate an exception while delivering the notification only at thread exit (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-thread-promise:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::promise)`](/docs/cpp/library/thread/promise/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper classes
+
+{/* source:cpp-thread-promise:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::uses_allocator<std::promise>`](/docs/cpp/library/thread/promise/uses_allocator) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::uses_allocator`](/docs/cpp/library/memory/uses_allocator) type trait (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-thread-promise:0011 */}
+This example shows how `promise<int>` can be used as signals between threads.
+
+```cpp
+#include <chrono>
+#include <future>
+#include <iostream>
+#include <numeric>
+#include <thread>
+#include <vector>
+
+void accumulate(std::vector<int>::iterator first,
+                std::vector<int>::iterator last,
+                std::promise<int> accumulate_promise)
+{
+    int sum = std::accumulate(first, last, 0);
+    accumulate_promise.set_value(sum); // Notify future
+}
+
+void do_work(std::promise<void> barrier)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    barrier.set_value();
+}
+
+int main()
+{
+    // Demonstrate using promise<int> to transmit a result between threads.
+    std::vector<int> numbers = {1, 2, 3, 4, 5, 6};
+    std::promise<int> accumulate_promise;
+    std::future<int> accumulate_future = accumulate_promise.get_future();
+    std::thread work_thread(accumulate, numbers.begin(), numbers.end(),
+                            std::move(accumulate_promise));
+
+    // future::get() will wait until the future has a valid result and retrieves it.
+    // Calling wait() before get() is not needed
+    // accumulate_future.wait(); // wait for result
+    std::cout << "result=" << accumulate_future.get() << '\n';
+    work_thread.join(); // wait for thread completion
+
+    // Demonstrate using promise<void> to signal state between threads.
+    std::promise<void> barrier;
+    std::future<void> barrier_future = barrier.get_future();
+    std::thread new_work_thread(do_work, std::move(barrier));
+    barrier_future.wait();
+    new_work_thread.join();
+}
+```
+
+Output:
+
+```text
+result=21
+```

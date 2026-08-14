@@ -1,0 +1,145 @@
+---
+title: "std::shared_future"
+description: "The class template std::shared_future provides a mechanism to access the result of asynchronous operations, similar to std::future, except that multiple threads are allowed to wait for the same shared state."
+source_url: "https://en.cppreference.com/w/cpp/thread/shared_future"
+language: "C++"
+---
+
+{/* source:cpp-thread-shared-future:0000 */}
+<DeclarationDoc>
+Defined in header [`<future>`](/docs/cpp/library/headers/future)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T > class shared_future;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T > class shared_future<T&>;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template<> class shared_future<void>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-shared-future:0001 */}
+The class template `std::shared_future` provides a mechanism to access the result of asynchronous operations, similar to [`std::future`](/docs/cpp/library/thread/future), except that multiple threads are allowed to wait for the same shared state. Unlike `std::future`, which is only moveable (so only one instance can refer to any particular asynchronous result), `std::shared_future` is copyable and multiple shared future objects may refer to the same shared state.
+
+{/* source:cpp-thread-shared-future:0002 */}
+Access to the same shared state from multiple threads is safe if each thread does it through its own copy of a `shared_future` object.
+
+### Member functions
+
+{/* source:cpp-thread-shared-future:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/shared_future/shared_future)</DescriptionTerm>
+    <DescriptionBody>constructs the future object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/shared_future/~shared_future)</DescriptionTerm>
+    <DescriptionBody>destructs the future object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/thread/shared_future/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns the contents (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Getting the result
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get`](/docs/cpp/library/thread/shared_future/get)</DescriptionTerm>
+    <DescriptionBody>returns the result (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### State
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`valid`](/docs/cpp/library/thread/shared_future/valid)</DescriptionTerm>
+    <DescriptionBody>checks if the future has a shared state (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/shared_future/wait)</DescriptionTerm>
+    <DescriptionBody>waits for the result to become available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_for`](/docs/cpp/library/thread/shared_future/wait_for)</DescriptionTerm>
+    <DescriptionBody>waits for the result, returns if it is not available for the specified timeout duration (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_until`](/docs/cpp/library/thread/shared_future/wait_until)</DescriptionTerm>
+    <DescriptionBody>waits for the result, returns if it is not available until specified time point has been reached (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-thread-shared-future:0004 */}
+A `shared_future` may be used to signal multiple threads simultaneously, similar to [`std::condition_variable::notify_all()`](/docs/cpp/library/thread/condition_variable/notify_all).
+
+```cpp
+#include <chrono>
+#include <future>
+#include <iostream>
+ 
+int main()
+{   
+    std::promise<void> ready_promise, t1_ready_promise, t2_ready_promise;
+    std::shared_future<void> ready_future(ready_promise.get_future());
+ 
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
+ 
+    auto fun1 = [&, ready_future]() -> std::chrono::duration<double, std::milli> 
+    {
+        t1_ready_promise.set_value();
+        ready_future.wait(); // waits for the signal from main()
+        return std::chrono::high_resolution_clock::now() - start;
+    };
+ 
+ 
+    auto fun2 = [&, ready_future]() -> std::chrono::duration<double, std::milli> 
+    {
+        t2_ready_promise.set_value();
+        ready_future.wait(); // waits for the signal from main()
+        return std::chrono::high_resolution_clock::now() - start;
+    };
+ 
+    auto fut1 = t1_ready_promise.get_future();
+    auto fut2 = t2_ready_promise.get_future();
+ 
+    auto result1 = std::async(std::launch::async, fun1);
+    auto result2 = std::async(std::launch::async, fun2);
+ 
+    // wait for the threads to become ready
+    fut1.wait();
+    fut2.wait();
+ 
+    // the threads are ready, start the clock
+    start = std::chrono::high_resolution_clock::now();
+ 
+    // signal the threads to go
+    ready_promise.set_value();
+ 
+    std::cout << "Thread 1 received the signal "
+              << result1.get().count() << " ms after start\n"
+              << "Thread 2 received the signal "
+              << result2.get().count() << " ms after start\n";
+}
+```
+
+Possible output:
+
+```text
+Thread 1 received the signal 0.072 ms after start
+Thread 2 received the signal 0.041 ms after start
+```
+
+### See also
+
+{/* source:cpp-thread-shared-future:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`async`](/docs/cpp/library/thread/async) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>runs a function asynchronously (potentially in a new thread) and returns a [`std::future`](/docs/cpp/library/thread/future) that will hold the result (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`future`](/docs/cpp/library/thread/future) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>waits for a value that is set asynchronously (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

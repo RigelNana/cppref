@@ -1,0 +1,197 @@
+---
+title: "std::barrier"
+description: "The class template std::barrier provides a thread-coordination mechanism that blocks a group of threads of known size until all threads in that group have reached the barrier."
+source_url: "https://en.cppreference.com/w/cpp/thread/barrier"
+language: "C++"
+---
+
+{/* source:cpp-thread-barrier:0000 */}
+<DeclarationDoc>
+Defined in header [`<barrier>`](/docs/cpp/library/headers/barrier)
+
+  <Declaration language="cpp" since="C++20" code={`template< class CompletionFunction = /* see below */ >
+class barrier;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-barrier:0001 */}
+The class template `std::barrier` provides a thread-coordination mechanism that blocks a group of threads of known size until all threads in that group have reached the barrier. Unlike [`std::latch`](/docs/cpp/library/thread/latch), barriers are reusable: once a group of arriving threads are unblocked, the barrier can be reused. Unlike [`std::latch`](/docs/cpp/library/thread/latch), barriers execute a possibly empty callable before unblocking threads.
+
+{/* source:cpp-thread-barrier:0002 */}
+A barrier object's lifetime consists of one or more phases. Each phase defines a phase synchronization point where waiting threads block. Threads can arrive at the barrier, but defer waiting on the phase synchronization point by calling [`arrive`](/docs/cpp/library/thread/barrier/arrive). Such threads can later block on the phase synchronization point by calling [`wait`](/docs/cpp/library/thread/barrier/wait).
+
+{/* source:cpp-thread-barrier:0003 */}
+A barrier phase consists of the following steps:
+
+{/* source:cpp-thread-barrier:0004 */}
+1. The expected count is decremented by each call to [`arrive`](/docs/cpp/library/thread/barrier/arrive) or [`arrive_and_drop`](/docs/cpp/library/thread/barrier/arrive_and_drop).
+2. When the expected count reaches zero, the *phase completion step* is run, meaning that the [`completion`](/docs/cpp/library/thread/barrier#Data_members) is invoked, and all threads blocked on the phase synchronization point are unblocked. The end of the completion step [strongly happens-before](/docs/cpp/library/atomic/memory_order#Strongly_happens-before) all calls that were unblocked by the completion step return.
+   Exactly once after the expected count reaches zero, a thread executes the completion step during its call to [`arrive`](/docs/cpp/library/thread/barrier/arrive), [`arrive_and_drop`](/docs/cpp/library/thread/barrier/arrive_and_drop), or [`wait`](/docs/cpp/library/thread/barrier/wait), except that it is implementation-defined whether the step executes if no thread calls [`wait`](/docs/cpp/library/thread/barrier/wait).
+3. When the completion step finishes, the expected count is reset to the value specified at construction less the number of calls to [`arrive_and_drop`](/docs/cpp/library/thread/barrier/arrive_and_drop) since, and the next barrier phase begins.
+
+{/* source:cpp-thread-barrier:0005 */}
+Concurrent invocations of the member functions of `barrier`, except for the destructor, do not introduce data races.
+
+### Template parameters
+
+{/* source:cpp-thread-barrier:0006 */}
+<ParameterList>
+  <Parameter name="CompletionFunction">a function object type `CompletionFunction` must meet the requirements of [`MoveConstructible`](/docs/cpp/library/named_req/MoveConstructible) and [`Destructible`](/docs/cpp/library/named_req/Destructible). `std::is_nothrow_invocable_v<CompletionFunction&>` must be `true`.</Parameter>
+</ParameterList>
+
+{/* source:cpp-thread-barrier:0007 */}
+The default template argument of `CompletionFunction` is an unspecified function object type that additionally meets the requirements of [`DefaultConstructible`](/docs/cpp/library/named_req/DefaultConstructible). Calling an lvalue of it with no arguments has no effects.
+
+### Member types
+
+{/* source:cpp-thread-barrier:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`arrival_token`</DescriptionTerm>
+    <DescriptionBody>an unspecified object type meeting requirements of [`MoveConstructible`](/docs/cpp/library/named_req/MoveConstructible), [`MoveAssignable`](/docs/cpp/library/named_req/MoveAssignable) and [`Destructible`](/docs/cpp/library/named_req/Destructible)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Data members
+
+{/* source:cpp-thread-barrier:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`CompletionFunction` `completion`</DescriptionTerm>
+    <DescriptionBody>a completion function object which is called on every phase completion step (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-thread-barrier:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/barrier/barrier)</DescriptionTerm>
+    <DescriptionBody>constructs a barrier (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/barrier/~barrier)</DescriptionTerm>
+    <DescriptionBody>destroys the barrier (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>barrier is not assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`arrive`](/docs/cpp/library/thread/barrier/arrive)</DescriptionTerm>
+    <DescriptionBody>arrives at barrier and decrements the expected count (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/barrier/wait)</DescriptionTerm>
+    <DescriptionBody>blocks at the phase synchronization point until its phase completion step is run (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`arrive_and_wait`](/docs/cpp/library/thread/barrier/arrive_and_wait)</DescriptionTerm>
+    <DescriptionBody>arrives at barrier and decrements the expected count by one, then blocks until current phase completes (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`arrive_and_drop`](/docs/cpp/library/thread/barrier/arrive_and_drop)</DescriptionTerm>
+    <DescriptionBody>decrements both the initial expected count for subsequent phases and the expected count for current phase by one (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`max`](/docs/cpp/library/thread/barrier/max)</DescriptionTerm>
+    <DescriptionBody>the maximum value of expected count supported by the implementation (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-thread-barrier:0011 */}
+| [Feature-test macro](/docs/cpp/library/utility/feature_test) | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_barrier`](/docs/cpp/library/feature_test#cpp_lib_barrier) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_barrier_201907L) | (C++20) | [`std::barrier`](/docs/cpp/library/thread/barrier#top) |
+| [`__cpp_lib_barrier`](/docs/cpp/library/feature_test#cpp_lib_barrier) | [`202302L`](/docs/cpp/library/compiler_support/20#cpp_lib_barrier_202302L) | (C++20) (DR) | Relaxed guarantees for phase completion |
+
+### Example
+
+{/* source:cpp-thread-barrier:0012 */}
+```cpp
+#include <barrier>
+#include <iostream>
+#include <string>
+#include <syncstream>
+#include <thread>
+#include <vector>
+
+int main()
+{
+    const auto workers = {"Anil", "Busara", "Carl"};
+
+    auto on_completion = []() noexcept
+    {
+        // locking not needed here
+        static auto phase =
+            "... done\n"
+            "Cleaning up...\n";
+        std::cout << phase;
+        phase = "... done\n";
+    };
+
+    std::barrier sync_point(std::ssize(workers), on_completion);
+
+    auto work = [&](std::string name)
+    {
+        std::string product = "  " + name + " worked\n";
+        std::osyncstream(std::cout) << product;  // ok, op<< call is atomic
+        sync_point.arrive_and_wait();
+
+        product = "  " + name + " cleaned\n";
+        std::osyncstream(std::cout) << product;
+        sync_point.arrive_and_wait();
+    };
+
+    std::cout << "Starting...\n";
+    std::vector<std::jthread> threads;
+    threads.reserve(std::size(workers));
+    for (auto const& worker : workers)
+        threads.emplace_back(work, worker);
+}
+```
+
+Possible output:
+
+```text
+Starting...
+  Anil worked
+  Carl worked
+  Busara worked
+... done
+Cleaning up...
+  Busara cleaned
+  Carl cleaned
+  Anil cleaned
+... done
+```
+
+### Defect reports
+
+{/* source:cpp-thread-barrier:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-barrier:0014 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2588R3" standard="C++20">
+    <PublishedBehavior>old phase completion guarantees might prevent hardware acceleration</PublishedBehavior>
+    <CorrectedBehavior>relaxed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-barrier:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`latch`](/docs/cpp/library/thread/latch) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>single-use thread barrier (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,107 @@
+---
+title: "std::promise<R>::set_exception"
+description: "Atomically stores the exception pointer p into the shared state and makes the state ready."
+source_url: "https://en.cppreference.com/w/cpp/thread/promise/set_exception"
+language: "C++"
+---
+
+{/* source:cpp-thread-promise-set-exception:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`void set_exception( std::exception_ptr p );`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-promise-set-exception:0001 */}
+Atomically stores the exception pointer `p` into the shared state and makes the state ready.
+
+{/* source:cpp-thread-promise-set-exception:0002 */}
+The operation behaves as though [`set_value`](/docs/cpp/library/thread/promise/set_value), `set_exception`, [`set_value_at_thread_exit`](/docs/cpp/library/thread/promise/set_value_at_thread_exit), and [`set_exception_at_thread_exit`](/docs/cpp/library/thread/promise/set_exception_at_thread_exit) acquire a single mutex associated with the promise object while updating the promise object.
+
+{/* source:cpp-thread-promise-set-exception:0003 */}
+An exception is thrown if there is no shared state or the shared state already stores a value or exception.
+
+{/* source:cpp-thread-promise-set-exception:0004 */}
+Calls to this function do not introduce data races with calls to [`get_future`](/docs/cpp/library/thread/promise/get_future) (therefore they need not synchronize with each other).
+
+### Parameters
+
+{/* source:cpp-thread-promise-set-exception:0005 */}
+<ParameterList>
+  <Parameter name="p">exception pointer to store. The behavior is undefined if `p` is null</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-promise-set-exception:0006 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-promise-set-exception:0007 */}
+[`std::future_error`](/docs/cpp/library/thread/future_error) on the following conditions:
+
+{/* source:cpp-thread-promise-set-exception:0008 */}
+- `*this` has no shared state. The error code is set to [`no_state`](/docs/cpp/library/thread/future_errc).
+
+{/* source:cpp-thread-promise-set-exception:0009 */}
+- The shared state already stores a value or exception. The error code is set to [`promise_already_satisfied`](/docs/cpp/library/thread/future_errc).
+
+### Example
+
+{/* source:cpp-thread-promise-set-exception:0010 */}
+```cpp
+#include <future>
+#include <iostream>
+#include <thread>
+
+int main()
+{
+    std::promise<int> p;
+    std::future<int> f = p.get_future();
+
+    std::thread t([&p]
+    {
+        try
+        {
+            // code that may throw
+            throw std::runtime_error("Example");
+        }
+        catch (...)
+        {
+            try
+            {
+                // store anything thrown in the promise
+                p.set_exception(std::current_exception());
+                // or throw a custom exception instead
+                // p.set_exception(std::make_exception_ptr(MyException("mine")));
+            }
+            catch (...) {} // set_exception() may throw too
+        }
+    });
+
+    try
+    {
+        std::cout << f.get();
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << "Exception from the thread: " << e.what() << '\n';
+    }
+    t.join();
+}
+```
+
+Output:
+
+```text
+Exception from the thread: Example
+```
+
+### See also
+
+{/* source:cpp-thread-promise-set-exception:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_exception_at_thread_exit`](/docs/cpp/library/thread/promise/set_exception_at_thread_exit)</DescriptionTerm>
+    <DescriptionBody>sets the result to indicate an exception while delivering the notification only at thread exit (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

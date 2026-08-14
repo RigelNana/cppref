@@ -1,0 +1,212 @@
+---
+title: "std::condition_variable"
+description: "std::condition_variable is a synchronization primitive used with a std::mutex to block one or more threads until another thread both modifies a shared variable (the condition) and notifies the std::condition_variable."
+source_url: "https://en.cppreference.com/w/cpp/thread/condition_variable"
+language: "C++"
+---
+
+{/* source:cpp-thread-condition-variable:0000 */}
+<DeclarationDoc>
+Defined in header [`<condition_variable>`](/docs/cpp/library/headers/condition_variable)
+
+  <Declaration language="cpp" since="C++11" code={`class condition_variable;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-condition-variable:0001 */}
+`std::condition_variable` is a synchronization primitive used with a [`std::mutex`](/docs/cpp/library/thread/mutex) to block one or more threads until another thread both modifies a shared variable (the *condition*) and notifies the `std::condition_variable`.
+
+{/* source:cpp-thread-condition-variable:0002 */}
+The thread that intends to modify the shared variable must:
+
+{/* source:cpp-thread-condition-variable:0003 */}
+1. Acquire a [`std::mutex`](/docs/cpp/library/thread/mutex) (typically via [`std::lock_guard`](/docs/cpp/library/thread/lock_guard)).
+2. Modify the shared variable while the lock is owned.
+3. Call [`notify_one`](/docs/cpp/library/thread/condition_variable/notify_one) or [`notify_all`](/docs/cpp/library/thread/condition_variable/notify_all) on the `std::condition_variable` (can be done after releasing the lock).
+
+{/* source:cpp-thread-condition-variable:0004 */}
+Even if the shared variable is atomic, it must be modified while owning the mutex to [correctly](https://stackoverflow.com/questions/38147825/) publish the modification to the waiting thread.
+
+{/* source:cpp-thread-condition-variable:0005 */}
+Any thread that intends to wait on a `std::condition_variable` must:
+
+{/* source:cpp-thread-condition-variable:0006 */}
+1. Acquire a `std::unique_lock<std::mutex>` on the mutex used to protect the shared variable.
+2. Do one of the following:
+
+{/* source:cpp-thread-condition-variable:0007 */}
+1. Check the condition, in case it was already updated and notified.
+2. Call [`wait`](/docs/cpp/library/thread/condition_variable/wait), [`wait_for`](/docs/cpp/library/thread/condition_variable/wait_for), or [`wait_until`](/docs/cpp/library/thread/condition_variable/wait_until) on the `std::condition_variable` (atomically releases the mutex and suspends thread execution until the condition variable is notified, a timeout expires, or a [spurious wakeup](https://en.wikipedia.org/wiki/Spurious_wakeup) occurs, then atomically acquires the mutex before returning).
+3. Check the condition and resume waiting if not satisfied.
+
+or:
+
+1. Use the predicated overload of [`wait`](/docs/cpp/library/thread/condition_variable/wait), [`wait_for`](/docs/cpp/library/thread/condition_variable/wait_for), and [`wait_until`](/docs/cpp/library/thread/condition_variable/wait_until), which performs the same three steps.
+
+{/* source:cpp-thread-condition-variable:0008 */}
+`std::condition_variable` works only with `std::unique_lock<std::mutex>`, which allows for maximal efficiency on some platforms. [`std::condition_variable_any`](/docs/cpp/library/thread/condition_variable_any) provides a condition variable that works with any [`BasicLockable`](/docs/cpp/library/named_req/BasicLockable) object, such as [`std::shared_lock`](/docs/cpp/library/thread/shared_lock).
+
+{/* source:cpp-thread-condition-variable:0009 */}
+Condition variables permit concurrent invocation of the [`wait`](/docs/cpp/library/thread/condition_variable/wait), [`wait_for`](/docs/cpp/library/thread/condition_variable/wait_for), [`wait_until`](/docs/cpp/library/thread/condition_variable/wait_until), [`notify_one`](/docs/cpp/library/thread/condition_variable/notify_one) and [`notify_all`](/docs/cpp/library/thread/condition_variable/notify_all) member functions.
+
+{/* source:cpp-thread-condition-variable:0010 */}
+The class `std::condition_variable` is a [`StandardLayoutType`](/docs/cpp/library/named_req/StandardLayoutType). It is not [`CopyConstructible`](/docs/cpp/library/named_req/CopyConstructible), [`MoveConstructible`](/docs/cpp/library/named_req/MoveConstructible), [`CopyAssignable`](/docs/cpp/library/named_req/CopyAssignable), or [`MoveAssignable`](/docs/cpp/library/named_req/MoveAssignable).
+
+### Nested types
+
+{/* source:cpp-thread-condition-variable:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`native_handle_type`</DescriptionTerm>
+    <DescriptionBody>implementation-defined</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-thread-condition-variable:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/condition_variable/condition_variable)</DescriptionTerm>
+    <DescriptionBody>constructs the object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/condition_variable/~condition_variable)</DescriptionTerm>
+    <DescriptionBody>destructs the object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>not copy-assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Notification
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_one`](/docs/cpp/library/thread/condition_variable/notify_one)</DescriptionTerm>
+    <DescriptionBody>notifies one waiting thread (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`notify_all`](/docs/cpp/library/thread/condition_variable/notify_all)</DescriptionTerm>
+    <DescriptionBody>notifies all waiting threads (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Waiting
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/condition_variable/wait)</DescriptionTerm>
+    <DescriptionBody>blocks the current thread until the condition variable is awakened (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_for`](/docs/cpp/library/thread/condition_variable/wait_for)</DescriptionTerm>
+    <DescriptionBody>blocks the current thread until the condition variable is awakened or after the specified timeout duration (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_until`](/docs/cpp/library/thread/condition_variable/wait_until)</DescriptionTerm>
+    <DescriptionBody>blocks the current thread until the condition variable is awakened or until specified time point has been reached (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Native handle
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`native_handle`](/docs/cpp/library/thread/condition_variable/native_handle)</DescriptionTerm>
+    <DescriptionBody>returns the native handle (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-thread-condition-variable:0013 */}
+`std::condition_variable` is used in combination with a [`std::mutex`](/docs/cpp/library/thread/mutex) to facilitate inter-thread communication.
+
+```cpp
+#include <condition_variable>
+#include <iostream>
+#include <mutex>
+#include <string>
+#include <thread>
+ 
+std::mutex m;
+std::condition_variable cv;
+std::string data;
+bool ready = false;
+bool processed = false;
+ 
+void worker_thread()
+{
+    // wait until main() sends data
+    std::unique_lock lk(m);
+    cv.wait(lk, []{ return ready; });
+ 
+    // after the wait, we own the lock
+    std::cout << "Worker thread is processing data\n";
+    data += " after processing";
+ 
+    // send data back to main()
+    processed = true;
+    std::cout << "Worker thread signals data processing completed\n";
+ 
+    // manual unlocking is done before notifying, to avoid waking up
+    // the waiting thread only to block again (see notify_one for details)
+    lk.unlock();
+    cv.notify_one();
+}
+ 
+int main()
+{
+    std::thread worker(worker_thread);
+ 
+    data = "Example data";
+    // send data to the worker thread
+    {
+        std::lock_guard lk(m);
+        ready = true;
+        std::cout << "main() signals data ready for processing\n";
+    }
+    cv.notify_one();
+ 
+    // wait for the worker
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, []{ return processed; });
+    }
+    std::cout << "Back in main(), data = " << data << '\n';
+ 
+    worker.join();
+}
+```
+
+Output:
+
+```text
+main() signals data ready for processing
+Worker thread is processing data
+Worker thread signals data processing completed
+Back in main(), data = Example data after processing
+```
+
+### See also
+
+{/* source:cpp-thread-condition-variable:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`condition_variable_any`](/docs/cpp/library/thread/condition_variable_any) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides a condition variable associated with any lock type (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mutex`](/docs/cpp/library/thread/mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides basic mutual exclusion facility (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock_guard`](/docs/cpp/library/thread/lock_guard) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements a strictly scope-based mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_lock`](/docs/cpp/library/thread/unique_lock) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements movable mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

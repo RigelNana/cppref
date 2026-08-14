@@ -1,0 +1,142 @@
+---
+title: "std::future<T>::get"
+description: "The get member function waits (by calling wait()) until the shared state is ready, then retrieves the value stored in the shared state (if any)."
+source_url: "https://en.cppreference.com/w/cpp/thread/future/get"
+language: "C++"
+---
+
+{/* source:cpp-thread-future-get:0000 */}
+<DeclarationDoc>
+Main template
+
+  <Declaration id="1" language="cpp" since="C++11" code={`T get();`} />
+
+`std::future<T&>` specializations
+
+  <Declaration id="2" language="cpp" since="C++11" code={`T& get();`} />
+
+`std::future<void>` specialization
+
+  <Declaration id="3" language="cpp" since="C++11" code={`void get();`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-future-get:0001 */}
+The `get` member function waits (by calling [`wait()`](/docs/cpp/library/thread/future/wait)) until the shared state is ready, then retrieves the value stored in the shared state (if any). Right after calling this function, `valid()` is `false`.
+
+{/* source:cpp-thread-future-get:0002 */}
+If `valid()` is `false` before the call to this function, the behavior is undefined.
+
+### Return value
+
+{/* source:cpp-thread-future-get:0003 */}
+1. The value `v` stored in the shared state, as `std::move(v)`.
+
+{/* source:cpp-thread-future-get:0004 */}
+2. The reference stored as value in the shared state.
+
+{/* source:cpp-thread-future-get:0005 */}
+3. (none)
+
+### Exceptions
+
+{/* source:cpp-thread-future-get:0006 */}
+If an exception was stored in the shared state referenced by the future (e.g. via a call to [`std::promise::set_exception()`](/docs/cpp/library/thread/promise/set_exception)) then that exception will be thrown.
+
+### Notes
+
+{/* source:cpp-thread-future-get:0007 */}
+The C++ standard recommends the implementations to detect the case when `valid()` is `false` before the call and throw a [`std::future_error`](/docs/cpp/library/thread/future_error) with an error condition of [`std::future_errc::no_state`](/docs/cpp/library/thread/future_errc).
+
+### Example
+
+{/* source:cpp-thread-future-get:0008 */}
+```cpp
+#include <chrono>
+#include <future>
+#include <iostream>
+#include <string>
+#include <thread>
+ 
+std::string time()
+{
+    static auto start = std::chrono::steady_clock::now();
+    std::chrono::duration<double> d = std::chrono::steady_clock::now() - start;
+    return "[" + std::to_string(d.count()) + "s]";
+}
+ 
+int main()
+{
+    using namespace std::chrono_literals;
+ 
+    {
+        std::cout << time() << " launching thread\n";
+        std::future<int> f = std::async(std::launch::async, []
+        {
+            std::this_thread::sleep_for(1s);
+            return 7;
+        });
+        std::cout << time() << " waiting for the future, f.valid() = "
+                  << f.valid() << '\n';
+        int n = f.get();
+        std::cout << time() << " f.get() returned " << n << ", f.valid() = "
+                  << f.valid() << '\n';
+    }
+ 
+    {
+        std::cout << time() << " launching thread\n";
+        std::future<int> f = std::async(std::launch::async, []
+        {
+            std::this_thread::sleep_for(1s);
+            return true ? throw std::runtime_error("7") : 7;
+        });
+        std::cout << time() << " waiting for the future, f.valid() = "
+                  << f.valid() << '\n';
+ 
+        try
+        {
+            int n = f.get();
+            std::cout << time() << " f.get() returned " << n
+                      << ", f.valid() = " << f.valid() << '\n';
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << time() << " caught exception " << e.what()
+                      << ", f.valid() = " << f.valid() << '\n';
+        }
+    }
+}
+```
+
+Possible output:
+
+```text
+[0.000004s] launching thread
+[0.000461s] waiting for the future, f.valid() = 1
+[1.001156s] f.get() returned with 7, f.valid() = 0
+[1.001192s] launching thread
+[1.001275s] waiting for the future, f.valid() = 1
+[2.002356s] caught exception 7, f.valid() = 0
+```
+
+### Defect reports
+
+{/* source:cpp-thread-future-get:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-future-get:0010 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2096} standard="C++11">
+    <PublishedBehavior>overload (1) needed to check whether `T` is [`MoveAssignable`](/docs/cpp/library/named_req/MoveAssignable)</PublishedBehavior>
+    <CorrectedBehavior>not required</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-future-get:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`valid`](/docs/cpp/library/thread/future/valid)</DescriptionTerm>
+    <DescriptionBody>checks if the future has a shared state (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,162 @@
+---
+title: "std::mutex"
+description: "The mutex class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads."
+source_url: "https://en.cppreference.com/w/cpp/thread/mutex"
+language: "C++"
+---
+
+{/* source:cpp-thread-mutex:0000 */}
+<DeclarationDoc>
+Defined in header [`<mutex>`](/docs/cpp/library/headers/mutex)
+
+  <Declaration language="cpp" since="C++11" code={`class mutex;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-mutex:0001 */}
+The `mutex` class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads.
+
+{/* source:cpp-thread-mutex:0002 */}
+`mutex` offers exclusive, non-recursive ownership semantics:
+
+{/* source:cpp-thread-mutex:0003 */}
+- A calling thread *owns* a `mutex` from the time that it successfully calls either [`lock`](/docs/cpp/library/thread/mutex/lock) or [`try_lock`](/docs/cpp/library/thread/mutex/try_lock) until it calls [`unlock`](/docs/cpp/library/thread/mutex/unlock).
+- When a thread owns a `mutex`, all other threads will block (for calls to [`lock`](/docs/cpp/library/thread/mutex/lock)) or receive a `false` return value (for [`try_lock`](/docs/cpp/library/thread/mutex/try_lock)) if they attempt to claim ownership of the `mutex`.
+- A calling thread must not own the `mutex` prior to calling [`lock`](/docs/cpp/library/thread/mutex/lock) or [`try_lock`](/docs/cpp/library/thread/mutex/try_lock).
+
+{/* source:cpp-thread-mutex:0004 */}
+The behavior of a program is undefined if a `mutex` is destroyed while still owned by any threads, or a thread terminates while owning a `mutex`. The `mutex` class satisfies all requirements of [Mutex](/docs/cpp/library/named_req/Mutex) and [StandardLayoutType](/docs/cpp/library/named_req/StandardLayoutType).
+
+{/* source:cpp-thread-mutex:0005 */}
+`std::mutex` is neither copyable nor movable.
+
+### Nested types
+
+{/* source:cpp-thread-mutex:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`native_handle_type` (optional*)</DescriptionTerm>
+    <DescriptionBody>implementation-defined</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-thread-mutex:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/mutex/mutex)</DescriptionTerm>
+    <DescriptionBody>constructs the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/mutex/~mutex)</DescriptionTerm>
+    <DescriptionBody>destroys the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>not copy-assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Locking
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock`](/docs/cpp/library/thread/mutex/lock)</DescriptionTerm>
+    <DescriptionBody>locks the mutex, blocks if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/mutex/try_lock)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock`](/docs/cpp/library/thread/mutex/unlock)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Native handle
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`native_handle`](/docs/cpp/library/thread/mutex/native_handle)</DescriptionTerm>
+    <DescriptionBody>returns the underlying implementation-defined native handle object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-thread-mutex:0008 */}
+`std::mutex` is usually not accessed directly: [`std::unique_lock`](/docs/cpp/library/thread/unique_lock), [`std::lock_guard`](/docs/cpp/library/thread/lock_guard), <InlineRevision since="C++17">or [`std::scoped_lock`](/docs/cpp/library/thread/scoped_lock)</InlineRevision> manage locking in a more exception-safe manner.
+
+### Example
+
+{/* source:cpp-thread-mutex:0009 */}
+This example shows how a `mutex` can be used to protect an [`std::map`](/docs/cpp/library/container/map) shared between two threads.
+
+```cpp
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <string>
+#include <thread>
+ 
+std::map<std::string, std::string> g_pages;
+std::mutex g_pages_mutex;
+ 
+void save_page(const std::string& url)
+{
+    // simulate a long page fetch
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::string result = "fake content";
+ 
+    std::lock_guard<std::mutex> guard(g_pages_mutex);
+    g_pages[url] = result;
+}
+ 
+int main() 
+{
+    std::thread t1(save_page, "http://foo");
+    std::thread t2(save_page, "http://bar");
+    t1.join();
+    t2.join();
+ 
+    // safe to access g_pages without lock now, as the threads are joined
+    for (const auto& [url, page] : g_pages)
+        std::cout << url << " => " << page << '\n';
+}
+```
+
+Output:
+
+```text
+http://bar => fake content
+http://foo => fake content
+```
+
+### See also
+
+{/* source:cpp-thread-mutex:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`recursive_mutex`](/docs/cpp/library/thread/recursive_mutex) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides mutual exclusion facility which can be locked recursively by the same thread (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock_guard`](/docs/cpp/library/thread/lock_guard) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements a strictly scope-based mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_lock`](/docs/cpp/library/thread/unique_lock) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements movable mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`scoped_lock`](/docs/cpp/library/thread/scoped_lock) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>deadlock-avoiding RAII wrapper for multiple mutexes (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`condition_variable`](/docs/cpp/library/thread/condition_variable) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>provides a condition variable associated with a [`std::unique_lock`](/docs/cpp/library/thread/unique_lock) (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

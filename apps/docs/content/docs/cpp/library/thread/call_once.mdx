@@ -1,0 +1,164 @@
+---
+title: "std::call_once"
+description: "Executes the Callable object f exactly once, even if called concurrently from several threads."
+source_url: "https://en.cppreference.com/w/cpp/thread/call_once"
+language: "C++"
+---
+
+{/* source:cpp-thread-call-once:0000 */}
+<DeclarationDoc>
+Defined in header [`<mutex>`](/docs/cpp/library/headers/mutex)
+
+  <Declaration language="cpp" since="C++11" code={`template< class Callable, class... Args >
+void call_once( std::once_flag& flag, Callable&& f, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-call-once:0001 */}
+Executes the [`Callable`](/docs/cpp/library/named_req/Callable) object `f` exactly once, even if called concurrently from several threads.
+
+{/* source:cpp-thread-call-once:0002 */}
+In detail:
+
+{/* source:cpp-thread-call-once:0003 */}
+- If, by the time `std::call_once` is called, `flag` indicates that `f` was already called, `std::call_once` returns right away (such a call to `std::call_once` is known as *passive*).
+
+{/* source:cpp-thread-call-once:0004 */}
+- Otherwise, `std::call_once` calls [`INVOKE`](/docs/cpp/library/utility/functional)(`std::forward<Callable>(f)`, `std::forward<Args>(args)...`). Unlike the [`std::thread`](/docs/cpp/library/thread/thread) constructor or [`std::async`](/docs/cpp/library/thread/async), the arguments are not moved or copied because they do not need to be transferred to another thread of execution (such a call to `std::call_once` is known as *active*).
+
+{/* source:cpp-thread-call-once:0005 */}
+- If that invocation throws an exception, it is propagated to the caller of `std::call_once`, and `flag` is not flipped so that another call will be attempted (such a call to `std::call_once` is known as *exceptional*).
+- If that invocation returns normally (such a call to `std::call_once` is known as *returning*), `flag` is flipped, and all other calls to `std::call_once` with the same `flag` are guaranteed to be *passive*.
+
+{/* source:cpp-thread-call-once:0006 */}
+All active calls on the same `flag` form a single total order consisting of zero or more exceptional calls, followed by one returning call. The end of each active call synchronizes-with the next active call in that order.
+
+{/* source:cpp-thread-call-once:0007 */}
+The return from the returning call synchronizes-with the returns from all passive calls on the same `flag`: this means that all concurrent calls to `std::call_once` are guaranteed to observe any side-effects made by the active call, with no additional synchronization.
+
+### Parameters
+
+{/* source:cpp-thread-call-once:0008 */}
+<ParameterList>
+  <Parameter name="flag">an object, for which exactly one function gets executed</Parameter>
+  <Parameter name="f">[Callable](/docs/cpp/library/named_req/Callable) object to invoke</Parameter>
+  <Parameter name="args...">arguments to pass to the function</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-call-once:0009 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-call-once:0010 */}
+- [`std::system_error`](/docs/cpp/library/error/system_error) if any condition prevents calls to `std::call_once` from executing as specified.
+- Any exception thrown by `f`.
+
+### Notes
+
+{/* source:cpp-thread-call-once:0011 */}
+If concurrent calls to `std::call_once` pass different functions `f`, it is unspecified which `f` will be called. The selected function runs in the same thread as the `std::call_once` invocation it was passed to.
+
+{/* source:cpp-thread-call-once:0012 */}
+Initialization of [function-local statics](/docs/cpp/language/declarations/storage_duration#Static_local_variables) is guaranteed to occur only once even when called from multiple threads, and may be more efficient than the equivalent code using `std::call_once`.
+
+{/* source:cpp-thread-call-once:0013 */}
+The POSIX equivalent of this function is [pthread_once](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_once.html).
+
+### Example
+
+{/* source:cpp-thread-call-once:0014 */}
+```cpp
+#include <iostream>
+#include <mutex>
+#include <thread>
+ 
+std::once_flag flag1, flag2;
+ 
+void simple_do_once()
+{
+    std::call_once(flag1, [](){ std::cout << "Simple example: called once\n"; });
+}
+ 
+void may_throw_function(bool do_throw)
+{
+    if (do_throw)
+    {
+        std::cout << "Throw: call_once will retry\n"; // this may appear more than once
+        throw std::exception();
+    }
+    std::cout << "Did not throw, call_once will not attempt again\n"; // guaranteed once
+}
+ 
+void do_once(bool do_throw)
+{
+    try
+    {
+        std::call_once(flag2, may_throw_function, do_throw);
+    }
+    catch (...) {}
+}
+ 
+int main()
+{
+    std::thread st1(simple_do_once);
+    std::thread st2(simple_do_once);
+    std::thread st3(simple_do_once);
+    std::thread st4(simple_do_once);
+    st1.join();
+    st2.join();
+    st3.join();
+    st4.join();
+ 
+    std::thread t1(do_once, true);
+    std::thread t2(do_once, true);
+    std::thread t3(do_once, false);
+    std::thread t4(do_once, true);
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+}
+```
+
+Possible output:
+
+```text
+Simple example: called once
+Throw: call_once will retry
+Throw: call_once will retry
+Throw: call_once will retry
+Did not throw, call_once will not attempt again
+```
+
+### Defect reports
+
+{/* source:cpp-thread-call-once:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-call-once:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2080} standard="C++11">
+    <PublishedBehavior>[`std::invalid_argument`](/docs/cpp/library/error/invalid_argument) would be thrown if `f` is invalid, but the scenario where `f` is invalidated is not specified</PublishedBehavior>
+    <CorrectedBehavior>removed this error condition</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2442} standard="C++11">
+    <PublishedBehavior>the arguments were copied and/or moved before invocation</PublishedBehavior>
+    <CorrectedBehavior>no copying/moving is performed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-call-once:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`once_flag`](/docs/cpp/library/thread/once_flag) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>helper object to ensure that `call_once` invokes the function only once (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/ONCE_FLAG_INIT)</DescriptionTerm>
+    <DescriptionBody>for `call_once`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

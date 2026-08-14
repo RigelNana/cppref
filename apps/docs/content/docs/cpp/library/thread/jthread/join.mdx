@@ -1,0 +1,118 @@
+---
+title: "std::jthread::join"
+description: "Blocks the current thread until the thread identified by *this finishes its execution."
+source_url: "https://en.cppreference.com/w/cpp/thread/jthread/join"
+language: "C++"
+---
+
+{/* source:cpp-thread-jthread-join:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`void join();`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-jthread-join:0001 */}
+Blocks the current thread until the thread identified by `*this` finishes its execution.
+
+{/* source:cpp-thread-jthread-join:0002 */}
+The completion of the thread identified by `*this` *synchronizes with* the corresponding successful return from `join()`.
+
+{/* source:cpp-thread-jthread-join:0003 */}
+No synchronization is performed on `*this` itself. Concurrently calling `join()` on the same `jthread` object from multiple threads constitutes a data race that results in undefined behavior.
+
+### Parameters
+
+{/* source:cpp-thread-jthread-join:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-jthread-join:0005 */}
+(none)
+
+### Postconditions
+
+{/* source:cpp-thread-jthread-join:0006 */}
+`joinable()` is `false`.
+
+### Exceptions
+
+{/* source:cpp-thread-jthread-join:0007 */}
+[`std::system_error`](/docs/cpp/library/error/system_error) if an error occurs.
+
+### Error conditions
+
+{/* source:cpp-thread-jthread-join:0008 */}
+- [`resource_deadlock_would_occur`](/docs/cpp/library/error/errc) if `this->get_id() == std::this_thread::get_id()` (deadlock detected).
+- [`no_such_process`](/docs/cpp/library/error/errc) if the thread is not valid.
+- [`invalid_argument`](/docs/cpp/library/error/errc) if `joinable()` is `false`.
+
+### Example
+
+{/* source:cpp-thread-jthread-join:0009 */}
+```cpp
+#include <chrono>
+#include <iostream>
+#include <thread>
+
+void foo()
+{
+    // simulate expensive operation
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+void bar()
+{
+    // simulate expensive operation
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+int main()
+{
+    std::cout << "starting first helper...\n";
+    std::jthread helper1(foo);
+
+    std::cout << "starting second helper...\n";
+    std::jthread helper2(bar);
+
+    std::cout << "waiting for helpers to finish..." << std::endl;
+    helper1.join();
+    helper2.join();
+
+    std::cout << "done!\n";
+}
+```
+
+Output:
+
+```text
+starting first helper...
+starting second helper...
+waiting for helpers to finish...
+done!
+```
+
+### References
+
+{/* source:cpp-thread-jthread-join:0010 */}
+C++23 standard (ISO/IEC 14882:2024): 33.4.4.3 Members [thread.jthread.mem]
+
+{/* source:cpp-thread-jthread-join:0011 */}
+C++20 standard (ISO/IEC 14882:2020): 32.4.3.2 Members [thread.jthread.mem]
+
+### See also
+
+{/* source:cpp-thread-jthread-join:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`detach`](/docs/cpp/library/thread/jthread/detach)</DescriptionTerm>
+    <DescriptionBody>permits the thread to execute independently from the thread handle (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`joinable`](/docs/cpp/library/thread/jthread/joinable)</DescriptionTerm>
+    <DescriptionBody>checks whether the thread is joinable, i.e. potentially running in parallel context (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/thrd_join)</DescriptionTerm>
+    <DescriptionBody>for `thrd_join`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

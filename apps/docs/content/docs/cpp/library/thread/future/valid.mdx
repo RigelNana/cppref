@@ -1,0 +1,70 @@
+---
+title: "std::future<T>::valid"
+description: "Checks if the future refers to a shared state."
+source_url: "https://en.cppreference.com/w/cpp/thread/future/valid"
+language: "C++"
+---
+
+{/* source:cpp-thread-future-valid:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`bool valid() const noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-future-valid:0001 */}
+Checks if the future refers to a shared state.
+
+{/* source:cpp-thread-future-valid:0002 */}
+This is the case only for futures that were not default-constructed or moved from (i.e. returned by [`std::promise::get_future()`](/docs/cpp/library/thread/promise/get_future), [`std::packaged_task::get_future()`](/docs/cpp/library/thread/packaged_task/get_future) or [`std::async()`](/docs/cpp/library/thread/async)) until the first time [`get()`](/docs/cpp/library/thread/future/get) or [`share()`](/docs/cpp/library/thread/future/share) is called.
+
+{/* source:cpp-thread-future-valid:0003 */}
+The behavior is undefined if any member function other than the destructor, the move-assignment operator, or `valid` is called on a future that does not refer to shared state (although implementations are encouraged to throw [`std::future_error`](/docs/cpp/library/thread/future_error) indicating `no_state` in this case). It is valid to move from a future object for which `valid()` is `false`.
+
+### Parameters
+
+{/* source:cpp-thread-future-valid:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-future-valid:0005 */}
+`true` if `*this` refers to a shared state, otherwise `false`.
+
+### Example
+
+{/* source:cpp-thread-future-valid:0006 */}
+```cpp
+#include <future>
+#include <iostream>
+ 
+int main()
+{
+    std::promise<void> p;
+    std::future<void> f = p.get_future();
+ 
+    std::cout << std::boolalpha;
+ 
+    std::cout << f.valid() << '\n';
+    p.set_value();
+    std::cout << f.valid() << '\n';
+    f.get();
+    std::cout << f.valid() << '\n';
+}
+```
+
+Output:
+
+```text
+true
+true
+false
+```
+
+### See also
+
+{/* source:cpp-thread-future-valid:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/future/wait)</DescriptionTerm>
+    <DescriptionBody>waits for the result to become available (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

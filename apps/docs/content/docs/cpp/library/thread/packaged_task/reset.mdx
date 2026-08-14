@@ -1,0 +1,68 @@
+---
+title: "std::packaged_task<R(Args...)>::reset"
+description: "Resets the state abandoning the results of previous executions."
+source_url: "https://en.cppreference.com/w/cpp/thread/packaged_task/reset"
+language: "C++"
+---
+
+{/* source:cpp-thread-packaged-task-reset:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`void reset();`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-packaged-task-reset:0001 */}
+Resets the state abandoning the results of previous executions. New shared state is constructed.
+
+{/* source:cpp-thread-packaged-task-reset:0002 */}
+Equivalent to `*this = packaged_task(std::move(f))`, where `f` is the stored task.
+
+### Parameters
+
+{/* source:cpp-thread-packaged-task-reset:0003 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-packaged-task-reset:0004 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-packaged-task-reset:0005 */}
+- [`std::future_error`](/docs/cpp/library/thread/future_error) if `*this` has no shared state. The error condition is set to [`no_state`](/docs/cpp/library/thread/future_errc).
+- [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if there was not enough memory for a new shared state.
+- Any exception thrown by the [move constructor](/docs/cpp/library/thread/packaged_task/packaged_task) of the new `packaged_task`.
+
+### Example
+
+{/* source:cpp-thread-packaged-task-reset:0006 */}
+```cpp
+#include <cmath>
+#include <future>
+#include <iostream>
+#include <thread>
+
+int main()
+{
+    std::packaged_task<int(int,int)> task([](int a, int b)
+    {
+        return std::pow(a, b);
+    });
+    std::future<int> result = task.get_future();
+    task(2, 9);
+    std::cout << "2^9 = " << result.get() << '\n';
+
+    task.reset();
+    result = task.get_future();
+    std::thread task_td(std::move(task), 2, 10);
+    task_td.join();
+    std::cout << "2^10 = " << result.get() << '\n';
+}
+```
+
+Output:
+
+```text
+2^9 = 512
+2^10 = 1024
+```

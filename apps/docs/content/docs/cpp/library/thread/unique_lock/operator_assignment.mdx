@@ -1,0 +1,55 @@
+---
+title: "std::unique_lock<Mutex>::operator="
+description: "Move assignment operator. Replaces the contents with those of other using move semantics."
+source_url: "https://en.cppreference.com/w/cpp/thread/unique_lock/operator="
+language: "C++"
+---
+
+{/* source:cpp-thread-unique-lock-operator:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`unique_lock& operator=( unique_lock&& other );`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-unique-lock-operator:0001 */}
+Move assignment operator. Replaces the contents with those of `other` using move semantics.
+
+{/* source:cpp-thread-unique-lock-operator:0002 */}
+If prior to the call `*this` has an associated mutex and has acquired ownership of it, the mutex is unlocked.
+
+### Parameters
+
+{/* source:cpp-thread-unique-lock-operator:0003 */}
+<ParameterList>
+  <Parameter name="other">another `unique_lock` to replace the state with</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-unique-lock-operator:0004 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-thread-unique-lock-operator:0005 */}
+Throws nothing.
+
+### Notes
+
+{/* source:cpp-thread-unique-lock-operator:0006 */}
+With a recursive mutex it is possible for both `*this` and `other` to own the same mutex before the assignment. In this case, `*this` will own the mutex after the assignment and `other` will not.
+
+### Defect reports
+
+{/* source:cpp-thread-unique-lock-operator:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-unique-lock-operator:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2104} standard="C++11">
+    <PublishedBehavior>the move assignment operator was `noexcept`, but it may throw an exception in the case of undefined behavior[1]</PublishedBehavior>
+    <CorrectedBehavior>it is not `noexcept`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+{/* source:cpp-thread-unique-lock-operator:0009 */}
+1. ↑ For example, `*this` is constructed with [`std::adopt_lock`](/docs/cpp/library/thread/lock_tag_t), but the calling thread does not have the ownership of the associated mutex. In this case, `*this` cannot properly release the ownership of the associated mutex, and it may result in an exception to be thrown.

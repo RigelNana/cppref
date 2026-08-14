@@ -1,0 +1,185 @@
+---
+title: "std::packaged_task"
+description: "The class template std::packaged_task wraps any Callable target (function, lambda expression, bind expression, or another function object) so that it can be invoked asynchronously."
+source_url: "https://en.cppreference.com/w/cpp/thread/packaged_task"
+language: "C++"
+---
+
+{/* source:cpp-thread-packaged-task:0000 */}
+<DeclarationDoc>
+Defined in header [`<future>`](/docs/cpp/library/headers/future)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class > class packaged_task; //not defined`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class R, class ...ArgTypes > 
+class packaged_task<R(ArgTypes...)>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-packaged-task:0001 */}
+The class template `std::packaged_task` wraps any [`Callable`](/docs/cpp/library/named_req/Callable) target (function, lambda expression, bind expression, or another function object) so that it can be invoked asynchronously. Its return value or exception thrown is stored in a shared state which can be accessed through [`std::future`](/docs/cpp/library/thread/future) objects.
+
+{/* source:cpp-thread-packaged-task:0002 */}
+<Revision until="C++17">
+Just like [`std::function`](/docs/cpp/library/utility/functional/function), `std::packaged_task` is a polymorphic, allocator-aware container: the stored callable target may be allocated on heap or with a provided allocator.
+</Revision>
+
+### Member functions
+
+{/* source:cpp-thread-packaged-task:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/packaged_task/packaged_task)</DescriptionTerm>
+    <DescriptionBody>constructs the task object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/packaged_task/~packaged_task)</DescriptionTerm>
+    <DescriptionBody>destructs the task object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/thread/packaged_task/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>moves the task object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`valid`](/docs/cpp/library/thread/packaged_task/valid)</DescriptionTerm>
+    <DescriptionBody>checks if the task object has a valid function (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/thread/packaged_task/swap)</DescriptionTerm>
+    <DescriptionBody>swaps two task objects (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Getting the result
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_future`](/docs/cpp/library/thread/packaged_task/get_future)</DescriptionTerm>
+    <DescriptionBody>returns a [`std::future`](/docs/cpp/library/thread/future) associated with the promised result (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Execution
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator()`](</docs/cpp/library/thread/packaged_task/operator()>)</DescriptionTerm>
+    <DescriptionBody>executes the function (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_ready_at_thread_exit`](/docs/cpp/library/thread/packaged_task/make_ready_at_thread_exit)</DescriptionTerm>
+    <DescriptionBody>executes the function ensuring that the result is ready only once the current thread exits (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reset`](/docs/cpp/library/thread/packaged_task/reset)</DescriptionTerm>
+    <DescriptionBody>resets the state abandoning any stored results of previous executions (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-thread-packaged-task:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::swap(std::packaged_task)`](/docs/cpp/library/thread/packaged_task/swap2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::swap`](/docs/cpp/library/algorithm/swap) algorithm (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper classes
+
+{/* source:cpp-thread-packaged-task:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::uses_allocator<std::packaged_task>`](/docs/cpp/library/thread/packaged_task/uses_allocator) <InlineRevision since="C++11" until="C++17" /></DescriptionTerm>
+    <DescriptionBody>specializes the [`std::uses_allocator`](/docs/cpp/library/memory/uses_allocator) type trait (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### [Deduction guides](/docs/cpp/library/thread/packaged_task/deduction_guides)
+
+<InlineRevision since="C++17" />
+
+### Example
+
+{/* source:cpp-thread-packaged-task:0006 */}
+```cpp
+#include <cmath>
+#include <functional>
+#include <future>
+#include <iostream>
+#include <thread>
+
+// unique function to avoid disambiguating the std::pow overload set
+int f(int x, int y) { return std::pow(x, y); }
+
+void task_lambda()
+{
+    std::packaged_task<int(int, int)> task([](int a, int b)
+    {
+        return std::pow(a, b); 
+    });
+    std::future<int> result = task.get_future();
+
+    task(2, 9);
+
+    std::cout << "task_lambda:\t" << result.get() << '\n';
+}
+
+void task_bind()
+{
+    std::packaged_task<int()> task(std::bind(f, 2, 11));
+    std::future<int> result = task.get_future();
+
+    task();
+
+    std::cout << "task_bind:\t" << result.get() << '\n';
+}
+
+void task_thread()
+{
+    std::packaged_task<int(int, int)> task(f);
+    std::future<int> result = task.get_future();
+
+    std::thread task_td(std::move(task), 2, 10);
+    task_td.join();
+
+    std::cout << "task_thread:\t" << result.get() << '\n';
+}
+
+int main()
+{
+    task_lambda();
+    task_bind();
+    task_thread();
+}
+```
+
+Output:
+
+```text
+task_lambda: 512
+task_bind:   2048
+task_thread: 1024
+```
+
+### Defect reports
+
+{/* source:cpp-thread-packaged-task:0007 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-packaged-task:0008 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3117} standard="C++17">
+    <PublishedBehavior>deduction guides for `packaged_task` were missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-packaged-task:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`future`](/docs/cpp/library/thread/future) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>waits for a value that is set asynchronously (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

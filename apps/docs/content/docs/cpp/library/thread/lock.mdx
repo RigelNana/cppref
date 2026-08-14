@@ -1,0 +1,163 @@
+---
+title: "std::lock"
+description: "Locks the given Lockable objects lock1, lock2, ..., lockn using a deadlock avoidance algorithm to avoid deadlock."
+source_url: "https://en.cppreference.com/w/cpp/thread/lock"
+language: "C++"
+---
+
+{/* source:cpp-thread-lock:0000 */}
+<DeclarationDoc>
+Defined in header [`<mutex>`](/docs/cpp/library/headers/mutex)
+
+  <Declaration language="cpp" since="C++11" code={`template< class Lockable1, class Lockable2, class... LockableN >
+void lock( Lockable1& lock1, Lockable2& lock2, LockableN&... lockn );`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-lock:0001 */}
+Locks the given [`Lockable`](/docs/cpp/library/named_req/Lockable) objects `lock1`, `lock2`, ..., `lockn` using a deadlock avoidance algorithm to avoid deadlock.
+
+{/* source:cpp-thread-lock:0002 */}
+The objects are locked by an unspecified series of calls to `lock`, `try_lock`, and `unlock`. If a call to `lock` or `unlock` results in an exception, `unlock` is called for any locked objects before rethrowing.
+
+### Parameters
+
+{/* source:cpp-thread-lock:0003 */}
+<ParameterList>
+  <Parameter name="lock1, lock2, ..., lockn">the [Lockable](/docs/cpp/library/named_req/Lockable) objects to lock</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-lock:0004 */}
+(none)
+
+### Notes
+
+{/* source:cpp-thread-lock:0005 */}
+[Boost provides a version of this function](https://www.boost.org/doc/libs/release/doc/html/thread/synchronization.html#thread.synchronization.lock_functions.lock_range) that takes a sequence of [`Lockable`](/docs/cpp/library/named_req/Lockable) objects defined by a pair of iterators.
+
+{/* source:cpp-thread-lock:0006 */}
+[`std::scoped_lock`](/docs/cpp/library/thread/scoped_lock) offers a [RAII](/docs/cpp/language/raii) wrapper for this function, and is generally preferred to a naked call to `std::lock`.
+
+### Example
+
+{/* source:cpp-thread-lock:0007 */}
+The following example uses `std::lock` to lock pairs of mutexes without deadlock.
+
+```cpp
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+ 
+struct Employee
+{
+    Employee(std::string id) : id(id) {}
+    std::string id;
+    std::vector<std::string> lunch_partners;
+    std::mutex m;
+    std::string output() const
+    {
+        std::string ret = "Employee " + id + " has lunch partners: ";
+        for (auto n{lunch_partners.size()}; const auto& partner : lunch_partners)
+            ret += partner + (--n ? ", " : "");
+        return ret;
+    }
+};
+ 
+void send_mail(Employee&, Employee&)
+{
+    // Simulate a time-consuming messaging operation
+    std::this_thread::sleep_for(std::chrono::milliseconds(696));
+}
+ 
+void assign_lunch_partner(Employee& e1, Employee& e2)
+{
+    static std::mutex io_mutex;
+    {
+        std::lock_guard<std::mutex> lk(io_mutex);
+        std::cout << e1.id << " and " << e2.id << " are waiting for locks" << std::endl;
+    }
+ 
+    // Use std::lock to acquire two locks without worrying about 
+    // other calls to assign_lunch_partner deadlocking us
+    {
+        std::lock(e1.m, e2.m);
+        std::lock_guard<std::mutex> lk1(e1.m, std::adopt_lock);
+        std::lock_guard<std::mutex> lk2(e2.m, std::adopt_lock);
+    // Equivalent code (if unique_locks are needed, e.g. for condition variables)
+    //  std::unique_lock<std::mutex> lk1(e1.m, std::defer_lock);
+    //  std::unique_lock<std::mutex> lk2(e2.m, std::defer_lock);
+    //  std::lock(lk1, lk2);
+    // Superior solution available in C++17
+    //  std::scoped_lock lk(e1.m, e2.m);
+        {
+            std::lock_guard<std::mutex> lk(io_mutex);
+            std::cout << e1.id << " and " << e2.id << " got locks" << std::endl;
+        }
+        e1.lunch_partners.push_back(e2.id);
+        e2.lunch_partners.push_back(e1.id);
+    }
+    send_mail(e1, e2);
+    send_mail(e2, e1);
+}
+ 
+int main()
+{
+    Employee alice("Alice"), bob("Bob"), christina("Christina"), dave("Dave");
+ 
+    // Assign in parallel threads because mailing users about lunch assignments
+    // takes a long time
+    std::vector<std::thread> threads;
+    threads.emplace_back(assign_lunch_partner, std::ref(alice), std::ref(bob));
+    threads.emplace_back(assign_lunch_partner, std::ref(christina), std::ref(bob));
+    threads.emplace_back(assign_lunch_partner, std::ref(christina), std::ref(alice));
+    threads.emplace_back(assign_lunch_partner, std::ref(dave), std::ref(bob));
+ 
+    for (auto& thread : threads)
+        thread.join();
+ 
+    std::cout << alice.output() << '\n'
+              << bob.output() << '\n'
+              << christina.output() << '\n'
+              << dave.output() << '\n';
+}
+```
+
+Possible output:
+
+```text
+Alice and Bob are waiting for locks
+Alice and Bob got locks
+Christina and Bob are waiting for locks
+Christina and Bob got locks
+Christina and Alice are waiting for locks
+Dave and Bob are waiting for locks
+Dave and Bob got locks
+Christina and Alice got locks
+Employee Alice has lunch partners: Bob, Christina 
+Employee Bob has lunch partners: Alice, Christina, Dave 
+Employee Christina has lunch partners: Bob, Alice 
+Employee Dave has lunch partners: Bob
+```
+
+### See also
+
+{/* source:cpp-thread-lock:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_lock`](/docs/cpp/library/thread/unique_lock) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements movable mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/try_lock) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>attempts to obtain ownership of mutexes via repeated calls to `try_lock` (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`scoped_lock`](/docs/cpp/library/thread/scoped_lock) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>deadlock-avoiding RAII wrapper for multiple mutexes (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

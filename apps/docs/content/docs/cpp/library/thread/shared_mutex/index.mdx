@@ -1,0 +1,205 @@
+---
+title: "std::shared_mutex"
+description: "The shared_mutex class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads."
+source_url: "https://en.cppreference.com/w/cpp/thread/shared_mutex"
+language: "C++"
+---
+
+{/* source:cpp-thread-shared-mutex:0000 */}
+<DeclarationDoc>
+Defined in header [`<shared_mutex>`](/docs/cpp/library/headers/shared_mutex)
+
+  <Declaration language="cpp" since="C++17" code={`class shared_mutex;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-shared-mutex:0001 */}
+The `shared_mutex` class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads. In contrast to other mutex types which facilitate exclusive access, a shared_mutex has two levels of access:
+
+{/* source:cpp-thread-shared-mutex:0002 */}
+- *shared* - several threads can share ownership of the same mutex.
+
+{/* source:cpp-thread-shared-mutex:0003 */}
+- *exclusive* - only one thread can own the mutex.
+
+{/* source:cpp-thread-shared-mutex:0004 */}
+If one thread has acquired the *exclusive* lock (through [`lock`](/docs/cpp/library/thread/shared_mutex/lock), [`try_lock`](/docs/cpp/library/thread/shared_mutex/try_lock)), no other threads can acquire the lock (including the *shared*).
+
+{/* source:cpp-thread-shared-mutex:0005 */}
+If one thread has acquired the *shared* lock (through [`lock_shared`](/docs/cpp/library/thread/shared_mutex/lock_shared), [`try_lock_shared`](/docs/cpp/library/thread/shared_mutex/try_lock_shared)), no other thread can acquire the *exclusive* lock, but can acquire the *shared* lock.
+
+{/* source:cpp-thread-shared-mutex:0006 */}
+Only when the *exclusive* lock has not been acquired by any thread, the *shared* lock can be acquired by multiple threads.
+
+{/* source:cpp-thread-shared-mutex:0007 */}
+Within one thread, only one lock (*shared* or *exclusive*) can be acquired at the same time.
+
+{/* source:cpp-thread-shared-mutex:0008 */}
+Shared mutexes are especially useful when shared data can be safely read by any number of threads simultaneously, but a thread may only write the same data when no other thread is reading or writing at the same time.
+
+{/* source:cpp-thread-shared-mutex:0009 */}
+The `shared_mutex` class satisfies all requirements of [`SharedMutex`](/docs/cpp/library/named_req/SharedMutex) and [`StandardLayoutType`](/docs/cpp/library/named_req/StandardLayoutType).
+
+### Member types
+
+{/* source:cpp-thread-shared-mutex:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`native_handle_type` (optional*)</DescriptionTerm>
+    <DescriptionBody>implementation-defined</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-thread-shared-mutex:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/shared_mutex/shared_mutex)</DescriptionTerm>
+    <DescriptionBody>constructs the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/shared_mutex/~shared_mutex)</DescriptionTerm>
+    <DescriptionBody>destroys the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>not copy-assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Exclusive locking
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock`](/docs/cpp/library/thread/shared_mutex/lock)</DescriptionTerm>
+    <DescriptionBody>locks the mutex, blocks if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/shared_mutex/try_lock)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock`](/docs/cpp/library/thread/shared_mutex/unlock)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Shared locking
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock_shared`](/docs/cpp/library/thread/shared_mutex/lock_shared)</DescriptionTerm>
+    <DescriptionBody>locks the mutex for shared ownership, blocks if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock_shared`](/docs/cpp/library/thread/shared_mutex/try_lock_shared)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex for shared ownership, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock_shared`](/docs/cpp/library/thread/shared_mutex/unlock_shared)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (shared ownership) (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Native handle
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`native_handle`](/docs/cpp/library/thread/shared_mutex/native_handle)</DescriptionTerm>
+    <DescriptionBody>returns the underlying implementation-defined native handle object (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-thread-shared-mutex:0012 */}
+The output below was generated on a single-core machine. When `thread1` starts, it enters the loop for the first time and calls `increment()` followed by `get()`. However, before it can print the returned value to `std::cout`, the scheduler puts `thread1` to sleep and wakes up `thread2`, which obviously has time enough to run all three loop iterations at once. Back to `thread1`, still in the first loop iteration, it finally prints its local copy of the counter's value, which is `1`, to `std::cout` and then runs the remaining two loop iterations. On a multi-core machine, none of the threads is put to sleep and the output is more likely to be in ascending order.
+
+```cpp
+#include <iostream>
+#include <mutex>
+#include <shared_mutex>
+#include <syncstream>
+#include <thread>
+ 
+class ThreadSafeCounter
+{
+public:
+    ThreadSafeCounter() = default;
+ 
+    // Multiple threads/readers can read the counter's value at the same time.
+    unsigned int get() const
+    {
+        std::shared_lock lock(mutex_);
+        return value_;
+    }
+ 
+    // Only one thread/writer can increment/write the counter's value.
+    void increment()
+    {
+        std::unique_lock lock(mutex_);
+        ++value_;
+    }
+ 
+    // Only one thread/writer can reset/write the counter's value.
+    void reset()
+    {
+        std::unique_lock lock(mutex_);
+        value_ = 0;
+    }
+ 
+private:
+    mutable std::shared_mutex mutex_;
+    unsigned int value_{};
+};
+ 
+int main()
+{
+    ThreadSafeCounter counter;
+ 
+    auto increment_and_print = [&counter]()
+    {
+        for (int i{}; i != 3; ++i)
+        {
+            counter.increment();
+            std::osyncstream(std::cout)
+                << std::this_thread::get_id() << ' ' << counter.get() << '\n';
+        }
+    };
+ 
+    std::thread thread1(increment_and_print);
+    std::thread thread2(increment_and_print);
+ 
+    thread1.join();
+    thread2.join();
+}
+```
+
+Possible output:
+
+```text
+123084176803584 2
+123084176803584 3
+123084176803584 4
+123084185655040 1
+123084185655040 5
+123084185655040 6
+```
+
+### See also
+
+{/* source:cpp-thread-shared-mutex:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_timed_mutex`](/docs/cpp/library/thread/shared_timed_mutex) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>provides shared mutual exclusion facility and implements locking with a timeout (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_lock`](/docs/cpp/library/thread/shared_lock) <InlineRevision since="C++14" /></DescriptionTerm>
+    <DescriptionBody>implements movable shared mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unique_lock`](/docs/cpp/library/thread/unique_lock) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>implements movable mutex ownership wrapper (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

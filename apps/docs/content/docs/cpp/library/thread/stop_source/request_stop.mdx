@@ -1,0 +1,41 @@
+---
+title: "std::stop_source::request_stop"
+description: "Issues a stop request to the stop-state, if the stop_source object has a stop-state and it has not yet already had stop requested."
+source_url: "https://en.cppreference.com/w/cpp/thread/stop_source/request_stop"
+language: "C++"
+---
+
+{/* source:cpp-thread-stop-source-request-stop:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`bool request_stop() noexcept;`} />
+</DeclarationDoc>
+{/* source:cpp-thread-stop-source-request-stop:0001 */}
+Issues a stop request to the stop-state, if the `stop_source` object has a stop-state and it has not yet already had stop requested.
+{/* source:cpp-thread-stop-source-request-stop:0002 */}
+The determination is made atomically, and if stop was requested, the stop-state is atomically updated to avoid race conditions, such that:
+{/* source:cpp-thread-stop-source-request-stop:0003 */}
+- `stop_requested()` and `stop_possible()` can be concurrently invoked on other `stop_tokens` and `stop_sources` of the same stop-state;
+- `request_stop()` can be concurrently invoked on other `stop_source` objects, and only one will actually perform the stop request.
+{/* source:cpp-thread-stop-source-request-stop:0004 */}
+However, see the Notes section.
+### Parameters
+{/* source:cpp-thread-stop-source-request-stop:0005 */}
+(none)
+### Return value
+{/* source:cpp-thread-stop-source-request-stop:0006 */}
+`true` if the `stop_source` object has a stop-state and this invocation made a stop request, otherwise `false`.
+### Postconditions
+{/* source:cpp-thread-stop-source-request-stop:0007 */}
+`stop_possible()` is `false` or `stop_requested()` is `true`.
+### Notes
+{/* source:cpp-thread-stop-source-request-stop:0008 */}
+If the `request_stop()` does issue a stop request (i.e., returns `true`), then any `stop_callbacks` registered for the same associated stop-state will be invoked synchronously, on the same thread `request_stop()` is issued on. If an invocation of a callback exits via an exception, [`std::terminate`](/docs/cpp/library/error/terminate) is called.
+{/* source:cpp-thread-stop-source-request-stop:0009 */}
+If the `stop_source` object has a stop-state but a stop request has already been made, this function returns `false`. However there is no guarantee that another `stop_source` object which has just (successfully) requested stop is not still in the middle of invoking a `stop_callback` function.
+{/* source:cpp-thread-stop-source-request-stop:0010 */}
+If the `request_stop()` does issue a stop request (i.e., returns `true`), then all condition variables of base type [`std::condition_variable_any`](/docs/cpp/library/thread/condition_variable_any) registered with an interruptible wait for `stop_tokens` associated with the `stop_source`'s stop-state will be notified.
+### Example
+{/* source:cpp-thread-stop-source-request-stop:0011 */}
+This section is incomplete
+
+Reason: no example

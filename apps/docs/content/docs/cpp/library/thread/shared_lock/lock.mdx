@@ -1,0 +1,120 @@
+---
+title: "std::shared_lock<Mutex>::lock"
+description: "Locks the associated mutex in shared mode. Effectively calls mutex()->lock_shared()."
+source_url: "https://en.cppreference.com/w/cpp/thread/shared_lock/lock"
+language: "C++"
+---
+
+{/* source:cpp-thread-shared-lock-lock:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++14" code={`void lock();`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-thread-shared-lock-lock:0001 */}
+    Locks the associated mutex in shared mode. Effectively calls `mutex()->lock_shared()`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-thread-shared-lock-lock:0002 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-shared-lock-lock:0003 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-shared-lock-lock:0004 */}
+- Any exceptions thrown by `mutex()->lock_shared()`.
+
+{/* source:cpp-thread-shared-lock-lock:0005 */}
+- If there is no associated mutex, [`std::system_error`](/docs/cpp/library/error/system_error) with an error code of [`std::errc::operation_not_permitted`](/docs/cpp/library/error/errc).
+
+{/* source:cpp-thread-shared-lock-lock:0006 */}
+- If the associated mutex is already locked by this `shared_lock` (that is, [`owns_lock`](/docs/cpp/library/thread/shared_lock/owns_lock) returns `true`), [`std::system_error`](/docs/cpp/library/error/system_error) with an error code of [`std::errc::resource_deadlock_would_occur`](/docs/cpp/library/error/errc).
+
+### Example
+
+{/* source:cpp-thread-shared-lock-lock:0007 */}
+This section is incomplete
+
+Reason: show a meaningful use of shared_lock::lock
+
+{/* source:cpp-thread-shared-lock-lock:0008 */}
+```cpp
+#include <iostream>
+#include <mutex>
+#include <shared_mutex>
+#include <string>
+#include <thread>
+ 
+std::string file = "Original content."; // Simulates a file
+std::mutex output_mutex; // mutex that protects output operations.
+std::shared_mutex file_mutex; // reader/writer mutex
+ 
+void read_content(int id)
+{
+    std::string content;
+    {
+        std::shared_lock lock(file_mutex, std::defer_lock); // Do not lock it first.
+        lock.lock(); // Lock it here.
+        content = file;
+    }
+    std::lock_guard lock(output_mutex);
+    std::cout << "Contents read by reader #" << id << ": " << content << '\n';
+}
+ 
+void write_content()
+{
+    {
+        std::lock_guard file_lock(file_mutex);
+        file = "New content";
+    }
+    std::lock_guard output_lock(output_mutex);
+    std::cout << "New content saved.\n";
+}
+ 
+int main()
+{
+    std::cout << "Two readers reading from file.\n"
+              << "A writer competes with them.\n";
+    std::thread reader1{read_content, 1};
+    std::thread reader2{read_content, 2};
+    std::thread writer{write_content};
+    reader1.join();
+    reader2.join();
+    writer.join();
+    std::cout << "The first few operations to file are done.\n";
+    reader1 = std::thread{read_content, 3};
+    reader1.join();
+}
+```
+
+Possible output:
+
+```text
+Two readers reading from file.
+A writer competes with them.
+Contents read by reader #1: Original content.
+Contents read by reader #2: Original content.
+New content saved.
+The first few operations to file are done.
+Contents read by reader #3: New content
+```
+
+### See also
+
+{/* source:cpp-thread-shared-lock-lock:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/shared_lock/try_lock)</DescriptionTerm>
+    <DescriptionBody>tries to lock the associated mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock`](/docs/cpp/library/thread/shared_lock/unlock)</DescriptionTerm>
+    <DescriptionBody>unlocks the associated mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

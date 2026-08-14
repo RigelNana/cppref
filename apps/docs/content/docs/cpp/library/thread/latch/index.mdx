@@ -1,0 +1,154 @@
+---
+title: "std::latch"
+description: "The latch class is a downward counter of type std::ptrdiff_t which can be used to synchronize threads."
+source_url: "https://en.cppreference.com/w/cpp/thread/latch"
+language: "C++"
+---
+
+{/* source:cpp-thread-latch:0000 */}
+<DeclarationDoc>
+Defined in header [`<latch>`](/docs/cpp/library/headers/latch)
+
+  <Declaration language="cpp" since="C++20" code={`class latch;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-latch:0001 */}
+The `latch` class is a downward counter of type [`std::ptrdiff_t`](/docs/cpp/library/utility/types/ptrdiff_t) which can be used to synchronize threads. The value of the counter is initialized on creation. Threads may block on the latch until the counter is decremented to zero. There is no possibility to increase or reset the counter, which makes the latch a single-use barrier.
+
+{/* source:cpp-thread-latch:0002 */}
+Concurrent invocations of the member functions of `std::latch`, except for the destructor, do not introduce data races.
+
+### Data Members
+
+{/* source:cpp-thread-latch:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::ptrdiff_t` `counter`</DescriptionTerm>
+    <DescriptionBody>the internal counter (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-thread-latch:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/latch/latch)</DescriptionTerm>
+    <DescriptionBody>constructs a latch (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/latch/~latch)</DescriptionTerm>
+    <DescriptionBody>destroys the latch (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>latch is not assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count_down`](/docs/cpp/library/thread/latch/count_down)</DescriptionTerm>
+    <DescriptionBody>decrements the counter in a non-blocking manner (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_wait`](/docs/cpp/library/thread/latch/try_wait)</DescriptionTerm>
+    <DescriptionBody>tests if the internal counter equals zero (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/latch/wait)</DescriptionTerm>
+    <DescriptionBody>blocks until the counter reaches zero (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`arrive_and_wait`](/docs/cpp/library/thread/latch/arrive_and_wait)</DescriptionTerm>
+    <DescriptionBody>decrements the counter and blocks until it reaches zero (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Constants
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`max`](/docs/cpp/library/thread/latch/max)</DescriptionTerm>
+    <DescriptionBody>the maximum value of counter supported by the implementation (public static member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-thread-latch:0005 */}
+| [Feature-test macro](/docs/cpp/library/utility/feature_test) | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_latch`](/docs/cpp/library/feature_test#cpp_lib_latch) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_latch_201907L) | (C++20) | `std::latch` |
+
+### Example
+
+{/* source:cpp-thread-latch:0006 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <latch>
+#include <string>
+#include <thread>
+
+struct Job
+{
+    const std::string name;
+    std::string product{"not worked"};
+    std::thread action{};
+};
+
+int main()
+{
+    Job jobs[]{{"Annika"}, {"Buru"}, {"Chuck"}};
+
+    std::latch work_done{std::size(jobs)};
+    std::latch start_clean_up{1};
+
+    auto work = [&](Job& my_job)
+    {
+        my_job.product = my_job.name + " worked";
+        work_done.count_down();
+        start_clean_up.wait();
+        my_job.product = my_job.name + " cleaned";
+    };
+
+    std::cout << "Work is starting... ";
+    for (auto& job : jobs)
+        job.action = std::thread{work, std::ref(job)};
+
+    work_done.wait();
+    std::cout << "done:\n";
+    for (auto const& job : jobs)
+        std::cout << "  " << job.product << '\n';
+
+    std::cout << "Workers are cleaning up... ";
+    start_clean_up.count_down();
+    for (auto& job : jobs)
+        job.action.join();
+
+    std::cout << "done:\n";
+    for (auto const& job : jobs)
+        std::cout << "  " << job.product << '\n';
+}
+```
+
+Output:
+
+```text
+Work is starting... done:
+  Annika worked
+  Buru worked
+  Chuck worked
+Workers are cleaning up... done:
+  Annika cleaned
+  Buru cleaned
+  Chuck cleaned
+```
+
+### See also
+
+{/* source:cpp-thread-latch:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`barrier`](/docs/cpp/library/thread/barrier) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>reusable thread barrier (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,151 @@
+---
+title: "std::shared_mutex::lock_shared"
+description: "Acquires shared ownership of the mutex."
+source_url: "https://en.cppreference.com/w/cpp/thread/shared_mutex/lock_shared"
+language: "C++"
+---
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`void lock_shared();`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0001 */}
+Acquires shared ownership of the mutex. If another thread is holding the mutex in exclusive ownership, a call to `lock_shared` will block execution until shared ownership can be acquired.
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0002 */}
+If `lock_shared` is called by a thread that already owns the `mutex` in any mode (exclusive or shared), the behavior is undefined.
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0003 */}
+If more than the implementation-defined maximum number of shared owners already locked the mutex in shared mode, `lock_shared` blocks execution until the number of shared owners is reduced. The maximum number of owners is guaranteed to be at least 10000.
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0004 */}
+A prior [`unlock()`](/docs/cpp/library/thread/shared_mutex/unlock) operation on the same mutex *synchronizes-with* (as defined in [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) this operation.
+
+### Parameters
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0006 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0007 */}
+Throws [`std::system_error`](/docs/cpp/library/error/system_error) when errors occur, including errors from the underlying operating system that would prevent lock from meeting its specifications. The mutex is not locked in the case of any exception being thrown.
+
+### Notes
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0008 */}
+`lock_shared()` is usually not called directly: [`std::shared_lock`](/docs/cpp/library/thread/shared_lock) is used to manage shared locking.
+
+### Example
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0009 */}
+```cpp
+#include <chrono>
+#include <iostream>
+#include <mutex>
+#include <shared_mutex>
+#include <syncstream>
+#include <thread>
+#include <vector>
+ 
+std::mutex stream_mutx;
+void print(auto v)
+{
+    std::unique_lock<std::mutex> lock(stream_mutx);
+    std::cout << std::this_thread::get_id() << " saw: ";
+    for (auto e : v)
+        std::cout << e << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    using namespace std::chrono_literals;
+    constexpr int N_READERS = 5;
+    constexpr int LAST = -999;
+ 
+    std::shared_mutex smtx;
+    int product = 0;
+ 
+    auto writer = [&smtx, &product](int start, int end)
+    {
+        for (int i = start; i < end; ++i)
+        {
+            auto data = i;            
+            {
+                std::unique_lock<std::shared_mutex> lock(smtx);
+                product = data;
+            } 
+            std::this_thread::sleep_for(3ms);
+        }
+ 
+        smtx.lock(); // lock manually
+        product = LAST;
+        smtx.unlock();
+    };
+ 
+    auto reader = [&smtx, &product]()
+    {
+        int data = 0;
+        std::vector<int> seen;
+        do
+        {
+            {
+                smtx.lock_shared(); // better to use: std::shared_lock lock(smtx);
+                data = product;
+                smtx.unlock_shared();
+            }                                   
+ 
+            seen.push_back(data);
+            std::this_thread::sleep_for(2ms);
+        }
+        while (data != LAST);
+ 
+        print(seen);
+    };
+ 
+    std::vector<std::thread> threads;
+    threads.emplace_back(writer, 1, 13);
+    threads.emplace_back(writer, 42, 52);
+ 
+    for (int i = 0; i < N_READERS; ++i)
+        threads.emplace_back(reader);
+ 
+    for (auto&& t : threads)
+        t.join();
+}
+```
+
+Possible output:
+
+```text
+127755840 saw: 43 3 3 4 46 5 6 7 7 8 9 51 10 11 11 12 -999
+144541248 saw: 2 44 3 4 46 5 6 7 7 8 9 51 10 11 11 12 -999
+110970432 saw: 42 2 3 45 4 5 47 6 7 8 8 9 10 11 11 12 -999
+119363136 saw: 42 2 3 4 46 5 6 7 7 8 9 9 10 11 11 12 12 -999
+136148544 saw: 2 44 3 4 46 5 6 48 7 8 9 51 10 11 11 12 12 -999
+```
+
+### See also
+
+{/* source:cpp-thread-shared-mutex-lock-shared:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock`](/docs/cpp/library/thread/shared_mutex/lock)</DescriptionTerm>
+    <DescriptionBody>locks the mutex, blocks if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock_shared`](/docs/cpp/library/thread/shared_mutex/try_lock_shared)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex for shared ownership, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock_shared`](/docs/cpp/library/thread/shared_mutex/unlock_shared)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (shared ownership) (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

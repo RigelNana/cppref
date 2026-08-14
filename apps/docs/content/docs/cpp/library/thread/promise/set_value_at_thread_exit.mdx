@@ -1,0 +1,120 @@
+---
+title: "std::promise<R>::set_value_at_thread_exit"
+description: "Stores the value into the shared state without making the state ready immediately."
+source_url: "https://en.cppreference.com/w/cpp/thread/promise/set_value_at_thread_exit"
+language: "C++"
+---
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0000 */}
+<DeclarationDoc>
+  Main template
+
+  <Declaration id="1" language="cpp" since="C++11" code={`void set_value_at_thread_exit( const R& value );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`void set_value_at_thread_exit( R&& value );`} />
+
+  `std::promise<R&>` specializations
+
+  <Declaration id="3" language="cpp" since="C++11" code={`void set_value_at_thread_exit( R& value );`} />
+
+  `std::promise<void>` specialization
+
+  <Declaration id="4" language="cpp" since="C++11" code={`void set_value_at_thread_exit();`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0001 */}
+Stores the `value` into the shared state without making the state ready immediately. The state is made ready when the current thread exits, after all variables with thread-local storage duration have been destroyed.
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0002 */}
+The operation behaves as though [`set_value`](/docs/cpp/library/thread/promise/set_value), [`set_exception`](/docs/cpp/library/thread/promise/set_exception), `set_value_at_thread_exit`, and [`set_exception_at_thread_exit`](/docs/cpp/library/thread/promise/set_exception_at_thread_exit) acquire a single mutex associated with the promise object while updating the promise object.
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0003 */}
+Calls to this function do not introduce data races with calls to [`get_future`](/docs/cpp/library/thread/promise/get_future) (therefore they need not synchronize with each other).
+
+### Parameters
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0004 */}
+<ParameterList>
+  <Parameter name="value">value to store in the shared state</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0005 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0006 */}
+[`std::future_error`](/docs/cpp/library/thread/future_error) on the following conditions:
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0007 */}
+- `*this` has no shared state. The error code is set to [`no_state`](/docs/cpp/library/thread/future_errc).
+- The shared state already stores a value or exception. The error code is set to [`promise_already_satisfied`](/docs/cpp/library/thread/future_errc).
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0008 */}
+Additionally:
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0009 */}
+1. Any exception thrown by the constructor selected to copy an object of type `R`.
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0010 */}
+2. Any exception thrown by the constructor selected to move an object of type `R`.
+
+### Example
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0011 */}
+```cpp
+#include <future>
+#include <iostream>
+#include <thread>
+
+int main()
+{
+    using namespace std::chrono_literals;
+    std::promise<int> p;
+    std::future<int> f = p.get_future();
+    std::thread([&p]
+    {
+        std::this_thread::sleep_for(1s);
+        p.set_value_at_thread_exit(9);
+    }).detach();
+
+    std::cout << "Waiting... " << std::flush;
+    f.wait();
+    std::cout << "Done!\nResult is: " << f.get() << '\n';
+}
+```
+
+Output:
+
+```text
+Waiting... Done!
+Result is: 9
+```
+
+### Defect reports
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2098} standard="C++11">
+    <PublishedBehavior>it was unclear which exceptions are required to be thrown</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-promise-set-value-at-thread-exit:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_value`](/docs/cpp/library/thread/promise/set_value)</DescriptionTerm>
+    <DescriptionBody>sets the result to specific value (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`set_exception_at_thread_exit`](/docs/cpp/library/thread/promise/set_exception_at_thread_exit)</DescriptionTerm>
+    <DescriptionBody>sets the result to indicate an exception while delivering the notification only at thread exit (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

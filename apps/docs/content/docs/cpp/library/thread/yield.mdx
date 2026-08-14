@@ -1,0 +1,81 @@
+---
+title: "std::this_thread::yield"
+description: "Provides a hint to the implementation to reschedule the execution of threads, allowing other threads to run."
+source_url: "https://en.cppreference.com/w/cpp/thread/yield"
+language: "C++"
+---
+
+{/* source:cpp-thread-yield:0000 */}
+<DeclarationDoc>
+Defined in header [`<thread>`](/docs/cpp/library/headers/thread)
+
+  <Declaration language="cpp" since="C++11" code={`void yield() noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-yield:0001 */}
+Provides a hint to the implementation to reschedule the execution of threads, allowing other threads to run.
+
+### Parameters
+
+{/* source:cpp-thread-yield:0002 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-yield:0003 */}
+(none)
+
+### Notes
+
+{/* source:cpp-thread-yield:0004 */}
+The exact behavior of this function depends on the implementation, in particular on the mechanics of the OS scheduler in use and the state of the system. For example, a first-in-first-out realtime scheduler (SCHED_FIFO in Linux) would suspend the current thread and put it on the back of the queue of the same-priority threads that are ready to run, and if there are no other threads at the same priority, `yield` has no effect.
+
+### Example
+
+{/* source:cpp-thread-yield:0005 */}
+```cpp
+#include <chrono>
+#include <iostream>
+#include <thread>
+ 
+// "busy sleep" while suggesting that other threads run 
+// for a small amount of time
+void little_sleep(std::chrono::microseconds us)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+    auto end = start + us;
+    do
+    {
+        std::this_thread::yield();
+    }
+    while (std::chrono::high_resolution_clock::now() < end);
+}
+ 
+int main()
+{
+    auto start = std::chrono::high_resolution_clock::now();
+ 
+    little_sleep(std::chrono::microseconds(100));
+ 
+    auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    std::cout << "waited for "
+              << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()
+              << " microseconds\n";
+}
+```
+
+Possible output:
+
+```text
+waited for 128 microseconds
+```
+
+### See also
+
+{/* source:cpp-thread-yield:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/thrd_yield) for `thrd_yield`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

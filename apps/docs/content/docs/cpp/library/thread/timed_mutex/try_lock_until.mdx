@@ -1,0 +1,95 @@
+---
+title: "std::timed_mutex::try_lock_until"
+description: "Tries to lock the mutex, returns if the mutex has been unavailable until specified time point has been reached."
+source_url: "https://en.cppreference.com/w/cpp/thread/timed_mutex/try_lock_until"
+language: "C++"
+---
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++11" code={`template< class Clock, class Duration >
+bool try_lock_until( const std::chrono::time_point<Clock, Duration>& timeout_time );`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0001 */}
+Tries to lock the mutex. Blocks until specified `timeout_time` has been reached (timeout) or the lock is acquired (owns the mutex), whichever comes first. On successful lock acquisition returns `true`, otherwise returns `false`.
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0002 */}
+If `timeout_time` has already passed, this function behaves like [`try_lock()`](/docs/cpp/library/thread/timed_mutex/try_lock).
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0003 */}
+`Clock` must meet the [Clock](/docs/cpp/library/named_req/Clock) requirements.<InlineRevision since="C++20"> The program is ill-formed if `std::chrono::is_clock_v<Clock>` is `false`.</InlineRevision>
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0004 */}
+The standard recommends that the clock tied to `timeout_time` be used, in which case adjustments of the clock may be taken into account. Thus, the duration of the block might be more or less than `timeout_time - Clock::now()` at the time of the call, depending on the direction of the adjustment and whether it is honored by the implementation. The function also may block until after `timeout_time` has been reached due to process scheduling or resource contention delays.
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0005 */}
+As with [`try_lock()`](/docs/cpp/library/thread/timed_mutex/try_lock), this function is allowed to fail spuriously and return `false` even if the mutex was not locked by any other thread at some point before `timeout_time`.
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0006 */}
+Prior [`unlock()`](/docs/cpp/library/thread/timed_mutex/unlock) operation on the same mutex *synchronizes-with* (as defined in [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) this operation if it returns `true`.
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0007 */}
+If `try_lock_until` is called by a thread that already owns the mutex, the behavior is undefined.
+
+### Parameters
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0008 */}
+<ParameterList>
+  <Parameter name="timeout_time">maximum time point to block until</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0009 */}
+`true` if the lock was acquired successfully, otherwise `false`.
+
+### Exceptions
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0010 */}
+Any exception thrown by `timeout_time` (clocks, time points, and durations provided by the standard library never throw).
+
+### Example
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0011 */}
+This section is incomplete
+
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2093} standard="C++11">
+    <PublishedBehavior>`try_lock_until` threw nothing</PublishedBehavior>
+    <CorrectedBehavior>throws timeout-related exceptions</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-thread-timed-mutex-try-lock-until:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lock`](/docs/cpp/library/thread/timed_mutex/lock)</DescriptionTerm>
+    <DescriptionBody>locks the mutex, blocks if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/timed_mutex/try_lock)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock_for`](/docs/cpp/library/thread/timed_mutex/try_lock_for)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex, returns if the mutex has been unavailable for the specified timeout duration (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock`](/docs/cpp/library/thread/timed_mutex/unlock)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/thread/mtx_timedlock) for `mtx_timedlock`
+

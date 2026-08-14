@@ -1,0 +1,185 @@
+---
+title: "std::future"
+description: "The class template std::future provides a mechanism to access the result of asynchronous operations."
+source_url: "https://en.cppreference.com/w/cpp/thread/future"
+language: "C++"
+---
+
+{/* source:cpp-thread-future:0000 */}
+<DeclarationDoc>
+Defined in header [`<future>`](/docs/cpp/library/headers/future)
+
+  <Declaration id="1" language="cpp" since="C++11" code={`template< class T > class future;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class T > class future<T&>;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template<> class future<void>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-future:0001 */}
+The class template `std::future` provides a mechanism to access the result of asynchronous operations:
+
+{/* source:cpp-thread-future:0002 */}
+- An asynchronous operation (created via [`std::async`](/docs/cpp/library/thread/async), [`std::packaged_task`](/docs/cpp/library/thread/packaged_task), or [`std::promise`](/docs/cpp/library/thread/promise)) can provide a `std::future` object to the creator of that asynchronous operation.
+
+{/* source:cpp-thread-future:0003 */}
+- The creator of the asynchronous operation can then use a variety of methods to query, wait for, or extract a value from the `std::future`. These methods may block if the asynchronous operation has not yet provided a value.
+
+{/* source:cpp-thread-future:0004 */}
+- When the asynchronous operation is ready to send a result to the creator, it can do so by modifying shared state (e.g. [`std::promise::set_value`](/docs/cpp/library/thread/promise/set_value)) that is linked to the creator's `std::future`.
+
+{/* source:cpp-thread-future:0005 */}
+Note that `std::future` references shared state that is not shared with any other asynchronous return objects (as opposed to [`std::shared_future`](/docs/cpp/library/thread/shared_future)).
+
+### Member functions
+
+{/* source:cpp-thread-future:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/thread/future/future)</DescriptionTerm>
+    <DescriptionBody>constructs the future object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/thread/future/~future)</DescriptionTerm>
+    <DescriptionBody>destructs the future object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/thread/future/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>moves the future object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`share`](/docs/cpp/library/thread/future/share)</DescriptionTerm>
+    <DescriptionBody>transfers the shared state from `*this` to a `shared_future` and returns it (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Getting the result
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get`](/docs/cpp/library/thread/future/get)</DescriptionTerm>
+    <DescriptionBody>returns the result (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### State
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`valid`](/docs/cpp/library/thread/future/valid)</DescriptionTerm>
+    <DescriptionBody>checks if the future has a shared state (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait`](/docs/cpp/library/thread/future/wait)</DescriptionTerm>
+    <DescriptionBody>waits for the result to become available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_for`](/docs/cpp/library/thread/future/wait_for)</DescriptionTerm>
+    <DescriptionBody>waits for the result, returns if it is not available for the specified timeout duration (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wait_until`](/docs/cpp/library/thread/future/wait_until)</DescriptionTerm>
+    <DescriptionBody>waits for the result, returns if it is not available until specified time point has been reached (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Examples
+
+{/* source:cpp-thread-future:0007 */}
+```cpp
+#include <future>
+#include <iostream>
+#include <thread>
+ 
+int main()
+{
+    // future from a packaged_task
+    std::packaged_task<int()> task([]{ return 7; }); // wrap the function
+    std::future<int> f1 = task.get_future(); // get a future
+    std::thread t(std::move(task)); // launch on a thread
+ 
+    // future from an async()
+    std::future<int> f2 = std::async(std::launch::async, []{ return 8; });
+ 
+    // future from a promise
+    std::promise<int> p;
+    std::future<int> f3 = p.get_future();
+    std::thread([&p]{ p.set_value_at_thread_exit(9); }).detach();
+ 
+    std::cout << "Waiting..." << std::flush;
+    f1.wait();
+    f2.wait();
+    f3.wait();
+    std::cout << "Done!\nResults are: "
+              << f1.get() << ' ' << f2.get() << ' ' << f3.get() << '\n';
+    t.join();
+}
+```
+
+Output:
+
+```text
+Waiting...Done!
+Results are: 7 8 9
+```
+
+### Example with exceptions
+
+{/* source:cpp-thread-future:0008 */}
+```cpp
+#include <future>
+#include <iostream>
+#include <thread>
+ 
+int main()
+{
+    std::promise<int> p;
+    std::future<int> f = p.get_future();
+ 
+    std::thread t([&p]
+    {
+        try
+        {
+            // code that may throw
+            throw std::runtime_error("Example");
+        }
+        catch (...)
+        {
+            try
+            {
+                // store anything thrown in the promise
+                p.set_exception(std::current_exception());
+            }
+            catch (...) {} // set_exception() may throw too
+        }
+    });
+ 
+    try
+    {
+        std::cout << f.get();
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << "Exception from the thread: " << e.what() << '\n';
+    }
+    t.join();
+}
+```
+
+Output:
+
+```text
+Exception from the thread: Example
+```
+
+### See also
+
+{/* source:cpp-thread-future:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`async`](/docs/cpp/library/thread/async) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>runs a function asynchronously (potentially in a new thread) and returns a `std::future` that will hold the result (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`shared_future`](/docs/cpp/library/thread/shared_future) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>waits for a value (possibly referenced by other futures) that is set asynchronously (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

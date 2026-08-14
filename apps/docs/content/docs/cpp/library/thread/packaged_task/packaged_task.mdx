@@ -1,0 +1,115 @@
+---
+title: "std::packaged_task<R(Args...)>::packaged_task"
+description: "Constructs a new std::packaged_task object."
+source_url: "https://en.cppreference.com/w/cpp/thread/packaged_task/packaged_task"
+language: "C++"
+---
+
+{/* source:cpp-thread-packaged-task-packaged-task:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`packaged_task() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`template< class F >
+explicit packaged_task( F&& f );`} />
+  <Declaration id="3" language="cpp" since="C++11" until="C++17" code={`template< class F, class Allocator >
+explicit packaged_task( std::allocator_arg_t, const Allocator& a, F&& f );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`packaged_task( const packaged_task& ) = delete;`} />
+  <Declaration id="5" language="cpp" since="C++11" code={`packaged_task( packaged_task&& rhs ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-packaged-task-packaged-task:0001 */}
+Constructs a new `std::packaged_task` object.
+
+{/* source:cpp-thread-packaged-task-packaged-task:0002 */}
+1. Constructs a `std::packaged_task` object with no task and no shared state.
+
+{/* source:cpp-thread-packaged-task-packaged-task:0003 */}
+2,3. Constructs a `std::packaged_task` object with a shared state and a copy of the task, initialized with `std::forward<F>(f)`. <InlineRevision until="C++17">The allocator `a` is used to allocate memory necessary to store the task.</InlineRevision>
+
+{/* source:cpp-thread-packaged-task-packaged-task:0004 */}
+<Revision until="C++17">These overloads participate in overload resolution only if `std::decay<F>::type` is not the same type as `std::packaged_task<R(Args...)>`. Let `t1`, `t2`, ..., `tN` be values of the corresponding types in `Args`, if [`INVOKE<R>`](/docs/cpp/library/utility/functional)`(f, t1, t2, ..., tN)` is not a valid expression, the program is ill-formed.</Revision>
+
+<Revision since="C++17">If `std::is_invocable_r_v<R, F&, Args...>` is `false`, the program is ill-formed.</Revision>
+
+{/* source:cpp-thread-packaged-task-packaged-task:0005 */}
+If invoking `f` itself and invoking a copy of `f` behave differently, the behavior is undefined.
+
+{/* source:cpp-thread-packaged-task-packaged-task:0006 */}
+4. The copy constructor is deleted, `std::packaged_task` is move-only.
+
+{/* source:cpp-thread-packaged-task-packaged-task:0007 */}
+5. Constructs a `std::packaged_task` with the shared state and task formerly owned by `rhs`, leaving `rhs` with no shared state and a moved-from task.
+
+### Parameters
+
+{/* source:cpp-thread-packaged-task-packaged-task:0008 */}
+<ParameterList>
+  <Parameter name="f">the callable target (function, member function, lambda expression, function object) to execute</Parameter>
+  <Parameter name="a">the allocator to use when storing the task</Parameter>
+  <Parameter name="rhs">the `std::packaged_task` to move from</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-thread-packaged-task-packaged-task:0009 */}
+2. Any exceptions thrown by copy/move constructor of `f` and possibly [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if the allocation fails.
+
+{/* source:cpp-thread-packaged-task-packaged-task:0010 */}
+3. Any exceptions thrown by copy/move constructor of `f` and by the allocator's allocate function if memory allocation fails.
+
+### Example
+
+{/* source:cpp-thread-packaged-task-packaged-task:0011 */}
+```cpp
+#include <future>
+#include <iostream>
+#include <thread>
+
+int fib(int n)
+{
+    if (n < 3)
+        return 1;
+    else
+        return fib(n - 1) + fib(n - 2);
+}
+
+int main()
+{
+    std::packaged_task<int(int)> fib_task(&fib); 
+
+    std::cout << "Starting task\n";
+    auto result = fib_task.get_future();
+    std::thread t(std::move(fib_task), 42);
+
+    std::cout << "Waiting for task to finish..." << std::endl;
+    std::cout << result.get() << '\n';
+
+    std::cout << "Task complete\n";
+    t.join();
+}
+```
+
+Output:
+
+```text
+Starting task
+Waiting for task to finish...
+267914296
+Task complete
+```
+
+### Defect reports
+
+{/* source:cpp-thread-packaged-task-packaged-task:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-thread-packaged-task-packaged-task:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2067} standard="C++11">
+    <PublishedBehavior>the parameter type of the copy constructor was `packaged_task&`</PublishedBehavior>
+    <CorrectedBehavior>added `const`</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2097} standard="C++11">
+    <PublishedBehavior>for overloads (2,3), `F` could be `std::packaged_task<R(Args...)>`</PublishedBehavior>
+    <CorrectedBehavior>`F` is constrained</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

@@ -1,0 +1,109 @@
+---
+title: "std::shared_timed_mutex::lock"
+description: "Locks the mutex. If another thread has already locked the mutex, a call to lock will block execution until the lock is acquired."
+source_url: "https://en.cppreference.com/w/cpp/thread/shared_timed_mutex/lock"
+language: "C++"
+---
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++14" code={`void lock();`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0001 */}
+Locks the mutex. If another thread has already locked the mutex, a call to `lock` will block execution until the lock is acquired.
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0002 */}
+If `lock` is called by a thread that already owns the `mutex` in any mode (shared or exclusive), the behavior is undefined.
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0003 */}
+Prior [`unlock()`](/docs/cpp/library/thread/shared_timed_mutex/unlock) operations on the same mutex *synchronize-with* (as defined in [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) this operation.
+
+### Parameters
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0005 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0006 */}
+Throws [`std::system_error`](/docs/cpp/library/error/system_error) when errors occur, including errors from the underlying operating system that would prevent lock from meeting its specifications. The mutex is not locked in the case of any exception being thrown.
+
+### Notes
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0007 */}
+`lock()` is usually not called directly: [`std::unique_lock`](/docs/cpp/library/thread/unique_lock), [`std::scoped_lock`](/docs/cpp/library/thread/scoped_lock), and [`std::lock_guard`](/docs/cpp/library/thread/lock_guard) are used to manage exclusive locking.
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0008 */}
+Shared mutexes do not support direct transition from shared to unique ownership mode: the shared lock has to be relinquished with [`unlock_shared()`](/docs/cpp/library/thread/shared_timed_mutex/unlock_shared) before exclusive ownership may be obtained with `lock()`. [boost::upgrade_mutex](https://www.boost.org/doc/libs/release/doc/html/thread/synchronization.html#thread.synchronization.mutex_types.upgrade_mutex) may be used for this purpose.
+
+### Example
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0009 */}
+This example shows how lock and unlock can be used to protect shared data.
+
+```cpp
+#include <chrono>
+#include <iostream>
+#include <mutex>
+#include <thread>
+ 
+int g_num = 0; // protected by g_num_mutex
+std::mutex g_num_mutex;
+ 
+void slow_increment(int id) 
+{
+    for (int i = 0; i < 3; ++i)
+    {
+        g_num_mutex.lock(); 
+        ++g_num;
+        // note, that the mutex also syncronizes the output
+        std::cout << "id: " << id << ", g_num: " << g_num << '\n';
+        g_num_mutex.unlock();
+ 
+        std::this_thread::sleep_for(std::chrono::milliseconds(234));
+    }
+}
+ 
+int main()
+{
+    std::thread t1{slow_increment, 0};
+    std::thread t2{slow_increment, 1};
+    t1.join();
+    t2.join();
+}
+```
+
+Possible output:
+
+```text
+id: 0, g_num: 1
+id: 1, g_num: 2
+id: 1, g_num: 3
+id: 0, g_num: 4
+id: 0, g_num: 5
+id: 1, g_num: 6
+```
+
+### See also
+
+{/* source:cpp-thread-shared-timed-mutex-lock:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`try_lock`](/docs/cpp/library/thread/shared_timed_mutex/try_lock)</DescriptionTerm>
+    <DescriptionBody>tries to lock the mutex, returns if the mutex is not available (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`unlock`](/docs/cpp/library/thread/shared_timed_mutex/unlock)</DescriptionTerm>
+    <DescriptionBody>unlocks the mutex (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/mtx_lock)</DescriptionTerm>
+    <DescriptionBody>for `mtx_lock`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

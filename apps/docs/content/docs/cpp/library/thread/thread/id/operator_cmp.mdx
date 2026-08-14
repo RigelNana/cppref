@@ -1,0 +1,105 @@
+---
+title: "operator==,!=,<,<=,>,>=,<=>(std::thread::id)"
+description: "Compares two thread identifiers."
+source_url: "https://en.cppreference.com/w/cpp/thread/thread/id/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-thread-thread-id-operator-cmp:0000 */}
+Defined in header [`<thread>`](/docs/cpp/library/headers/thread)
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`bool operator==( std::thread::id lhs, std::thread::id rhs ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" until="C++20" code={`bool operator!=( std::thread::id lhs, std::thread::id rhs ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++11" until="C++20" code={`bool operator< ( std::thread::id lhs, std::thread::id rhs ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++11" until="C++20" code={`bool operator<=( std::thread::id lhs, std::thread::id rhs ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++11" until="C++20" code={`bool operator> ( std::thread::id lhs, std::thread::id rhs ) noexcept;`} />
+  <Declaration id="6" language="cpp" since="C++11" until="C++20" code={`bool operator>=( std::thread::id lhs, std::thread::id rhs ) noexcept;`} />
+  <Declaration id="7" language="cpp" since="C++20" code={`std::strong_ordering operator<=>( std::thread::id lhs,
+                                    std::thread::id rhs ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-thread-thread-id-operator-cmp:0001 */}
+Compares two thread identifiers.
+
+{/* source:cpp-thread-thread-id-operator-cmp:0002 */}
+1. 1,2) Checks whether `lhs` and `rhs` represent either the same thread, or no thread.
+
+{/* source:cpp-thread-thread-id-operator-cmp:0003 */}
+2. 3-7) Compares `lhs` and `rhs` in an unspecified total ordering.
+
+{/* source:cpp-thread-thread-id-operator-cmp:0004 */}
+<Revision since="C++20">
+The `<`, `<=`, `>`, `>=`, and `!=` operators are [synthesized](/docs/cpp/language/expressions/operators#Comparison_operators) from `operator<=>` and `operator==` respectively.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-thread-thread-id-operator-cmp:0005 */}
+<ParameterList>
+  <Parameter name="lhs, rhs">thread identifiers to compare</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-thread-thread-id-operator-cmp:0006 */}
+1. 1-6) `true` if the corresponding relation holds, `false` otherwise.
+
+{/* source:cpp-thread-thread-id-operator-cmp:0007 */}
+2. 7) `std::strong_ordering::less` if `lhs` is less than `rhs` in the total ordering; otherwise `std::strong_ordering::greater` if `rhs` is less than `lhs` in the total ordering; otherwise `std::strong_ordering::equal`.
+
+### Complexity
+
+{/* source:cpp-thread-thread-id-operator-cmp:0008 */}
+Constant.
+
+### Example
+
+{/* source:cpp-thread-thread-id-operator-cmp:0009 */}
+```cpp
+#include <cassert>
+#include <chrono>
+#include <iostream>
+#include <thread>
+ 
+ 
+int main()
+{
+    auto work = [] { std::this_thread::sleep_for(std::chrono::seconds(1)); };
+    std::thread t1(work);
+    std::thread t2(work);
+ 
+    assert(t1.get_id() == t1.get_id() and
+           t2.get_id() == t2.get_id() and
+           t1.get_id() != t2.get_id());
+ 
+    if (const auto cmp = t1.get_id() <=> t2.get_id(); cmp < 0)
+        std::cout << "id1 < id2\n";
+    else
+        std::cout << "id1 > id2\n";
+ 
+    std::cout << "id1: " << t1.get_id() << "\n"
+                 "id2: " << t2.get_id() << '\n';
+ 
+    t1.join();
+    t2.join();
+}
+```
+
+Possible output:
+
+```text
+id1 > id2
+id1: 139741717640896
+id2: 139741709248192
+```
+
+### See also
+
+{/* source:cpp-thread-thread-id-operator-cmp:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/thread/thrd_equal) for `thrd_equal`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>
