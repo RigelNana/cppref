@@ -19,29 +19,36 @@ const searchUrl = withBase("/search.json");
     title: string;
   }
 
-  const root = document.querySelector<HTMLElement>("[data-doc-search]");
-  const input = root?.querySelector<HTMLInputElement>("input");
-  const results = root?.querySelector<HTMLElement>(".doc-search__results");
   let index: Promise<SearchEntry[]> | undefined;
 
-  function closeResults() {
+  function currentRoot(): HTMLElement | null {
+    return document.querySelector<HTMLElement>("[data-doc-search]");
+  }
+
+  function closeResults(root = currentRoot()): void {
+    const results = root?.querySelector<HTMLElement>(".doc-search__results");
     if (results) results.hidden = true;
   }
 
-  async function loadIndex(): Promise<SearchEntry[]> {
-    if (!root?.dataset.searchUrl) return [];
+  async function loadIndex(root: HTMLElement): Promise<SearchEntry[]> {
+    if (!root.dataset.searchUrl) return [];
     index ??= fetch(root.dataset.searchUrl).then((response) => response.json() as Promise<SearchEntry[]>);
     return index;
   }
 
-  input?.addEventListener("input", async () => {
-    if (!results) return;
+  document.addEventListener("input", async (event) => {
+    if (!(event.target instanceof HTMLInputElement)) return;
+    const input = event.target;
+    const root = input.closest<HTMLElement>("[data-doc-search]");
+    const results = root?.querySelector<HTMLElement>(".doc-search__results");
+    if (!root || !results) return;
     const query = input.value.trim().toLocaleLowerCase();
     if (query.length < 2) {
-      closeResults();
+      closeResults(root);
       return;
     }
-    const entries = await loadIndex();
+    const entries = await loadIndex(root);
+    if (!input.isConnected || input.value.trim().toLocaleLowerCase() !== query) return;
     const matches = entries
       .filter((entry) => `${entry.title} ${entry.description}`.toLocaleLowerCase().includes(query))
       .slice(0, 10);
@@ -65,14 +72,17 @@ const searchUrl = withBase("/search.json");
   });
 
   document.addEventListener("keydown", (event) => {
+    const root = currentRoot();
+    const input = root?.querySelector<HTMLInputElement>("input");
     if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
       event.preventDefault();
       input?.focus();
     }
-    if (event.key === "Escape") closeResults();
+    if (event.key === "Escape") closeResults(root);
   });
 
   document.addEventListener("pointerdown", (event) => {
-    if (root && event.target instanceof Node && !root.contains(event.target)) closeResults();
+    const root = currentRoot();
+    if (root && event.target instanceof Node && !root.contains(event.target)) closeResults(root);
   });
 </script>

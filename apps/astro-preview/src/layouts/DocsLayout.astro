@@ -1,5 +1,6 @@
 ---
 import type { MarkdownHeading } from "astro";
+import { ClientRouter } from "astro:transitions";
 import { Braces, Github, Menu, Moon, PanelLeftClose, Sun, X } from "lucide-astro";
 import DocSearch from "@/components/DocSearch.astro";
 import NavTree from "@/components/NavTree.astro";
@@ -35,7 +36,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
@@ -43,6 +44,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
     <meta name="generator" content={Astro.generator} />
     {canonical && <link rel="canonical" href={canonical} />}
     <title>{title} · cppreference modern</title>
+    <ClientRouter />
     <script is:inline>
       const savedTheme = localStorage.getItem("cppref-theme");
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -149,30 +151,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
     </div>
 
     <script>
-      const root = document.documentElement;
-      const themeButtons = document.querySelectorAll("[data-theme-toggle]");
-      for (const button of themeButtons) {
-        button.addEventListener("click", () => {
-          const dark = !root.classList.contains("dark");
-          root.classList.toggle("dark", dark);
-          localStorage.setItem("cppref-theme", dark ? "dark" : "light");
-        });
-      }
-
-      const body = document.body;
-      document.querySelector("[data-sidebar-open]")?.addEventListener("click", () => body.classList.add("sidebar-open"));
-      for (const close of document.querySelectorAll("[data-sidebar-close]")) {
-        close.addEventListener("click", () => body.classList.remove("sidebar-open"));
-      }
-      for (const toggle of document.querySelectorAll("[data-sidebar-toggle]")) {
-        toggle.addEventListener("click", () => {
-          if (window.matchMedia("(max-width: 900px)").matches) {
-            body.classList.remove("sidebar-open");
-          } else {
-            root.classList.toggle("sidebar-collapsed");
-          }
-        });
-      }
+      import "@/scripts/shell";
     </script>
   </body>
 </html>

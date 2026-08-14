@@ -20,5 +20,5 @@ export default defineConfig({
   },
   output: "static",
   site: process.env.ASTRO_SITE_URL ?? "http://localhost:4321",
-  trailingSlash: "ignore",
+  trailingSlash: "always",
 });
