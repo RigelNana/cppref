@@ -27,25 +27,19 @@ const { currentId, depth = 0, nodes } = Astro.props;
         );
       }
 
-      if (!active && node.href) {
-        return (
-          <li>
-            <a class="nav-link nav-folder-link" href={withBase(node.href)}>
-              <span>{node.title}</span>
-              <ChevronRight aria-hidden="true" />
-            </a>
-          </li>
-        );
-      }
+
+      const childNodes: NavNode[] = node.href
+        ? [{ href: node.href, id: node.id, kind: "page", title: "Overview" }, ...(node.children ?? [])]
+        : node.children ?? [];
 
       return (
         <li>
           <details class="nav-folder" open={active || depth === 0}>
-            <summary class:list={["nav-summary", { "is-current": current }]}>
-              {node.href ? <a href={withBase(node.href)} aria-current={current ? "page" : undefined}>{node.title}</a> : <span>{node.title}</span>}
+            <summary class:list={["nav-summary", { "is-current": current && !node.href }]}>
+              <span>{node.title}</span>
               <ChevronRight aria-hidden="true" />
             </summary>
-            {node.children && <Astro.self currentId={currentId} depth={depth + 1} nodes={node.children} />}
+            {childNodes.length > 0 && <Astro.self currentId={currentId} depth={depth + 1} nodes={childNodes} />}
           </details>
         </li>
       );
