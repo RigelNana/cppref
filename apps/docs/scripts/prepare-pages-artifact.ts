@@ -13,15 +13,21 @@ export interface PreparedPagesArtifact {
   removedFiles: number;
 }
 
-async function collectFullPayloads(directory: string, paths: string[]): Promise<void> {
+async function collectArtifactPayloads(
+  directory: string,
+  fullPayloadPaths: string[],
+  docsLayoutPrefetchPaths: string[],
+): Promise<void> {
   const entries = await readdir(directory, { withFileTypes: true });
 
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      await collectFullPayloads(path, paths);
+      await collectArtifactPayloads(path, fullPayloadPaths, docsLayoutPrefetchPaths);
     } else if (entry.isFile() && entry.name === "__next._full.txt") {
-      paths.push(path);
+      fullPayloadPaths.push(path);
+    } else if (entry.isFile() && entry.name === "__next.docs.txt") {
+      docsLayoutPrefetchPaths.push(path);
     }
   }
 }
@@ -66,7 +72,12 @@ export async function preparePagesArtifact(
   outputDirectory: string,
 ): Promise<PreparedPagesArtifact> {
   const fullPayloadPaths: string[] = [];
-  await collectFullPayloads(outputDirectory, fullPayloadPaths);
+  const docsLayoutPrefetchPaths: string[] = [];
+  await collectArtifactPayloads(
+    outputDirectory,
+    fullPayloadPaths,
+    docsLayoutPrefetchPaths,
+  );
 
   if (fullPayloadPaths.length === 0) {
     throw new Error(`No Next.js full segment payloads found under ${outputDirectory}.`);
@@ -100,13 +111,21 @@ export async function preparePagesArtifact(
     duplicates.push({ fullPayloadPath, routePayloadPath, size: fullPayload.size });
   }
 
+  let removedBytes = duplicates.reduce((total, duplicate) => total + duplicate.size, 0);
   for (const duplicate of duplicates) {
     await unlink(duplicate.fullPayloadPath);
   }
 
+  // Next.js can reconstruct this optional layout prefetch from the retained route tree,
+  // page segment, and route payload. Omitting it keeps the Pages artifact below 1 GiB.
+  for (const docsLayoutPrefetchPath of docsLayoutPrefetchPaths) {
+    removedBytes += (await stat(docsLayoutPrefetchPath)).size;
+    await unlink(docsLayoutPrefetchPath);
+  }
+
   return {
-    removedBytes: duplicates.reduce((total, duplicate) => total + duplicate.size, 0),
-    removedFiles: duplicates.length,
+    removedBytes,
+    removedFiles: duplicates.length + docsLayoutPrefetchPaths.length,
   };
 }
 
@@ -114,6 +133,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const outputDirectory = fileURLToPath(new URL("../out", import.meta.url));
   const result = await preparePagesArtifact(outputDirectory);
   console.log(
-    `Removed ${result.removedFiles} duplicate Next.js full segment payloads (${result.removedBytes} bytes).`,
+    `Removed ${result.removedFiles} redundant Next.js export payloads (${result.removedBytes} bytes).`,
   );
 }
