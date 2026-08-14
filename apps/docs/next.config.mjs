@@ -15,6 +15,11 @@ const config = {
   output: "export",
   trailingSlash: true,
   basePath,
+  enablePrerenderSourceMaps: false,
+  experimental: {
+    turbopackSourceMaps: false,
+    turbopackInputSourceMaps: false,
+  },
   images: {
     unoptimized: true,
   },
