@@ -1,0 +1,338 @@
+---
+title: "Standard format specification (since C++20)"
+description: "For basic types and string types, the format specification is based on the format specification in Python."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/spec"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-spec:0000 */}
+For basic types and string types, the format specification is based on the [format specification in Python](https://docs.python.org/3/library/string.html#formatspec).
+
+{/* source:cpp-utility-format-spec:0001 */}
+The syntax of format specifications is:
+
+{/* source:cpp-utility-format-spec:0002 */}
+| | |
+| --- | --- |
+| *fill-and-align* `(optional)` *sign* `(optional)` `#` `(optional)` `0` `(optional)` *width* `(optional)` *precision* `(optional)` `L` `(optional)` *type* `(optional)` | |
+
+{/* source:cpp-utility-format-spec:0003 */}
+The *sign*, `#` and `0` options are only valid when an integer or floating-point presentation type is used.
+
+### Fill and align
+
+{/* source:cpp-utility-format-spec:0004 */}
+*fill-and-align* is an optional *fill* character (which can be any character other than `{` or `}`), followed by one of the *align* options `<`, `>`, `^`.
+
+{/* source:cpp-utility-format-spec:0005 */}
+If no fill character is specified, it defaults to the space character. For a format specification in a Unicode encoding, the fill character must correspond to a single Unicode scalar value.
+
+{/* source:cpp-utility-format-spec:0006 */}
+The meaning of *align* options is as follows:
+
+{/* source:cpp-utility-format-spec:0007 */}
+- `<`: Forces the formatted argument to be aligned to the start of the available space by inserting `n` fill characters after the formatted argument. This is the default when a non-integer non-floating-point presentation type is used.
+- `>`: Forces the formatted argument to be aligned to the end of the available space by inserting `n` fill characters before the formatted argument. This is the default when an integer or floating-point presentation type is used.
+- `^`: Forces the formatted argument to be centered within the available space by inserting ⌊`n`/2⌋ characters before and ⌈`n`/2⌉ characters after the formatted argument.
+
+{/* source:cpp-utility-format-spec:0008 */}
+In each case, `n` is the difference of the minimum field width (specified by *width*) and the [estimated width](/docs/cpp/library/text/format/spec#Width_estimation) of the formatted argument, or `0` if the difference is less than `0`.
+
+{/* source:cpp-utility-format-spec:0009 */}
+```cpp
+#include <cassert>
+#include <format>
+
+int main()
+{
+    char c = 120;
+    assert(std::format("{:6}", 42)    == "    42");
+    assert(std::format("{:6}", 'x')   == "x     ");
+    assert(std::format("{:*<6}", 'x') == "x*****");
+    assert(std::format("{:*>6}", 'x') == "*****x");
+    assert(std::format("{:*^6}", 'x') == "**x***");
+    assert(std::format("{:6d}", c)    == "   120");
+    assert(std::format("{:6}", true)  == "true  ");
+}
+```
+
+### Sign, #, and 0
+
+{/* source:cpp-utility-format-spec:0010 */}
+The *sign* option can be one of following:
+
+{/* source:cpp-utility-format-spec:0011 */}
+- `+`: Indicates that a sign should be used for both non-negative and negative numbers. The `+` sign is inserted before the output value for non-negative numbers.
+- `-`: Indicates that a sign should be used for negative numbers only (this is the default behavior).
+- space: Indicates that a leading space should be used for non-negative numbers, and a minus sign for negative numbers.
+
+{/* source:cpp-utility-format-spec:0012 */}
+Negative zero is treated as a negative number.
+
+{/* source:cpp-utility-format-spec:0013 */}
+The *sign* option applies to floating-point infinity and NaN.
+
+{/* source:cpp-utility-format-spec:0014 */}
+```cpp
+#include <cassert>
+#include <format>
+#include <limits>
+
+int main()
+{
+    double inf = std::numeric_limits<double>::infinity();
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    assert(std::format("{0:},{0:+},{0:-},{0: }", 1)   == "1,+1,1, 1");
+    assert(std::format("{0:},{0:+},{0:-},{0: }", -1)  == "-1,-1,-1,-1");
+    assert(std::format("{0:},{0:+},{0:-},{0: }", inf) == "inf,+inf,inf, inf");
+    assert(std::format("{0:},{0:+},{0:-},{0: }", nan) == "nan,+nan,nan, nan");
+}
+```
+
+{/* source:cpp-utility-format-spec:0015 */}
+The `#` option causes the alternate form to be used for the conversion.
+
+{/* source:cpp-utility-format-spec:0016 */}
+- For integral types, when binary, octal, or hexadecimal presentation type is used, the alternate form inserts the prefix (`0b`, `0`, or `0x`) into the output value after the sign character (possibly space) if there is one, or add it before the output value otherwise.
+- For floating-point types, the alternate form causes the result of the conversion of finite values to always contain a decimal-point character, even if no digits follow it. Normally, a decimal-point character appears in the result of these conversions only if a digit follows it. In addition, for `g` and `G` conversions, trailing zeros are not removed from the result.
+
+{/* source:cpp-utility-format-spec:0017 */}
+The `0` option pads the field with leading zeros (following any indication of sign or base) to the field width, except when applied to an infinity or NaN. If the `0` character and an align option both appear, the `0` character is ignored.
+
+{/* source:cpp-utility-format-spec:0018 */}
+```cpp
+#include <cassert>
+#include <format>
+
+int main()
+{
+    char c = 120;
+    assert(std::format("{:+06d}", c)   == "+00120");
+    assert(std::format("{:#06x}", 0xa) == "0x000a");
+    assert(std::format("{:<06}", -42)  == "-42   "); // 0 is ignored because of '<'
+}
+```
+
+### Width and precision
+
+{/* source:cpp-utility-format-spec:0019 */}
+*width* is either a positive decimal number, or a nested replacement field (`{}` or `{`*n*`}`). If present, it specifies the minimum field width.
+
+{/* source:cpp-utility-format-spec:0020 */}
+*precision* is a dot (`.`) followed by either a non-negative decimal number or a nested replacement field. This field indicates the precision or maximum field size. It can only be used with floating-point and string types.
+
+{/* source:cpp-utility-format-spec:0021 */}
+- For floating-point types, this field specifies the formatting precision.
+- For string types, it provides an upper bound for the estimated width (see [below](/docs/cpp/library/text/format/spec#Width_estimation)) of the prefix of the string to be copied to the output. For a string in a Unicode encoding, the text to be copied to the output is the longest prefix of whole extended grapheme clusters whose estimated width is no greater than the precision.
+
+{/* source:cpp-utility-format-spec:0022 */}
+If a nested replacement field is used for *width* or *precision*, and the corresponding argument is not of <InlineRevision until="C++23">[`integral type`](/docs/cpp/language/basic_concepts/type-id)</InlineRevision><InlineRevision since="C++23">[`standard signed or unsigned integer type`](/docs/cpp/language/basic_concepts/type-id)</InlineRevision>, or is negative, an exception of type [`std::format_error`](/docs/cpp/library/text/format/format_error) is thrown.
+
+{/* source:cpp-utility-format-spec:0023 */}
+```cpp
+float pi = 3.14f;
+assert(std::format("{:10f}", pi)           == "  3.140000"); // width = 10
+assert(std::format("{:{}f}", pi, 10)       == "  3.140000"); // width = 10
+assert(std::format("{:.5f}", pi)           == "3.14000");    // precision = 5
+assert(std::format("{:.{}f}", pi, 5)       == "3.14000");    // precision = 5
+assert(std::format("{:10.5f}", pi)         == "   3.14000"); // width = 10, precision = 5
+assert(std::format("{:{}.{}f}", pi, 10, 5) == "   3.14000"); // width = 10, precision = 5
+
+auto b1 = std::format("{:{}f}", pi, 10.0); // throws: width is not of integral type
+auto b2 = std::format("{:{}f}", pi, -10);  // throws: width is negative
+auto b3 = std::format("{:.{}f}", pi, 5.0); // throws: precision is not of integral type
+```
+
+{/* source:cpp-utility-format-spec:0024 */}
+The width of a string is defined as the estimated number of column positions appropriate for displaying it in a terminal.
+
+{/* source:cpp-utility-format-spec:0025 */}
+For the purpose of width computation, a string is assumed to be in an implementation-defined encoding. The method of width computation is unspecified, but for a string in a Unicode encoding, implementation should estimate the width of the string as the sum of estimated widths of the first code points in its [extended grapheme clusters](https://www.unicode.org/reports/tr29/). The estimated width is 2 for the following code points, and is 1 otherwise:
+
+{/* source:cpp-utility-format-spec:0026 */}
+- Any code point whose Unicode property [`East_Asian_Width`](https://www.unicode.org/reports/tr44/#East_Asian_Width) has value Fullwidth (`F`) or Wide (`W`)
+- U+4DC0 - U+4DFF (Yijing Hexagram Symbols)
+- U+1F300 – U+1F5FF (Miscellaneous Symbols and Pictographs)
+- U+1F900 – U+1F9FF (Supplemental Symbols and Pictographs)
+
+{/* source:cpp-utility-format-spec:0027 */}
+```cpp
+#include <cassert>
+#include <format>
+
+int main()
+{
+    assert(std::format("{:.^5s}",   "🐱")    == ".🐱..");
+    assert(std::format("{:.5s}",    "🐱🐱🐱") == "🐱🐱");
+    assert(std::format("{:.<5.5s}", "🐱🐱🐱") == "🐱🐱.");
+}
+```
+
+### L (locale-specific formatting)
+
+{/* source:cpp-utility-format-spec:0028 */}
+The `L` option causes the locale-specific form to be used. This option is only valid for arithmetic types.
+
+{/* source:cpp-utility-format-spec:0029 */}
+- For integral types, the locale-specific form inserts the appropriate digit group separator characters according to the context's locale.
+- For floating-point types, the locale-specific form inserts the appropriate digit group and radix separator characters according to the context's locale.
+- For the textual representation of `bool`, the locale-specific form uses the appropriate string as if obtained with [`std::numpunct::truename`](/docs/cpp/library/text/locale/numpunct/truefalsename) or [`std::numpunct::falsename`](/docs/cpp/library/text/locale/numpunct/truefalsename).
+
+### Type
+
+{/* source:cpp-utility-format-spec:0030 */}
+The *type* option determines how the data should be presented.
+
+{/* source:cpp-utility-format-spec:0031 */}
+The available string presentation types are:
+
+{/* source:cpp-utility-format-spec:0032 */}
+- none, `s`: Copies the string to the output.
+
+{/* source:cpp-utility-format-spec:0033 */}
+<Revision since="C++23">
+- `?`: Copies the escaped string (see [below](/docs/cpp/library/text/format/spec#Formatting_escaped_characters_and_strings)) to the output.
+</Revision>
+
+{/* source:cpp-utility-format-spec:0034 */}
+The available integer presentation types for integral types other than `char`, `wchar_t`, and `bool` are:
+
+{/* source:cpp-utility-format-spec:0035 */}
+- `b`: Binary format. Produces the output as if by calling `std::to_chars(first, last, value, 2)`. The base prefix is `0b`.
+- `B`: same as `b`, except that the base prefix is `0B`.
+- `c`: Copies the character `static_cast<CharT>(value)` to the output, where `CharT` is the character type of the format string. Throws [`std::format_error`](/docs/cpp/library/text/format/format_error) if value is not in the range of representable values for `CharT`.
+- `d`: Decimal format. Produces the output as if by calling `std::to_chars(first, last, value)`.
+- `o`: Octal format. Produces the output as if by calling `std::to_chars(first, last, value, 8)`. The base prefix is `0` if the corresponding argument value is non-zero and is empty otherwise.
+- `x`: Hex format. Produces the output as if by calling `std::to_chars(first, last, value, 16)`. The base prefix is `0x`.
+- `X`: same as `x`, except that it uses uppercase letters for digits above 9 and the base prefix is `0X`.
+- none: same as `d`.
+
+{/* source:cpp-utility-format-spec:0036 */}
+The available `char` and `wchar_t` presentation types are:
+
+{/* source:cpp-utility-format-spec:0037 */}
+- none, `c`: Copies the character to the output.
+- `b`, `B`, `d`, `o`, `x`, `X`: Uses integer presentation types with the value `static_cast<unsigned char>(value)` or `static_cast<std::make_unsigned_t<wchar_t>>(value)` respectively.
+
+{/* source:cpp-utility-format-spec:0038 */}
+<Revision since="C++23">
+- `?`: Copies the escaped character (see [below](/docs/cpp/library/text/format/spec#Formatting_escaped_characters_and_strings)) to the output.
+</Revision>
+
+{/* source:cpp-utility-format-spec:0039 */}
+The available `bool` presentation types are:
+
+{/* source:cpp-utility-format-spec:0040 */}
+- none, `s`: Copies textual representation (`true` or `false`, or the locale-specific form) to the output.
+- `b`, `B`, `d`, `o`, `x`, `X`: Uses integer presentation types with the value `static_cast<unsigned char>(value)`.
+
+{/* source:cpp-utility-format-spec:0041 */}
+The available floating-point presentation types are:
+
+{/* source:cpp-utility-format-spec:0042 */}
+- `a`: If *precision* is specified, produces the output as if by calling `std::to_chars(first, last, value, std::chars_format::hex, precision)` where *precision* is the specified precision; otherwise, the output is produced as if by calling `std::to_chars(first, last, value, std::chars_format::hex)`.
+- `A`: same as `a`, except that it uses uppercase letters for digits above 9 and uses `P` to indicate the exponent.
+- `e`: Produces the output as if by calling `std::to_chars(first, last, value, std::chars_format::scientific, precision)` where *precision* is the specified precision, or 6 if precision is not specified.
+- `E`: same as `e`, except that it uses `E` to indicate the exponent.
+- `f`, `F`: Produces the output as if by calling `std::to_chars(first, last, value, std::chars_format::fixed, precision)` where *precision* is the specified precision, or 6 if precision is not specified.
+- `g`: Produces the output as if by calling `std::to_chars(first, last, value, std::chars_format::general, precision)` where *precision* is the specified precision, or 6 if precision is not specified.
+- `G`: same as `g`, except that it uses `E` to indicate the exponent.
+- none: If *precision* is specified, produces the output as if by calling `std::to_chars(first, last, value, std::chars_format::general, precision)` where *precision* is the specified precision; otherwise, the output is produced as if by calling `std::to_chars(first, last, value)`.
+
+{/* source:cpp-utility-format-spec:0043 */}
+For lower-case presentation types, infinity and NaN are formatted as `inf` and `nan`, respectively. For upper-case presentation types, infinity and NaN are formatted as `INF` and `NAN`, respectively.
+
+{/* source:cpp-utility-format-spec:0044 */}
+The available pointer presentation types (also used for [`std::nullptr_t`](/docs/cpp/library/utility/types/nullptr_t)) are:
+
+{/* source:cpp-utility-format-spec:0045 */}
+- none, `p`: If [`std::uintptr_t`](/docs/cpp/library/utility/types/integer) is defined, produces the output as if by calling `std::to_chars(first, last, reinterpret_cast<std::uintptr_t>(value), 16)` with the prefix `0x` added to the output; otherwise, the output is implementation-defined.
+
+{/* source:cpp-utility-format-spec:0046 */}
+<Revision since="C++26">
+- `P`: same as `p`, except that it uses uppercase letters for digits above 9 and the base prefix is `0X`.
+</Revision>
+
+{/* source:cpp-utility-format-spec:0047 */}
+### Formatting escaped characters and strings
+
+<Revision since="C++23">
+A character or string can be formatted as *escaped* to make it more suitable for debugging or for logging.
+
+Escaping is done as follows:
+
+- For each well-formed code unit sequence that encodes a character *C*:
+  - If *C* is one of the characters in the following table, the corresponding escape sequence is used.
+
+| Character | Escape sequence | Notes |
+| --- | --- | --- |
+| horizontal tab (byte 0x09 in ASCII encoding) | `\t` | |
+| line feed - new line (byte 0x0a in ASCII encoding) | `\n` | |
+| carriage return (byte 0x0d in ASCII encoding) | `\r` | |
+| double quote (byte 0x22 in ASCII encoding) | `\"` | Used only if the output is a double-quoted string |
+| single quote (byte 0x27 in ASCII encoding) | `\'` | Used only if the output is a single-quoted string |
+| backslash (byte 0x5c in ASCII encoding) | `\\` | |
+
+  - Otherwise, if *C* is not the space character (byte 0x20 in ASCII encoding), and either
+    - the associated character encoding is a Unicode encoding and
+      - *C* corresponds to a Unicode scalar value whose Unicode property [`General_Category`](https://www.unicode.org/reports/tr44/#General_Category_Values) has a value in the groups `Separator` (`Z`) or `Other` (`C`), or
+      - *C* is not immediately preceded by a non-escaped character, and *C* corresponds to a Unicode scalar value which has the Unicode property `Grapheme_Extend=Yes`, or
+    - the associated character encoding is not a Unicode encoding and *C* is one of an implementation-defined set of separator or non-printable characters
+    - the escape sequence is `\u{`*hex-digit-sequence*`}`, where *hex-digit-sequence* is the shortest hexadecimal representation of *C* using lower-case hexadecimal digits.
+  - Otherwise, *C* is copied as is.
+- A code unit sequence that is a shift sequence has unspecified effect on the output and further decoding of the string.
+- Other code units (i.e. those in ill-formed code unit sequences) are each replaced with `\x{`*hex-digit-sequence*`}`, where *hex-digit-sequence* is the shortest hexadecimal representation of the code unit using lower-case hexadecimal digits.
+
+The escaped string representation of a string is constructed by escaping the code unit sequences in the string, as described above, and quoting the result with double quotes.
+
+The escaped representation of a character is constructed by escaping it as described above, and quoting the result with single quotes.
+
+[Compiler Explorer demo](https://godbolt.org/z/WxhTs6b69):
+
+```cpp
+#include <print>
+
+int main()
+{
+    std::println("[{:?}]", "h\tllo");             // prints: ["h\tllo"]
+    std::println("[{:?}]", "Спасибо, Виктор ♥!"); // prints: ["Спасибо, Виктор ♥!"]
+    std::println("[{:?}] [{:?}]", '\'', '"');     // prints: ['\'', '"']
+
+    // The following examples assume use of the UTF-8 encoding
+    std::println("[{:?}]", std::string("\0 \n \t \x02 \x1b", 9));
+                                             // prints: ["\u{0} \n \t \u{2} \u{1b}"]
+    std::println("[{:?}]", "\xc3\x28");      // invalid UTF-8
+                                             // prints: ["\x{c3}("]
+    std::println("[{:?}]", "\u0301");        // prints: ["\u{301}"]
+    std::println("[{:?}]", "\\\u0301");      // prints: ["\\\u{301}"]
+    std::println("[{:?}]", "e\u0301\u0323"); // prints: ["ẹ́"]
+}
+```
+</Revision>
+
+### Notes
+
+{/* source:cpp-utility-format-spec:0048 */}
+In most of the cases the syntax is similar to the old `%`-formatting, with the addition of the `{}` and with `:` used instead of `%`. For example, `"%03.2f"` can be translated to `"{:03.2f}"`.
+
+{/* source:cpp-utility-format-spec:0049 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_format_uchar`](/docs/cpp/library/feature_test#cpp_lib_format_uchar) | [`202311L`](/docs/cpp/library/compiler_support/20#cpp_lib_format_uchar_202311L) | (C++20) (DR) | Formatting of code units as unsigned integers |
+
+### Defect reports
+
+{/* source:cpp-utility-format-spec:0050 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-format-spec:0051 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3721} standard="C++20">
+    <PublishedBehavior>zero is not allowed for the width field in standard format specification</PublishedBehavior>
+    <CorrectedBehavior>zero is permitted if specified via a replacement field</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2909R4" standard="C++20">
+    <PublishedBehavior>`char` or `wchar_t` might be formatted as out-of-range unsigned integer values</PublishedBehavior>
+    <CorrectedBehavior>code units are converted to the corresponding unsigned type before such formatting</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

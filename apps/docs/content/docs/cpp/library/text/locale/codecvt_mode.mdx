@@ -1,0 +1,119 @@
+---
+title: "std::codecvt_mode"
+description: "The facets std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16 accept an optional value of type std::codecvt_mode as a template argument, which specifies optional features of the unicode string conversion."
+source_url: "https://en.cppreference.com/w/cpp/locale/codecvt_mode"
+language: "C++"
+---
+
+{/* source:cpp-locale-codecvt-mode:0000 */}
+<DeclarationDoc>
+Defined in header [`<codecvt>`](/docs/cpp/library/headers/codecvt)
+  <Declaration language="cpp" since="C++11" removed="C++26" code={`enum codecvt_mode {
+    consume_header = 4,
+    generate_header = 2,
+    little_endian = 1
+};`} /> (deprecated in C++17)
+
+  <DeclarationDescription>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-locale-codecvt-mode:0001 */}
+The facets [`std::codecvt_utf8`](/docs/cpp/library/text/locale/codecvt_utf8), [`std::codecvt_utf16`](/docs/cpp/library/text/locale/codecvt_utf16), and [`std::codecvt_utf8_utf16`](/docs/cpp/library/text/locale/codecvt_utf8_utf16) accept an optional value of type `std::codecvt_mode` as a template argument, which specifies optional features of the unicode string conversion.
+
+### Constants
+
+{/* source:cpp-locale-codecvt-mode:0002 */}
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`little_endian`</DescriptionTerm>
+    <DescriptionBody>assume the input is in little-endian byte order (applies to UTF-16 input only, the default is big-endian)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`consume_header`</DescriptionTerm>
+    <DescriptionBody>consume the byte order mark, if present at the start of input sequence, and (in case of UTF-16), rely on the byte order it specifies for decoding the rest of the input</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`generate_header`</DescriptionTerm>
+    <DescriptionBody>output the byte order mark at the start of the output sequence</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-locale-codecvt-mode:0003 */}
+The recognized byte order marks are:
+
+{/* source:cpp-locale-codecvt-mode:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`0xfe 0xff`</DescriptionTerm>
+    <DescriptionBody>UTF-16 big-endian</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`0xff 0xfe`</DescriptionTerm>
+    <DescriptionBody>UTF-16 little-endian</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`0xef 0xbb 0xbf`</DescriptionTerm>
+    <DescriptionBody>UTF-8 (no effect on endianness)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-locale-codecvt-mode:0005 */}
+If `std::consume_header` is not selected when reading a file beginning with byte order mark, the Unicode character U+FEFF (Zero width non-breaking space) will be read as the first character of the string content.
+
+### Example
+
+{/* source:cpp-locale-codecvt-mode:0006 */}
+The following example demonstrates consuming the UTF-8 BOM:
+```cpp
+#include <codecvt>
+#include <cwchar>
+#include <fstream>
+#include <iostream>
+#include <locale>
+#include <string>
+ 
+int main()
+{
+    // UTF-8 data with BOM
+    std::ofstream{"text.txt"} << "\ufeffz\u6c34\U0001d10b";
+ 
+    // read the UTF-8 file, skipping the BOM
+    std::wifstream fin{"text.txt"};
+    fin.imbue(std::locale(fin.getloc(),
+                          new std::codecvt_utf8<wchar_t, 0x10ffff, std::consume_header>));
+ 
+    for (wchar_t c; fin.get(c);)
+        std::cout << std::hex << std::showbase << (std::wint_t)c << '\n';
+}
+```
+Output:
+```text
+0x7a
+0x6c34
+0x1d10b
+```
+
+### See also
+
+{/* source:cpp-locale-codecvt-mode:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`codecvt`](/docs/cpp/library/text/locale/codecvt)</DescriptionTerm>
+    <DescriptionBody>converts between character encodings, including UTF-8, UTF-16, UTF-32 <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`codecvt_utf8`](/docs/cpp/library/text/locale/codecvt_utf8)<InlineRevision since="C++11" />(deprecated in C++17)<InlineRevision removed="C++26" /></DescriptionTerm>
+    <DescriptionBody>converts between UTF-8 and UCS-2/UCS-4 <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`codecvt_utf16`](/docs/cpp/library/text/locale/codecvt_utf16)<InlineRevision since="C++11" />(deprecated in C++17)<InlineRevision removed="C++26" /></DescriptionTerm>
+    <DescriptionBody>converts between UTF-16 and UCS-2/UCS-4 <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`codecvt_utf8_utf16`](/docs/cpp/library/text/locale/codecvt_utf8_utf16)<InlineRevision since="C++11" />(deprecated in C++17)<InlineRevision removed="C++26" /></DescriptionTerm>
+    <DescriptionBody>converts between UTF-8 and UTF-16 <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

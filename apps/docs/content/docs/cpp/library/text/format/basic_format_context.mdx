@@ -1,0 +1,153 @@
+---
+title: "std::basic_format_context, std::format_context, std::wformat_context"
+description: "Provides access to formatting state consisting of the formatting arguments and the output iterator."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/basic_format_context"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-basic-format-context:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class OutputIt, class CharT >
+class basic_format_context;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`using format_context = basic_format_context</* unspecified */, char>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`using wformat_context = basic_format_context</* unspecified */, wchar_t>;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-utility-format-basic-format-context:0001 */}
+    Provides access to formatting state consisting of the formatting arguments and the output iterator.
+
+    {/* source:cpp-utility-format-basic-format-context:0002 */}
+    2. The unspecified template argument is an output iterator that appends to [`std::string`](/docs/cpp/library/string/basic_string), such as `std::back_insert_iterator<std::string>`. Implementations typically use an iterator to type-erased buffer type that supports appending to any contiguous and resizable container.
+
+    {/* source:cpp-utility-format-basic-format-context:0003 */}
+    3. The unspecified template argument is an output iterator that appends to [`std::wstring`](/docs/cpp/library/string/basic_string).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-basic-format-context:0004 */}
+The behavior is undefined if `OutputIt` does not model `std::output_iterator<const CharT&>`.
+
+{/* source:cpp-utility-format-basic-format-context:0005 */}
+A program that declares an explicit or partial specialization of `std::basic_format_context` is ill-formed, no diagnostic required.
+
+{/* source:cpp-utility-format-basic-format-context:0006 */}
+`std::basic_format_context` objects can only be created by the implementation. User codes are only allowed to modify the format context via the `format` function of [`std::formatter`](/docs/cpp/library/text/format/formatter) specializations.
+
+### Member types
+
+{/* source:cpp-utility-format-basic-format-context:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody>`OutputIt`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`char_type`</DescriptionTerm>
+    <DescriptionBody>`CharT`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member alias templates
+
+{/* source:cpp-utility-format-basic-format-context:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`formatter_type<T>`</DescriptionTerm>
+    <DescriptionBody>`std::formatter<T, CharT>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-utility-format-basic-format-context:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`(constructor)` [deleted]</DescriptionTerm>
+    <DescriptionBody>`basic_format_context` cannot be constructed by user code (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`operator=` [deleted]</DescriptionTerm>
+    <DescriptionBody>`basic_format_context` is not assignable (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`arg`</DescriptionTerm>
+    <DescriptionBody>returns the argument at the given index (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`locale`</DescriptionTerm>
+    <DescriptionBody>returns the locale used for locale-specific formatting (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`out`</DescriptionTerm>
+    <DescriptionBody>returns the iterator to output buffer (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`advance_to`</DescriptionTerm>
+    <DescriptionBody>advances the output iterator to the given position (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-format-basic-format-context:0010 */}
+#### `std::basic_format_context::arg`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`std::basic_format_arg<basic_format_context> arg( std::size_t id ) const;`} />
+</DeclarationDoc>
+
+Returns a `std::basic_format_arg` holding the `id`-th argument in `args`, where `args` is the parameter pack or `std::basic_format_args` object passed to the formatting function. If `id` is not less than the number of formatting arguments, returns a default-constructed `std::basic_format_arg` (holding a [`std::monostate`](/docs/cpp/library/utility/variant/monostate) object).
+
+{/* source:cpp-utility-format-basic-format-context:0011 */}
+#### `std::basic_format_context::locale`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`std::locale locale();`} />
+</DeclarationDoc>
+
+Returns the [`std::locale`](/docs/cpp/library/text/locale/locale) passed to the formatting function, or a default-constructed `std::locale` if the formatting function does not take a locale.
+
+{/* source:cpp-utility-format-basic-format-context:0012 */}
+#### `std::basic_format_context::out`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`iterator out();`} />
+</DeclarationDoc>
+
+Returns the iterator to the output buffer. The result is move-constructed from the stored iterator.
+
+{/* source:cpp-utility-format-basic-format-context:0013 */}
+#### `std::basic_format_context::advance_to`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`void advance_to( iterator it );`} />
+</DeclarationDoc>
+
+Move assigns `it` to the stored output iterator. After a call to `advance_to`, the next call to `out()` will return an iterator with the value that `it` had before the assignment.
+
+### Example
+
+{/* source:cpp-utility-format-basic-format-context:0014 */}
+This section is incomplete
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-utility-format-basic-format-context:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-format-basic-format-context:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3567} standard="C++20">
+    <PublishedBehavior>`basic_format_context` does not work move-only iterator types</PublishedBehavior>
+    <CorrectedBehavior>made to move iterators</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3975} standard="C++20">
+    <PublishedBehavior>user specialization of `basic_format_context` was allowed</PublishedBehavior>
+    <CorrectedBehavior>disallowed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={4061} standard="C++20">
+    <PublishedBehavior>`basic_format_context` was constructible and assignable by user code</PublishedBehavior>
+    <CorrectedBehavior>made neither constructible nor assignable</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

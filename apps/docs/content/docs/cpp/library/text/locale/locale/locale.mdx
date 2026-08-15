@@ -1,0 +1,164 @@
+---
+title: "std::locale::locale"
+description: "Constructs a new locale object."
+source_url: "https://en.cppreference.com/w/cpp/locale/locale/locale"
+language: "C++"
+---
+
+{/* source:cpp-locale-locale-locale:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" until="C++11" code={`locale() throw();`} />
+  <Declaration id="1" language="cpp" since="C++11" code={`locale() noexcept;`} />
+  <Declaration id="2" language="cpp" until="C++11" code={`locale( const locale& other ) throw();`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`locale( const locale& other ) noexcept;`} />
+  <Declaration id="3" language="cpp" code={`explicit locale( const char* std_name );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`explicit locale( const std::string& std_name );`} />
+  <Declaration id="5" language="cpp" code={`locale( const locale& other, const char* std_name, category cats );`} />
+  <Declaration id="6" language="cpp" since="C++11" code={`locale( const locale& other, const std::string& std_name, category cats );`} />
+  <Declaration id="7" language="cpp" code={`template< class Facet >
+locale( const locale& other, Facet* f );`} />
+  <Declaration id="8" language="cpp" code={`locale( const locale& other, const locale& one, category cats );`} />
+</DeclarationDoc>
+
+{/* source:cpp-locale-locale-locale:0001 */}
+Constructs a new locale object.
+
+{/* source:cpp-locale-locale-locale:0002 */}
+1) Default constructor. Constructs a copy of the global C++ locale, which is the locale most recently used as the argument to [std::locale::global](/docs/cpp/library/text/locale/locale/global) or a copy of `std::locale::classic()` if no call to [std::locale::global](/docs/cpp/library/text/locale/locale/global) has been made.
+
+{/* source:cpp-locale-locale-locale:0003 */}
+2) Copy constructor. Constructs a copy of `other`.
+
+{/* source:cpp-locale-locale-locale:0004 */}
+3,4) Constructs a copy of the system locale with specified `std_name` (such as `"C"`, or `"POSIX"`, or `"en_US.UTF-8"`, or `"English_US.1251"`), if such locale is supported by the operating system. The locale constructed in this manner has a name.
+
+{/* source:cpp-locale-locale-locale:0005 */}
+4) Equivalent to `locale(std_name.c_str())`.
+
+{/* source:cpp-locale-locale-locale:0006 */}
+5) Constructs a copy of `other` except for all the facets identified by the `cats` argument, which are copied from the system locale identified by its `std_name`. The locale constructed in this manner has a name if and only if `other` has a name.
+
+{/* source:cpp-locale-locale-locale:0007 */}
+6) Equivalent to `locale(other, std_name.c_str(), cats)`.
+
+{/* source:cpp-locale-locale-locale:0008 */}
+7) Constructs a copy of `other` except for the facet of type `Facet` (typically deduced from the type of the argument) which is installed from `f`. If `f` is a null pointer, the constructed locale is a full copy of `other`. The program is ill-formed if `Facet` is not a [facet](/docs/cpp/library/text/locale/locale/facet#Facet_class) or it is a volatile-qualified facet.
+
+{/* source:cpp-locale-locale-locale:0009 */}
+If `f` is null, the constructed locale has the same name as `other`. Otherwise, the constructed locale has no name.
+
+{/* source:cpp-locale-locale-locale:0010 */}
+8) Constructs a copy of `other` except for all the facets identified by the `cats` argument, which are copied from `one`.
+
+{/* source:cpp-locale-locale-locale:0011 */}
+If `cats` is equal to `locale::none`, the constructed locale has a name if and only if `other` has a name. Otherwise, the constructed locale has a name if and only if `other` and `one` both have names.
+
+### Parameters
+
+{/* source:cpp-locale-locale-locale:0012 */}
+<ParameterList>
+  <Parameter name="other">another locale to copy</Parameter>
+  <Parameter name="std_name">name of the system locale to use</Parameter>
+  <Parameter name="f">pointer to a facet to merge with `other`</Parameter>
+  <Parameter name="cats">the facet categories used to identify the facets to merge with `other`</Parameter>
+  <Parameter name="one">another locale to take facets from</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-locale-locale-locale:0013 */}
+3,5) [std::runtime_error](/docs/cpp/library/error/runtime_error) if the operating system has no locale named `std_name` or if `std_name` is a null pointer.
+
+{/* source:cpp-locale-locale-locale:0014 */}
+4,6) [std::runtime_error](/docs/cpp/library/error/runtime_error) if the operating system has no locale named `std_name`.
+
+### Notes
+
+{/* source:cpp-locale-locale-locale:0015 */}
+Overload ([7](/docs/cpp/library/text/locale/locale/locale#Version_7)) is typically called with its second argument, `f`, obtained directly from a new-expression: the locale is responsible for calling the matching `delete` from its own destructor.
+
+### Example
+
+{/* source:cpp-locale-locale-locale:0016 */}
+```cpp
+#include <codecvt>
+#include <iostream>
+#include <locale>
+ 
+std::ostream& operator<< (std::ostream& os, const std::locale& loc)
+{
+    if (loc.name().length() <= 80)
+        os << loc.name();
+    else
+        for (const auto c : loc.name())
+            os << c << (c == ';' ? "\n  " : "");
+ 
+    return os << '\n';
+}
+ 
+int main()
+{
+    std::locale l1;
+    std::cout << "Name of a copy of the classic \"C\" locale: " << l1;
+ 
+    std::locale l2("en_US.UTF-8");
+    std::cout << "Name of unicode locale: " << l2;
+ 
+    std::locale l3(l1, new std::codecvt_utf8<wchar_t>);
+    std::cout << "Name of \"C\" locale except for codecvt: " << l3;
+ 
+    std::locale l4(l1, l2, std::locale::ctype);
+    std::cout << "Name of \"C\" locale except for ctype, which is unicode:\n  " << l4;
+}
+```
+Possible output:
+```text
+Name of a copy of the classic "C" locale: C
+Name of unicode locale: en_US.UTF-8
+Name of "C" locale except for codecvt: *
+Name of "C" locale except for ctype, which is unicode:
+  LC_CTYPE=en_US.UTF-8;
+  LC_NUMERIC=C;
+  LC_TIME=C;
+  LC_COLLATE=C;
+  LC_MONETARY=C;
+  LC_MESSAGES=C;
+  LC_PAPER=C;
+  LC_NAME=C;
+  LC_ADDRESS=C;
+  LC_TELEPHONE=C;
+  LC_MEASUREMENT=C;
+  LC_IDENTIFICATION=C
+```
+
+### Defect reports
+
+{/* source:cpp-locale-locale-locale:0017 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-locale-locale:0018 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={436} standard="C++98">
+    <PublishedBehavior>for overload ([7](/docs/cpp/library/text/locale/locale/locale#Version_7)), it was unclear<br />whether `Facet` can be cv-qualified</PublishedBehavior>
+    <CorrectedBehavior>it can be const-qualified,<br />but not volatile-qualified</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2295} standard="C++98">
+    <PublishedBehavior>for overload ([7](/docs/cpp/library/text/locale/locale/locale#Version_7)), the constructed locale had no name even if `f` is null</PublishedBehavior>
+    <CorrectedBehavior>it has the name of `other`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-locale-locale:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/text/locale/locale/~locale)</DescriptionTerm>
+    <DescriptionBody>destructs the locale and the facets whose reference count becomes zero <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-locale-locale-locale:0020 */}
+1. [List of Windows locale names](https://ss64.com/locale.html). 2. [List of Linux locale names](https://lh.2xlibre.net/locales/).

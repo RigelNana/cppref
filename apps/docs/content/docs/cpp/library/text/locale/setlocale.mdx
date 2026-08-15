@@ -1,0 +1,118 @@
+---
+title: "std::setlocale"
+description: "The setlocale function installs the specified system locale or its portion as the new C locale. The modifications remain in effect and influences the execution of all locale-sensitive C library functions until the next call to setlocale. If locale is a null pointer, setlocale queries the current C locale without modifying it."
+source_url: "https://en.cppreference.com/w/cpp/locale/setlocale"
+language: "C++"
+---
+
+{/* source:cpp-locale-setlocale:0000 */}
+<DeclarationDoc>
+Defined in header [`<clocale>`](/docs/cpp/library/headers/clocale)
+  <Declaration language="cpp" code={`char* setlocale( int category, const char* locale );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-setlocale:0001 */}
+    The `setlocale` function installs the specified system locale or its portion as the new C locale. The modifications remain in effect and influences the execution of all locale-sensitive C library functions until the next call to `setlocale`. If `locale` is a null pointer, `setlocale` queries the current C locale without modifying it.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-locale-setlocale:0002 */}
+<ParameterList>
+  <Parameter name="category">locale category identifier, one of the [`LC_xxx`](/docs/cpp/library/text/locale/LC_categories) macros. May be `​0​`.</Parameter>
+  <Parameter name="locale">system-specific locale identifier. Can be `""` for the user-preferred locale or `"C"` for the minimal locale</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-locale-setlocale:0003 */}
+Pointer to a narrow null-terminated string identifying the C locale after applying the changes, if any, or null pointer on failure.
+
+{/* source:cpp-locale-setlocale:0004 */}
+A copy of the returned string along with the category used in this call to `std::setlocale` may be used later in the program to restore the locale back to the state at the end of this call.
+
+### Notes
+
+{/* source:cpp-locale-setlocale:0005 */}
+During program startup, the equivalent of `std::setlocale(LC_ALL, "C");` is executed before any user code is run.
+
+{/* source:cpp-locale-setlocale:0006 */}
+Although the return type is `char*`, modifying the pointed-to characters is undefined behavior.
+
+{/* source:cpp-locale-setlocale:0007 */}
+Because `setlocale` modifies global state which affects execution of locale-dependent functions, it is undefined behavior to call it from one thread, while another thread is executing any of the following functions: [`std::fprintf`](/docs/cpp/library/io/c/printf), `std::isprint`, [`std::iswdigit`](/docs/cpp/library/text/wide/iswdigit), [`std::localeconv`](/docs/cpp/library/text/locale/localeconv), `std::tolower`, [`std::fscanf`](/docs/cpp/library/io/c/scanf), `std::ispunct`, [`std::iswgraph`](/docs/cpp/library/text/wide/iswgraph), [`std::mblen`](/docs/cpp/library/text/multibyte/mblen), `std::toupper`, `std::isalnum`, `std::isspace`, [`std::iswlower`](/docs/cpp/library/text/wide/iswlower), [`std::mbstowcs`](/docs/cpp/library/text/multibyte/mbstowcs), [`std::towlower`](/docs/cpp/library/text/wide/towlower), `std::isalpha`, `std::isupper`, [`std::iswprint`](/docs/cpp/library/text/wide/iswprint), [`std::mbtowc`](/docs/cpp/library/text/multibyte/mbtowc), [`std::towupper`](/docs/cpp/library/text/wide/towupper), `std::isblank`, [`std::iswalnum`](/docs/cpp/library/text/wide/iswalnum), [`std::iswpunct`](/docs/cpp/library/text/wide/iswpunct), `std::setlocale`, [`std::wcscoll`](/docs/cpp/library/text/wide/wcscoll), `std::iscntrl`, [`std::iswalpha`](/docs/cpp/library/text/wide/iswalpha), [`std::iswspace`](/docs/cpp/library/text/wide/iswspace), [`std::strcoll`](/docs/cpp/library/text/byte/strcoll), [`std::wcstod`](/docs/cpp/library/text/wide/wcstof), `std::isdigit`, [`std::iswblank`](/docs/cpp/library/text/wide/iswblank), [`std::iswupper`](/docs/cpp/library/text/wide/iswupper), [`std::strerror`](/docs/cpp/library/text/byte/strerror), [`std::wcstombs`](/docs/cpp/library/text/multibyte/wcstombs), `std::isgraph`, [`std::iswcntrl`](/docs/cpp/library/text/wide/iswcntrl), [`std::iswxdigit`](/docs/cpp/library/text/wide/iswxdigit), [`std::strtod`](/docs/cpp/library/text/byte/strtof), [`std::wcsxfrm`](/docs/cpp/library/text/wide/wcsxfrm), `std::islower`, [`std::iswctype`](/docs/cpp/library/text/wide/iswctype), `std::isxdigit`.
+
+{/* source:cpp-locale-setlocale:0008 */}
+POSIX also defines a locale named `"POSIX"`, which is always accessible and is exactly equivalent to the default minimal `"C"` locale.
+
+{/* source:cpp-locale-setlocale:0009 */}
+POSIX also specifies that the returned pointer, not just the contents of the pointed-to string, may be invalidated by subsequent calls to `setlocale`.
+
+### Example
+
+{/* source:cpp-locale-setlocale:0010 */}
+```cpp
+#include <clocale>
+#include <cstdio>
+#include <ctime>
+#include <cwchar>
+#include <iterator>
+#include <string>
+ 
+int main()
+{
+    // Make a "deep copy" of current locale name.
+    std::string prev_loc = std::setlocale(LC_ALL, nullptr);
+ 
+    // The C locale will be UTF-8 enabled English,
+    // decimal dot will be German,
+    // date and time formatting will be Japanese.
+    if (const char* loc = std::setlocale(LC_ALL, "en_US.UTF-8"))
+        std::wprintf(L"New LC_ALL locale: %s\n", loc);
+    if (const char* loc = std::setlocale(LC_NUMERIC, "de_DE.UTF-8"))
+        std::wprintf(L"New LC_NUMERIC locale: %s\n", loc);
+    if (const char* loc = std::setlocale(LC_TIME, "ja_JP.UTF-8"))
+        std::wprintf(L"New LC_TIME locale: %s\n", loc);
+ 
+    wchar_t buf[100];
+    std::time_t t = std::time(nullptr);
+    std::wcsftime(buf, std::size(buf), L"%A %c", std::localtime(&t));
+    std::wprintf(L"Number: %.2f\nDate: %Ls\n", 3.14, buf);
+ 
+    // Restore the previous locale.
+    if (const char* loc = std::setlocale(LC_ALL, prev_loc.c_str()))
+        std::wprintf(L"Restorred LC_ALL locale: %s\n", loc);
+}
+```
+Possible output:
+```text
+New LC_ALL locale: en_US.UTF-8
+New LC_NUMERIC locale: de_DE.UTF-8
+New LC_TIME locale: ja_JP.UTF-8
+Number: 3,14
+Date: 日曜日 2022年11月06日 20時40分59秒
+Restorred LC_ALL locale: C
+```
+
+### See also
+
+{/* source:cpp-locale-setlocale:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`LC_ALL LC_COLLATE LC_CTYPE LC_MONETARY LC_NUMERIC LC_TIME`](/docs/cpp/library/text/locale/LC_categories)</DescriptionTerm>
+    <DescriptionBody>locale categories for `std::setlocale` <br /> (macro constant)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`locale`](/docs/cpp/library/text/locale/locale)</DescriptionTerm>
+    <DescriptionBody>set of polymorphic facets that encapsulate cultural differences <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+[C documentation](/docs/c/library/locale/setlocale) for setlocale
+
+### External links
+
+{/* source:cpp-locale-setlocale:0012 */}
+1. [List of Windows locale names](https://ss64.com/locale.html).
+2. [List of Linux locale names](https://lh.2xlibre.net/locales/).

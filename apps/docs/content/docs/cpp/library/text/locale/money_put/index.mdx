@@ -1,0 +1,192 @@
+---
+title: "std::money_put"
+description: "Class std::money_put encapsulates the rules for formatting monetary values as strings. The standard I/O manipulator std::put_money uses the std::money_put facet of the I/O stream's locale."
+source_url: "https://en.cppreference.com/w/cpp/locale/money_put"
+language: "C++"
+---
+
+{/* source:cpp-locale-money-put:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`template< 
+    class CharT,
+    class OutputIt = std::ostreambuf_iterator<CharT>
+> class money_put;`} />
+</DeclarationDoc>
+
+{/* source:cpp-locale-money-put:0001 */}
+
+Class `std::money_put` encapsulates the rules for formatting monetary values as strings. The standard I/O manipulator [`std::put_money`](/docs/cpp/library/io/manip/put_money) uses the `std::money_put` facet of the I/O stream's locale.
+
+{/* source:cpp-locale-money-put:0002 */}
+
+Inheritance diagram
+
+{/* source:cpp-locale-money-put:0003 */}
+
+If a `std::money_put` specialization is not guaranteed to be provided by the standard library (see below), the behaviors of its [`put()`](/docs/cpp/library/text/locale/money_put/put) and [`do_put()`](/docs/cpp/library/text/locale/money_put/put) are not guaranteed as specified.
+
+### Specializations
+
+{/* source:cpp-locale-money-put:0004 */}
+
+The standard library is guaranteed to provide the following specializations (they are [required to be implemented by any locale object](/docs/cpp/library/text/locale/locale)):
+
+{/* source:cpp-locale-money-put:0005 */}
+
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::money_put<char>`</DescriptionTerm>
+    <DescriptionBody>creates narrow string representations of monetary values</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::money_put<wchar_t>`</DescriptionTerm>
+    <DescriptionBody>creates wide string representations of monetary values</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-locale-money-put:0006 */}
+
+In addition, the standard library is also guaranteed to provide every specialization that satisfies the following type requirements:
+
+{/* source:cpp-locale-money-put:0007 */}
+
+- `CharT` is one of
+  - `char`,
+  - `wchar_t`, and
+  - any other implementation-defined [character container type](/docs/cpp/library/string) that meets the requirements for a character on which any of the [iostream components](/docs/cpp/library/io) can be instantiated; and
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+
+### Nested types
+
+{/* source:cpp-locale-money-put:0008 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`char_type`</DescriptionTerm>
+    <DescriptionBody>`CharT`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`string_type`</DescriptionTerm>
+    <DescriptionBody>`std::basic_string<CharT>`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iter_type`</DescriptionTerm>
+    <DescriptionBody>`OutputIt`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Data members
+
+{/* source:cpp-locale-money-put:0009 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::locale::id`](/docs/cpp/library/text/locale/locale/id) `id` [static]</DescriptionTerm>
+    <DescriptionBody>the identifier of the [facet](/docs/cpp/library/text/locale/locale/facet#Facet_class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-locale-money-put:0010 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/text/locale/money_put/money_put)</DescriptionTerm>
+    <DescriptionBody>constructs a new `money_put` facet <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`put`](/docs/cpp/library/text/locale/money_put/put)</DescriptionTerm>
+    <DescriptionBody>invokes `do_put` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Protected member functions
+
+{/* source:cpp-locale-money-put:0011 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/text/locale/money_put/~money_put)</DescriptionTerm>
+    <DescriptionBody>destructs a `money_put` facet <br /> (protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_put`](/docs/cpp/library/text/locale/money_put/put)[virtual]</DescriptionTerm>
+    <DescriptionBody>formats a monetary value and writes to output stream <br /> (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-locale-money-put:0012 */}
+
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <locale>
+ 
+int main()
+{
+    // using the I/O manipulator
+    std::cout.imbue(std::locale("en_US.UTF-8"));
+    std::cout << "American locale: "
+              << std::showbase << std::put_money(12345678.9) << '\n';
+ 
+    // using the facet directly
+    std::cout.imbue(std::locale("de_DE.UTF-8"));
+    std::cout << "German locale: ";
+    auto& f = std::use_facet<std::money_put<char>>(std::cout.getloc());
+    f.put({std::cout}, false, std::cout, std::cout.fill(), 12345678.9);
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+American locale: $123,456.79
+German locale: 123.456,79 €
+```
+
+### Defect reports
+
+{/* source:cpp-locale-money-put:0013 */}
+
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-money-put:0014 */}
+
+<DefectReportList>
+  <DefectReport kind="lwg" id={427} standard="C++98">
+    <PublishedBehavior>`money_put` was guaranteed to accept any `CharT` that<br />meets the requirements for a character on which<br />any of the iostream components can be instantiated</PublishedBehavior>
+    <CorrectedBehavior>only guarantees to accept `char`,<br />`wchar_t` and other implementation-<br />defined character types</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2392} standard="C++98">
+    <PublishedBehavior>only character type `CharT` could be<br />guaranteed to be accepted by `money_put`</PublishedBehavior>
+    <CorrectedBehavior>can guarantee to accept implementation-<br />defined character container types</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-money-put:0015 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`moneypunct`](/docs/cpp/library/text/locale/moneypunct)</DescriptionTerm>
+    <DescriptionBody>defines monetary formatting parameters used by [`std::money_get`](/docs/cpp/library/text/locale/money_get) and `std::money_put` <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`money_get`](/docs/cpp/library/text/locale/money_get)</DescriptionTerm>
+    <DescriptionBody>parses and constructs a monetary value from an input character sequence <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`put_money`](/docs/cpp/library/io/manip/put_money) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>formats and outputs a monetary value <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,74 @@
+---
+title: "std::wbuffer_convert<Codecvt,Elem,Tr>::rdbuf"
+description: "1) Returns the pointer to the underlying byte stream."
+source_url: "https://en.cppreference.com/w/cpp/locale/wbuffer_convert/rdbuf"
+language: "C++"
+---
+
+{/* source:cpp-locale-wbuffer-convert-rdbuf:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`std::streambuf* rdbuf() const;`} />
+  <Declaration id="2" language="cpp" code={`std::streambuf* rdbuf( std::streambuf* bytebuf );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-wbuffer-convert-rdbuf:0001 */}
+    1) Returns the pointer to the underlying byte stream.
+
+    {/* source:cpp-locale-wbuffer-convert-rdbuf:0002 */}
+    2) Replaces the associated byte stream with `bytebuf`.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Return value
+
+{/* source:cpp-locale-wbuffer-convert-rdbuf:0003 */}
+1) [`bufptr`](/docs/cpp/library/text/locale/wbuffer_convert#bufptr)
+
+{/* source:cpp-locale-wbuffer-convert-rdbuf:0004 */}
+2) the previous value of [`bufptr`](/docs/cpp/library/text/locale/wbuffer_convert#bufptr)
+
+### Example
+
+{/* source:cpp-locale-wbuffer-convert-rdbuf:0005 */}
+```cpp
+#include <codecvt>
+#include <iostream>
+#include <locale>
+#include <sstream>
+ 
+int main()
+{
+    // Convert UTF-8 to UCS4
+    std::stringbuf utf8buf("z\u00df\u6c34\U0001d10b");
+                       // or "\x7a\xc3\x9f\xe6\xb0\xb4\xf0\x9d\x84\x8b"
+                       // or u8"zß水𝄋"
+    std::wbuffer_convert<std::codecvt_utf8<wchar_t>> conv(&utf8buf);
+    std::wistream ucsbuf(&conv);
+    std::cout << "Reading from a UTF-8 stringbuf via wbuffer_convert: "
+              << std::hex << std::showbase;
+    for (wchar_t c; ucsbuf.get(c);)
+        std::cout << static_cast<std::wint_t>(c) << ' ';
+ 
+    // Reuse the same wbuffer_convert to handle UCS4 to UTF-8 output
+    conv.rdbuf(std::cout.rdbuf());
+    std::wostream out(&conv);
+    std::cout << "\nSending UCS4 data to std::cout via wbuffer_convert: ";
+    out << L"z\u00df\u6c34\U0001d10b\n";
+}
+```
+Output:
+```text
+Reading from a UTF-8 stringbuf via wbuffer_convert: 0x7a 0xdf 0x6c34 0x1d10b 
+Sending UCS4 data to std::cout via wbuffer_convert: zß水𝄋
+```
+
+### See also
+
+{/* source:cpp-locale-wbuffer-convert-rdbuf:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/text/locale/wbuffer_convert/wbuffer_convert)</DescriptionTerm>
+    <DescriptionBody>constructs a new `wbuffer_convert` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,212 @@
+---
+title: "std::time_put<CharT,OutputIt>::put, std::time_put<CharT,OutputIt>::do_put"
+description: "Converts the calendar date and time stored in the std::tm object pointed to by t into a character string, according to the format string [fmtbeg, fmtend). The format string is the same as used by std::strftime, but each format specifier is processed by an individual call to do_put(), which can be customized by extending this facet."
+source_url: "https://en.cppreference.com/w/cpp/locale/time_put/put"
+language: "C++"
+---
+
+{/* source:cpp-locale-time-put-put:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`public:
+iter_type put( iter_type out, std::ios_base& str,
+               char_type fill, const std::tm* t,
+               const CharT* fmtbeg, const CharT* fmtend ) const;`} />
+  <Declaration id="2" language="cpp" code={`public:
+iter_type put( iter_type out, std::ios_base& str,
+               char_type fill, const std::tm* t,
+               char format, char modifier = 0 ) const;`} />
+  <Declaration id="3" language="cpp" code={`protected:
+virtual iter_type do_put( iter_type out, std::ios_base& str,
+                          char_type fill, const std::tm* t,
+                          char format, char modifier ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-time-put-put:0001 */}
+    Converts the calendar date and time stored in the [`std::tm`](/docs/cpp/library/chrono/c/tm) object pointed to by `t` into a character string, according to the [format string](/docs/cpp/library/text/locale/time_put/put#Format_string) `[fmtbeg, fmtend)`. The format string is the same as used by [`std::strftime`](/docs/cpp/library/chrono/c/strftime), but each format specifier is processed by an individual call to `do_put()`, which can be customized by extending this facet.
+
+    {/* source:cpp-locale-time-put-put:0002 */}
+    1) Steps through the character sequence `[fmtbeg, fmtend)`, examining the characters. Every character that is not a part of a format sequence is written to the output iterator `out` immediately. To identify format sequences, this function narrows the next character `c` in `[fmtbeg, fmtend)` as if by `std::ctype<char_type>(str.getloc()).narrow(c, 0)` and if it equals `'%'`, the next one or two characters are compared to the list of format sequences recognized by [`std::strftime`](/docs/cpp/library/chrono/c/strftime) plus any additional implementation-defined formats supported by this locale. For each valid format sequence, a call to `do_put(out, str, fill, t, format, modifier)` is made, where `format` is the format sequence character, and `modifier` is the optional format sequence modifier (`'E'` or `'O'`). A value of `'\0'` is used if the modifier is absent.
+
+    {/* source:cpp-locale-time-put-put:0003 */}
+    2) Calls the `do_put` member function of the most derived class.
+
+    {/* source:cpp-locale-time-put-put:0004 */}
+    3) Converts the calendar date and time stored in the [`std::tm`](/docs/cpp/library/chrono/c/tm) object pointed to by `t` into a character string, according to the format conversion sequence formed by concatenating `'%'`, the value of `modifier` if not `'\0'`, and the value of `format`. The format is interpreted the same way as the function [`std::strftime`](/docs/cpp/library/chrono/c/strftime), except that the formats that are described as locale-dependent are defined by this locale, and additional format specifiers may be supported (the `fill` argument is provided for these implementation-defined format specifiers to use). The string is written to the output iterator `out`.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-locale-time-put-put:0005 */}
+<ParameterList>
+  <Parameter name="out">output iterator where the result of the conversion is written</Parameter>
+  <Parameter name="str">a stream object that this function uses to obtain locale facets when needed, e.g. [`std::ctype`](/docs/cpp/library/text/locale/ctype) to narrow characters</Parameter>
+  <Parameter name="t">pointer to the [`std::tm`](/docs/cpp/library/chrono/c/tm) object from which the date/time values are obtained</Parameter>
+  <Parameter name="fmtbeg">pointer to the first character of a sequence of `char_type` characters specifying the [conversion format](/docs/cpp/library/text/locale/time_put/put#Format_string)</Parameter>
+  <Parameter name="fmtend">pointer one past the last character of a sequence of `char_type` characters specifying the [conversion format](/docs/cpp/library/text/locale/time_put/put#Format_string)</Parameter>
+  <Parameter name="fill">fill character (usually space)</Parameter>
+  <Parameter name="format">the character that names a [conversion specifier](/docs/cpp/library/text/locale/time_put/put#Format_string)</Parameter>
+  <Parameter name="modifier">the optional modifier that may appear between `%` and the [conversion specifier](/docs/cpp/library/text/locale/time_put/put#Format_string)</Parameter>
+</ParameterList>
+
+### Format string
+
+{/* source:cpp-locale-time-put-put:0006 */}
+The format string consists of zero or more conversion specifiers and ordinary characters (except `%`). All ordinary characters, including the terminating null character, are copied to the output string without modification. Each conversion specification begins with `%` character, optionally followed by `E` or `O` modifier (ignored if unsupported by the locale), followed by the character that determines the behavior of the specifier. The following format specifiers are available:
+
+{/* source:cpp-locale-time-put-put:0007 */}
+| Conversion<br /> specifier | Explanation | Used fields |
+| --- | --- | --- |
+| `%` | writes literal `%`. The full conversion specification must be `%%`. |   |
+| `n`<br /><InlineRevision since="C++11" /> | writes newline character |   |
+| `t`<br /><InlineRevision since="C++11" /> | writes horizontal tab character |   |
+| **Year** |   |   |
+| `Y` | writes **year** as a decimal number, e.g. 2017 | `tm_year` |
+| `EY`<br /><InlineRevision since="C++11" /> | writes **year** in the alternative representation, e.g.平成23年 (year Heisei 23) instead of 2011年 (year 2011) in ja_JP locale | `tm_year` |
+| `y` | writes last 2 digits of **year** as a decimal number (range `[00,99]`) | `tm_year` |
+| `Oy`<br /><InlineRevision since="C++11" /> | writes last 2 digits of **year** using the alternative numeric system, e.g. 十一 instead of 11 in ja_JP locale | `tm_year` |
+| `Ey`<br /><InlineRevision since="C++11" /> | writes **year** as offset from locale's alternative calendar period `%EC` (locale-dependent) | `tm_year` |
+| `C`<br /><InlineRevision since="C++11" /> | writes first 2 digits of **year** as a decimal number (range `[00,99]`) | `tm_year` |
+| `EC`<br /><InlineRevision since="C++11" /> | writes name of the **base year (period)** in the locale's alternative representation, e.g. 平成 (Heisei era) in ja_JP | `tm_year` |
+| `G`<br /><InlineRevision since="C++11" /> | writes **ISO 8601 week-based year**, i.e. the year that contains the specified week. In ISO 8601 weeks begin with Monday and the first week of the year must satisfy the following requirements:   Includes January 4  Includes first Thursday of the year | `tm_year`, `tm_wday`, `tm_yday` |
+| `g`<br /><InlineRevision since="C++11" /> | writes last 2 digits of **ISO 8601 week-based year**, i.e. the year that contains the specified week (range `[00,99]`). In ISO 8601 weeks begin with Monday and the first week of the year must satisfy the following requirements:   Includes January 4  Includes first Thursday of the year | `tm_year`, `tm_wday`, `tm_yday` |
+| **Month** |   |   |
+| `b` | writes **abbreviated month** name, e.g. `Oct` (locale dependent) | `tm_mon` |
+| `h`<br /><InlineRevision since="C++11" /> | synonym of `b` | `tm_mon` |
+| `B` | writes **full month** name, e.g. `October` (locale dependent) | `tm_mon` |
+| `m` | writes **month** as a decimal number (range `[01,12]`) | `tm_mon` |
+| `Om`<br /><InlineRevision since="C++11" /> | writes **month** using the alternative numeric system, e.g. 十二 instead of 12 in ja_JP locale | `tm_mon` |
+| **Week** |   |   |
+| `U` | writes **week of the year** as a decimal number (Sunday is the first day of the week) (range `[00,53]`) | `tm_year`, `tm_wday`, `tm_yday` |
+| `OU`<br /><InlineRevision since="C++11" /> | writes **week of the year**, as by `%U`, using the alternative numeric system, e.g. 五十二 instead of 52 in ja_JP locale | `tm_year`, `tm_wday`, `tm_yday` |
+| `W` | writes **week of the year** as a decimal number (Monday is the first day of the week) (range `[00,53]`) | `tm_year`, `tm_wday`, `tm_yday` |
+| `OW`<br /><InlineRevision since="C++11" /> | writes **week of the year**, as by `%W`, using the alternative numeric system, e.g. 五十二 instead of 52 in ja_JP locale | `tm_year`, `tm_wday`, `tm_yday` |
+| `V`<br /><InlineRevision since="C++11" /> | writes **ISO 8601 week of the year** (range `[01,53]`). In ISO 8601 weeks begin with Monday and the first week of the year must satisfy the following requirements:   Includes January 4  Includes first Thursday of the year | `tm_year`, `tm_wday`, `tm_yday` |
+| `OV`<br /><InlineRevision since="C++11" /> | writes **week of the year**, as by `%V`, using the alternative numeric system, e.g. 五十二 instead of 52 in ja_JP locale | `tm_year`, `tm_wday`, `tm_yday` |
+| **Day of the year/month** |   |   |
+| `j` | writes **day of the year** as a decimal number (range `[001,366]`) | `tm_yday` |
+| `d` | writes **day of the month** as a decimal number (range `[01,31]`) | `tm_mday` |
+| `Od`<br /><InlineRevision since="C++11" /> | writes zero-based **day of the month** using the alternative numeric system, e.g. 二十七 instead of 27 in ja_JP locale Single character is preceded by a space. | `tm_mday` |
+| `e`<br /><InlineRevision since="C++11" /> | writes **day of the month** as a decimal number (range `[1,31]`). Single digit is preceded by a space. | `tm_mday` |
+| `Oe`<br /><InlineRevision since="C++11" /> | writes one-based **day of the month** using the alternative numeric system, e.g. 二十七 instead of 27 in ja_JP locale Single character is preceded by a space. | `tm_mday` |
+| **Day of the week** |   |   |
+| `a` | writes **abbreviated weekday** name, e.g. `Fri` (locale dependent) | `tm_wday` |
+| `A` | writes **full weekday** name, e.g. `Friday` (locale dependent) | `tm_wday` |
+| `w` | writes **weekday** as a decimal number, where Sunday is `0` (range `[0-6]`) | `tm_wday` |
+| `Ow`<br /><InlineRevision since="C++11" /> | writes **weekday**, where Sunday is `0`, using the alternative numeric system, e.g. 二 instead of 2 in ja_JP locale | `tm_wday` |
+| `u`<br /><InlineRevision since="C++11" /> | writes **weekday** as a decimal number, where Monday is `1` (ISO 8601 format) (range `[1-7]`) | `tm_wday` |
+| `Ou`<br /><InlineRevision since="C++11" /> | writes **weekday**, where Monday is `1`, using the alternative numeric system, e.g. 二 instead of 2 in ja_JP locale | `tm_wday` |
+| **Hour, minute, second** |   |   |
+| `H` | writes **hour** as a decimal number, 24 hour clock (range `[00-23]`) | `tm_hour` |
+| `OH`<br /><InlineRevision since="C++11" /> | writes **hour** from 24-hour clock using the alternative numeric system, e.g. 十八 instead of 18 in ja_JP locale | `tm_hour` |
+| `I` | writes **hour** as a decimal number, 12 hour clock (range `[01,12]`) | `tm_hour` |
+| `OI`<br /><InlineRevision since="C++11" /> | writes **hour** from 12-hour clock using the alternative numeric system, e.g. 六 instead of 06 in ja_JP locale | `tm_hour` |
+| `M` | writes **minute** as a decimal number (range `[00,59]`) | `tm_min` |
+| `OM`<br /><InlineRevision since="C++11" /> | writes **minute** using the alternative numeric system, e.g. 二十五 instead of 25 in ja_JP locale | `tm_min` |
+| `S` | writes **second** as a decimal number (range `[00,60]`) | `tm_sec` |
+| `OS`<br /><InlineRevision since="C++11" /> | writes **second** using the alternative numeric system, e.g. 二十四 instead of 24 in ja_JP locale | `tm_sec` |
+| **Other** |   |   |
+| `c` | writes **standard date and time string**, e.g. `Sun Oct 17 04:41:13 2010` (locale dependent) | all |
+| `Ec`<br /><InlineRevision since="C++11" /> | writes **alternative date and time string**, e.g. using 平成23年 (year Heisei 23) instead of 2011年 (year 2011) in ja_JP locale | all |
+| `x` | writes localized **date representation** (locale dependent) | all |
+| `Ex`<br /><InlineRevision since="C++11" /> | writes **alternative date representation**, e.g. using 平成23年 (year Heisei 23) instead of 2011年 (year 2011) in ja_JP locale | all |
+| `X` | writes localized **time representation**, e.g. 18:40:20 or 6:40:20 PM (locale dependent) | all |
+| `EX`<br /><InlineRevision since="C++11" /> | writes **alternative time representation** (locale dependent) | all |
+| `D`<br /><InlineRevision since="C++11" /> | equivalent to **"%m/%d/%y"** | `tm_mon`, `tm_mday`, `tm_year` |
+| `F`<br /><InlineRevision since="C++11" /> | equivalent to **"%Y-%m-%d"** (the ISO 8601 date format) | `tm_mon`, `tm_mday`, `tm_year` |
+| `r`<br /><InlineRevision since="C++11" /> | writes localized **12-hour clock** time (locale dependent) | `tm_hour`, `tm_min`, `tm_sec` |
+| `R`<br /><InlineRevision since="C++11" /> | equivalent to **"%H:%M"** | `tm_hour`, `tm_min` |
+| `T`<br /><InlineRevision since="C++11" /> | equivalent to **"%H:%M:%S"** (the ISO 8601 time format) | `tm_hour`, `tm_min`, `tm_sec` |
+| `p` | writes localized **a.m. or p.m.** (locale dependent) | `tm_hour` |
+| `z`<br /><InlineRevision since="C++11" /> | writes **offset from UTC** in the ISO 8601 format (e.g. `-0430`), or no characters if the time zone information is not available | `tm_isdst` |
+| `Z` | writes locale-dependent **time zone name or abbreviation**, or no characters if the time zone information is not available | `tm_isdst` |
+
+### Return value
+
+{/* source:cpp-locale-time-put-put:0008 */}
+Iterator pointing one past the last character that was produced.
+
+### Notes
+
+{/* source:cpp-locale-time-put-put:0009 */}
+No error handling is provided.
+
+{/* source:cpp-locale-time-put-put:0010 */}
+The `fill` character is provided for those implementation-defined format specifiers and for the user-defined overrides of `do_put()` that use padding and filling logic. Such implementations typically make use of the formatting flags from `str`.
+
+### Example
+
+{/* source:cpp-locale-time-put-put:0011 */}
+```cpp
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+ 
+void try_time_put(const std::tm* t, const std::string& fmt)
+{
+    std::cout.imbue(std::locale());
+    std::cout << "In the locale '" << std::cout.getloc().name() << "' : '";
+ 
+    std::use_facet<std::time_put<char>>(std::cout.getloc()).put(
+        {std::cout}, std::cout, ' ', t, &fmt[0], &fmt[0] + fmt.size());
+ 
+    std::cout << "'\n";
+}
+ 
+int main()
+{
+    std::time_t t = std::time(NULL);
+    std::tm tm = *std::localtime(&t);
+ 
+    std::string fmt = "%c";
+    std::cout << "Using the format string '" << fmt
+              << "' to format the time: " << std::ctime(&t) << '\n';
+ 
+    std::locale::global(std::locale("de_DE.utf8"));
+    try_time_put(&tm, fmt);
+ 
+    std::locale::global(std::locale("el_GR.utf8"));
+    try_time_put(&tm, fmt);
+ 
+    std::locale::global(std::locale("ja_JP.utf8"));
+    try_time_put(&tm, fmt);
+}
+```
+Possible output:
+```text
+Using the format string '%c' to format the time: Mon Feb 11 22:58:50 2013
+ 
+In the locale 'de_DE.utf8' : 'Mo 11 Feb 2013 23:02:38 EST'
+In the locale 'el_GR.utf8' : 'Δευ 11 Φεβ 2013 11:02:38 μμ EST'
+In the locale 'ja_JP.utf8' : '2013年02月11日 23時02分38秒'
+```
+
+### Defect reports
+
+{/* source:cpp-locale-time-put-put:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-time-put-put:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={164} standard="C++98">
+    <PublishedBehavior>the purpose of the parameter `fill` was not clear</PublishedBehavior>
+    <CorrectedBehavior>made clear</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-time-put-put:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`put_time`](/docs/cpp/library/io/manip/put_time)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>formats and outputs a date/time value according to the specified format <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_get`](/docs/cpp/library/text/locale/time_get/get)[virtual] <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>extracts date/time components from input stream, according to the specified format <br /> (virtual protected member function of `std::time_get<CharT,InputIt>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

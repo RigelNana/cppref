@@ -1,0 +1,214 @@
+---
+title: "std::regex_constants::error_type"
+description: "The error_type is a type that describes errors that may occur during regular expression parsing."
+source_url: "https://en.cppreference.com/w/cpp/regex/error_type"
+language: "C++"
+---
+
+{/* source:cpp-regex-error-type:0000 */}
+<DeclarationDoc>
+Defined in header [`<regex>`](/docs/cpp/library/headers/regex)
+  <Declaration language="cpp" id="1" since="C++11" code={`using error_type = /* implementation-defined */;`} />
+  <Declaration language="cpp" id="2" since="C++11" code={`constexpr error_type error_collate =    /* unspecified */;
+constexpr error_type error_ctype =      /* unspecified */;
+constexpr error_type error_escape =     /* unspecified */;
+constexpr error_type error_backref =    /* unspecified */;
+constexpr error_type error_brack =      /* unspecified */;
+constexpr error_type error_paren =      /* unspecified */;
+constexpr error_type error_brace =      /* unspecified */;
+constexpr error_type error_badbrace =   /* unspecified */;
+constexpr error_type error_range =      /* unspecified */;
+constexpr error_type error_space =      /* unspecified */;
+constexpr error_type error_badrepeat =  /* unspecified */;
+constexpr error_type error_complexity = /* unspecified */;
+constexpr error_type error_stack =      /* unspecified */;`} /> (inline since C++17)
+
+  <DeclarationDescription>
+    {/* source:cpp-regex-error-type:0001 */}
+    1. The `error_type` is a type that describes errors that may occur during regular expression parsing.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Constants
+
+{/* source:cpp-regex-error-type:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`error_collate`</DescriptionTerm>
+    <DescriptionBody>the expression contains an invalid collating element name</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_ctype`</DescriptionTerm>
+    <DescriptionBody>the expression contains an invalid character class name</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_escape`</DescriptionTerm>
+    <DescriptionBody>the expression contains an invalid escaped character or a trailing escape</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_backref`</DescriptionTerm>
+    <DescriptionBody>the expression contains an invalid back reference</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_brack`</DescriptionTerm>
+    <DescriptionBody>the expression contains mismatched square brackets ('[' and ']')</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_paren`</DescriptionTerm>
+    <DescriptionBody>the expression contains mismatched parentheses ('(' and ')')</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_brace`</DescriptionTerm>
+    <DescriptionBody>the expression contains mismatched curly braces ('\{' and '\}')</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_badbrace`</DescriptionTerm>
+    <DescriptionBody>the expression contains an invalid range in a \{\} expression</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_range`</DescriptionTerm>
+    <DescriptionBody>the expression contains an invalid character range (e.g. [b-a])</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_space`</DescriptionTerm>
+    <DescriptionBody>there was not enough memory to convert the expression into a finite state machine</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_badrepeat`</DescriptionTerm>
+    <DescriptionBody>'*', '?', '+' or '\{' was not preceded by a valid regular expression</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_complexity`</DescriptionTerm>
+    <DescriptionBody>the complexity of an attempted match exceeded a predefined level</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error_stack`</DescriptionTerm>
+    <DescriptionBody>there was not enough memory to perform a match</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-regex-error-type:0003 */}
+Implements regular expressions checker:
+```cpp
+#include <cstddef>
+#include <iomanip>
+#include <iostream>
+#include <regex>
+#include <sstream>
+#include <string>
+ 
+void regular_expression_checker(const std::string& text,
+                                const std::string& regex,
+                                const std::regex::flag_type flags)
+{
+    std::cout << "Text: " << std::quoted(text) << '\n'
+              << "Regex: " << std::quoted(regex) << '\n';
+ 
+    try
+    {
+        const std::regex re{regex, flags};
+        const bool matched = std::regex_match(text, re);
+ 
+        std::stringstream out;
+        out << (matched ? "MATCH!\n" : "DOES NOT MATCH!\n");
+ 
+        std::smatch m;
+        if (std::regex_search(text, m, re); !m.empty())
+        {
+            out << "prefix = [" << m.prefix().str().data() << "]\n";
+ 
+            for (std::size_t i{}; i != m.size(); ++i)
+                out << "  m[" << i << "] = [" << m[i].str().data() << "]\n";
+ 
+            out << "suffix = [" << m.suffix().str().data() << "]\n";
+        }
+        std::cout << out.str() << '\n';
+    }
+    catch (std::regex_error& e)
+    {
+        std::cout << "Error: " << e.what() << ".\n\n";
+    }
+}
+ 
+int main()
+{
+    constexpr std::regex::flag_type your_flags
+        = std::regex::flag_type{0}
+    // Choose one of the supported grammars:
+        | std::regex::ECMAScript
+    //  | std::regex::basic
+    //  | std::regex::extended
+    //  | std::regex::awk
+    //  | std::regex::grep
+    //  | std::regex::egrep
+    // Choose any of the next options:
+    //  | std::regex::icase
+    //  | std::regex::nosubs
+    //  | std::regex::optimize
+    //  | std::regex::collate
+    //  | std::regex::multiline
+        ;
+ 
+    const std::string your_text = "Hello regular expressions.";
+    const std::string your_regex = R"(([a-zA-Z]+) ([a-z]+) ([a-z]+)\.)";
+    regular_expression_checker(your_text, your_regex, your_flags);
+ 
+    regular_expression_checker("Invalid!", R"(((.)(.))", your_flags);
+    regular_expression_checker("Invalid!", R"([.)", your_flags);
+    regular_expression_checker("Invalid!", R"([.]{})", your_flags);
+    regular_expression_checker("Invalid!", R"([1-0])", your_flags);
+}
+```
+Possible output:
+```text
+Text: "Hello regular expressions."
+Regex: "([a-zA-Z]+) ([a-z]+) ([a-z]+)\\."
+MATCH!
+prefix = []
+  m[0] = [Hello regular expressions.]
+  m[1] = [Hello]
+  m[2] = [regular]
+  m[3] = [expressions]
+suffix = []
+ 
+Text: "Invalid!"
+Regex: "((.)(.)"
+Error: Mismatched '(' and ')' in regular expression.
+ 
+Text: "Invalid!"
+Regex: "[."
+Error: Unexpected character within '[...]' in regular expression.
+ 
+Text: "Invalid!"
+Regex: "[.]{}"
+Error: Invalid range in '{}' in regular expression.
+ 
+Text: "Invalid!"
+Regex: "[1-0]"
+Error: Invalid range in bracket expression..
+```
+
+### Defect reports
+
+{/* source:cpp-regex-error-type:0004 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-regex-error-type:0005 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2053} standard="C++11">
+    <PublishedBehavior>the constants were declared `static`</PublishedBehavior>
+    <CorrectedBehavior>removed the `static` specifier</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-regex-error-type:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`regex_error`](/docs/cpp/library/text/regex/regex_error)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>reports errors generated by the regular expressions library  <br />  (class)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

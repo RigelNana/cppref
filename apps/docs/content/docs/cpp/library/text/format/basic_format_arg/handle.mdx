@@ -1,0 +1,81 @@
+---
+title: "std::basic_format_arg<Context>::handle"
+description: "A type-erased wrapper that allows formatting an object of a user-defined type."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/basic_format_arg/handle"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration language="cpp" since="C++20" code={`template< class Context >
+class basic_format_arg<Context>::handle;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0001 */}
+A type-erased wrapper that allows formatting an object of a user-defined type.
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0002 */}
+`handle` objects are typically created by [`std::make_format_args`](/docs/cpp/library/text/format/make_format_args) and accessed through [`std::visit_format_arg`](/docs/cpp/library/text/format/visit_format_arg)<InlineRevision since="C++26"> or the `visit` member functions of [`std::basic_format_arg`](/docs/cpp/library/text/format/basic_format_arg)</InlineRevision>.
+
+### Data members
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0003 */}
+A typical implementation of `handle` is [*TriviallyCopyable*](/docs/cpp/library/named_req/TriviallyCopyable) and only stores two non-static data members:
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0004 */}
+- a `const void*` pointer to the object to be formatted, and
+- a `void (*)(std::basic_format_parse_context<Context::char_type>&, Context&, const void*)` function pointer to the function performing needed operations in the `format` member function (see below).
+
+### Member functions
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`format` <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>formats the referenced object with the given contexts (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0006 */}
+#### `std::basic_format_arg<Context>::handle::format`
+
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++20" code={`void format( std::basic_format_parse_context<Context::char_type>& parse_ctx,
+             Context& format_ctx ) const;`} />
+</DeclarationDoc>
+
+Let
+
+- `T` be the type of the formatting argument,
+- `TD` be `std::remove_const_t<T>`,
+- `TQ` be `const TD` if `const TD` satisfies [`__formattable_with`](/docs/cpp/library/text/format/formattable)`<Context>` or `TD` otherwise, and
+- `ref` be a reference to the formatting argument.
+
+Equivalent to:
+
+```cpp
+typename Context::template formatter_type<TD> f;
+parse_ctx.advance_to(f.parse(parse_ctx));
+format_ctx.advance_to(f.format(const_cast<TQ&>(static_cast<const TD&>(ref)), format_ctx));
+```
+
+### Notes
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0007 */}
+A `handle` has reference semantics for the formatted argument and does not extend its lifetime. It is the programmer's responsibility to ensure that the argument outlives the `handle`. Usually, a `handle` is only used within formatting functions.
+
+### See also
+
+{/* source:cpp-utility-format-basic-format-arg-handle:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_format_arg`](/docs/cpp/library/text/format/basic_format_arg) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>class template that provides access to a formatting argument for user-defined formatters (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_format_args`, `make_wformat_args`](/docs/cpp/library/text/format/make_format_args) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a type-erased object referencing all formatting arguments, convertible to `format_args` (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

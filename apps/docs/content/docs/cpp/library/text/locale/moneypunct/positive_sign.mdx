@@ -1,0 +1,98 @@
+---
+title: "std::moneypunct<CharT,International>::positive_sign, do_positive_sign, negative_sign, do_negative_sign"
+description: "Public member function, calls the member function do_positive_sign of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/moneypunct/positive_sign"
+language: "C++"
+---
+
+{/* source:cpp-locale-moneypunct-positive-sign:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`public:
+string_type positive_sign() const;`} />
+  <Declaration id="2" language="cpp" code={`public:
+string_type negative_sign() const;`} />
+  <Declaration id="3" language="cpp" code={`protected:
+virtual string_type do_positive_sign() const;`} />
+  <Declaration id="4" language="cpp" code={`protected:
+virtual string_type do_negative_sign() const;`} />
+  <DeclarationDescription>
+    {/* source:cpp-locale-moneypunct-positive-sign:0001 */}
+    1. Public member function, calls the member function `do_positive_sign` of the most derived class.
+    {/* source:cpp-locale-moneypunct-positive-sign:0002 */}
+    2. Public member function, calls the member function `do_negative_sign` of the most derived class.
+    {/* source:cpp-locale-moneypunct-positive-sign:0003 */}
+    3. Returns the string that is used for formatting of positive monetary values.
+    {/* source:cpp-locale-moneypunct-positive-sign:0004 */}
+    3. Returns the string that is used for formatting of negative monetary values.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-locale-moneypunct-positive-sign:0005 */}
+
+Only the first character of the string returned is the character that appears in the [`pos_format()`](/docs/cpp/library/text/locale/moneypunct/pos_format)/[`neg_format()`](/docs/cpp/library/text/locale/moneypunct/pos_format) position indicated by the value `sign`. The rest of the characters appear *after* the rest of the monetary string.
+
+{/* source:cpp-locale-moneypunct-positive-sign:0006 */}
+
+In particular, for negative_sign of `"-"`, the formatting may appear as `"-1.23 €"`, while for negative_sign of `"()"` it would appear as `"(1.23 €)"`.
+
+### Return value
+
+{/* source:cpp-locale-moneypunct-positive-sign:0007 */}
+
+The string of type `string_type` holding the characters to be used as positive or negative sign.
+
+### Example
+
+{/* source:cpp-locale-moneypunct-positive-sign:0008 */}
+
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <locale>
+ 
+struct my_punct : std::moneypunct_byname<char, false>
+{
+    my_punct(const char* name) : moneypunct_byname(name) {}
+    string_type do_negative_sign() const { return "()"; }
+};
+ 
+int main()
+{
+    std::locale loc("de_DE.utf8");
+    std::cout.imbue(loc);
+    std::cout << loc.name() << " negative sign is '"
+              << std::use_facet<std::moneypunct<char>>(loc).negative_sign()
+              << "' for example: " << std::showbase << std::put_money(-1234) << '\n';
+ 
+    std::locale loc2("ms_MY.utf8");
+    std::cout.imbue(loc2);
+    std::cout << loc2.name() << " negative sign is '"
+              << std::use_facet<std::moneypunct<char>>(loc2).negative_sign()
+              << "' for example: " << std::put_money(-1234) << '\n';
+ 
+    std::cout.imbue(std::locale(std::cout.getloc(), new my_punct("de_DE.utf8")));
+    std::cout << "de_DE.utf8 with negative_sign set to \"()\": "
+              << std::put_money(-1234) << '\n';
+}
+```
+
+Output:
+
+```text
+de_DE.utf8 negative sign is '-' for example: -12,34 €
+ms_MY.utf8 negative sign is '()' for example: (RM12.34)
+de_DE.utf8 with negative_sign set to "()": (12,34 €)
+```
+
+### See also
+
+{/* source:cpp-locale-moneypunct-positive-sign:0009 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_pos_format, do_neg_format`](/docs/cpp/library/text/locale/moneypunct/pos_format)[virtual]</DescriptionTerm>
+    <DescriptionBody>provides the formatting pattern for currency values <br /> (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

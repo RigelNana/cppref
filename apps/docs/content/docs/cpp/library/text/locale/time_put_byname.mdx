@@ -1,0 +1,189 @@
+---
+title: "std::time_put_byname"
+description: "std::time_put_byname is a std::time_put facet which encapsulates time and date formatting rules of the locale specified at its construction."
+source_url: "https://en.cppreference.com/w/cpp/locale/time_put_byname"
+language: "C++"
+---
+
+{/* source:cpp-locale-time-put-byname:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration language="cpp" code={`template<
+    class CharT,
+    class OutputIt = std::ostreambuf_iterator<CharT>
+> class time_put_byname : public std::time_put<CharT, OutputIt>`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-time-put-byname:0001 */}
+    `std::time_put_byname` is a [`std::time_put`](/docs/cpp/library/text/locale/time_put) facet which encapsulates time and date formatting rules of the locale specified at its construction.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Specializations
+
+{/* source:cpp-locale-time-put-byname:0002 */}
+The standard library is guaranteed to provide every specialization that satisfies the following type requirements:
+
+{/* source:cpp-locale-time-put-byname:0003 */}
+- `CharT` is one of `char` and `wchar_t`, and
+- `OutputIt` must meet the requirements of [`LegacyOutputIterator`](/docs/cpp/library/named_req/OutputIterator).
+
+### Nested types
+
+{/* source:cpp-locale-time-put-byname:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`char_type`</DescriptionTerm>
+    <DescriptionBody>`CharT`</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`iter_type`</DescriptionTerm>
+    <DescriptionBody>`OutputIt`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-locale-time-put-byname:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>(constructor)</DescriptionTerm>
+    <DescriptionBody>constructs a new `time_put_byname` facet <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>(destructor)</DescriptionTerm>
+    <DescriptionBody>destroys a `time_put_byname` facet <br /> (protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-locale-time-put-byname:0006 */}
+
+#### std::time_put_byname::time_put_byname
+
+<DeclarationDoc>
+
+  <Declaration language="cpp" code={`explicit time_put_byname( const char* name, std::size_t refs = 0 );`} />
+
+  <Declaration language="cpp" since="C++11" code={`explicit time_put_byname( const std::string& name, std::size_t refs = 0 );`} />
+
+</DeclarationDoc>
+
+Constructs a new `std::time_put_byname` facet for a locale with `name`.
+
+`refs` is used for resource management: if `refs == 0`, the implementation destroys the facet, when the last [`std::locale`](/docs/cpp/library/text/locale/locale) object holding it is destroyed. Otherwise, the object is not destroyed.
+
+### Parameters
+
+<ParameterList>
+
+  <Parameter name="name">the name of the locale</Parameter>
+
+  <Parameter name="refs">the number of references that link to the facet</Parameter>
+
+</ParameterList>
+
+{/* source:cpp-locale-time-put-byname:0007 */}
+
+#### std::time_put_byname::~time_put_byname
+
+<DeclarationDoc>
+
+  <Declaration language="cpp" code={`protected:
+~time_put_byname();`} />
+
+</DeclarationDoc>
+
+Destroys the facet.
+
+{/* source:cpp-locale-time-put-byname:0008 */}
+
+## Inherited from [`std::time_put`](/docs/cpp/library/text/locale/time_put)
+
+### Data members
+
+<DescriptionList>
+
+  <DescriptionItem>
+
+    <DescriptionTerm>[`std::locale::id`](/docs/cpp/library/text/locale/locale/id) `id` [static]</DescriptionTerm>
+
+    <DescriptionBody>the identifier of the [`facet`](/docs/cpp/library/text/locale/locale/facet#Facet_class)</DescriptionBody>
+
+  </DescriptionItem>
+
+</DescriptionList>
+
+### Member functions
+
+<DescriptionList>
+
+  <DescriptionItem>
+
+    <DescriptionTerm>[`put`](/docs/cpp/library/text/locale/time_put/put)</DescriptionTerm>
+
+    <DescriptionBody>invokes `do_put` <br /> (public member function of `std::time_put<CharT,OutputIt>`)</DescriptionBody>
+
+  </DescriptionItem>
+
+</DescriptionList>
+
+### Protected member functions
+
+<DescriptionList>
+
+  <DescriptionItem>
+
+    <DescriptionTerm>[`do_put`](/docs/cpp/library/text/locale/time_put/put)[virtual]</DescriptionTerm>
+
+    <DescriptionBody>formats date/time and writes to output stream <br /> (virtual protected member function of `std::time_put<CharT,OutputIt>`)</DescriptionBody>
+
+  </DescriptionItem>
+
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-locale-time-put-byname:0009 */}
+Prints current time using the "C" locale with the `time_put` facet replaced by various `std::time_put_byname` facets. The result shown was obtained using the clang compiler.
+```cpp
+#include <codecvt>
+#include <ctime>
+#include <iomanip>
+#include <iostream>
+ 
+int main()
+{
+    std::time_t t = std::time(nullptr);
+    std::wbuffer_convert<std::codecvt_utf8<wchar_t>> conv(std::cout.rdbuf());
+    std::wostream out(&conv);
+ 
+    out.imbue(std::locale(out.getloc(),
+                          new std::time_put_byname<wchar_t>("ja_JP.utf8")));
+    out << std::put_time(std::localtime(&t), L"%A %c") << '\n';
+ 
+    out.imbue(std::locale(out.getloc(),
+                          new std::time_put_byname<wchar_t>("ru_RU.utf8")));
+    out << std::put_time(std::localtime(&t), L"%A %c") << '\n';
+ 
+    out.imbue(std::locale(out.getloc(),
+                          new std::time_put_byname<wchar_t>("sv_SE.utf8")));
+    out << std::put_time(std::localtime(&t), L"%A %c") << '\n';
+}
+```
+Possible output:
+```text
+木曜日 2023年10月05日 19時44分51秒
+Четверг Чт 05 окт 2023 19:44:51
+torsdag tor  5 okt 2023 19:44:51
+```
+
+### See also
+
+{/* source:cpp-locale-time-put-byname:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`time_put`](/docs/cpp/library/text/locale/time_put)</DescriptionTerm>
+    <DescriptionBody>formats contents of [`std::tm`](/docs/cpp/library/chrono/c/tm) for output as character sequence <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,107 @@
+---
+title: "std::wstring_convert<Codecvt,Elem,Wide_alloc,Byte_alloc>::from_bytes"
+description: "Converts a byte sequence to a wide string using the facet pointed to by cvtptr ."
+source_url: "https://en.cppreference.com/w/cpp/locale/wstring_convert/from_bytes"
+language: "C++"
+---
+
+{/* source:cpp-locale-wstring-convert-from-bytes:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`wide_string from_bytes( char byte );`} />
+  <Declaration id="2" language="cpp" code={`wide_string from_bytes( const char* ptr );`} />
+  <Declaration id="3" language="cpp" code={`wide_string from_bytes( const byte_string& str );`} />
+  <Declaration id="4" language="cpp" code={`wide_string from_bytes( const char* first, const char* last );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-wstring-convert-from-bytes:0001 */}
+    Converts a byte sequence to a wide string using the facet pointed to by [`cvtptr`](/docs/cpp/library/text/locale/wstring_convert#cvtptr) .
+
+    {/* source:cpp-locale-wstring-convert-from-bytes:0002 */}
+    1) The byte sequence only consists of one element `byte`.
+
+    {/* source:cpp-locale-wstring-convert-from-bytes:0003 */}
+    2) The byte sequence is the null-terminated sequence beginning at `ptr`.
+
+    {/* source:cpp-locale-wstring-convert-from-bytes:0004 */}
+    3) The byte sequence is the sequence contained in `str`.
+
+    {/* source:cpp-locale-wstring-convert-from-bytes:0005 */}
+    4) The byte sequence is the range `[``first``,``last``)`.
+
+    {/* source:cpp-locale-wstring-convert-from-bytes:0006 */}
+    Before the conversion begins, if `*this` was **not** constructed with constructor overload [`(3)`](/docs/cpp/library/text/locale/wstring_convert/wstring_convert#Version_3), [`cvtstate`](/docs/cpp/library/text/locale/wstring_convert#cvtstate) will be set to its default value (the initial conversion state).
+
+    {/* source:cpp-locale-wstring-convert-from-bytes:0007 */}
+    The number of input elements successfully converted will be stored in [`cvtcount`](/docs/cpp/library/text/locale/wstring_convert#cvtcount) .
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Return value
+
+{/* source:cpp-locale-wstring-convert-from-bytes:0008 */}
+If the conversion succeeds, returns the conversion result. Otherwise, if `*this` is constructed with constructor overload [`(4)`](/docs/cpp/library/text/locale/wstring_convert/wstring_convert#Version_4), returns [`wide_err_string`](/docs/cpp/library/text/locale/wstring_convert#wide_err_string).
+
+### Exceptions
+
+{/* source:cpp-locale-wstring-convert-from-bytes:0009 */}
+If the conversion fails and `*this` was **not** constructed with constructor overload [`(4)`](/docs/cpp/library/text/locale/wstring_convert/wstring_convert#Version_4), throws [`std::range_error`](/docs/cpp/library/error/range_error).
+
+### Example
+
+{/* source:cpp-locale-wstring-convert-from-bytes:0010 */}
+```cpp
+#include <codecvt>
+#include <cstdint>
+#include <iostream>
+#include <locale>
+#include <string>
+ 
+int main()
+{
+    std::string utf8 = "z\u00df\u6c34\U0001d10b"; // or u8"zß水𝄋"
+                 // or "\x7a\xc3\x9f\xe6\xb0\xb4\xf0\x9d\x84\x8b";
+ 
+    // the UTF-8 / UTF-16 standard conversion facet
+    std::u16string utf16 = 
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,
+                             char16_t>{}.from_bytes(utf8.data());
+    std::cout << "UTF-16 conversion produced " << utf16.size()
+              << " code units: " << std::showbase;
+    for (char16_t c : utf16)
+        std::cout << std::hex << static_cast<std::uint16_t>(c) << ' ';
+ 
+    // the UTF-8 / UTF-32 standard conversion facet
+    std::u32string utf32 =
+        std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+    std::cout << "\nUTF-32 conversion produced " << std::dec
+              << utf32.size() << " code units: ";
+    for (char32_t c : utf32)
+        std::cout << std::hex << static_cast<std::uint32_t>(c) << ' ';
+    std::cout << '\n';
+}
+```
+Output:
+```text
+UTF-16 conversion produced 5 code units: 0x7a 0xdf 0x6c34 0xd834 0xdd0b
+UTF-32 conversion produced 4 code units: 0x7a 0xdf 0x6c34 0x1d10b
+```
+
+### See also
+
+{/* source:cpp-locale-wstring-convert-from-bytes:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_bytes`](/docs/cpp/library/text/locale/wstring_convert/to_bytes)</DescriptionTerm>
+    <DescriptionBody>converts a wide string into a byte string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mbsrtowcs`](/docs/cpp/library/text/multibyte/mbsrtowcs)</DescriptionTerm>
+    <DescriptionBody>converts a narrow multibyte character string to wide string, given state <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_in`](/docs/cpp/library/text/locale/codecvt/in)[virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `ExternT` to `InternT`, such as when reading from file <br /> (virtual protected member function of `std::codecvt<InternT,ExternT,StateT>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

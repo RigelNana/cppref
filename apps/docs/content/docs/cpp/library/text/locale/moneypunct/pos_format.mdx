@@ -1,0 +1,107 @@
+---
+title: "std::moneypunct<CharT,International>::pos_format, do_pos_format, neg_format, do_neg_format"
+description: "Public member function, calls the member function do_pos_format of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/moneypunct/pos_format"
+language: "C++"
+---
+
+{/* source:cpp-locale-moneypunct-pos-format:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`public:
+pattern pos_format() const;`} />
+  <Declaration id="2" language="cpp" code={`public:
+pattern neg_format() const;`} />
+  <Declaration id="3" language="cpp" code={`protected:
+virtual pattern do_pos_format() const;`} />
+  <Declaration id="4" language="cpp" code={`protected:
+virtual pattern do_neg_format() const;`} />
+  <DeclarationDescription>
+    {/* source:cpp-locale-moneypunct-pos-format:0001 */}
+    1. Public member function, calls the member function `do_pos_format` of the most derived class.
+    {/* source:cpp-locale-moneypunct-pos-format:0002 */}
+    2. Public member function, calls the member function `do_neg_format` of the most derived class.
+    {/* source:cpp-locale-moneypunct-pos-format:0003 */}
+    3. Returns the format structure (of type [`std::money_base::format`](/docs/cpp/library/text/locale/money_base)) which describes the formatting of positive monetary values.
+    {/* source:cpp-locale-moneypunct-pos-format:0004 */}
+    4. Returns the format structure (of type [`std::money_base::format`](/docs/cpp/library/text/locale/money_base)) which describes the formatting of negative monetary values.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-locale-moneypunct-pos-format:0005 */}
+
+The standard specializations of [`std::moneypunct`](/docs/cpp/library/text/locale/moneypunct) return the pattern `{symbol, sign, none, value}`.
+
+### Return value
+
+{/* source:cpp-locale-moneypunct-pos-format:0006 */}
+
+The object of type [`std::money_base::format`](/docs/cpp/library/text/locale/money_base) describing the formatting used by this locale.
+
+### Notes
+
+{/* source:cpp-locale-moneypunct-pos-format:0007 */}
+
+While [`std::money_put`](/docs/cpp/library/text/locale/money_put) uses `pos_format` for formatting positive values and neg_format for formatting negative values, [`std::money_get`](/docs/cpp/library/text/locale/money_get) uses `neg_format` for parsing all monetary values: it assumes that `neg_format` is compatible with `pos_format`.
+
+### Example
+
+{/* source:cpp-locale-moneypunct-pos-format:0008 */}
+
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <locale>
+ 
+struct my_punct : std::moneypunct_byname<char, false>
+{
+    my_punct(const char* name) : moneypunct_byname(name) {}
+    pattern do_pos_format() const { return {value, space, symbol, sign}; }
+    pattern do_neg_format() const { return {value, space, symbol, sign}; }
+};
+ 
+int main()
+{
+    std::cout.imbue(std::locale("en_US.utf8"));
+    std::cout << "american locale: " << std::showbase
+              << std::put_money(12345678.0) << '\n';
+ 
+    std::cout.imbue(std::locale(std::cout.getloc(), new my_punct("en_US.utf8")));
+    std::cout << "locale with modified moneypunct:\n"
+              << std::put_money(12345678.0) << '\n'
+              << std::put_money(-12345678.0) << '\n';
+}
+```
+
+Output:
+
+```text
+american locale: $123,456.78
+locale with modified moneypunct:
+123,456.78 $
+123,456.78 $-
+```
+
+### See also
+
+{/* source:cpp-locale-moneypunct-pos-format:0009 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_curr_symbol`](/docs/cpp/library/text/locale/moneypunct/curr_symbol)[virtual]</DescriptionTerm>
+    <DescriptionBody>provides the string to use as the currency identifier <br /> (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_positive_sign, do_negative_sign`](/docs/cpp/library/text/locale/moneypunct/positive_sign)[virtual]</DescriptionTerm>
+    <DescriptionBody>provides the string to indicate a positive or negative value <br /> (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_get`](/docs/cpp/library/text/locale/money_get/get)[virtual]</DescriptionTerm>
+    <DescriptionBody>parses a monetary value from an input stream <br /> (virtual protected member function of `std::money_get<CharT,InputIt>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_put`](/docs/cpp/library/text/locale/money_put/put)[virtual]</DescriptionTerm>
+    <DescriptionBody>formats a monetary value and writes to output stream <br /> (virtual protected member function of `std::money_put<CharT,OutputIt>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

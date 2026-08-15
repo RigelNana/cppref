@@ -1,0 +1,245 @@
+---
+title: "std::range_formatter"
+description: "std::range_formatter is a helper class template for implementing range std::formatter specializations."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/range_formatter"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-range-formatter:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration language="cpp" since="C++23" code={`template< class T, class CharT = char >
+    requires std::same_as<std::remove_cvref_t<T>, T> && std::formattable<T, CharT>
+
+class range_formatter;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-range-formatter:0001 */}
+`std::range_formatter` is a helper class template for implementing range [`std::formatter`](/docs/cpp/library/text/format/formatter) specializations.
+
+### Range format specification
+
+{/* source:cpp-utility-format-range-formatter:0002 */}
+The syntax of *range-format-spec* is:
+
+{/* source:cpp-utility-format-range-formatter:0003 */}
+| | |
+| --- | --- |
+| *range-fill-and-align* `(optional)` *width* `(optional)` `n` `(optional)` *range-type* `(optional)` *range-underlying-spec* `(optional)` | |
+
+{/* source:cpp-utility-format-range-formatter:0004 */}
+The *range-fill-and-align* is interpreted the same way as a *fill-and-align* except that the *fill* in *range-fill-and-align* is any character other than `{`, `}`, or `:`.
+
+{/* source:cpp-utility-format-range-formatter:0005 */}
+The *width* is described in [standard format width specification](/docs/cpp/library/text/format/spec#Width_and_precision).
+
+{/* source:cpp-utility-format-range-formatter:0006 */}
+The `n` option causes the range to be formatted without the opening and closing brackets.
+
+{/* source:cpp-utility-format-range-formatter:0007 */}
+```cpp
+assert(std::format("{}", views::iota(1, 5)) == "[1, 2, 3, 4]");
+assert(std::format("{:n}", views::iota(1, 5)) == "1, 2, 3, 4");
+```
+
+{/* source:cpp-utility-format-range-formatter:0008 */}
+The *format-spec* in a *range-underlying-spec* (its syntax is equivalent to `:` *format-spec*), if any, is interpreted by the range element formatter `std::formatter<T, CharT>`.
+
+{/* source:cpp-utility-format-range-formatter:0009 */}
+```cpp
+std::array ints{12, 10, 15, 14};
+
+assert(std::format("{}", ints) == "[12, 10, 15, 14]");
+assert(std::format("{::X}", ints) == "[C, A, F, E]");
+assert(std::format("{:n:_^4}", ints) == "_12_, _10_, _15_, _14_");
+```
+
+{/* source:cpp-utility-format-range-formatter:0010 */}
+The *range-type* changes the way a range is formatted, with certain options only valid with certain argument types.
+
+{/* source:cpp-utility-format-range-formatter:0011 */}
+The available range presentation types are:
+
+{/* source:cpp-utility-format-range-formatter:0012 */}
+- `m`: Indicates that the opening bracket should be `"{"`, the closing bracket should be `"}"`, the separator should be `", "`, and each range element should be formatted as if `m` were specified for its *tuple-type* (in [*tuple-format-spec*](/docs/cpp/library/text/format/tuple_formatter#Format_specification)).
+
+{/* source:cpp-utility-format-range-formatter:0013 */}
+  If `m` is chosen as the *range-type*, the program is ill-formed unless `T` is either a specialization of:
+
+  - [`std::pair`](/docs/cpp/library/utility/pair), or
+  - [`std::tuple`](/docs/cpp/library/utility/tuple) such that `std::tuple_size_v<T> == 2` is `true`.
+
+{/* source:cpp-utility-format-range-formatter:0014 */}
+```cpp
+std::array char_pairs
+{
+    std::pair{'A', 5}, std::pair{'B', 10}, std::pair{'C', 12}
+};
+
+assert(std::format("{}", char_pairs) == "[('A', 5), ('B', 10), ('C', 12)]");
+assert(std::format("{:m}", char_pairs) == "{'A': 5, 'B': 10, 'C': 12}");
+```
+
+{/* source:cpp-utility-format-range-formatter:0015 */}
+- `s`: Indicates that the range should be formatted as a string.
+- `?s`: Indicates that the range should be formatted as an [escaped string](/docs/cpp/library/text/format/spec#Formatting_escaped_characters_and_strings).
+
+{/* source:cpp-utility-format-range-formatter:0016 */}
+  If `s` or `?s` is chosen as the *range-type*, both `n` option and *range-underlying-spec* should not be included in the format specifier, and the program is ill-formed unless `T` is `CharT`.
+
+{/* source:cpp-utility-format-range-formatter:0017 */}
+```cpp
+std::array star{'S', 'T', 'A', 'R'};
+
+assert(std::format("{}", star) == "['S', 'T', 'A', 'R']");
+assert(std::format("{:s}", star) == "STAR");
+assert(std::format("{:?s}", star) == "\"STAR\"");
+```
+
+### Data members
+
+{/* source:cpp-utility-format-range-formatter:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`std::formatter<T, CharT>` `underlying_` (private)</DescriptionTerm>
+    <DescriptionBody>the underlying formatter for elements (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::basic_string_view<CharT>` `separator_` (private)</DescriptionTerm>
+    <DescriptionBody>a string representing the separator of the range formatted result. The default separator is `", "`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::basic_string_view<CharT>` `opening-bracket_` (private)</DescriptionTerm>
+    <DescriptionBody>a string representing the opening bracket of the range formatted result. The default opening bracket is `"["`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`std::basic_string_view<CharT>` `closing-bracket_` (private)</DescriptionTerm>
+    <DescriptionBody>a string representing the closing bracket of the range formatted result. The default closing bracket is `"]"`. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-utility-format-range-formatter:0019 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`set_separator`</DescriptionTerm>
+    <DescriptionBody>sets a specified separator for the range formatted result (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`set_brackets`</DescriptionTerm>
+    <DescriptionBody>sets a specified opening and closing brackets for the range formatted result (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`underlying`</DescriptionTerm>
+    <DescriptionBody>returns the underlying formatter (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`parse`</DescriptionTerm>
+    <DescriptionBody>parses the format specifier as specified by *range-format-spec* (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`format`</DescriptionTerm>
+    <DescriptionBody>writes the range formatted output as specified by *range-format-spec* (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-format-range-formatter:0020 */}
+#### `std::range_formatter::set_separator`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`constexpr void set_separator( std::basic_string_view<CharT> sep ) noexcept;`} />
+</DeclarationDoc>
+
+Assigns `sep` to `separator_`.
+
+{/* source:cpp-utility-format-range-formatter:0021 */}
+#### `std::range_formatter::set_brackets`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`constexpr void set_brackets( std::basic_string_view<CharT> opening,
+                             std::basic_string_view<CharT> closing ) noexcept;`} />
+</DeclarationDoc>
+
+Assigns `opening` and `closing` to `opening-bracket_` and `closing-bracket_`, respectively.
+
+{/* source:cpp-utility-format-range-formatter:0022 */}
+#### `std::range_formatter::underlying`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`constexpr std::formatter<T, CharT>& underlying();`} />
+  <Declaration id="2" language="cpp" code={`constexpr const std::formatter<T, CharT>& underlying() const;`} />
+
+  <DeclarationDescription>
+    Returns `underlying_` (the underlying formatter).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-range-formatter:0023 */}
+#### `std::range_formatter::parse`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class ParseContext >
+constexpr auto parse( ParseContext& ctx ) -> ParseContext::iterator;`} />
+</DeclarationDoc>
+
+Parses the format specifiers as a *range-format-spec* and stores the parsed specifiers in the current object.
+
+Calls `underlying_.parse(ctx)` to parse *format-spec* in *range-format-spec* or, if the latter is not present, an empty *format-spec*.
+
+If *range-type* or the `n` option is present, the values of `opening-bracket_`, `closing-bracket_`, and `separator_` are modified as required.
+
+It calls `underlying_.set_debug_format()` if:
+
+- the *range-type* is neither `s` nor `?s`,
+- `underlying_.set_debug_format()` is a valid expression, and
+- there is no *range-underlying-spec*.
+
+Returns an iterator past the end of the *range-format-spec*.
+
+{/* source:cpp-utility-format-range-formatter:0024 */}
+#### `std::range_formatter::format`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< ranges::input_range R, class FormatContext >
+  requires std::formattable<ranges::range_reference_t<R>, CharT> &&
+           std::same_as<std::remove_cvref_t<ranges::range_reference_t<R>>, T>
+
+auto format( R&& r, FormatContext& ctx ) const -> FormatContext::iterator;`} />
+</DeclarationDoc>
+
+If the *range-type* was either `s` or `?s`, it writes the formatted `std::basic_string<CharT>(std::from_range, r)` as a string or an escaped string, respectively, into `ctx.out()`.
+
+Otherwise, it writes the following into `ctx.out()` as specified by *range-format-spec*, in order:
+
+- `opening-bracket_`,
+- for each formattable element `e` of the range `r`:
+  - the result of writing `e` via `underlying_`, and
+  - `separator_`, unless `e` is the last element of `r`, and
+- `closing-bracket_`.
+
+Returns an iterator past the end of the output range.
+
+### Defect reports
+
+{/* source:cpp-utility-format-range-formatter:0025 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-format-range-formatter:0026 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3892} standard="C++23">
+    <PublishedBehavior>the formatting of nested ranges was incorrect</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-format-range-formatter:0027 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`formatter`](/docs/cpp/library/text/format/formatter) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>defines formatting rules for a given type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

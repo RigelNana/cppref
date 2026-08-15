@@ -1,0 +1,118 @@
+---
+title: "std::ctype<CharT>::is, std::ctype<CharT>::do_is"
+description: "1,2) Public member function, calls the protected virtual member function do_is of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/ctype/is"
+language: "C++"
+---
+
+{/* source:cpp-locale-ctype-is:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration language="cpp" id="1" code={`public:
+bool is( mask m, CharT c ) const;`} />
+  <Declaration language="cpp" id="2" code={`public:
+const CharT* is( const CharT* low, const CharT* high, mask* vec ) const;`} />
+  <Declaration language="cpp" id="3" code={`protected:
+virtual bool do_is( mask m, CharT c ) const;`} />
+  <Declaration language="cpp" id="4" code={`protected:
+virtual const CharT* do_is( const CharT* low, const CharT* high, mask* vec ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-ctype-is:0001 */}
+    1,2) Public member function, calls the protected virtual member function `do_is` of the most derived class.
+
+    {/* source:cpp-locale-ctype-is:0002 */}
+    3) Checks if the character `c` is classified by the mask `m`.
+
+    {/* source:cpp-locale-ctype-is:0003 */}
+    4) For every character in the character array `[low, high)`, identifies the complete classification mask (e.g. `digit|xdigit|alnum|print|graph` for the digit `'0'` in the default locale), and stores the masks in the corresponding elements of the array pointed to by `vec`.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-locale-ctype-is:0004 */}
+<ParameterList>
+  <Parameter name="c">character to classify</Parameter>
+  <Parameter name="m">mask to use for classifying a single character</Parameter>
+  <Parameter name="low">pointer to the first character in an array of characters to classify</Parameter>
+  <Parameter name="high">one past the end pointer for the array of characters to classify</Parameter>
+  <Parameter name="vec">pointer to the first element of the array of masks to fill</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-locale-ctype-is:0005 */}
+1,3) `true` if `c` is classified by `m`.
+
+{/* source:cpp-locale-ctype-is:0006 */}
+2,4) `high`
+
+### Example
+
+{/* source:cpp-locale-ctype-is:0007 */}
+```cpp
+#include <cstddef>
+#include <iostream>
+#include <locale>
+#include <utility>
+#include <vector>
+ 
+// utility wrapper to make locale-bound facets destructible
+template<class Facet>
+struct deletable_facet : Facet
+{
+    template<class ...Args>
+    deletable_facet(Args&& ...args) : Facet(std::forward<Args>(args)...) {}
+    ~deletable_facet() {}
+};
+ 
+int main()
+{
+    // classify a single character using the default locale
+    auto& f = std::use_facet<std::ctype<char>>(std::locale());
+    char c = '0';
+    if (f.is(std::ctype_base::digit, c)) // or isdigit(c, locale());
+        std::cout << '\'' << c << "' is a digit\n";
+ 
+    // classify every character in a string using a named locale
+    deletable_facet<std::ctype_byname<wchar_t>> f2("en_US.utf8");
+    std::wstring str = L"z\u00df\u6c34\U0001d10b";
+    std::vector<std::ctype_base::mask> vec(str.size());
+    f2.is(&str[0], &str[0] + str.size(), &vec[0]);
+ 
+    for (std::size_t n = 0; n < str.size(); ++n)
+    {
+        std::cout << std::hex << "U+" << static_cast<wint_t>(str[n]) << " is: ";
+        if (vec[n] & std::ctype_base::alnum) 
+            std::cout << "alnum";
+        if (vec[n] & std::ctype_base::punct) 
+            std::cout << "punct";
+        std::cout << '\n';
+    }
+}
+```
+Output:
+```text
+'0' is a digit
+U+7a is: alnum 
+U+df is: alnum 
+U+6c34 is: alnum 
+U+1d10b is: punct
+```
+
+### See also
+
+{/* source:cpp-locale-ctype-is:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is`](/docs/cpp/library/text/locale/ctype/../ctype_char/is)</DescriptionTerm>
+    <DescriptionBody>classifies a character or a character sequence, using the classification table <br /> (public member function of `std::ctype<char>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iswctype`](/docs/cpp/library/text/wide/iswctype)</DescriptionTerm>
+    <DescriptionBody>classifies a wide character according to the specified [`LC_CTYPE`](/docs/cpp/library/text/locale/LC_categories) category <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

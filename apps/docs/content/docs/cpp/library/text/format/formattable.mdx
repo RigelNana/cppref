@@ -1,0 +1,72 @@
+---
+title: "std::formattable"
+description: "The concept formattable specifies that std::formatter<std::remove_cvref_t<T>, CharT> meets the requirements of BasicFormatter and Formatter (if std::remove_reference_t<T> is const-qualified)."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/formattable"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-formattable:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template< class T, class CharT >
+concept formattable = /* formattable_with */<
+  std::remove_reference_t<T>,
+  std::basic_format_context</* fmt_iter_for */<CharT>, CharT>
+>;`} />
+  Helper templates
+  <Declaration id="2" language="cpp" code={`template< class CharT >
+using /* fmt_iter_for */ = /* unspecified */;`} />
+(exposition only*)
+  <Declaration id="3" language="cpp" code={`template< class T, class Context,
+          class Formatter =
+              typename Context::template
+                  formatter_type<std::remove_const_t<T>> >
+concept /* formattable_with */ =
+  std::semiregular<Formatter> &&
+  requires (Formatter& f, const Formatter& cf, T&& t, Context fc,
+            std::basic_format_parse_context<
+                typename Context::char_type
+            > pc) {
+    { f.parse(pc) } -> std::same_as<typename decltype(pc)::iterator>;
+    { cf.format(t, fc) } -> std::same_as<typename Context::iterator>;
+  };`} />
+(exposition only*)
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-formattable:0001 */}
+The concept `formattable` specifies that `std::formatter<std::remove_cvref_t<T>, CharT>` meets the requirements of [*BasicFormatter*](/docs/cpp/library/named_req/BasicFormatter) and [*Formatter*](/docs/cpp/library/named_req/Formatter) (if `std::remove_reference_t<T>` is const-qualified).
+
+{/* source:cpp-utility-format-formattable:0002 */}
+The exposition-only alias template `/* fmt_iter_for */` yields an unspecified type that satisfies `std::output_iterator<const CharT&>`.
+
+### Defect reports
+
+{/* source:cpp-utility-format-formattable:0003 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-format-formattable:0004 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3925} standard="C++23">
+    <PublishedBehavior>the second template argument of [`std::basic_format_context`](/docs/cpp/library/text/format/basic_format_context) was not provided</PublishedBehavior>
+    <CorrectedBehavior>provided</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-format-formattable:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`formatter`](/docs/cpp/library/text/format/formatter) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>defines formatting rules for a given type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`BasicFormatter`](/docs/cpp/library/named_req/BasicFormatter) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>abstracts formatting operations for a given formatting argument type and character type (named requirement)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`Formatter`](/docs/cpp/library/named_req/Formatter) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>defines functions used by the [formatting library](/docs/cpp/library/text/format) (named requirement)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

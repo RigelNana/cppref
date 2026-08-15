@@ -1,0 +1,200 @@
+---
+title: "std::basic_regex<CharT,Traits>::basic_regex"
+description: "Constructs a new regular expression from a sequence of characters interpreted according to the flags f."
+source_url: "https://en.cppreference.com/w/cpp/regex/basic_regex/basic_regex"
+language: "C++"
+---
+
+{/* source:cpp-regex-basic-regex-basic-regex:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" since="C++11" code={`basic_regex();`} />
+  <Declaration language="cpp" id="2" since="C++11" code={`explicit basic_regex( const CharT* s,
+                      flag_type f = std::regex_constants::ECMAScript );`} />
+  <Declaration language="cpp" id="3" since="C++11" code={`basic_regex( const CharT* s, std::size_t count,
+             flag_type f = std::regex_constants::ECMAScript );`} />
+  <Declaration language="cpp" id="4" since="C++11" code={`basic_regex( const basic_regex& other );`} />
+  <Declaration language="cpp" id="5" since="C++11" code={`basic_regex( basic_regex&& other ) noexcept;`} />
+  <Declaration language="cpp" id="6" since="C++11" code={`template< class ST, class SA >
+explicit basic_regex( const std::basic_string<CharT,ST,SA>& str,
+                      flag_type f = std::regex_constants::ECMAScript );`} />
+  <Declaration language="cpp" id="7" since="C++11" code={`template< class ForwardIt >
+basic_regex( ForwardIt first, ForwardIt last,
+             flag_type f = std::regex_constants::ECMAScript );`} />
+  <Declaration language="cpp" id="8" since="C++11" code={`basic_regex( std::initializer_list<CharT> init,
+             flag_type f = std::regex_constants::ECMAScript );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-regex-basic-regex-basic-regex:0001 */}
+    Constructs a new regular expression from a sequence of characters interpreted according to the flags `f`.
+    {/* source:cpp-regex-basic-regex-basic-regex:0002 */}
+    1. Default constructor. Constructs an empty regular expression which will match nothing.
+    {/* source:cpp-regex-basic-regex-basic-regex:0003 */}
+    2. Constructs a regex from a null-terminated string `s`.
+    {/* source:cpp-regex-basic-regex-basic-regex:0004 */}
+    3. Constructs a regex from a sequence of `count` characters, pointed to by `s`.
+    {/* source:cpp-regex-basic-regex-basic-regex:0005 */}
+    4. Copy constructor. Constructs a regex by copying `other`.
+    {/* source:cpp-regex-basic-regex-basic-regex:0006 */}
+    5. Move constructor. Constructs a regex with the contents of `other` using move semantics.
+    {/* source:cpp-regex-basic-regex-basic-regex:0007 */}
+    6. Constructs a regex from a string `str`.
+    {/* source:cpp-regex-basic-regex-basic-regex:0008 */}
+    7. Range constructor. Constructs the string with the contents of the range [`first`, `last`).
+    {/* source:cpp-regex-basic-regex-basic-regex:0009 */}
+    8. Initializer list constructor. Constructs the string with the contents of the initializer list `init`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-regex-basic-regex-basic-regex:0010 */}
+<ParameterList>
+  <Parameter name="s">
+    pointer to a null-terminated string
+  </Parameter>
+  <Parameter name="count">
+    length of a character sequence used to initialize the regex
+  </Parameter>
+  <Parameter name="first, last">
+    range of a character sequence used to initialize the regex
+  </Parameter>
+  <Parameter name="str">
+    a basic_string used as a source used to initialize the regex
+  </Parameter>
+  <Parameter name="other">
+    another regex to use as source to initialize the regex
+  </Parameter>
+  <Parameter name="init">
+    initializer list used to initialize the regex
+  </Parameter>
+  <Parameter name="f">
+    flags used to guide the interpretation of the character sequence as a regular expression
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `ForwardIt` must meet the requirements of [`LegacyForwardIterator`](/docs/cpp/library/named_req/ForwardIterator).
+
+### Exceptions
+
+{/* source:cpp-regex-basic-regex-basic-regex:0011 */}
+1) May throw implementation-defined exceptions.
+
+{/* source:cpp-regex-basic-regex-basic-regex:0012 */}
+2,3) [`std::regex_error`](/docs/cpp/library/text/regex/regex_error) if the supplied regular expression is not valid.
+
+{/* source:cpp-regex-basic-regex-basic-regex:0013 */}
+4) May throw implementation-defined exceptions.
+
+{/* source:cpp-regex-basic-regex-basic-regex:0014 */}
+6-8) [`std::regex_error`](/docs/cpp/library/text/regex/regex_error) if the supplied regular expression is not valid.
+
+### Example
+
+{/* source:cpp-regex-basic-regex-basic-regex:0015 */}
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <regex>
+#include <string>
+ 
+void match_and_print(const std::string& text, const std::regex& pattern)
+{
+    std::sregex_iterator it(text.begin(), text.end(), pattern), it_end;
+    int count = 0;
+    for (; it != it_end; ++it)
+    {
+        const std::smatch& match = *it;
+        std::cout << ++count << ". " << std::quoted(match.str()) << '\n';
+    }
+    std::cout << (count ? "\n" : "no match found\n\n");
+}
+ 
+int main()
+{
+    const std::string text = "Hello, World! 12345";
+ 
+    // Matches one or more digits
+    std::string pattern_text = "\\d+";
+    std::cout << "digits (" << pattern_text << "):\n";
+    auto pattern = std::regex(pattern_text);
+    match_and_print(text, pattern);
+ 
+    // Matches one or more characters split by space
+    pattern_text = "[^\\s]+";
+    std::cout << "words (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text);
+    match_and_print(text, pattern);
+ 
+    // Matches one or more characters split by space
+    pattern_text = "[a-zA-Z]+";
+    std::cout << "words without symbols and digits (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text);
+    match_and_print(text, pattern);
+ 
+    // Matches one non digits, non alphabet
+    pattern_text = "[^0-9A-Za-z]";
+    std::cout << "symbol (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text);
+    match_and_print(text, pattern);
+ 
+    // Matches one or more lowercase
+    pattern_text = "[a-z]+";
+    std::cout << "lowercase (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text);
+    match_and_print(text, pattern);
+ 
+    // Matches one or more lowercase with std::regex::icase flag
+    pattern_text = "[a-z]+";
+    std::cout << "lowercase with ignore case flag (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text, std::regex::icase);
+    match_and_print(text, pattern);
+ 
+    // Matches basic POSIX regular expression
+    pattern_text = "[[:digit:]]+";
+    std::cout << "basic POSIX regex (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text, std::regex::basic);
+    match_and_print(text, pattern);
+ 
+    // Matches extended POSIX regular expression
+    pattern_text = "[[:digit:]]+";
+    std::cout << "extended POSIX regex (" << pattern_text << "):\n";
+    pattern = std::regex(pattern_text, std::regex::extended);
+    match_and_print(text, pattern);
+}
+```
+Output:
+```text
+digits (\d+):
+1. "12345"
+ 
+words ([^\s]+):
+1. "Hello,"
+2. "World!"
+3. "12345"
+ 
+words without symbols and digits ([a-zA-Z]+):
+1. "Hello"
+2. "World"
+ 
+symbol ([^0-9A-Za-z]):
+1. ","
+2. " "
+3. "!"
+4. " "
+ 
+lowercase ([a-z]+):
+1. "ello"
+2. "orld"
+ 
+lowercase with ignore case flag ([a-z]+):
+1. "Hello"
+2. "World"
+ 
+basic POSIX regex ([[:digit:]]+):
+no match found
+ 
+extended POSIX regex ([[:digit:]]+):
+1. "12345"
+```

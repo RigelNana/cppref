@@ -1,0 +1,175 @@
+---
+title: "std::time_get<CharT,InputIt>::get_date, std::time_get<CharT,InputIt>::do_get_date"
+description: "1) Public member function, calls the protected virtual member function do_get_date of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/time_get/get_date"
+language: "C++"
+---
+
+{/* source:cpp-locale-time-get-get-date:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`public:
+iter_type get_date( iter_type beg, iter_type end, std::ios_base& str,
+                    std::ios_base::iostate& err, std::tm* t ) const;`} />
+  <Declaration id="2" language="cpp" code={`protected:
+virtual iter_type do_get_date( iter_type beg, iter_type end, std::ios_base& str,
+                               std::ios_base::iostate& err, std::tm* t ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-time-get-get-date:0001 */}
+    1) Public member function, calls the protected virtual member function `do_get_date` of the most derived class.
+
+    {/* source:cpp-locale-time-get-get-date:0002 */}
+    2) Reads successive characters from the sequence `[``beg``,``end``)` and parses out the calendar date value using the default format expected by this locale, which is determined as
+
+
+
+[`date_order()`](/docs/cpp/library/text/locale/time_get/date_order)
+
+Format
+
+
+`no_order`
+
+`"%m/%d/%y"`
+
+
+`dmy`
+
+`"%d/%m/%y"`
+
+
+`mdy`
+
+`"%m/%d/%y"`
+
+
+`ymd`
+
+`"%y/%m/%d"`
+
+
+`ydm`
+
+`"%y/%d/%m"`
+
+    {/* source:cpp-locale-time-get-get-date:0003 */}
+    as used by the functions [`std::get_time()`](/docs/cpp/library/io/manip/get_time), [`get()`](/docs/cpp/library/text/locale/time_get/get), and the POSIX function `strptime()`.
+
+    {/* source:cpp-locale-time-get-get-date:0004 */}
+    The parsed date is stored in the corresponding fields of the [`std::tm`](/docs/cpp/library/chrono/c/tm) structure pointed to by the argument `t`.
+
+    {/* source:cpp-locale-time-get-get-date:0005 */}
+    If the end iterator is reached before a valid date is read, the function sets [`std::ios_base::eofbit`](/docs/cpp/library/io/ios_base/iostate) in `err`. If a parsing error is encountered, the function sets [`std::ios_base::failbit`](/docs/cpp/library/io/ios_base/iostate) in `err`.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-locale-time-get-get-date:0006 */}
+<ParameterList>
+  <Parameter name="beg">iterator designating the start of the sequence to parse</Parameter>
+  <Parameter name="end">one past the end iterator for the sequence to parse</Parameter>
+  <Parameter name="str">a stream object that this function uses to obtain locale facets when needed, e.g. [`std::ctype`](/docs/cpp/library/text/locale/ctype) to skip whitespace or [`std::collate`](/docs/cpp/library/text/locale/collate) to compare strings</Parameter>
+  <Parameter name="err">stream error flags object that is modified by this function to indicate errors</Parameter>
+  <Parameter name="t">pointer to the [`std::tm`](/docs/cpp/library/chrono/c/tm) object that will hold the result of this function call</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-locale-time-get-get-date:0007 */}
+Iterator pointing one past the last character in `[``beg``,``end``)` that was recognized as a part of a valid date.
+
+### Notes
+
+{/* source:cpp-locale-time-get-get-date:0008 */}
+For the alphabetic components of the default date format (if any), this function is usually case-insensitive.
+
+{/* source:cpp-locale-time-get-get-date:0009 */}
+If a parsing error is encountered, most implementations of this function leave `*t` unmodified.
+
+{/* source:cpp-locale-time-get-get-date:0010 */}
+The implementation may support other date formats besides the ones required by the standard.
+
+### Example
+
+{/* source:cpp-locale-time-get-get-date:0011 */}
+```cpp
+#include <ctime>
+#include <iostream>
+#include <iterator>
+#include <locale>
+#include <sstream>
+ 
+void try_get_date(const std::string& s)
+{
+    std::cout << "Parsing the date out of '" << s
+              << "' in the locale " << std::locale().name() << '\n';
+    std::istringstream str(s);
+    std::ios_base::iostate err = std::ios_base::goodbit;
+ 
+    std::tm t;
+    const std::time_get<char>& facet = std::use_facet<std::time_get<char>>(str.getloc());
+    std::istreambuf_iterator<char> ret = facet.get_date({str}, {}, str, err, &t);
+    str.setstate(err);
+ 
+    if (str)
+    {
+        std::cout << "Day: " << t.tm_mday << ' '
+                  << "Month: " << t.tm_mon + 1 << ' '
+                  << "Year: " << t.tm_year + 1900 << '\n';
+    }
+    else
+    {
+        std::cout << "Parse failed. Unparsed string: ";
+        std::copy(ret, {}, std::ostreambuf_iterator<char>(std::cout));
+        std::cout << '\n';
+    }
+}
+int main()
+{
+    std::locale::global(std::locale("en_US.utf8"));
+    try_get_date("02/01/2013");
+    try_get_date("02-01-2013");
+ 
+    std::locale::global(std::locale("ja_JP.utf8"));
+    try_get_date("2013年02月01日");
+}
+```
+Output:
+```text
+Parsing the date out of '02/01/2013' in the locale en_US.utf8
+Day: 1 Month: 2 Year: 2013
+Parsing the date out of '02-01-2013' in the locale en_US.utf8
+Parse failed. Unparsed string: -01-2013
+Parsing the date out of '2013年02月01日' in the locale ja_JP.utf8
+Day: 1 Month: 2 Year: 2013
+```
+
+### Defect reports
+
+{/* source:cpp-locale-time-get-get-date:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-time-get-get-date:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={248} standard="C++98">
+    <PublishedBehavior>`eofbit` was not set upon reaching the end iterator</PublishedBehavior>
+    <CorrectedBehavior>sets `eofbit` if a valid date has not been read</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={461} standard="C++98">
+    <PublishedBehavior>`do_get_date` needed to parse localized date representation</PublishedBehavior>
+    <CorrectedBehavior>parses with the format determined by [`date_order()`](/docs/cpp/library/text/locale/time_get/date_order)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-time-get-get-date:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_time`](/docs/cpp/library/io/manip/get_time)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>parses a date/time value of specified format <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,215 @@
+---
+title: "std::format_to"
+description: "Format args according to the format string fmt, and write the result to the output iterator out. If present, loc is used for locale-specific formatting."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/format_to"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-format-to:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class OutputIt, class... Args >
+OutputIt format_to( OutputIt out,
+                    std::format_string<Args...> fmt, Args&&... args );`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class OutputIt, class... Args >
+OutputIt format_to( OutputIt out,
+                    std::wformat_string<Args...> fmt, Args&&... args );`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class OutputIt, class... Args >
+OutputIt format_to( OutputIt out, const std::locale& loc,
+                    std::format_string<Args...> fmt, Args&&... args );`} />
+  <Declaration id="4" language="cpp" since="C++20" code={`template< class OutputIt, class... Args >
+OutputIt format_to( OutputIt out, const std::locale& loc,
+                    std::wformat_string<Args...> fmt, Args&&... args );`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-format-to:0001 */}
+Format `args` according to the format string `fmt`, and write the result to the output iterator `out`. If present, `loc` is used for locale-specific formatting.
+
+{/* source:cpp-utility-format-format-to:0002 */}
+Equivalent to:
+
+{/* source:cpp-utility-format-format-to:0003 */}
+1. `return std::vformat_to(std::move(out), fmt.str, std::make_format_args(args...));`
+
+{/* source:cpp-utility-format-format-to:0004 */}
+2. `return std::vformat_to(std::move(out), fmt.str, std::make_wformat_args(args...));`
+
+{/* source:cpp-utility-format-format-to:0005 */}
+3. `return std::vformat_to(std::move(out), loc, fmt.str, std::make_format_args(args...));`
+
+{/* source:cpp-utility-format-format-to:0006 */}
+4. `return std::vformat_to(std::move(out), loc, fmt.str, std::make_wformat_args(args...));`.
+
+{/* source:cpp-utility-format-format-to:0007 */}
+Let `CharT` be `char` for overloads (1,3), `wchar_t` for overloads (2,4).
+
+{/* source:cpp-utility-format-format-to:0008 */}
+These overloads participate in overload resolution only if `OutputIt` satisfies the concept `std::output_iterator<const CharT&>`.
+
+{/* source:cpp-utility-format-format-to:0009 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-utility-format-format-to:0010 */}
+- `OutputIt` does not model `std::output_iterator<const CharT&>`.
+- `std::formatter<Ti, CharT>` does not meet the [*BasicFormatter*](/docs/cpp/library/named_req/BasicFormatter) requirements (as required by [`std::make_format_args`](/docs/cpp/library/text/format/make_format_args) and [`std::make_wformat_args`](/docs/cpp/library/text/format/make_format_args)) for some `Ti` in `Args`.
+
+### Parameters
+
+{/* source:cpp-utility-format-format-to:0011 */}
+<ParameterList>
+  <Parameter name="out">iterator to the output buffer</Parameter>
+  <Parameter name="fmt">
+an object that represents the format string. The format string consists of
+
+- ordinary characters (except `{` and `}`), which are copied unchanged to the output,
+- escape sequences `{{` and `}}`, which are replaced with `{` and `}` respectively in the output, and
+- replacement fields.
+</Parameter>
+</ParameterList>
+
+Each replacement field has the following format:
+
+| | |
+| --- | --- |
+| `{` *arg-id* `(optional)` `}` | (1) |
+| `{` *arg-id* `(optional)` `:` *format-spec* `}` | (2) |
+
+1. replacement field without a format specification
+2. replacement field with a format specification
+
+<ParameterList>
+  <Parameter name="arg-id">specifies the index of the argument in `args` whose value is to be used for formatting; if it is omitted, the arguments are used in order. The `arg-id`s in a format string must all be present or all be omitted. Mixing manual and automatic indexing is an error.</Parameter>
+  <Parameter name="format-spec">the format specification defined by the [`std::formatter`](/docs/cpp/library/text/format/formatter) specialization for the corresponding argument. Cannot start with `}`.</Parameter>
+</ParameterList>
+
+- For basic types and standard string types, the format specification is interpreted as [standard format specification](/docs/cpp/library/text/format/spec).
+- For chrono types, the format specification is interpreted as [chrono format specification](/docs/cpp/library/chrono/system_clock/formatter#Format_specification).
+
+<Revision since="C++23">
+- For range types, the format specification is interpreted as [range format specification](/docs/cpp/library/text/format/range_formatter#Range_format_specification).
+- For [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), the format specification is interpreted as [tuple format specification](/docs/cpp/library/text/format/tuple_formatter#Format_specification).
+- For [`std::thread::id`](/docs/cpp/library/thread/thread/id) and [`std::stacktrace_entry`](/docs/cpp/library/error/stacktrace_entry), see [thread id format specification](/docs/cpp/library/thread/thread/id/formatter#Format_specification) and [stacktrace entry format specification](/docs/cpp/library/error/stacktrace_entry/formatter#Format_specification).
+- For [`std::basic_stacktrace`](/docs/cpp/library/error/basic_stacktrace), no format specifier is allowed.
+</Revision>
+
+<Revision since="C++26">
+- For [`std::filesystem::path`](/docs/cpp/library/filesystem/path), see [path format specification](/docs/cpp/library/filesystem/path/formatter#Format_specification).
+</Revision>
+
+For other formattable types, the format specification is determined by user-defined `formatter` specializations.
+
+<ParameterList>
+  <Parameter name="args">arguments to be formatted</Parameter>
+  <Parameter name="loc">[`std::locale`](/docs/cpp/library/text/locale/locale) used for locale-specific formatting</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-format-format-to:0012 */}
+Iterator past the end of the output range.
+
+### Exceptions
+
+{/* source:cpp-utility-format-format-to:0013 */}
+Propagates any exception thrown by formatter or iterator operations.
+
+### Notes
+
+{/* source:cpp-utility-format-format-to:0014 */}
+As of [P2216R3](https://wg21.link/P2216R3), it is an error if the format string is not a constant expression. [`std::vformat_to`](/docs/cpp/library/text/format/vformat_to)<InlineRevision since="C++26"> or `std::runtime_format`</InlineRevision> can be used in this case.
+
+### Example
+
+{/* source:cpp-utility-format-format-to:0015 */}
+```cpp
+#include <format>
+#include <iostream>
+#include <iterator>
+#include <string>
+
+int main()
+{
+    std::string buffer;
+
+    std::format_to
+    (
+        std::back_inserter(buffer), // < OutputIt
+        "Hello, C++{}!\n",          // < fmt
+        "20"                        // < arg
+    );
+    std::cout << buffer;
+    buffer.clear();
+
+    std::format_to
+    (
+        std::back_inserter(buffer), // < OutputIt
+        "Hello, {0}::{1}!{2}",      // < fmt
+        "std",                      // < arg {0}
+        "format_to()",              // < arg {1}
+        "\n",                       // < arg {2}
+        "extra param(s)..."         // < unused
+    );
+    std::cout << buffer << std::flush;
+
+    std::wstring wbuffer;
+    std::format_to
+    (
+        std::back_inserter(wbuffer),// < OutputIt
+        L"Hello, {2}::{1}!{0}",     // < fmt
+        L"\n",                      // < arg {0}
+        L"format_to()",             // < arg {1}
+        L"std",                     // < arg {2}
+        L"...is not..."             // < unused
+        L"...an error!"             // < unused
+    );
+    std::wcout << wbuffer;
+}
+```
+
+Output:
+
+```text
+Hello, C++20!
+Hello, std::format_to()!
+Hello, std::format_to()!
+```
+
+### Defect reports
+
+{/* source:cpp-utility-format-format-to:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-format-format-to:0017 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3539} standard="C++20">
+    <PublishedBehavior>`out` could not be a move-only iterator</PublishedBehavior>
+    <CorrectedBehavior>it can be</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2216R3" standard="C++20">
+    <PublishedBehavior>throws [`std::format_error`](/docs/cpp/library/text/format/format_error) for invalid format string</PublishedBehavior>
+    <CorrectedBehavior>results in compile-time error instead</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2418R2" standard="C++20">
+    <PublishedBehavior>objects that are neither const-usable nor copyable (such as generator-like objects) are not formattable</PublishedBehavior>
+    <CorrectedBehavior>allow formatting these objects</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P2508R1" standard="C++20">
+    <PublishedBehavior>there's no user-visible name for this facility</PublishedBehavior>
+    <CorrectedBehavior>the name `basic_format_string` is exposed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-utility-format-format-to:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`format`](/docs/cpp/library/text/format/format) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>stores formatted representation of the arguments in a new string (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`format_to_n`](/docs/cpp/library/text/format/format_to_n) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>writes out formatted representation of its arguments through an output iterator, not exceeding specified size (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

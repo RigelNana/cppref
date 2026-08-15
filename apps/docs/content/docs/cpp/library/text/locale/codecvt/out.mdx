@@ -1,0 +1,156 @@
+---
+title: "std::codecvt<InternT,ExternT,StateT>::out, do_out"
+description: "1) Public member function, calls the member function do_out of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/codecvt/out"
+language: "C++"
+---
+
+{/* source:cpp-locale-codecvt-out:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration language="cpp" id="1" code={`public:
+result out( StateT& state,
+            const InternT* from,
+            const InternT* from_end,
+            const InternT*& from_next,
+            ExternT* to,
+            ExternT* to_end,
+            ExternT*& to_next ) const;`} />
+  <Declaration language="cpp" id="2" code={`protected:
+virtual result do_out( StateT& state,
+                       const InternT* from,
+                       const InternT* from_end,
+                       const InternT*& from_next,
+                       ExternT* to,
+                       ExternT* to_end,
+                       ExternT*& to_next ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-codecvt-out:0001 */}
+    1) Public member function, calls the member function `do_out` of the most derived class.
+
+    {/* source:cpp-locale-codecvt-out:0002 */}
+    2) If this `codecvt` facet defines a conversion, translates the internal characters from the source range `[from, from_end)` to external characters, placing the results in the subsequent locations starting at `to`. Converts no more than `from_end - from` internal characters and writes no more than `to_end - to` external characters. Leaves `from_next` and `to_next` pointing one beyond the last element successfully converted.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-locale-codecvt-out:0003 */}
+If this `codecvt` facet does not define a conversion, no characters are converted. `to_next` is set to be equal to `to`, `state` is unchanged, and [`std::codecvt_base::noconv`](/docs/cpp/library/text/locale/codecvt_base) is returned.
+
+{/* source:cpp-locale-codecvt-out:0004 */}
+`do_out(state, from, from + 1, from_next, to, to_end, to_next)` must return `ok` if
+
+{/* source:cpp-locale-codecvt-out:0005 */}
+- this `codecvt` facet is used by [`basic_filebuf`](/docs/cpp/library/io/basic_filebuf), and
+- `do_out(state, from, from_end, from_next, to, to_end, to_next)` would return `ok` where `from != from_end`.
+
+### Return value
+
+{/* source:cpp-locale-codecvt-out:0006 */}
+A value of type [`std::codecvt_base::result`](/docs/cpp/library/text/locale/codecvt_base), indicating the success status as follows:
+
+{/* source:cpp-locale-codecvt-out:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`ok`</DescriptionTerm>
+    <DescriptionBody>conversion completed</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`partial`</DescriptionTerm>
+    <DescriptionBody>not enough space in the output buffer or unexpected end of source buffer</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`error`</DescriptionTerm>
+    <DescriptionBody>encountered a character that could not be converted</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`noconv`</DescriptionTerm>
+    <DescriptionBody>this facet is non-converting, no output written</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-locale-codecvt-out:0008 */}
+The non-converting specialization `std::codecvt<char, char, std::mbstate_t>` always returns [`std::codecvt_base::noconv`](/docs/cpp/library/text/locale/codecvt_base).
+
+### Notes
+
+{/* source:cpp-locale-codecvt-out:0009 */}
+Requires that `from <= from_end && to <= to_end` and that `state` either representing the initial shift state or obtained by converting the preceding characters in the sequence.
+
+{/* source:cpp-locale-codecvt-out:0010 */}
+While `codecvt` supports N:M conversions (e.g. UTF-16 to UTF-8, where two internal characters may be necessary to decide what external characters to output), [`std::basic_filebuf`](/docs/cpp/library/io/basic_filebuf) can only use `codecvt` facets that define a 1:N conversion, that is it must be able to process one internal character at a time when writing to a file.
+
+{/* source:cpp-locale-codecvt-out:0011 */}
+When performing N:M conversions, this function may return [`std::codecvt_base::partial`](/docs/cpp/library/text/locale/codecvt_base) after consuming all source characters (`from_next == from_end`). This means that another internal character is needed to complete the conversion (e.g. when converting UTF-16 to UTF-8, if the last character in the source buffer is a high surrogate).
+
+{/* source:cpp-locale-codecvt-out:0012 */}
+The effect on `state` is deliberately unspecified. In standard facets, it is used to maintain shift state like when calling `std::wcsrtombs`, and is therefore updated to reflect the shift state after the last successfully converted character, but a user-defined facet is free to use it to maintain any other state, e.g. count the number of special characters encountered.
+
+### Example
+
+{/* source:cpp-locale-codecvt-out:0013 */}
+```cpp
+#include <iostream>
+#include <locale>
+#include <string>
+ 
+int main()
+{
+    std::locale::global(std::locale("en_US.utf8"));
+    auto& f = std::use_facet<std::codecvt<wchar_t, char, std::mbstate_t>>(std::locale());
+    std::wstring internal = L"z\u00df\u6c34\U0001f34c"; // L"zß水🍌"
+ 
+    // note that the following can be done with wstring_convert
+    std::mbstate_t mb{}; // initial shift state
+    std::string external(internal.size() * f.max_length(), '\0'); 
+    const wchar_t* from_next;
+    char* to_next;
+    f.out(mb, &internal[0], &internal[internal.size()], from_next,
+              &external[0], &external[external.size()], to_next);
+    // error checking skipped for brevity
+    external.resize(to_next - &external[0]);
+ 
+    std::cout << "The string in narrow multibyte encoding: " << external << '\n';
+}
+```
+Output:
+```text
+The string in narrow multibyte encoding: zß水🍌
+```
+
+### Defect reports
+
+{/* source:cpp-locale-codecvt-out:0014 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-codecvt-out:0015 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={76} standard="C++98">
+    <PublishedBehavior>it was unclear whether the conversion is required<br />to support taking one internal character at a time</PublishedBehavior>
+    <CorrectedBehavior>only required if used<br />by [`basic_filebuf`](/docs/cpp/library/io/basic_filebuf)</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-codecvt-out:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`overflow`](/docs/cpp/library/io/basic_filebuf/overflow)[virtual]</DescriptionTerm>
+    <DescriptionBody>writes characters to the associated file from the put area <br /> (virtual protected member function of `std::basic_filebuf<CharT,Traits>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`to_bytes`](/docs/cpp/library/text/locale/wstring_convert/to_bytes)</DescriptionTerm>
+    <DescriptionBody>converts a wide string into a byte string <br /> (public member function of `std::wstring_convert<Codecvt,Elem,Wide_alloc,Byte_alloc>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wcsrtombs`](/docs/cpp/library/text/multibyte/wcsrtombs)</DescriptionTerm>
+    <DescriptionBody>converts a wide string to narrow multibyte character string, given state <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_in`](/docs/cpp/library/text/locale/codecvt/in)[virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `ExternT` to `InternT`, such as when reading from file <br /> (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

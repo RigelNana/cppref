@@ -1,0 +1,163 @@
+---
+title: "std::time_get<CharT,InputIt>::get_weekday, std::time_get<CharT,InputIt>::do_get_weekday"
+description: "1) Public member function, calls the protected virtual member function do_get_weekday of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/time_get/get_weekday"
+language: "C++"
+---
+
+{/* source:cpp-locale-time-get-get-weekday:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration id="1" language="cpp" code={`public:
+iter_type get_weekday( iter_type beg, iter_type end, std::ios_base& str,
+                       std::ios_base::iostate& err, std::tm* t ) const;`} />
+  <Declaration id="2" language="cpp" code={`protected:
+virtual iter_type do_get_weekday( iter_type beg, iter_type end, std::ios_base& str,
+                                  std::ios_base::iostate& err, std::tm* t ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-time-get-get-weekday:0001 */}
+    1) Public member function, calls the protected virtual member function `do_get_weekday` of the most derived class.
+
+    {/* source:cpp-locale-time-get-get-weekday:0002 */}
+    2) Reads successive characters from the sequence `[``beg``,``end``)` and parses out the weekday name (possibly abbreviated), using the default format for weekdays expected by this locale, which is the same format as `"%a"` as used by the functions [`std::get_time`](/docs/cpp/library/io/manip/get_time), [`time_get::get`](/docs/cpp/library/text/locale/time_get/get), and the POSIX function `strptime()`.
+
+    {/* source:cpp-locale-time-get-get-weekday:0003 */}
+    If it finds abbreviated name, followed by the characters that are valid for the full name, it continues reading until it consumes all the characters for the full name or finds a character that is not expected, in which case parsing fails even if the first few characters were a valid abbreviation.
+
+    {/* source:cpp-locale-time-get-get-weekday:0004 */}
+    The parsed weekday is stored in the [`std::tm`](/docs/cpp/library/chrono/c/tm) field `t->tm_wday`.
+
+    {/* source:cpp-locale-time-get-get-weekday:0005 */}
+    If the end iterator is reached before a valid weekday name is read, the function sets [`std::ios_base::eofbit`](/docs/cpp/library/io/ios_base/iostate) in `err`. If a parsing error is encountered, the function sets [`std::ios_base::failbit`](/docs/cpp/library/io/ios_base/iostate) in `err`.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-locale-time-get-get-weekday:0006 */}
+<ParameterList>
+  <Parameter name="beg">iterator designating the start of the sequence to parse</Parameter>
+  <Parameter name="end">one past the end iterator for the sequence to parse</Parameter>
+  <Parameter name="str">a stream object that this function uses to obtain locale facets when needed, e.g. [`std::ctype`](/docs/cpp/library/text/locale/ctype) to skip whitespace or [`std::collate`](/docs/cpp/library/text/locale/collate) to compare strings</Parameter>
+  <Parameter name="err">stream error flags object that is modified by this function to indicate errors</Parameter>
+  <Parameter name="t">pointer to the [`std::tm`](/docs/cpp/library/chrono/c/tm) object that will hold the result of this function call</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-locale-time-get-get-weekday:0007 */}
+Iterator pointing one past the last character in `[``beg``,``end``)` that was recognized as a part of a valid weekday name.
+
+### Notes
+
+{/* source:cpp-locale-time-get-get-weekday:0008 */}
+This function is usually case-insensitive.
+
+{/* source:cpp-locale-time-get-get-weekday:0009 */}
+If a parsing error is encountered, most implementations of this function leave `*t` unmodified.
+
+### Example
+
+{/* source:cpp-locale-time-get-get-weekday:0010 */}
+```cpp
+#include <initializer_list>
+#include <iostream>
+#include <iterator>
+#include <locale>
+#include <sstream>
+#include <string_view>
+ 
+void try_get_wday(std::string_view s)
+{
+    std::cout << "Parsing the weekday out of '" << s
+              << "' in the locale " << std::locale().name() << '\n';
+    std::istringstream str{s.data()};
+    std::ios_base::iostate err{std::ios_base::goodbit};
+ 
+    std::tm t;
+    std::time_get<char> const& facet = std::use_facet<std::time_get<char>>(str.getloc());
+    std::istreambuf_iterator<char> ret = facet.get_weekday({str}, {}, str, err, &t);
+    str.setstate(err);
+    std::istreambuf_iterator<char> last{};
+ 
+    if (str)
+    {
+        std::cout << "Successfully parsed, weekday number is " << t.tm_wday;
+ 
+        if (ret != last)
+        {
+            std::cout << " Remaining content: ";
+            std::copy(ret, last, std::ostreambuf_iterator<char>(std::cout));
+        }
+        else
+            std::cout << " the input was fully consumed";
+    }
+    else
+    {
+        std::cout << "Parse failed. Unparsed string: ";
+        std::copy(ret, last, std::ostreambuf_iterator<char>(std::cout));
+    }
+ 
+    std::cout << '\n';
+}
+ 
+void demo(std::string_view locale_name, std::initializer_list<std::string_view>&& data)
+{
+    try
+    {
+        std::locale::global(std::locale(locale_name.data()));
+    }
+    catch (std::runtime_error const& ex)
+    {
+        std::cout << "Cannot setup locale: " << locale_name << "\n"
+                     "Exception: " << ex.what() << '\n';
+        return;
+    }
+ 
+    for (std::string_view const weekday : data)
+        try_get_wday(weekday);
+}
+ 
+int main()
+{
+    demo("lt_LT.utf8", {"Št", "Šeštadienis"});
+    demo("en_US.utf8", {"SATELLITE"});
+    demo("ja_JP.utf8", {"土曜日"});
+}
+```
+Possible output:
+```text
+Parsing the weekday out of 'Št' in the locale lt_LT.utf8
+Successfully parsed, weekday number is 6 the input was fully consumed
+Parsing the weekday out of 'Šeštadienis' in the locale lt_LT.utf8
+Successfully parsed, weekday number is 6 the input was fully consumed
+Parsing the weekday out of 'SATELLITE' in the locale en_US.utf8
+Successfully parsed, weekday number is 6 Remaining content: ELLITE
+Parsing the weekday out of '土曜日' in the locale ja_JP.utf8
+Successfully parsed, weekday number is 6 the input was fully consumed
+```
+
+### Defect reports
+
+{/* source:cpp-locale-time-get-get-weekday:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-time-get-get-weekday:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={248} standard="C++98">
+    <PublishedBehavior>`eofbit` was not set upon reaching the end iterator</PublishedBehavior>
+    <CorrectedBehavior>sets `eofbit` if a valid weekday name has not been read</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-time-get-get-weekday:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_time`](/docs/cpp/library/io/manip/get_time)<InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>parses a date/time value of specified format <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,124 @@
+---
+title: "std::runtime_format"
+description: "Returns an object that stores a runtime format string directly usable in user-oriented formatting functions and can be implicitly converted to std::basic_format_string."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/runtime_format"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-runtime-format:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration id="1" language="cpp" since="C++26" code={`/*runtime-format-string*/<char> runtime_format( std::string_view fmt ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`/*runtime-format-string*/<wchar_t> runtime_format( std::wstring_view fmt ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-runtime-format:0001 */}
+Returns an object that stores a runtime format string directly usable in user-oriented formatting functions and can be implicitly converted to [`std::basic_format_string`](/docs/cpp/library/text/format/basic_format_string).
+
+### Parameters
+
+{/* source:cpp-utility-format-runtime-format:0002 */}
+<ParameterList>
+  <Parameter name="fmt">a string view</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-utility-format-runtime-format:0003 */}
+An object holding the runtime format string of the exposition-only type:
+
+{/* source:cpp-utility-format-runtime-format:0004 */}
+#### Class template `/*runtime-format-string*/`\<CharT\>
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`template< class CharT >
+struct /*runtime-format-string*/;`} /> (exposition only*)
+</DeclarationDoc>
+
+##### Member objects
+
+The returned object contains an exposition-only non-static data member *str* of type `std::basic_string_view<CharT>`.
+
+##### Constructors and assignments
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`/*runtime-format-string*/( std::basic_string_view<CharT> s ) noexcept;`} />
+  <Declaration id="2" language="cpp" code={`/*runtime-format-string*/( const /*runtime-format-string*/& ) = delete;`} />
+  <Declaration id="3" language="cpp" code={`/*runtime-format-string*/& operator=( const /*runtime-format-string*/& ) = delete;`} />
+
+  <DeclarationDescription>
+    1. Initializes `str` with `s`.
+    2. Copy constructor is explicitly deleted. The type is neither copyable nor movable.
+    3. The assignment is explicitly deleted.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Notes
+
+{/* source:cpp-utility-format-runtime-format:0005 */}
+Since the return type of `runtime_format` is neither copyable nor movable, an attempt of passing `runtime_fmt` as glvalue inhibits the construction of `std::basic_format_string` which results in program ill-formed. To construct `std::basic_format_string` with `runtime_format`, the returned value of `runtime_format` is passed directly on `std::basic_format_string` as prvalue where copy elision is guaranteed.
+
+{/* source:cpp-utility-format-runtime-format:0006 */}
+```cpp
+auto runtime_fmt = std::runtime_format("{}");
+
+auto s0 = std::format(runtime_fmt, 1); // error
+auto s1 = std::format(std::move(runtime_fmt), 1); // still error
+auto s2 = std::format(std::runtime_format("{}"), 1); // ok
+```
+
+{/* source:cpp-utility-format-runtime-format:0007 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_format`](/docs/cpp/library/feature_test#cpp_lib_format) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_format_202311L) | (C++26) | Runtime format strings |
+
+### Example
+
+{/* source:cpp-utility-format-runtime-format:0008 */}
+```cpp
+#include <format>
+#include <print>
+#include <string>
+#include <string_view>
+
+int main()
+{
+    std::print("Hello {}!\n", "world");
+
+    std::string fmt;
+    for (int i{}; i != 3; ++i)
+    {
+        fmt += "{} "; // constructs the formatting string
+        std::print("{} : ", fmt);
+        std::println(std::runtime_format(fmt), "alpha", 'Z', 3.14, "unused");
+    }
+}
+```
+
+Output:
+
+```text
+Hello world!
+{}  : alpha
+{} {}  : alpha Z
+{} {} {}  : alpha Z 3.14
+```
+
+### See also
+
+{/* source:cpp-utility-format-runtime-format:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`format`](/docs/cpp/library/text/format/format) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>stores formatted representation of the arguments in a new string (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`vformat`](/docs/cpp/library/text/format/vformat) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>non-template variant of [`std::format`](/docs/cpp/library/text/format/format) using type-erased argument representation (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`basic_format_string`, `format_string`, `wformat_string`](/docs/cpp/library/text/format/basic_format_string) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>class template that performs compile-time format string checks at construction time (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

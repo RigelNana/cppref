@@ -1,0 +1,92 @@
+---
+title: "std::codecvt<InternT,ExternT,StateT>::length, do_length"
+description: "1) Public member function, calls the member function do_length of the most derived class."
+source_url: "https://en.cppreference.com/w/cpp/locale/codecvt/length"
+language: "C++"
+---
+
+{/* source:cpp-locale-codecvt-length:0000 */}
+<DeclarationDoc>
+Defined in header [`<locale>`](/docs/cpp/library/headers/locale)
+  <Declaration language="cpp" id="1" code={`public:
+int length( StateT& state, const ExternT* from, const ExternT* from_end,
+            std::size_t max ) const;`} />
+  <Declaration language="cpp" id="2" code={`protected:
+virtual int do_length( StateT& state, const ExternT* from, const ExternT* from_end,
+                       std::size_t max ) const;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-locale-codecvt-length:0001 */}
+    1) Public member function, calls the member function `do_length` of the most derived class.
+
+    {/* source:cpp-locale-codecvt-length:0002 */}
+    2) Attempts to convert the `ExternT` characters from the character array defined by `[from, from_end)`, given initial conversion state `state`, to at most `max` `InternT` characters, and returns the number of `ExternT` characters that such conversion would consume. Modifies `state` as if by executing `do_in(state, from, from_end, from, to, to + max, to)` for some imaginary `[to, to + max)` output buffer.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Return value
+
+{/* source:cpp-locale-codecvt-length:0003 */}
+The number of `ExternT` characters that would be consumed if converted by [`do_in()`](/docs/cpp/library/text/locale/codecvt/in) until either all `from_end - from` characters were consumed or `max` `InternT` characters were produced, or a conversion error occurred.
+
+{/* source:cpp-locale-codecvt-length:0004 */}
+The non-converting specialization `std::codecvt<char, char, std::mbstate_t>` returns `std::min(max, from_end - from)`.
+
+### Example
+
+{/* source:cpp-locale-codecvt-length:0005 */}
+```cpp
+#include <iostream>
+#include <locale>
+#include <string>
+ 
+int main()
+{
+    using facet_type = std::codecvt<wchar_t, char, std::mbstate_t>;
+ 
+    // narrow multibyte encoding
+    std::string s = "z\u00df\u6c34\U0001d10b"; // or u8"zß水𝄋"
+              // or "\x7a\xc3\x9f\xe6\xb0\xb4\xf0\x9d\x84\x8b"
+ 
+    std::locale loc("en_US.UTF-8");
+    facet_type const& codecvt_facet = std::use_facet<facet_type>(loc);
+    std::mbstate_t mb = std::mbstate_t();
+    std::cout << "Only the first "
+              << codecvt_facet.length(mb, s.data(), s.data() + s.size(), 2)
+              << " bytes out of " << s.size() << " would be consumed"
+                 " to produce the first 2 characters\n";
+}
+```
+Output:
+```text
+Only the first 3 bytes out of 10 would be consumed to produce the first 2 characters
+```
+
+### Defect reports
+
+{/* source:cpp-locale-codecvt-length:0006 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-locale-codecvt-length:0007 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={75} standard="C++98">
+    <PublishedBehavior>the effect on `state` was not specified</PublishedBehavior>
+    <CorrectedBehavior>specified</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={305} standard="C++98">
+    <PublishedBehavior>`std::codecvt<wchar_t, char, std::mbstate_t>::do_length`<br />was required to return `std::min(max, from_end - from)`</PublishedBehavior>
+    <CorrectedBehavior>not required</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-locale-codecvt-length:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_in`](/docs/cpp/library/text/locale/codecvt/in)[virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `ExternT` to `InternT`, such as when reading from file <br /> (virtual protected member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+

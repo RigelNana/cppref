@@ -1,0 +1,141 @@
+---
+title: "std::basic_format_string, std::format_string, std::wformat_string"
+description: "Class template std::basic_format_string wraps a std::basic_string_view that will be used by formatting functions."
+source_url: "https://en.cppreference.com/w/cpp/utility/format/basic_format_string"
+language: "C++"
+---
+
+{/* source:cpp-utility-format-basic-format-string:0000 */}
+<DeclarationDoc>
+Defined in header [`<format>`](/docs/cpp/library/headers/format)
+
+  <Declaration id="1" language="cpp" since="C++20" code={`template< class CharT, class... Args >
+struct basic_format_string;`} />
+  <Declaration id="2" language="cpp" since="C++20" code={`template< class... Args >
+using format_string =
+    basic_format_string<char, std::type_identity_t<Args>...>;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`template< class... Args >
+using wformat_string =
+    basic_format_string<wchar_t, std::type_identity_t<Args>...>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-format-basic-format-string:0001 */}
+Class template `std::basic_format_string` wraps a [`std::basic_string_view`](/docs/cpp/library/string/basic_string_view) that will be used by formatting functions.
+
+{/* source:cpp-utility-format-basic-format-string:0002 */}
+The constructor of `std::basic_format_string` performs compile-time format string checks<InlineRevision since="C++26"> unless the constructor argument is returned by [`std::runtime_format`](/docs/cpp/library/text/format/runtime_format)</InlineRevision>.
+
+### Member functions
+
+{/* source:cpp-utility-format-basic-format-string:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`(constructor)`</DescriptionTerm>
+    <DescriptionBody>constructs a `basic_format_string`, raising compile error if the argument is not a format string (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`get`</DescriptionTerm>
+    <DescriptionBody>returns the wrapped string (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-utility-format-basic-format-string:0004 */}
+#### `std::basic_format_string::basic_format_string`
+
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`template< class T >
+consteval basic_format_string( const T& s );`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`basic_format_string( /* runtime-format-string */<CharT> s ) noexcept;`} />
+
+  <DeclarationDescription>
+    1. Constructs a `basic_format_string` object that stores a view of string `s`. If the argument is not a compile-time constant, or if it cannot be parsed as a format string for the formatting argument types `Args`, the construction is ill-formed. This overload participates in overload resolution only if `const T&` models `std::convertible_to<std::basic_string_view<CharT>>`.
+    2. Constructs a `basic_format_string` object that stores a view of string `s` as returned by `std::runtime_format`. It does not perform format string checks upon construction.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+##### Parameters
+
+<ParameterList>
+  <Parameter name="s">
+an object that represents the format string. The format string consists of
+
+- ordinary characters (except `{` and `}`), which are copied unchanged to the output,
+- escape sequences `{{` and `}}`, which are replaced with `{` and `}` respectively in the output, and
+- replacement fields.
+</Parameter>
+</ParameterList>
+
+Each replacement field has the following format:
+
+| | |
+| --- | --- |
+| `{` *arg-id* `(optional)` `}` | (1) |
+| `{` *arg-id* `(optional)` `:` *format-spec* `}` | (2) |
+
+1. replacement field without a format specification
+2. replacement field with a format specification
+
+<ParameterList>
+  <Parameter name="arg-id">specifies the index of the argument in `args` whose value is to be used for formatting; if it is omitted, the arguments are used in order. The `arg-id`s in a format string must all be present or all be omitted. Mixing manual and automatic indexing is an error.</Parameter>
+  <Parameter name="format-spec">the format specification defined by the [`std::formatter`](/docs/cpp/library/text/format/formatter) specialization for the corresponding argument. Cannot start with `}`.</Parameter>
+</ParameterList>
+
+- For basic types and standard string types, the format specification is interpreted as [standard format specification](/docs/cpp/library/text/format/spec).
+- For chrono types, the format specification is interpreted as [chrono format specification](/docs/cpp/library/chrono/system_clock/formatter#Format_specification).
+
+<Revision since="C++23">
+- For range types, the format specification is interpreted as [range format specification](/docs/cpp/library/text/format/range_formatter#Range_format_specification).
+- For [`std::pair`](/docs/cpp/library/utility/pair) and [`std::tuple`](/docs/cpp/library/utility/tuple), the format specification is interpreted as [tuple format specification](/docs/cpp/library/text/format/tuple_formatter#Format_specification).
+- For [`std::thread::id`](/docs/cpp/library/thread/thread/id) and [`std::stacktrace_entry`](/docs/cpp/library/error/stacktrace_entry), see [thread id format specification](/docs/cpp/library/thread/thread/id/formatter#Format_specification) and [stacktrace entry format specification](/docs/cpp/library/error/stacktrace_entry/formatter#Format_specification).
+- For [`std::basic_stacktrace`](/docs/cpp/library/error/basic_stacktrace), no format specifier is allowed.
+</Revision>
+
+<Revision since="C++26">
+- For [`std::filesystem::path`](/docs/cpp/library/filesystem/path), see [path format specification](/docs/cpp/library/filesystem/path/formatter#Format_specification).
+</Revision>
+
+For other formattable types, the format specification is determined by user-defined `formatter` specializations.
+
+{/* source:cpp-utility-format-basic-format-string:0005 */}
+#### `std::basic_format_string::get`
+
+<DeclarationDoc>
+  <Declaration language="cpp" code={`constexpr std::basic_string_view<CharT> get() const noexcept;`} />
+</DeclarationDoc>
+
+Returns the stored string view.
+
+### Notes
+
+{/* source:cpp-utility-format-basic-format-string:0006 */}
+The alias templates `format_string` and `wformat_string` use `std::type_identity_t` to inhibit template argument deduction. Typically, when they appear as a function parameter, their template arguments are deduced from other function arguments.
+
+{/* source:cpp-utility-format-basic-format-string:0007 */}
+```cpp
+template<class... Args>
+std::string format(std::format_string<Args...> fmt, Args&&... args);
+
+auto s = format("{} {}", 1.0, 2);
+// Calls format<double, int>. Args are deduced from 1.0, 2
+// Due to the use of type_identity_t in format_string, template argument deduction
+// does not consider the type of the format string.
+```
+
+### Example
+
+{/* source:cpp-utility-format-basic-format-string:0008 */}
+This section is incomplete
+Reason: no example
+
+### Defect reports
+
+{/* source:cpp-utility-format-basic-format-string:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-format-basic-format-string:0010 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P2508R1" standard="C++20">
+    <PublishedBehavior>there's no user-visible name for this facility</PublishedBehavior>
+    <CorrectedBehavior>the name `basic_format_string` is exposed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
