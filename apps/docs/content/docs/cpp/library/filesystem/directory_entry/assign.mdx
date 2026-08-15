@@ -1,0 +1,111 @@
+---
+title: "std::filesystem::directory_entry::assign"
+description: "Assigns new content to the directory entry object. Sets the path to p and calls refresh to update the cached attributes. If an error occurs, the values of the cached attributes are unspecified."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/directory_entry/assign"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-directory-entry-assign:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" since="C++17" code={`void assign( const std::filesystem::path& p );`} />
+  <Declaration language="cpp" id="2" since="C++17" code={`void assign( const std::filesystem::path& p, std::error_code& ec );`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-directory-entry-assign:0001 */}
+Assigns new content to the directory entry object. Sets the path to `p` and calls [`refresh`](/docs/cpp/library/filesystem/directory_entry/refresh) to update the cached attributes. If an error occurs, the values of the cached attributes are unspecified.
+
+{/* source:cpp-filesystem-directory-entry-assign:0002 */}
+This function does not commit any changes to the filesystem.
+
+### Parameters
+
+{/* source:cpp-filesystem-directory-entry-assign:0003 */}
+<ParameterList>
+  <Parameter name="p">path to the filesystem object to which the directory entry will refer</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-directory-entry-assign:0004 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-filesystem-directory-entry-assign:0005 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-directory-entry-assign:0006 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-directory-entry-assign:0007 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-directory-entry-assign:0008 */}
+```cpp
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+ 
+void print_entry_info(const std::filesystem::directory_entry& entry)
+{
+    if (std::cout << "The entry " << entry; not entry.exists())
+    {
+        std::cout << " does not exists on the file system\n";
+        return;
+    }
+    std::cout << " is ";
+    if (entry.is_directory())
+        std::cout << "a directory\n";
+    if (entry.is_regular_file())
+        std::cout << "a regular file\n";
+    /*...*/
+}
+ 
+int main()
+{
+    std::filesystem::current_path(std::filesystem::temp_directory_path());
+ 
+    std::filesystem::directory_entry entry{std::filesystem::current_path()};
+    print_entry_info(entry);
+ 
+    std::filesystem::path name{"cppreference.html"};
+    std::ofstream{name} << "C++";
+ 
+    std::cout << "entry.assign();\n";
+    entry.assign(entry/name);
+    print_entry_info(entry);
+ 
+    std::cout << "remove(entry);\n";
+    std::filesystem::remove(entry);
+    print_entry_info(entry); // the entry still contains old "state"
+ 
+    std::cout << "entry.assign();\n";
+    entry.assign(entry); // or just call entry.refresh()
+    print_entry_info(entry);
+}
+```
+
+Possible output:
+
+```text
+The entry "/tmp" is a directory
+entry.assign();
+The entry "/tmp/cppreference.html" is a regular file
+remove(entry);
+The entry "/tmp/cppreference.html" is a regular file
+entry.assign();
+The entry "/tmp/cppreference.html" does not exists on the file system
+```
+
+### See also
+
+{/* source:cpp-filesystem-directory-entry-assign:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/filesystem/directory_entry/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns contents <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

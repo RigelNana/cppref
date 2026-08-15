@@ -1,0 +1,120 @@
+---
+title: "std::filesystem::exists"
+description: "Checks if the given file status or path corresponds to an existing file or directory."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/exists"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-exists:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`bool exists( std::filesystem::file_status s ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`bool exists( const std::filesystem::path& p );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`bool exists( const std::filesystem::path& p, std::error_code& ec ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-exists:0001 */}
+    Checks if the given file status or path corresponds to an existing file or directory.
+
+    {/* source:cpp-filesystem-exists:0002 */}
+    1) Equivalent to `status_known(s) && s.type() != file_type::not_found`.
+
+    {/* source:cpp-filesystem-exists:0003 */}
+    2,3) Let `s` be a `std::filesystem::file_status` determined as if by `status(p)` or `status(p, ec)` (symlinks are followed), respectively. Returns `exists(s)`. The non-throwing overload calls `ec.clear()` if `status_known(s)`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-exists:0004 */}
+<ParameterList>
+  <Parameter name="s">file status to check</Parameter>
+  <Parameter name="p">path to examine</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-exists:0005 */}
+`true` if the given path or file status corresponds to an existing file or directory, `false` otherwise.
+
+### Exceptions
+
+{/* source:cpp-filesystem-exists:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-exists:0007 */}
+2) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-exists:0008 */}
+3) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+{/* source:cpp-filesystem-exists:0009 */}
+No filesystem exception is thrown if object does not exist (use return value).
+
+### Notes
+
+{/* source:cpp-filesystem-exists:0010 */}
+The information provided by this function is usually also provided as a byproduct of directory iteration. During directory iteration, calling `exists(*iterator)` is less efficient than `exists(iterator->status())`.
+
+### Example
+
+{/* source:cpp-filesystem-exists:0011 */}
+```cpp
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+void demo_exists(const fs::path& p, fs::file_status s = fs::file_status{})
+{
+    std::cout << p;
+    if (fs::status_known(s) ? fs::exists(s) : fs::exists(p))
+        std::cout << " exists\n";
+    else
+        std::cout << " does not exist\n";
+}
+ 
+int main()
+{
+    const fs::path sandbox{"sandbox"};
+    fs::create_directory(sandbox);
+    std::ofstream{sandbox/"file"}; // create regular file
+    fs::create_symlink("non-existing", sandbox/"symlink");
+ 
+    demo_exists(sandbox);
+ 
+    for (const auto& entry : fs::directory_iterator(sandbox))
+        demo_exists(entry, entry.status()); // use cached status from directory entry
+ 
+    fs::remove_all(sandbox);
+}
+```
+
+Output:
+
+```text
+"sandbox" exists
+"sandbox/symlink" does not exist
+"sandbox/file" exists
+```
+
+### See also
+
+{/* source:cpp-filesystem-exists:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`status, symlink_status`](/docs/cpp/library/filesystem/status)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>determines file attributes<br />determines file attributes, checking the symlink target <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`file_status`](/docs/cpp/library/filesystem/file_status)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>represents file type and permissions <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exists`](/docs/cpp/library/filesystem/directory_entry/exists)</DescriptionTerm>
+    <DescriptionBody>checks whether directory entry refers to existing file system object <br /> (public member function of `std::filesystem::directory_entry`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

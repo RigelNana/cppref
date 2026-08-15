@@ -1,0 +1,113 @@
+---
+title: "std::filesystem::is_empty"
+description: "Checks whether the given path refers to an empty file or directory."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/is_empty"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-is-empty:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`bool is_empty( const std::filesystem::path& p );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`bool is_empty( const std::filesystem::path& p, std::error_code& ec );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-is-empty:0001 */}
+    Checks whether the given path refers to an empty file or directory.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-is-empty:0002 */}
+<ParameterList>
+  <Parameter name="p">path to examine</Parameter>
+  <Parameter name="ec">error code to modify in case of error</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-is-empty:0003 */}
+`true` if the path indicated by `p` refers to an empty file or directory, `false` otherwise. The non-throwing overload returns `false` if an error occurs.
+
+### Exceptions
+
+{/* source:cpp-filesystem-is-empty:0004 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-is-empty:0005 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-is-empty:0006 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-is-empty:0007 */}
+```cpp
+#include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+ 
+int main()
+{
+    namespace fs = std::filesystem;
+ 
+    const fs::path tmp_dir{fs::temp_directory_path()};
+    std::cout << std::boolalpha
+              << "Temp dir: " << tmp_dir << '\n'
+              << "is_empty(): " << fs::is_empty(tmp_dir) << '\n';
+ 
+    const fs::path tmp_name{tmp_dir / std::tmpnam(nullptr)};
+    std::cout << "Temp file: " << tmp_name << '\n';
+ 
+    std::ofstream file{tmp_name.string()};
+    std::cout << "is_empty(): " << fs::is_empty(tmp_name) << '\n';
+    file << "cppreference.com";
+    file.flush();
+    std::cout << "is_empty(): " << fs::is_empty(tmp_name) << '\n'
+              << "file_size(): " << fs::file_size(tmp_name) << '\n';
+    file.close();
+    fs::remove(tmp_name);
+}
+```
+
+Possible output:
+
+```text
+Temp dir: "/tmp"
+is_empty(): false
+Temp file: "/tmp/fileCqd9DM"
+is_empty(): true
+is_empty(): false
+file_size(): 16
+```
+
+### Defect reports
+
+{/* source:cpp-filesystem-is-empty:0008 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-is-empty:0009 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3013} standard="C++17">
+    <PublishedBehavior>`error_code` overload marked `noexcept` but can allocate memory</PublishedBehavior>
+    <CorrectedBehavior>`noexcept` removed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-filesystem-is-empty:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`status, symlink_status`](/docs/cpp/library/filesystem/status)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>determines file attributes<br />determines file attributes, checking the symlink target <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exists`](/docs/cpp/library/filesystem/exists)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether path refers to existing file system object <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

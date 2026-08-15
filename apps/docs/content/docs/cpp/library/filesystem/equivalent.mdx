@@ -1,0 +1,136 @@
+---
+title: "std::filesystem::equivalent"
+description: "Checks whether the paths p1 and p2 resolve to the same file system entity."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/equivalent"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-equivalent:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`bool equivalent( const std::filesystem::path& p1,
+                 const std::filesystem::path& p2 );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`bool equivalent( const std::filesystem::path& p1,
+                 const std::filesystem::path& p2,
+
+                 std::error_code& ec ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-equivalent:0001 */}
+    Checks whether the paths `p1` and `p2` resolve to the same file system entity.
+
+    {/* source:cpp-filesystem-equivalent:0002 */}
+    If either `p1` or `p2` does not exist, an error is reported.
+
+    {/* source:cpp-filesystem-equivalent:0003 */}
+    The non-throwing overload returns `false` on errors.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-equivalent:0004 */}
+<ParameterList>
+  <Parameter name="p1, p2">paths to check for equivalence</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-equivalent:0005 */}
+`true` if the `p1` and `p2` refer to the same file or directory and their file status is the same. `false` otherwise.
+
+### Exceptions
+
+{/* source:cpp-filesystem-equivalent:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-equivalent:0007 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p1` as the first path argument, `p2` as the second path argument, and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-equivalent:0008 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Notes
+
+{/* source:cpp-filesystem-equivalent:0009 */}
+Two paths are considered to resolve to the same file system entity if the two candidate entities the paths resolve to are located on the same device at the same location. For POSIX, this means that the `st_dev` and `st_ino` members of their POSIX [`stat structure`](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/sys_stat.h.html), obtained as if by POSIX [`stat()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/stat.html), are equal.
+
+{/* source:cpp-filesystem-equivalent:0010 */}
+In particular, all hard links for the same file or directory are equivalent, and a symlink and its target on the same file system are equivalent.
+
+### Example
+
+{/* source:cpp-filesystem-equivalent:0011 */}
+```cpp
+#include <cstdint>
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    // hard link equivalency
+    fs::path p1 = ".";
+    fs::path p2 = fs::current_path();
+    if (fs::equivalent(p1, p2))
+        std::cout << p1 << " is equivalent to " << p2 << '\n';
+ 
+    // symlink equivalency
+    for (const fs::path lib : {"/lib/libc.so.6", "/lib/x86_64-linux-gnu/libc.so.6"})
+    {
+        try
+        {
+            p2 = lib.parent_path() / fs::read_symlink(lib);
+        }
+        catch (std::filesystem::filesystem_error const& ex)
+        {
+            std::cout << ex.what() << '\n';
+            continue;
+        }
+ 
+        if (fs::equivalent(lib, p2))
+            std::cout << lib << " is equivalent to " << p2 << '\n';
+    }
+}
+```
+
+Possible output:
+
+```text
+"." is equivalent to "/var/tmp/test"
+filesystem error: read_symlink: No such file or directory [/lib/libc.so.6]
+"/lib/x86_64-linux-gnu/libc.so.6" is equivalent to "/lib/x86_64-linux-gnu/libc-2.23.so"
+```
+
+### Defect reports
+
+{/* source:cpp-filesystem-equivalent:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-equivalent:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2937} standard="C++17">
+    <PublishedBehavior>error condition specified incorrectly</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-filesystem-equivalent:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare`](/docs/cpp/library/filesystem/path/compare)</DescriptionTerm>
+    <DescriptionBody>compares the lexical representations of two paths lexicographically <br /> (public member function of `std::filesystem::path`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==`, `operator!=`, `operator<`, `operator<=`, `operator>`, `operator>=`, `operator<=>`](/docs/cpp/library/filesystem/path/operator_cmp) <InlineRevision since="C++17" /> <InlineRevision since="C++17" until="C++20" /> <InlineRevision since="C++17" until="C++20" /> <InlineRevision since="C++17" until="C++20" /> <InlineRevision since="C++17" until="C++20" /> <InlineRevision since="C++17" until="C++20" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>lexicographically compares two paths <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`status, symlink_status`](/docs/cpp/library/filesystem/status)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>determines file attributes<br />determines file attributes, checking the symlink target <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

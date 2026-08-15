@@ -1,0 +1,160 @@
+---
+title: "std::filesystem::directory_entry::is_socket"
+description: "Checks whether the pointed-to object is a named socket."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/directory_entry/is_socket"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" since="C++17" code={`bool is_socket() const;`} />
+  <Declaration language="cpp" id="2" since="C++17" code={`bool is_socket( std::error_code& ec ) const noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0001 */}
+Checks whether the pointed-to object is a named socket. Effectively returns:
+
+1. {/* source:cpp-filesystem-directory-entry-is-socket:0002 */}1) `std::filesystem::is_socket(status())`,
+2. {/* source:cpp-filesystem-directory-entry-is-socket:0003 */}2) `std::filesystem::is_socket(status(ec))`.
+
+### Parameters
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0004 */}
+<ParameterList>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0005 */}
+`true` if the referred-to filesystem object is a named socket, `false` otherwise.
+
+### Exceptions
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0007 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0008 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0009 */}
+```cpp
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <unistd.h>
+ 
+namespace fs = std::filesystem;
+ 
+void print_entry_type(const std::filesystem::directory_entry& entry)
+{
+    std::cout << entry.path() << ": ";
+ 
+    if (!entry.exists())
+        std::cout << "does not exist ";
+    if (entry.is_block_file())
+        std::cout << "is a block device ";
+    if (entry.is_character_file())
+        std::cout << "is a character device ";
+    if (entry.is_directory())
+        std::cout << "is a directory ";
+    if (entry.is_fifo())
+        std::cout << "is a named IPC pipe ";
+    if (entry.is_regular_file())
+        std::cout << "is a regular file ";
+    if (entry.is_socket())
+        std::cout << "is a named IPC socket ";
+    if (entry.is_symlink())
+        std::cout << "(a symlink)";
+    if (entry.is_other())
+        std::cout << "(an `other` file)";
+ 
+    std::cout << '\n';
+}
+ 
+template<typename Type, typename Fun>
+class scoped_cleanup
+{
+    std::unique_ptr<Type, std::function<void(const Type*)>> u;
+ 
+public:
+    scoped_cleanup(Type* ptr, Fun fun) : u{ptr, std::move(fun)} {}
+};
+ 
+int main()
+{
+    // Create files of different kinds.
+    std::filesystem::current_path(fs::temp_directory_path());
+    const std::filesystem::path sandbox{"sandbox"};
+    scoped_cleanup remove_all_at_exit{&sandbox, [](const fs::path* p)
+    {
+        std::cout << "cleanup: remove_all(" << *p << ")\n";
+        fs::remove_all(*p);
+    }};
+    std::filesystem::create_directory(sandbox);
+    std::ofstream{sandbox/"file"}; // Creates a regular file
+    std::filesystem::create_directory(sandbox/"dir");
+ 
+    mkfifo((sandbox/"pipe").string().data(), 0644);
+    struct sockaddr_un addr; addr.sun_family = AF_UNIX;
+ 
+    std::strcpy(addr.sun_path, (sandbox/"sock").string().data());
+    int fd{socket(PF_UNIX, SOCK_STREAM, 0)};
+    scoped_cleanup close_socket_at_exit{&fd, [](const int* f)
+    {
+        std::cout << "cleanup: close socket #" << *f << '\n';
+        close(*f);
+    }};
+    bind(fd, reinterpret_cast<sockaddr*>(std::addressof(addr)), sizeof addr);
+ 
+    fs::create_symlink("file", sandbox/"symlink");
+ 
+    for (std::filesystem::directory_entry entry: fs::directory_iterator(sandbox))
+        print_entry_type(entry);
+ 
+    // Request file system objects status directly:
+    for (const char* str : {"/dev/null", "/dev/cpu", "/usr/include/c++",
+                            "/usr/include/asm", "/usr/include/time.h"})
+        print_entry_type(fs::directory_entry{str});
+ 
+} // Cleanup via scoped_cleanup objects
+```
+
+Possible output:
+
+```text
+"sandbox/symlink": is a regular file (a symlink) 
+"sandbox/sock": is a named IPC socket (an `other` file) 
+"sandbox/pipe": is a named IPC pipe (an `other` file) 
+"sandbox/dir": is a directory 
+"sandbox/file": is a regular file 
+"/dev/null": is a character device (an `other` file) 
+"/dev/cpu": does not exist 
+"/usr/include/c++": is a directory 
+"/usr/include/asm": is a directory (a symlink) 
+"/usr/include/time.h": is a regular file 
+cleanup: close socket #3
+cleanup: remove_all("sandbox")
+```
+
+### See also
+
+{/* source:cpp-filesystem-directory-entry-is-socket:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_socket`](/docs/cpp/library/filesystem/is_socket) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the argument refers to a named IPC socket <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

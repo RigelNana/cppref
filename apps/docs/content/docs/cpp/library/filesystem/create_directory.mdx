@@ -1,0 +1,155 @@
+---
+title: "std::filesystem::create_directory, std::filesystem::create_directories"
+description: "1,2) Creates the directory p as if by POSIX mkdir() with a second argument of static_cast<int>(std::filesystem::perms::all) (the parent directory must already exist). If the function fails because p resolves to an existing directory, no error is reported. Otherwise on failure an error is reported."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/create_directory"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-create-directory:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`bool create_directory( const std::filesystem::path& p );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`bool create_directory( const std::filesystem::path& p, std::error_code& ec ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`bool create_directory( const std::filesystem::path& p,
+                       const std::filesystem::path& existing_p );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`bool create_directory( const std::filesystem::path& p,
+                       const std::filesystem::path& existing_p,
+
+                       std::error_code& ec ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++17" code={`bool create_directories( const std::filesystem::path& p );`} />
+  <Declaration id="6" language="cpp" since="C++17" code={`bool create_directories( const std::filesystem::path& p, std::error_code& ec );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-create-directory:0001 */}
+    1,2) Creates the directory `p` as if by POSIX [`mkdir()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/mkdir.html) with a second argument of `static_cast<int>(std::filesystem::perms::all)` (the parent directory must already exist). If the function fails because `p` resolves to an existing directory, no error is reported. Otherwise on failure an error is reported.
+
+    {/* source:cpp-filesystem-create-directory:0002 */}
+    3,4) Same as (1,2), except that the attributes of the new directory are copied from `existing_p` (which must be a directory that exists). It is OS-dependent which attributes are copied: on POSIX systems, the attributes are copied as if by `stat(existing_p.c_str(), &attributes_stat)` `mkdir(p.c_str(), attributes_stat.st_mode)`. On Windows OS, no attributes of `existing_p` are copied.
+
+    {/* source:cpp-filesystem-create-directory:0003 */}
+    5,6) Executes (1,2) for every element of `p` that does not already exist. If `p` already exists, the function does nothing (this condition is not treated as an error).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-create-directory:0004 */}
+<ParameterList>
+  <Parameter name="p">the path to the new directory to create</Parameter>
+  <Parameter name="existing_p">the path to a directory to copy the attributes from</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-create-directory:0005 */}
+`true` if a directory was newly created for the directory `p` resolves to, `false` otherwise.
+
+### Exceptions
+
+{/* source:cpp-filesystem-create-directory:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-create-directory:0007 */}
+1,5) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-create-directory:0008 */}
+2,6) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+{/* source:cpp-filesystem-create-directory:0009 */}
+3) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument, `existing_p` as the second path argument, and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-create-directory:0010 */}
+4) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Notes
+
+{/* source:cpp-filesystem-create-directory:0011 */}
+The attribute-preserving overload (3,4) is implicitly invoked by [`copy()`](/docs/cpp/library/filesystem/copy) when recursively copying directories. Its equivalent in boost.filesystem is [`copy_directory`](https://www.boost.org/doc/libs/1_57_0/libs/filesystem/doc/reference.html#copy_directory) (with argument order reversed).
+
+### Example
+
+{/* source:cpp-filesystem-create-directory:0012 */}
+```cpp
+#include <cassert>
+#include <cstdlib>
+#include <filesystem>
+ 
+int main()
+{
+    std::filesystem::current_path(std::filesystem::temp_directory_path());
+ 
+    // Basic usage
+    std::filesystem::create_directories("sandbox/1/2/a");
+    std::filesystem::create_directory("sandbox/1/2/b");
+ 
+    // Directory already exists (false returned, no error)
+    assert(!std::filesystem::create_directory("sandbox/1/2/b"));
+ 
+    // Permissions copying usage
+    std::filesystem::permissions(
+        "sandbox/1/2/b",
+        std::filesystem::perms::others_all,
+        std::filesystem::perm_options::remove
+    );
+    std::filesystem::create_directory("sandbox/1/2/c", "sandbox/1/2/b");
+ 
+    std::system("ls -l sandbox/1/2");
+    std::system("tree sandbox");
+    std::filesystem::remove_all("sandbox");
+}
+```
+
+Possible output:
+
+```text
+drwxr-xr-x 2 user group 4096 Apr 15 09:33 a
+drwxr-x--- 2 user group 4096 Apr 15 09:33 b
+drwxr-x--- 2 user group 4096 Apr 15 09:33 c
+sandbox
+└── 1
+    └── 2
+        ├── a
+        ├── b
+        └── c
+```
+
+### Defect reports
+
+{/* source:cpp-filesystem-create-directory:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-create-directory:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2935} standard="C++17">
+    <PublishedBehavior>error if target already exists but is not a directory</PublishedBehavior>
+    <CorrectedBehavior>not error</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3014} standard="C++17">
+    <PublishedBehavior>`error_code` overload of `create_directories` marked `noexcept` but can allocate memory</PublishedBehavior>
+    <CorrectedBehavior>`noexcept` removed</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P1164R1" standard="C++17">
+    <PublishedBehavior>creation failure caused by an existing non-directory file is not an error</PublishedBehavior>
+    <CorrectedBehavior>made error</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-filesystem-create-directory:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`create_symlink, create_directory_symlink`](/docs/cpp/library/filesystem/create_symlink)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`](/docs/cpp/library/filesystem/copy)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>copies files or directories <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`perms`](/docs/cpp/library/filesystem/perms)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>identifies file system permissions <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

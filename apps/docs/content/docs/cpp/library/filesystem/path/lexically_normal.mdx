@@ -1,0 +1,127 @@
+---
+title: "std::filesystem::path::lexically_normal, std::filesystem::path::lexically_relative, std::filesystem::path::lexically_proximate"
+description: "Returns *this converted to normal form in its generic format."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/path/lexically_normal"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-path-lexically-normal:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`path lexically_normal() const;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`path lexically_relative( const path& base ) const;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`path lexically_proximate( const path& base ) const;`} />
+</DeclarationDoc>
+
+<DeclarationDescription>
+
+{/* source:cpp-filesystem-path-lexically-normal:0001 */}
+1. 1) Returns `*this` converted to [normal form](/docs/cpp/library/filesystem/path) in its generic format.
+
+{/* source:cpp-filesystem-path-lexically-normal:0002 */}
+2. 2) Returns `*this` made relative to `base`. 
+
+-  First, if `root_name() != base.root_name()` is `true` or `is_absolute() != base.is_absolute()` is `true` or `(!has_root_directory() && base.has_root_directory())` is `true` or any filename in `relative_path()` or `base.relative_path()` can be interpreted as a *root-name*, returns a default-constructed path.
+
+-  Otherwise, first determines the first mismatched element of `*this` and `base` as if by `auto [a, b] = mismatch(begin(), end(), base.begin(), base.end())`, then
+
+-  if `a == end()` and `b == base.end()`, returns `path(".")`,
+
+-  otherwise, define N as the number of nonempty filename elements that are neither *dot* nor *dot-dot* in `[b, base.end())`, minus the number of *dot-dot* filename elements, If N < 0, returns a default-constructed path,
+
+-  otherwise, if N = 0 and `a == end() || a->empty()`, returns `path(".")`,
+
+-  otherwise returns an object composed from
+
+-  a default-constructed `path()` followed by
+
+-  N applications of `operator/=(path(".."))`, followed by
+
+-  one application of `operator/=` for each element in the half-open range `[``a``, ``end()``)`.
+
+{/* source:cpp-filesystem-path-lexically-normal:0003 */}
+3. 3) If the value of `lexically_relative(base)` is not an empty path, return it. Otherwise return `*this`.
+
+</DeclarationDescription>
+
+### Parameters
+
+{/* source:cpp-filesystem-path-lexically-normal:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-filesystem-path-lexically-normal:0005 */}
+1. 1) The normal form of the path.
+
+{/* source:cpp-filesystem-path-lexically-normal:0006 */}
+2. 2) The relative form of the path.
+
+{/* source:cpp-filesystem-path-lexically-normal:0007 */}
+3. 3) The proximate form of the path.
+
+### Exceptions
+
+{/* source:cpp-filesystem-path-lexically-normal:0008 */}
+May throw implementation-defined exceptions.
+
+### Notes
+
+{/* source:cpp-filesystem-path-lexically-normal:0009 */}
+These conversions are purely lexical. They do not check that the paths exist, do not follow symlinks, and do not access the filesystem at all. For symlink-following counterparts of `lexically_relative` and `lexically_proximate`, see [`relative`](/docs/cpp/library/filesystem/relative) and [`proximate`](/docs/cpp/library/filesystem/relative).
+
+{/* source:cpp-filesystem-path-lexically-normal:0010 */}
+On Windows, the returned `path` has backslashes (the preferred separators).
+
+{/* source:cpp-filesystem-path-lexically-normal:0011 */}
+On POSIX, no filename in a relative path is acceptable as a *root-name*.
+
+### Example
+
+{/* source:cpp-filesystem-path-lexically-normal:0012 */}
+```cpp
+#include <cassert>
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    assert(fs::path("a/./b/..").lexically_normal() == "a/");
+    assert(fs::path("a/.///b/../").lexically_normal() == "a/");
+    assert(fs::path("/a/d").lexically_relative("/a/b/c") == "../../d");
+    assert(fs::path("/a/b/c").lexically_relative("/a/d") == "../b/c");
+    assert(fs::path("a/b/c").lexically_relative("a") == "b/c");
+    assert(fs::path("a/b/c").lexically_relative("a/b/c/x/y") == "../..");
+    assert(fs::path("a/b/c").lexically_relative("a/b/c") == ".");
+    assert(fs::path("a/b").lexically_relative("c/d") == "../../a/b");
+    assert(fs::path("a/b").lexically_relative("/a/b") == "");
+    assert(fs::path("a/b").lexically_proximate("/a/b") == "a/b");
+}
+```
+
+### Defect reports
+
+{/* source:cpp-filesystem-path-lexically-normal:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-path-lexically-normal:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3070} standard="C++17">
+    <PublishedBehavior>a filename that can also be a root-name may cause surprising result</PublishedBehavior>
+    <CorrectedBehavior>treated as error case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3096} standard="C++17">
+    <PublishedBehavior>trailing "/" and "/." are handled incorrectly</PublishedBehavior>
+    <CorrectedBehavior>corrected</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-filesystem-path-lexically-normal:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`relative` `proximate`](/docs/cpp/library/filesystem/relative)(C++17)</DescriptionTerm>
+    <DescriptionBody>composes a relative path <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

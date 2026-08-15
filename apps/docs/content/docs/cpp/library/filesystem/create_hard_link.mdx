@@ -1,0 +1,113 @@
+---
+title: "std::filesystem::create_hard_link"
+description: "Creates a hard link link with its target set to target as if by POSIX link(): the pathname target must exist."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/create_hard_link"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-create-hard-link:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`void create_hard_link( const std::filesystem::path& target,
+                       const std::filesystem::path& link );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`void create_hard_link( const std::filesystem::path& target,
+                       const std::filesystem::path& link,
+
+                       std::error_code& ec ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-create-hard-link:0001 */}
+    Creates a hard link `link` with its target set to `target` as if by POSIX [`link()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/link.html): the pathname `target` must exist.
+
+    {/* source:cpp-filesystem-create-hard-link:0002 */}
+    Once created, `link` and `target` are two logical names that refer to the same file (they are [`equivalent`](/docs/cpp/library/filesystem/equivalent)). Even if the original name `target` is deleted, the file continues to exist and is accessible as `link`.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-create-hard-link:0003 */}
+<ParameterList>
+  <Parameter name="target">path of the file or directory to link to</Parameter>
+  <Parameter name="link">path of the new hard link</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-create-hard-link:0004 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-filesystem-create-hard-link:0005 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-create-hard-link:0006 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `target` as the first path argument, `link` as the second path argument, and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-create-hard-link:0007 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Notes
+
+{/* source:cpp-filesystem-create-hard-link:0008 */}
+Some operating systems do not support hard links at all or support them only for regular files.
+
+{/* source:cpp-filesystem-create-hard-link:0009 */}
+Some file systems do not support hard links regardless of the operating system: the FAT file system used on memory cards and flash drives, for example.
+
+{/* source:cpp-filesystem-create-hard-link:0010 */}
+Some file systems limit the number of links per file.
+
+{/* source:cpp-filesystem-create-hard-link:0011 */}
+Hardlinking to directories is typically restricted to the superuser.
+
+{/* source:cpp-filesystem-create-hard-link:0012 */}
+Hard links typically cannot cross filesystem boundaries.
+
+{/* source:cpp-filesystem-create-hard-link:0013 */}
+The special pathname dot (`"."`) is a hard link to its parent directory. The special pathname dot-dot `".."` is a hard link to the directory that is the parent of its parent.
+
+### Example
+
+{/* source:cpp-filesystem-create-hard-link:0014 */}
+```cpp
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    fs::create_directories("sandbox/subdir");
+    std::ofstream("sandbox/a").put('a'); // create regular file
+    fs::create_hard_link("sandbox/a", "sandbox/b");
+    fs::remove("sandbox/a");
+    // read from the original file via surviving hard link
+    char c = std::ifstream("sandbox/b").get();
+    std::cout << c << '\n';
+    fs::remove_all("sandbox");
+}
+```
+
+Output:
+
+```text
+a
+```
+
+### See also
+
+{/* source:cpp-filesystem-create-hard-link:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`create_symlink, create_directory_symlink`](/docs/cpp/library/filesystem/create_symlink)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`hard_link_count`](/docs/cpp/library/filesystem/hard_link_count)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>returns the number of hard links referring to the specific file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

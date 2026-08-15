@@ -1,0 +1,107 @@
+---
+title: "std::filesystem::recursive_directory_iterator::disable_recursion_pending"
+description: "Disables recursion to the currently referred subdirectory, if any."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/recursive_directory_iterator/disable_recursion_pending"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`void disable_recursion_pending();`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0001 */}
+    Disables recursion to the currently referred subdirectory, if any.
+
+    {/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0002 */}
+    The call modifies the pending recursion flag on the iterator in such a way that the next time [`increment`](/docs/cpp/library/filesystem/recursive_directory_iterator/increment) is called, the iterator will advance within the current directory even if it is currently referring to a subdirectory that hasn't been visited.
+
+    {/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0003 */}
+    The status of the pending recursion flag can be queried with [`recursion_pending()`](/docs/cpp/library/filesystem/recursive_directory_iterator/recursion_pending), which is `false` after this call. It is reset back to `true` after [`increment`](/docs/cpp/library/filesystem/recursive_directory_iterator/increment), and its initial value is also `true`.
+
+    {/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0004 */}
+    The behavior is undefined if `*this` is the end iterator.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0006 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0007 */}
+May throw implementation-defined exceptions.
+
+### Example
+
+{/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0008 */}
+```cpp
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    fs::current_path(fs::temp_directory_path());
+    fs::create_directories("sandbox/a/b/c");
+    fs::create_directories("sandbox/a/b/d/e");
+    std::ofstream("sandbox/a/b/file1.txt");
+    fs::create_symlink("a", "sandbox/syma");
+    std::system("tree sandbox");
+    for (auto i = fs::recursive_directory_iterator("sandbox");
+         i != fs::recursive_directory_iterator();
+         ++i)
+    {
+        std::cout << std::string(i.depth() * 2, ' ') << *i;
+        if (fs::is_symlink(i->symlink_status()))
+            std::cout << " -> " << fs::read_symlink(*i);
+        std::cout << '\n';
+ 
+        // do not descend into "b"
+        if (i->path().filename() == "b")
+            i.disable_recursion_pending();
+    }
+    fs::remove_all("sandbox");
+}
+```
+
+Possible output:
+
+```text
+sandbox
+├── a
+│   └── b
+│       ├── c
+│       ├── d
+│       │   └── e
+│       └── file1.txt
+└── syma -> a
+ 
+"sandbox/a"
+  "sandbox/a/b"
+"sandbox/syma" -> "a"
+```
+
+### See also
+
+{/* source:cpp-filesystem-recursive-directory-iterator-disable-recursion-pending:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`recursion_pending`](/docs/cpp/library/filesystem/recursive_directory_iterator/recursion_pending)</DescriptionTerm>
+    <DescriptionBody>checks whether the recursion is disabled for the current directory (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`increment` `operator++`](/docs/cpp/library/filesystem/recursive_directory_iterator/increment)</DescriptionTerm>
+    <DescriptionBody>advances to the next entry (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,130 @@
+---
+title: "std::filesystem::filesystem_error"
+description: "The class std::filesystem::filesystem_error defines an exception object that is thrown on failure by the throwing overloads of the functions in the filesystem library."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/filesystem_error"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-filesystem-error:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration language="cpp" since="C++17" code={`class filesystem_error;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-filesystem-error:0001 */}
+The class `std::filesystem::filesystem_error` defines an exception object that is thrown on failure by the throwing overloads of the functions in the filesystem library.
+
+{/* source:cpp-filesystem-filesystem-error:0002 */}
+Inheritance diagram
+
+### Member functions
+
+{/* source:cpp-filesystem-filesystem-error:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/filesystem/filesystem_error/filesystem_error)</DescriptionTerm>
+    <DescriptionBody>constructs the exception object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/filesystem/filesystem_error/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>replaces the exception object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`path1` `path2`](/docs/cpp/library/filesystem/filesystem_error/path)</DescriptionTerm>
+    <DescriptionBody>returns the paths that were involved in the operation that caused the error <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`what`](/docs/cpp/library/filesystem/filesystem_error/what)</DescriptionTerm>
+    <DescriptionBody>returns the explanatory string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-filesystem-filesystem-error:0004 */}
+## Inherited from [`std::system_error`](/docs/cpp/library/error/system_error)
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`code`](/docs/cpp/library/error/system_error/code)</DescriptionTerm>
+    <DescriptionBody>returns error code <br /> (public member function of `std::system_error`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`what`](/docs/cpp/library/error/system_error/what)[virtual]</DescriptionTerm>
+    <DescriptionBody>returns an explanatory string <br /> (virtual public member function of `std::system_error`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-filesystem-filesystem-error:0005 */}
+## Inherited from [`std::runtime_error`](/docs/cpp/library/error/runtime_error)
+
+{/* source:cpp-filesystem-filesystem-error:0006 */}
+## Inherited from [`std::exception`](/docs/cpp/library/error/exception)
+
+### Member functions
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/error/exception/~exception)[virtual]</DescriptionTerm>
+    <DescriptionBody>destroys the exception object <br /> (virtual public member function of `std::exception`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`what`](/docs/cpp/library/error/exception/what)[virtual]</DescriptionTerm>
+    <DescriptionBody>returns an explanatory string <br /> (virtual public member function of `std::exception`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-filesystem-filesystem-error:0007 */}
+In order to ensure that copy functions of `filesystem_error` are `noexcept`, typical implementations store an object holding the return value of [`what()`](/docs/cpp/library/filesystem/filesystem_error/what) and two [`std::filesystem::path`](/docs/cpp/library/filesystem/path) objects referenced by [`path1()`](/docs/cpp/library/filesystem/filesystem_error/path) and [`path2()`](/docs/cpp/library/filesystem/filesystem_error/path) respectively in a separately-allocated reference-counted storage.
+
+{/* source:cpp-filesystem-filesystem-error:0008 */}
+Currently the [MS STL implementation](https://github.com/microsoft/STL/blob/master/stl/inc/filesystem#L1749) is non-conforming: objects mentioned above are stored directly in the filesystem object, which makes the copy functions not `noexcept`.
+
+### Example
+
+{/* source:cpp-filesystem-filesystem-error:0009 */}
+```cpp
+#include <filesystem>
+#include <iostream>
+#include <system_error>
+ 
+int main()
+{
+    const std::filesystem::path from{"/none1/a"}, to{"/none2/b"};
+ 
+    try
+    {
+        std::filesystem::copy_file(from, to); // throws: files do not exist
+    }
+    catch (std::filesystem::filesystem_error const& ex)
+    {
+        std::cout << "what():  " << ex.what() << '\n'
+                  << "path1(): " << ex.path1() << '\n'
+                  << "path2(): " << ex.path2() << '\n'
+                  << "code().value():    " << ex.code().value() << '\n'
+                  << "code().message():  " << ex.code().message() << '\n'
+                  << "code().category(): " << ex.code().category().name() << '\n';
+    }
+ 
+    // All functions have non-throwing equivalents
+    std::error_code ec;
+    std::filesystem::copy_file(from, to, ec); // does not throw
+    std::cout << "\nNon-throwing form sets error_code: " << ec.message() << '\n';
+}
+```
+
+Possible output:
+
+```text
+what():  filesystem error: cannot copy file: No such file or directory [/none1/a] [/none2/b]
+path1(): "/none1/a"
+path2(): "/none2/b"
+code().value():    2
+code().message():  No such file or directory
+code().category(): generic
+ 
+Non-throwing form sets error_code: No such file or directory
+```

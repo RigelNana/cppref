@@ -1,0 +1,149 @@
+---
+title: "std::filesystem::permissions"
+description: "Changes access permissions of the file to which p resolves, as if by POSIX fchmodat. Symlinks are followed unless perm_options::nofollow is set in opts."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/permissions"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-permissions:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`void permissions( const std::filesystem::path& p,
+                  std::filesystem::perms prms,
+
+                  std::filesystem::perm_options opts = perm_options::replace );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`void permissions( const std::filesystem::path& p,
+                  std::filesystem::perms prms,
+
+                  std::error_code& ec ) noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`void permissions( const std::filesystem::path& p,
+                  std::filesystem::perms prms,
+                  std::filesystem::perm_options opts,
+
+                  std::error_code& ec );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-permissions:0001 */}
+    Changes access permissions of the file to which `p` resolves, as if by POSIX [`fchmodat`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/fchmodat.html). Symlinks are followed unless `perm_options::nofollow` is set in `opts`.
+
+    {/* source:cpp-filesystem-permissions:0002 */}
+    The second signature behaves as if called with `opts` set to `perm_options::replace`.
+
+    {/* source:cpp-filesystem-permissions:0003 */}
+    The effects depend on `prms` and `opts` as follows:
+
+    {/* source:cpp-filesystem-permissions:0004 */}
+    - If `opts` is `perm_options::replace`, file permissions are set to exactly `prms & std::filesystem::perms::mask` (meaning, every valid bit of `prms` is applied).
+    - If `opts` is `perm_options::add`, the file permissions are set to exactly `status(p).permissions() | (prms & perms::mask)` (meaning, any valid bit that is set in `prms`, but not in the file's current permissions is added to the file's permissions).
+    - If `opts` is `perm_options::remove`, the file permissions are set to exactly `status(p).permissions() & ~(prms & perms::mask)` (meaning, any valid bit that is clear in `prms`, but set in the file's current permissions is cleared in the file's permissions).
+
+    {/* source:cpp-filesystem-permissions:0005 */}
+    `opts` is required to have only one of `replace`, `add`, or `remove` to be set.
+
+    {/* source:cpp-filesystem-permissions:0006 */}
+    The non-throwing overload has no special action on error.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-permissions:0007 */}
+<ParameterList>
+  <Parameter name="p">path to examine</Parameter>
+  <Parameter name="prms">permissions to set, add, or remove</Parameter>
+  <Parameter name="opts">options controlling the action taken by this function</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-permissions:0008 */}
+(none)
+
+### Exceptions
+
+{/* source:cpp-filesystem-permissions:0009 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-permissions:0010 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-permissions:0011 */}
+2,3) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Notes
+
+{/* source:cpp-filesystem-permissions:0012 */}
+Permissions may not necessarily be implemented as bits, but they are treated that way conceptually.
+
+{/* source:cpp-filesystem-permissions:0013 */}
+Some permission bits may be ignored on some systems, and changing some bits may automatically change others (e.g. on platforms without owner/group/all distinction, setting any of the three write bits set all three).
+
+### Example
+
+{/* source:cpp-filesystem-permissions:0014 */}
+```cpp
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+ 
+void demo_perms(std::filesystem::perms p)
+{
+    using std::filesystem::perms;
+    auto show = [=](char op, perms perm)
+    {
+        std::cout << (perms::none == (perm & p) ? '-' : op);
+    };
+    show('r', perms::owner_read);
+    show('w', perms::owner_write);
+    show('x', perms::owner_exec);
+    show('r', perms::group_read);
+    show('w', perms::group_write);
+    show('x', perms::group_exec);
+    show('r', perms::others_read);
+    show('w', perms::others_write);
+    show('x', perms::others_exec);
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::ofstream("test.txt"); // create file
+ 
+    std::cout << "Created file with permissions: ";
+    demo_perms(std::filesystem::status("test.txt").permissions());
+ 
+    std::filesystem::permissions(
+        "test.txt",
+        std::filesystem::perms::owner_all | std::filesystem::perms::group_all,
+        std::filesystem::perm_options::add
+    );
+ 
+    std::cout << "After adding u+rwx and g+rwx:  ";
+    demo_perms(std::filesystem::status("test.txt").permissions());
+ 
+    std::filesystem::remove("test.txt");
+}
+```
+
+Possible output:
+
+```text
+Created file with permissions: rw-r--r--
+After adding u+rwx and g+wrx:  rwxrwxr--
+```
+
+### See also
+
+{/* source:cpp-filesystem-permissions:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`perms`](/docs/cpp/library/filesystem/perms)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>identifies file system permissions <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`status, symlink_status`](/docs/cpp/library/filesystem/status)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>determines file attributes<br />determines file attributes, checking the symlink target <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

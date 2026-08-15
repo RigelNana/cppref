@@ -1,0 +1,103 @@
+---
+title: "std::filesystem::read_symlink"
+description: "If the path p refers to a symbolic link, returns a new path object which refers to the target of that symbolic link."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/read_symlink"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-read-symlink:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`std::filesystem::path read_symlink( const std::filesystem::path& p );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`std::filesystem::path read_symlink( const std::filesystem::path& p,
+                                    std::error_code& ec );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-read-symlink:0001 */}
+    If the path `p` refers to a symbolic link, returns a new path object which refers to the target of that symbolic link.
+
+    {/* source:cpp-filesystem-read-symlink:0002 */}
+    It is an error if `p` does not refer to a symbolic link.
+
+    {/* source:cpp-filesystem-read-symlink:0003 */}
+    The non-throwing overload returns an empty path on errors.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-read-symlink:0004 */}
+<ParameterList>
+  <Parameter name="p">path to a symlink</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-read-symlink:0005 */}
+The target of the symlink (which may not necessarily exist).
+
+### Exceptions
+
+{/* source:cpp-filesystem-read-symlink:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-read-symlink:0007 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-read-symlink:0008 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-read-symlink:0009 */}
+```cpp
+#include <filesystem>
+#include <iostream>
+ 
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    for (fs::path p : {"/usr/bin/gcc", "/bin/cat", "/bin/mouse"})
+    {
+        std::cout << p;
+        fs::exists(p) ?
+            fs::is_symlink(p) ?
+                std::cout << " -> " << fs::read_symlink(p) << '\n' :
+                std::cout << " exists but it is not a symlink\n" :
+            std::cout << " does not exist\n";
+    }
+}
+```
+
+Possible output:
+
+```text
+"/usr/bin/gcc" -> "gcc-5"
+"/bin/cat" exists but it is not a symlink
+"/bin/mouse" does not exist
+```
+
+### See also
+
+{/* source:cpp-filesystem-read-symlink:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_symlink`](/docs/cpp/library/filesystem/is_symlink)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the argument refers to a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`create_symlink, create_directory_symlink`](/docs/cpp/library/filesystem/create_symlink)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy_symlink`](/docs/cpp/library/filesystem/copy_symlink)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>copies a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`status, symlink_status`](/docs/cpp/library/filesystem/status)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>determines file attributes<br />determines file attributes, checking the symlink target <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

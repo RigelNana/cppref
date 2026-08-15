@@ -1,0 +1,92 @@
+---
+title: "std::filesystem::directory_entry::last_write_time"
+description: "If the last modification time is cached in this directory_entry, returns the cached value. Otherwise, returns std::filesystem::last_write_time(path())."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/directory_entry/last_write_time"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" since="C++17" code={`std::filesystem::file_time_type last_write_time() const;`} />
+  <Declaration language="cpp" id="2" since="C++17" code={`std::filesystem::file_time_type last_write_time( std::error_code& ec ) const noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0001 */}
+If the last modification time is cached in this [`directory_entry`](/docs/cpp/library/filesystem/directory_entry/directory_entry), returns the cached value. Otherwise, returns:
+
+1. {/* source:cpp-filesystem-directory-entry-last-write-time:0002 */}1) `std::filesystem::last_write_time(path())`.
+2. {/* source:cpp-filesystem-directory-entry-last-write-time:0003 */}2) `std::filesystem::last_write_time(path(), ec)`.
+
+### Parameters
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0004 */}
+<ParameterList>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0005 */}
+The last modification time for the referred-to filesystem object.
+
+### Exceptions
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0007 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0008 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0009 */}
+```cpp
+#include <chrono>
+#include <ctime>
+#include <filesystem>
+#include <format>
+#include <iostream>
+#include <string>
+ 
+std::string to_string(const std::filesystem::file_time_type& ftime)
+{
+#if __cpp_lib_format
+    return std::format("{:%c}", ftime);
+#else
+    std::time_t cftime = std::chrono::system_clock::to_time_t(
+        std::chrono::file_clock::to_sys(ftime));
+    std::string str = std::asctime(std::localtime(&cftime));
+    str.pop_back(); // rm the trailing '\n' put by `asctime`
+    return str;
+#endif
+}
+ 
+int main()
+{
+    auto dir = std::filesystem::current_path();
+    using Entry = std::filesystem::directory_entry;
+    for (Entry const& entry : std::filesystem::directory_iterator(dir))
+        std::cout << to_string(entry.last_write_time()) << " : "
+                  << entry.path().filename() << '\n';
+}
+```
+
+Possible output:
+
+```text
+Wed Sep  6 13:37:13.960314156 2023 : "main.cpp"
+Wed Sep  6 13:37:42.690271828 2023 : "a.out"
+```
+
+### See also
+
+{/* source:cpp-filesystem-directory-entry-last-write-time:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`last_write_time`](/docs/cpp/library/filesystem/last_write_time) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>gets or sets the time of the last data modification <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

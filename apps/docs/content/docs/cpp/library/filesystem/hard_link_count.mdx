@@ -1,0 +1,92 @@
+---
+title: "std::filesystem::hard_link_count"
+description: "Returns the number of hard links for the filesystem object identified by path p."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/hard_link_count"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-hard-link-count:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`std::uintmax_t hard_link_count( const std::filesystem::path& p );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`std::uintmax_t hard_link_count( const std::filesystem::path& p,
+                                std::error_code& ec ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-hard-link-count:0001 */}
+    Returns the number of hard links for the filesystem object identified by path `p`.
+
+    {/* source:cpp-filesystem-hard-link-count:0002 */}
+    The non-throwing overload returns `static_cast<uintmax_t>(-1)` on errors.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-hard-link-count:0003 */}
+<ParameterList>
+  <Parameter name="p">path to examine</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-hard-link-count:0004 */}
+The number of hard links for `p`.
+
+### Exceptions
+
+{/* source:cpp-filesystem-hard-link-count:0005 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-hard-link-count:0006 */}
+1) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-hard-link-count:0007 */}
+2) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-hard-link-count:0008 */}
+```cpp
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    // On a POSIX-style filesystem, each directory has at least 2 hard links:
+    // itself and the special member pathname "."
+    fs::path p = fs::current_path();
+    std::cout << "Number of hard links for current path is "
+              << fs::hard_link_count(p) << '\n';
+ 
+    // Each ".." is a hard link to the parent directory, so the total number
+    // of hard links for any directory is 2 plus number of direct subdirectories
+    p = fs::current_path() / ".."; // Each dot-dot is a hard link to parent
+    std::cout << "Number of hard links for .. is "
+              << fs::hard_link_count(p) << '\n';
+}
+```
+
+Possible output:
+
+```text
+Number of hard links for current path is 2
+Number of hard links for .. is 3
+```
+
+### See also
+
+{/* source:cpp-filesystem-hard-link-count:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`create_hard_link`](/docs/cpp/library/filesystem/create_hard_link)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>creates a hard link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`hard_link_count`](/docs/cpp/library/filesystem/directory_entry/hard_link_count)</DescriptionTerm>
+    <DescriptionBody>returns the number of hard links referring to the file to which the directory entry refers <br /> (public member function of `std::filesystem::directory_entry`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

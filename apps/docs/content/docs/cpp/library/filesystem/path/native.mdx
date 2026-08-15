@@ -1,0 +1,109 @@
+---
+title: "std::filesystem::path::c_str, std::filesystem::path::native, std::filesystem::path::operator string_type()"
+description: "Accesses the native path name as a character string."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/path/native"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-path-native:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`const value_type* c_str() const noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`const string_type& native() const noexcept;`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`operator string_type() const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-path-native:0001 */}
+Accesses the native path name as a character string.
+
+{/* source:cpp-filesystem-path-native:0002 */}
+1. 1) Equivalent to `native().c_str()`.
+
+{/* source:cpp-filesystem-path-native:0003 */}
+2. 2) Returns the native-format representation of the pathname by reference.
+
+{/* source:cpp-filesystem-path-native:0004 */}
+3. 3) Returns the native-format representation of the pathname by value.
+
+### Parameters
+
+{/* source:cpp-filesystem-path-native:0005 */}
+(none)
+
+### Return value
+
+{/* source:cpp-filesystem-path-native:0006 */}
+The native string representation of the pathname, using native syntax, native character type, and native character encoding. This string is suitable for use with OS APIs.
+
+### Notes
+
+{/* source:cpp-filesystem-path-native:0007 */}
+The conversion function (3) is provided so that APIs that accept `[std::basic_string](/docs/cpp/library/string/basic_string)` file names can use pathnames with no changes to code.
+
+### Example
+
+{/* source:cpp-filesystem-path-native:0008 */}
+```cpp
+#include <cstdio>
+#ifdef _MSC_VER
+#include <fcntl.h>
+#include <io.h>
+#else
+#include <clocale>
+#include <locale>
+#endif
+#include <filesystem>
+#include <fstream>
+ 
+int main()
+{
+#ifdef _MSC_VER
+    _setmode(_fileno(stderr), _O_WTEXT);
+#else
+    std::setlocale(LC_ALL, "");
+    std::locale::global(std::locale(""));
+#endif
+ 
+    std::filesystem::path p(u8"要らない.txt");
+    std::ofstream(p) << "File contents"; // Prior to LWG2676 uses operator string_type()
+                                         // on MSVC, where string_type is wstring, only
+                                         // works due to non-standard extension.
+                                         // Post-LWG2676 uses new fstream constructors
+ 
+    // Native string representation can be used with OS-specific APIs
+#ifdef _MSC_VER
+    if (std::FILE* f = _wfopen(p.c_str(), L"r"))
+#else
+    if (std::FILE* f = std::fopen(p.c_str(), "r"))
+#endif
+    {
+        for (int ch; (ch = fgetc(f)) != EOF; std::putchar(ch))
+        {}
+        std::fclose(f);
+    }
+ 
+    std::filesystem::remove(p);
+}
+```
+
+Possible output:
+
+```text
+File contents
+```
+
+### See also
+
+{/* source:cpp-filesystem-path-native:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`string` `wstring` `u8string` `u16string` `u32string`](/docs/cpp/library/filesystem/path/string)</DescriptionTerm>
+    <DescriptionBody>returns the path in native pathname format converted to a string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`generic_string` `generic_wstring` `generic_u8string` `generic_u16string` `generic_u32string`](/docs/cpp/library/filesystem/path/generic_string)</DescriptionTerm>
+    <DescriptionBody>returns the path in generic pathname format converted to a string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,116 @@
+---
+title: "std::filesystem::copy_options"
+description: "This type represents available options that control the behavior of the copy() and copy_file() function."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/copy_options"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-copy-options:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration language="cpp" since="C++17" code={`enum class copy_options {
+    none = /* unspecified */,
+    skip_existing = /* unspecified */,
+    overwrite_existing = /* unspecified */,
+    update_existing = /* unspecified */,
+    recursive = /* unspecified */,
+    copy_symlinks = /* unspecified */,
+    skip_symlinks = /* unspecified */,
+    directories_only = /* unspecified */,
+    create_symlinks = /* unspecified */,
+    create_hard_links = /* unspecified */
+
+};`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-copy-options:0001 */}
+This type represents available options that control the behavior of the [`copy()`](/docs/cpp/library/filesystem/copy) and [`copy_file()`](/docs/cpp/library/filesystem/copy_file) function.
+
+{/* source:cpp-filesystem-copy-options:0002 */}
+`copy_options` satisfies the requirements of [*BitmaskType*](/docs/cpp/library/named_req/BitmaskType) (which means the bitwise operators `operator&`, `operator|`, `operator^`, `operator~`, `operator&=`, `operator|=`, and `operator^=` are defined for this type). `none` represents the empty bitmask; every other enumerator represents a distinct bitmask element.
+
+### Member constants
+
+{/* source:cpp-filesystem-copy-options:0003 */}
+At most one copy option in each of the following options groups may be present, otherwise the behavior of the copy functions is undefined.
+
+{/* source:cpp-filesystem-copy-options:0004 */}
+| Member constant | Meaning |
+| --- | --- |
+| **options controlling [`copy_file()`](/docs/cpp/library/filesystem/copy_file) when the file already exists** | |
+| `none` | Report an error (default behavior). |
+| `skip_existing` | Keep the existing file, without reporting an error. |
+| `overwrite_existing` | Replace the existing file. |
+| `update_existing` | Replace the existing file only if it is older than the file being copied. |
+| **options controlling the effects of [`copy()`](/docs/cpp/library/filesystem/copy) on subdirectories** | |
+| `none` | Skip subdirectories (default behavior). |
+| `recursive` | Recursively copy subdirectories and their content. |
+| **options controlling the effects of [`copy()`](/docs/cpp/library/filesystem/copy) on symbolic links** | |
+| `none` | Follow symlinks (default behavior). |
+| `copy_symlinks` | Copy symlinks as symlinks, not as the files they point to. |
+| `skip_symlinks` | Ignore symlinks. |
+| **options controlling the kind of copying [`copy()`](/docs/cpp/library/filesystem/copy) does** | |
+| `none` | Copy file content (default behavior). |
+| `directories_only` | Copy the directory structure, but do not copy any non-directory files. |
+| `create_symlinks` | Instead of creating copies of files, create symlinks pointing to the originals. Note: the source path must be an absolute path unless the destination path is in the current directory. |
+| `create_hard_links` | Instead of creating copies of files, create hardlinks that resolve to the same files as the originals. |
+
+### Example
+
+{/* source:cpp-filesystem-copy-options:0005 */}
+```cpp
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    fs::create_directories("sandbox/dir/subdir");
+    std::ofstream("sandbox/file1.txt").put('a');
+    fs::copy("sandbox/file1.txt", "sandbox/file2.txt"); // copy file
+    fs::copy("sandbox/dir", "sandbox/dir2"); // copy directory (non-recursive)
+    const auto copyOptions = fs::copy_options::update_existing
+                           | fs::copy_options::recursive
+                           | fs::copy_options::directories_only
+                           ;
+    fs::copy("sandbox", "sandbox_copy", copyOptions); 
+    static_cast<void>(std::system("tree"));
+    fs::remove_all("sandbox");
+    fs::remove_all("sandbox_copy");
+}
+```
+
+Possible output:
+
+```text
+.
+├── sandbox
+│   ├── dir
+│   │   └── subdir
+│   ├── dir2
+│   ├── file1.txt
+│   └── file2.txt
+└── sandbox_copy
+    ├── dir
+    │   └── subdir
+    └── dir2
+ 
+8 directories, 2 files
+```
+
+### See also
+
+{/* source:cpp-filesystem-copy-options:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`](/docs/cpp/library/filesystem/copy) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>copies files or directories <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy_file`](/docs/cpp/library/filesystem/copy_file) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>copies file contents <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

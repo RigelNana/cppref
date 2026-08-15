@@ -1,0 +1,85 @@
+---
+title: "std::filesystem::filesystem_error::what"
+description: "Returns an explanatory byte string."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/filesystem_error/what"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-filesystem-error-what:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" since="C++17" code={`const char* what() const noexcept override;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-filesystem-error-what:0001 */}
+Returns an explanatory byte string. This explanatory string contains the explanatory string passed at the time of construction. Implementations are encouraged to include the pathnames of [`path1()`](/docs/cpp/library/filesystem/filesystem_error/path) and [`path2()`](/docs/cpp/library/filesystem/filesystem_error/path) in native format and the [`std::system_error::what()`](/docs/cpp/library/error/system_error/what) string inside the returned string as well.
+
+### Return value
+
+{/* source:cpp-filesystem-filesystem-error-what:0002 */}
+(none)
+
+### Notes
+
+{/* source:cpp-filesystem-filesystem-error-what:0003 */}
+A C-stye explanatory byte string that contains the explanatory string passed at the time of construction.
+
+### Example
+
+{/* source:cpp-filesystem-filesystem-error-what:0004 */}
+```cpp
+#include <cstdio>
+#include <filesystem>
+#include <iostream>
+#include <string_view>
+namespace fs = std::filesystem;
+ 
+void explain(std::string_view note, fs::filesystem_error const& ex)
+{
+    std::cout << note << " exception:\n"
+              << "what(): " << ex.what() << '\n'
+              << "path1(): " << ex.path1() << ", path2(): "
+              << ex.path2() << "\n\n";
+}
+ 
+int main()
+{
+    try
+    {
+        std::filesystem::rename("/dev", "/null");
+    }
+    catch(fs::filesystem_error const& ex)
+    {
+        explain("fs::rename()", ex);
+    }
+ 
+    for (auto const path : {"/bool", "/bin/cat", "/bin/mouse"})
+        try
+        {
+            std::filesystem::create_directory(path);
+        }
+        catch(fs::filesystem_error const& ex)
+        {
+            explain("fs::create_directory()", ex);
+        }
+}
+```
+
+Possible output:
+
+```text
+fs::rename() exception:
+what(): filesystem error: cannot rename: Permission denied [/dev] [/null]
+path1(): "/dev", path2(): "/null"
+ 
+fs::create_directory() exception:
+what(): filesystem error: cannot create directory: Permission denied [/bool]
+path1(): "/bool", path2(): ""
+ 
+fs::create_directory() exception:
+what(): filesystem error: cannot create directory: File exists [/bin/cat]
+path1(): "/bin/cat", path2(): ""
+ 
+fs::create_directory() exception:
+what(): filesystem error: cannot create directory: Read-only file system [/bin/mouse]
+path1(): "/bin/mouse", path2(): ""
+```

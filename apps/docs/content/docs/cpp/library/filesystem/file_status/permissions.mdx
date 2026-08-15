@@ -1,0 +1,90 @@
+---
+title: "std::filesystem::file_status::permissions"
+description: "Accesses the file permissions information."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/file_status/permissions"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-file-status-permissions:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`std::filesystem::perms permissions() const noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`void permissions( std::filesystem::perms perm ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-file-status-permissions:0001 */}
+Accesses the file permissions information.
+
+{/* source:cpp-filesystem-file-status-permissions:0002 */}
+1. Returns file permissions information.
+
+{/* source:cpp-filesystem-file-status-permissions:0003 */}
+2. Sets file permissions to `perm`.
+
+### Parameters
+
+{/* source:cpp-filesystem-file-status-permissions:0004 */}
+<ParameterList>
+  <Parameter name="perm">file permissions to set to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-file-status-permissions:0005 */}
+1. File permissions information.
+
+{/* source:cpp-filesystem-file-status-permissions:0006 */}
+2. (none)
+
+### Example
+
+{/* source:cpp-filesystem-file-status-permissions:0007 */}
+```cpp
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+ 
+void demo_perms(std::filesystem::perms p)
+{
+    using std::filesystem::perms;
+    auto show = [=](char op, perms perm)
+    {
+        std::cout << (perms::none == (perm & p) ? '-' : op);
+    };
+    show('r', perms::owner_read);
+    show('w', perms::owner_write);
+    show('x', perms::owner_exec);
+    show('r', perms::group_read);
+    show('w', perms::group_write);
+    show('x', perms::group_exec);
+    show('r', perms::others_read);
+    show('w', perms::others_write);
+    show('x', perms::others_exec);
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::ofstream("test.txt"); // create file
+ 
+    std::cout << "Created file with permissions: ";
+    demo_perms(std::filesystem::status("test.txt").permissions());
+ 
+    std::filesystem::permissions(
+        "test.txt",
+        std::filesystem::perms::owner_all | std::filesystem::perms::group_all,
+        std::filesystem::perm_options::add
+    );
+ 
+    std::cout << "After adding u+rwx and g+rwx:  ";
+    demo_perms(std::filesystem::status("test.txt").permissions());
+ 
+    std::filesystem::remove("test.txt");
+}
+```
+
+Possible output:
+
+```text
+Created file with permissions: rw-r--r--
+After adding u+rwx and g+wrx:  rwxrwxr--
+```

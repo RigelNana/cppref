@@ -1,0 +1,157 @@
+---
+title: "std::filesystem::path::append, std::filesystem::path::operator/="
+description: "If p.is_absolute ( ) || (p.has_root_name ( ) && p.root_name ( ) ! = root_name( ) ), then replaces the current path with p as if by operator= (p) and finishes."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/path/append"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-path-append:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`path& operator/=( const path& p );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`template< class Source >
+path& operator/=( const Source& source );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`template< class Source >
+path& append( const Source& source );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`template< class InputIt >
+path& append( InputIt first, InputIt last );`} />
+</DeclarationDoc>
+
+<DeclarationDescription>
+
+{/* source:cpp-filesystem-path-append:0001 */}
+1. 1) If `p.is_absolute() || (p.has_root_name() && p.root_name() != root_name())`, then replaces the current path with `p` as if by `operator=(p)` and finishes.
+
+{/* source:cpp-filesystem-path-append:0002 */}
+   - Otherwise, if `p.has_root_directory()`, then removes any root directory and the entire relative path from the generic format pathname of `*this`.
+
+{/* source:cpp-filesystem-path-append:0003 */}
+   - Otherwise, if `has_filename() || (!has_root_directory() && is_absolute())`, then appends `path::preferred_separator` to the generic format of `*this`.
+
+{/* source:cpp-filesystem-path-append:0004 */}
+   - Either way, then appends the native format pathname of `p`, omitting any *root-name* from its generic format, to the native format of `*this`.
+
+{/* source:cpp-filesystem-path-append:0005 */}
+```cpp
+// Where "//host" is a root-name
+path("//host")  / "foo" // the result is      "//host/foo" (appends with separator)
+path("//host/") / "foo" // the result is also "//host/foo" (appends without separator)
+ 
+// On POSIX,
+path("foo") / ""      // the result is "foo/" (appends)
+path("foo") / "/bar"; // the result is "/bar" (replaces)
+ 
+// On Windows,
+path("foo") / "C:/bar";  // the result is "C:/bar" (replaces)
+path("foo") / "C:";      // the result is "C:"     (replaces)
+path("C:") / "";         // the result is "C:"     (appends, without separator)
+path("C:foo") / "/bar";  // yields "C:/bar"        (removes relative path, then appends)
+path("C:foo") / "C:bar"; // yields "C:foo/bar"     (appends, omitting p's root-name)
+```
+
+{/* source:cpp-filesystem-path-append:0006 */}
+2,3. 2,3) Same as (1), but accepts any `[std::basic_string](/docs/cpp/library/string/basic_string)`, `[std::basic_string_view](/docs/cpp/library/string/basic_string_view)`, null-terminated multicharacter string, or an input iterator pointing to a null-terminated multicharacter sequence. Equivalent to `return operator/=(path(source));`.
+
+{/* source:cpp-filesystem-path-append:0007 */}
+4. 4) Same as (1), but accepts any iterator pair that designates a multicharacter string. Equivalent to `return operator/=(path(first, last));`.
+
+</DeclarationDescription>
+
+{/* source:cpp-filesystem-path-append:0008 */}
+(2) and (3) participate in overload resolution only if `Source` and `path` are not the same type, and either:
+
+{/* source:cpp-filesystem-path-append:0009 */}
+-  `Source` is a specialization of `[std::basic_string](/docs/cpp/library/string/basic_string)` or `[std::basic_string_view](/docs/cpp/library/string/basic_string_view)`, or
+
+-  `std::iterator_traits<std::decay_t<Source>>::value_type` is valid and denotes a possibly const-qualified encoding character type (`char`, <InlineRevision since="C++20">`char8_t`, </InlineRevision>`char16_t`, `char32_t`, or `wchar_t`).
+
+### Parameters
+
+{/* source:cpp-filesystem-path-append:0010 */}
+<ParameterList>
+  <Parameter name="p">
+    pathname to append
+  </Parameter>
+  <Parameter name="source">
+    `[std::basic_string](/docs/cpp/library/string/basic_string)`, `[std::basic_string_view](/docs/cpp/library/string/basic_string_view)`, null-terminated multicharacter string, or an input iterator pointing to a null-terminated multicharacter sequence, which represents a path name (either in portable or in native format)
+  </Parameter>
+  <Parameter name="first, last">
+    pair of [LegacyInputIterators](/docs/cpp/library/named_req/InputIterator) that specify a multicharacter sequence that represents a path name
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator).
+- The value type of `InputIt` must be one of the encoded character types (`char`, `wchar_t`, `char16_t` and `char32_t`).
+
+### Return value
+
+{/* source:cpp-filesystem-path-append:0011 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-filesystem-path-append:0012 */}
+May throw `std::bad_alloc` if memory allocation fails.
+
+### Notes
+
+{/* source:cpp-filesystem-path-append:0013 */}
+These functions effectively yield an approximation of the meaning of the argument path `p` in an environment where `*this` is the starting directory.
+
+### Example
+
+{/* source:cpp-filesystem-path-append:0014 */}
+The output is produced on Windows.
+
+```cpp
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    fs::path p1 = "C:";
+    p1 /= "Users"; // does not insert a separator
+    std::cout << "\"C:\" / \"Users\" == " << p1 << '\n';
+    p1 /= "batman"; // inserts fs::path::preferred_separator, '\' on Windows
+    std::cout << "\"C:\" / \"Users\" / \"batman\" == " << p1 << '\n';
+}
+```
+
+Possible output:
+
+```text
+"C:" / "Users" == "C:Users"
+"C:" / "Users" / "batman" == "C:Users\\batman"
+```
+
+### Defect reports
+
+{/* source:cpp-filesystem-path-append:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-path-append:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3244} standard="C++17">
+    <PublishedBehavior>constraint that `Source` cannot be `path` was missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-filesystem-path-append:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`concat` `operator+=`](/docs/cpp/library/filesystem/path/concat)</DescriptionTerm>
+    <DescriptionBody>concatenates two paths without introducing a directory separator <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator/`](/docs/cpp/library/filesystem/path/operator_slash)(C++17)</DescriptionTerm>
+    <DescriptionBody>concatenates two paths with a directory separator <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

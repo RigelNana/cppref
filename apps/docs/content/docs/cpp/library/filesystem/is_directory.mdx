@@ -1,0 +1,181 @@
+---
+title: "std::filesystem::is_directory"
+description: "Checks if the given file status or path corresponds to a directory."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/is_directory"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-is-directory:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`bool is_directory( std::filesystem::file_status s ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`bool is_directory( const std::filesystem::path& p );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`bool is_directory( const std::filesystem::path& p, std::error_code& ec ) noexcept;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-is-directory:0001 */}
+    Checks if the given file status or path corresponds to a directory.
+
+    {/* source:cpp-filesystem-is-directory:0002 */}
+    1) Equivalent to `s.type() == file_type::directory`.
+
+    {/* source:cpp-filesystem-is-directory:0003 */}
+    2,3) Equivalent to `is_directory(status(p))` or `is_directory(status(p, ec))`, respectively.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-is-directory:0004 */}
+<ParameterList>
+  <Parameter name="s">file status to check</Parameter>
+  <Parameter name="p">path to query</Parameter>
+  <Parameter name="ec">error code to modify in case of errors</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-is-directory:0005 */}
+`true` if the file indicated by `p` or if the type indicated `s` refers to a directory, `false` otherwise. The non-throwing overload returns `false` if an error occurs.
+
+### Exceptions
+
+{/* source:cpp-filesystem-is-directory:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-is-directory:0007 */}
+2,3) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Example
+
+{/* source:cpp-filesystem-is-directory:0008 */}
+```cpp
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <unistd.h>
+ 
+namespace fs = std::filesystem;
+ 
+void demo_status(const fs::path& p, fs::file_status s)
+{
+    std::cout << p;
+    // alternative: switch(s.type()) { case fs::file_type::regular: ...}
+    if (fs::is_regular_file(s))
+        std::cout << " is a regular file\n";
+    if (fs::is_directory(s))
+        std::cout << " is a directory\n";
+    if (fs::is_block_file(s))
+        std::cout << " is a block device\n";
+    if (fs::is_character_file(s))
+        std::cout << " is a character device\n";
+    if (fs::is_fifo(s))
+        std::cout << " is a named IPC pipe\n";
+    if (fs::is_socket(s))
+        std::cout << " is a named IPC socket\n";
+    if (fs::is_symlink(s))
+        std::cout << " is a symlink\n";
+    if (!fs::exists(s))
+        std::cout << " does not exist\n";
+}
+ 
+int main()
+{
+    // create files of different kinds
+    fs::create_directory("sandbox");
+    fs::create_directory("sandbox/dir");
+    std::ofstream{"sandbox/file"}; // create regular file
+    fs::create_symlink("file", "sandbox/symlink");
+ 
+    mkfifo("sandbox/pipe", 0644);
+    sockaddr_un addr;
+    addr.sun_family = AF_UNIX;
+    std::strcpy(addr.sun_path, "sandbox/sock");
+    int fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof addr);
+ 
+    // demo different status accessors
+    for (auto it{fs::directory_iterator("sandbox")}; it != fs::directory_iterator(); ++it)
+        demo_status(*it, it->symlink_status()); // use cached status from directory entry
+    demo_status("/dev/null", fs::status("/dev/null")); // direct calls to status
+    demo_status("/dev/sda", fs::status("/dev/sda"));
+    demo_status("sandbox/no", fs::status("/sandbox/no"));
+ 
+    // cleanup (prefer std::unique_ptr-based custom deleters)
+    close(fd);
+    fs::remove_all("sandbox");
+}
+```
+
+Possible output:
+
+```text
+"sandbox/file" is a regular file
+"sandbox/dir" is a directory
+"sandbox/pipe" is a named IPC pipe
+"sandbox/sock" is a named IPC socket
+"sandbox/symlink" is a symlink
+"/dev/null" is a character device
+"/dev/sda" is a block device
+"sandbox/no" does not exist
+```
+
+### See also
+
+{/* source:cpp-filesystem-is-directory:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`status, symlink_status`](/docs/cpp/library/filesystem/status)<InlineRevision since="C++17" />, <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>determines file attributes<br />determines file attributes, checking the symlink target <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`file_status`](/docs/cpp/library/filesystem/file_status)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>represents file type and permissions <br /> (class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`status_known`](/docs/cpp/library/filesystem/status_known)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether file status is known <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_block_file`](/docs/cpp/library/filesystem/is_block_file)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the given path refers to block device <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_character_file`](/docs/cpp/library/filesystem/is_character_file)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the given path refers to a character device <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_fifo`](/docs/cpp/library/filesystem/is_fifo)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the given path refers to a named pipe <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_other`](/docs/cpp/library/filesystem/is_other)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the argument refers to an *other* file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_regular_file`](/docs/cpp/library/filesystem/is_regular_file)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the argument refers to a regular file <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_socket`](/docs/cpp/library/filesystem/is_socket)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the argument refers to a named IPC socket <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_symlink`](/docs/cpp/library/filesystem/is_symlink)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether the argument refers to a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exists`](/docs/cpp/library/filesystem/exists)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks whether path refers to existing file system object <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_directory`](/docs/cpp/library/filesystem/directory_entry/is_directory)</DescriptionTerm>
+    <DescriptionBody>checks whether the directory entry refers to a directory <br /> (public member function of `std::filesystem::directory_entry`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

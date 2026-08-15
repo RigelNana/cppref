@@ -1,0 +1,94 @@
+---
+title: "std::filesystem::absolute"
+description: "Returns a path referencing the same file system location as p, for which filesystem::path::is_absolute() is true."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/absolute"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-absolute:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`path absolute( const std::filesystem::path& p );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`path absolute( const std::filesystem::path& p, std::error_code& ec );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-absolute:0001 */}
+    Returns a path referencing the same file system location as `p`, for which [`filesystem::path::is_absolute()`](/docs/cpp/library/filesystem/path/is_absrel) is `true`.
+
+    {/* source:cpp-filesystem-absolute:0002 */}
+    2. This non-throwing overload returns default-constructed path if an error occurs.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-absolute:0003 */}
+<ParameterList>
+  <Parameter name="p">path to convert to absolute form</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-absolute:0004 */}
+Returns an absolute (although not necessarily canonical) pathname referencing the same file as `p`.
+
+### Exceptions
+
+{/* source:cpp-filesystem-absolute:0005 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-absolute:0006 */}
+1. Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `p` as the first path argument and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-absolute:0007 */}
+2. Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Notes
+
+{/* source:cpp-filesystem-absolute:0008 */}
+Implementations are encouraged to not consider `p` not existing to be an error.
+
+{/* source:cpp-filesystem-absolute:0009 */}
+For POSIX-based operating systems, `std::filesystem::absolute(p)` is equivalent to `std::filesystem::current_path() / p` except for when `p` is the empty path.
+
+{/* source:cpp-filesystem-absolute:0010 */}
+For Windows, `std::filesystem::absolute` may be implemented as a call to [`GetFullPathNameW`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfullpathnamew).
+
+### Example
+
+{/* source:cpp-filesystem-absolute:0011 */}
+```cpp
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    std::filesystem::path p = "foo.c";
+    std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+    std::cout << "Absolute path for " << p << " is " << fs::absolute(p) << '\n';
+}
+```
+
+Possible output:
+
+```text
+Current path is "/tmp/1666297965.0051296"
+Absolute path for "foo.c" is "/tmp/1666297965.0051296/foo.c"
+```
+
+### See also
+
+{/* source:cpp-filesystem-absolute:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`canonical, weakly_canonical`](/docs/cpp/library/filesystem/canonical)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>composes a canonical path <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`relative, proximate`](/docs/cpp/library/filesystem/relative)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>composes a relative path <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

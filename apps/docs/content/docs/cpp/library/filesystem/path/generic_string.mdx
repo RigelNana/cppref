@@ -1,0 +1,119 @@
+---
+title: "std::filesystem::path::generic_string, std::filesystem::path::generic_wstring, std::filesystem::path::generic_u8string, std::filesystem::path::generic_u16string, std::filesystem::path::generic_u32string"
+description: "Returns the internal pathname in generic pathname format, converted to specific string type. Conversion, if any, is specified as follows:"
+source_url: "https://en.cppreference.com/w/cpp/filesystem/path/generic_string"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-path-generic-string:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++17" code={`template< class CharT, class Traits = std::char_traits<CharT>,
+          class Alloc = std::allocator<CharT> >
+std::basic_string<CharT,Traits,Alloc>
+    generic_string( const Alloc& a = Alloc() ) const;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`std::string generic_string() const;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`std::wstring generic_wstring() const;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`std::u16string generic_u16string() const;`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`std::u32string generic_u32string() const;`} />
+  <Declaration id="3" language="cpp" since="C++17" until="C++20" code={`std::string generic_u8string() const;`} />
+  <Declaration id="3" language="cpp" since="C++20" code={`std::u8string generic_u8string() const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-path-generic-string:0001 */}
+Returns the internal pathname in generic pathname format, converted to specific string type. Conversion, if any, is specified as follows:
+
+{/* source:cpp-filesystem-path-generic-string:0002 */}
+-  If `path::value_type` is `char`, conversion, if any, is system-dependent. This is the case on typical POSIX systems (such as Linux), where native encoding is UTF-8 and `string()` performs no conversion.
+
+-  Otherwise, if `path::value_type` is `wchar_t`, conversion, if any, is unspecified. This is the case on Windows, where `wchar_t` is 16 bit and the native encoding is UTF-16.
+
+-  Otherwise, if `path::value_type` is `char16_t`, native encoding is UTF-16 and the conversion method is unspecified.
+
+-  Otherwise, if `path::value_type` is `char32_t`, native encoding is UTF-32  and the conversion method is unspecified.
+
+-  Otherwise, if `path::value_type` is `char8_t`, native encoding is UTF-8 and the conversion method is unspecified.
+
+{/* source:cpp-filesystem-path-generic-string:0003 */}
+The `/` character is used as the directory separator.
+
+{/* source:cpp-filesystem-path-generic-string:0004 */}
+1. 1) All memory allocations are performed by `a`.
+
+{/* source:cpp-filesystem-path-generic-string:0005 */}
+3. 3) The result encoding in the case of `u8string()` is always UTF-8.
+
+### Parameters
+
+{/* source:cpp-filesystem-path-generic-string:0006 */}
+<ParameterList>
+  <Parameter name="a">
+    allocator to construct the string with
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `CharT` must be one of the encoded character types (`char`, `wchar_t`<InlineRevision since="C++20">, `char8_t`</InlineRevision>, `char16_t` and `char32_t`).
+
+### Return value
+
+{/* source:cpp-filesystem-path-generic-string:0007 */}
+The internal pathname in generic pathname format, converted to specified string type.
+
+### Exceptions
+
+{/* source:cpp-filesystem-path-generic-string:0008 */}
+May throw implementation-defined exceptions.
+
+### Example
+
+{/* source:cpp-filesystem-path-generic-string:0009 */}
+```cpp
+#include <cstddef>
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <span>
+#include <string_view>
+ 
+void print(std::string_view rem, auto const& str)
+{
+    std::cout << rem << std::hex << std::uppercase << std::setfill('0');
+    for (const auto b : std::as_bytes(std::span{str}))
+        std::cout << std::setw(2) << std::to_integer<unsigned>(b) << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::filesystem::path p{"/家/屋"};
+    std::cout << p << '\n';
+ 
+    print("string    : ", p.generic_string());
+    print("u8string  : ", p.generic_u8string());
+    print("u16string : ", p.generic_u16string());
+    print("u32string : ", p.generic_u32string());
+    print("wstring   : ", p.generic_wstring());
+}
+```
+
+Possible output:
+
+```text
+"/家/屋"
+string    : 2F E5 AE B6 2F E5 B1 8B
+u8string  : 2F E5 AE B6 2F E5 B1 8B
+u16string : 2F 00 B6 5B 2F 00 4B 5C
+u32string : 2F 00 00 00 B6 5B 00 00 2F 00 00 00 4B 5C 00 00
+wstring   : 2F 00 00 00 B6 5B 00 00 2F 00 00 00 4B 5C 00 00
+```
+
+### See also
+
+{/* source:cpp-filesystem-path-generic-string:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`string` `wstring` `u8string` `u16string` `u32string`](/docs/cpp/library/filesystem/path/string)</DescriptionTerm>
+    <DescriptionBody>returns the path in native pathname format converted to a string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

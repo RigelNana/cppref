@@ -1,0 +1,149 @@
+---
+title: "std::filesystem::copy_file"
+description: "3,4) Copies a single file from from to to, using the copy options indicated by options. The behavior is undefined if there is more than one option in any of the copy_options option group present in options (even in the groups not relevant to filesystem::copy_file)."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/copy_file"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-copy-file:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration id="1" language="cpp" since="C++17" code={`bool copy_file( const std::filesystem::path& from,
+                const std::filesystem::path& to );`} />
+  <Declaration id="2" language="cpp" since="C++17" code={`bool copy_file( const std::filesystem::path& from,
+                const std::filesystem::path& to,
+
+                std::error_code& ec );`} />
+  <Declaration id="3" language="cpp" since="C++17" code={`bool copy_file( const std::filesystem::path& from,
+                const std::filesystem::path& to,
+
+                std::filesystem::copy_options options );`} />
+  <Declaration id="4" language="cpp" since="C++17" code={`bool copy_file( const std::filesystem::path& from,
+                const std::filesystem::path& to,
+                std::filesystem::copy_options options,
+
+                std::error_code& ec );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-filesystem-copy-file:0001 */}
+    1,2) The default, equivalent to (3,4) with `copy_options::none` used as `options`.
+
+    {/* source:cpp-filesystem-copy-file:0002 */}
+    3,4) Copies a single file from `from` to `to`, using the copy options indicated by `options`. The behavior is undefined if there is more than one option in any of the [`copy_options`](/docs/cpp/library/filesystem/copy_options) option group present in `options` (even in the groups not relevant to `filesystem::copy_file`). If [`!filesystem::is_regular_file(from)`](/docs/cpp/library/filesystem/is_regular_file) (either because the source file doesn't exist or because it is not a regular file), report an error. Otherwise, if the destination file does not exist, copies the contents and the attributes of the file to which `from` resolves to the file to which `to` resolves (symlinks are followed). Otherwise, if the destination file already exists, report an error if any of the following is true: `to` and `from` are the same as determined by [`filesystem::equivalent(from, to)`](/docs/cpp/library/filesystem/equivalent); `to` is not a regular file as determined by [`!filesystem::is_regular_file(to)`](/docs/cpp/library/filesystem/is_regular_file); none of the `filesystem::copy_file` control options are set in `options`. Otherwise, if `copy_options::skip_existing` is set in `options`, do nothing. Otherwise, if `copy_options::overwrite_existing` is set in `options`, copy the contents and the attributes of the file to which `from` resolves to the file to which `to` resolves. Otherwise, if `copy_options::update_existing` is set in `options`, only copy the file if `from` is newer than `to`, as defined by [`filesystem::last_write_time()`](/docs/cpp/library/filesystem/last_write_time).
+
+    {/* source:cpp-filesystem-copy-file:0003 */}
+    The non-throwing overloads return `false` if an error occurs.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-filesystem-copy-file:0004 */}
+<ParameterList>
+  <Parameter name="from">path to the source file</Parameter>
+  <Parameter name="to">path to the target file</Parameter>
+  <Parameter name="ec">out-parameter for error reporting in the non-throwing overload</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-filesystem-copy-file:0005 */}
+`true` if the file was copied, `false` otherwise.
+
+### Exceptions
+
+{/* source:cpp-filesystem-copy-file:0006 */}
+Any overload not marked `noexcept` may throw [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) if memory allocation fails.
+
+{/* source:cpp-filesystem-copy-file:0007 */}
+1,3) Throws [`std::filesystem::filesystem_error`](/docs/cpp/library/filesystem/filesystem_error) on underlying OS API errors, constructed with `from` as the first path argument, `to` as the second path argument, and the OS error code as the error code argument.
+
+{/* source:cpp-filesystem-copy-file:0008 */}
+2,4) Sets a `std::error_code&` parameter to the OS API error code if an OS API call fails, and executes `ec.`[`clear`](/docs/cpp/library/error/error_code/clear)`()` if no errors occur.
+
+### Notes
+
+{/* source:cpp-filesystem-copy-file:0009 */}
+The functions involve at most one direct or indirect call to [`filesystem::status(to)`](/docs/cpp/library/filesystem/status) (used both to determine if the file exists, and, for `filesystem::copy_options::update_existing` option, its last write time).
+
+{/* source:cpp-filesystem-copy-file:0010 */}
+Error is reported when `filesystem::copy_file` is used to copy a directory: use [`filesystem::copy`](/docs/cpp/library/filesystem/copy) for that.
+
+{/* source:cpp-filesystem-copy-file:0011 */}
+`filesystem::copy_file` follows symlinks: use [`filesystem::copy_symlink`](/docs/cpp/library/filesystem/copy_symlink) or `filesystem::copy` with `filesystem::copy_options::copy_symlinks` for that.
+
+### Example
+
+{/* source:cpp-filesystem-copy-file:0012 */}
+```cpp
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+namespace fs = std::filesystem;
+ 
+int main()
+{
+    fs::create_directory("sandbox");
+    std::ofstream("sandbox/file1.txt").put('a');
+ 
+    fs::copy_file("sandbox/file1.txt", "sandbox/file2.txt");
+ 
+    // now there are two files in sandbox:
+    std::cout << "file1.txt holds: "
+              << std::ifstream("sandbox/file1.txt").rdbuf() << '\n';
+    std::cout << "file2.txt holds: "
+              << std::ifstream("sandbox/file2.txt").rdbuf() << '\n';
+ 
+    // fail to copy directory
+    fs::create_directory("sandbox/abc");
+    try
+    {
+        fs::copy_file("sandbox/abc", "sandbox/def");
+    }
+    catch (fs::filesystem_error& e)
+    {
+        std::cout << "Could not copy sandbox/abc: " << e.what() << '\n';
+    }
+    fs::remove_all("sandbox");
+}
+```
+
+Possible output:
+
+```text
+file1.txt holds: a
+file2.txt holds: a
+Could not copy sandbox/abc: copy_file: Is a directory: "sandbox/abc", "sandbox/def"
+```
+
+### Defect reports
+
+{/* source:cpp-filesystem-copy-file:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-copy-file:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3014} standard="C++17">
+    <PublishedBehavior>`error_code` overload marked `noexcept` but can allocate memory</PublishedBehavior>
+    <CorrectedBehavior>`noexcept` removed</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-filesystem-copy-file:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy_options`](/docs/cpp/library/filesystem/copy_options)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>specifies semantics of copy operations <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy_symlink`](/docs/cpp/library/filesystem/copy_symlink)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>copies a symbolic link <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`copy`](/docs/cpp/library/filesystem/copy)<InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>copies files or directories <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

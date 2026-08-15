@@ -1,0 +1,453 @@
+---
+title: "std::filesystem::path"
+description: "Objects of type path represent paths on a filesystem. Only syntactic aspects of paths are handled: the pathname may represent a non-existing path or even one that is not allowed to exist on the current file system or OS."
+source_url: "https://en.cppreference.com/w/cpp/filesystem/path"
+language: "C++"
+---
+
+{/* source:cpp-filesystem-path:0000 */}
+<DeclarationDoc>
+Defined in header [`<filesystem>`](/docs/cpp/library/headers/filesystem)
+
+  <Declaration language="cpp" since="C++17" code={`class path;`} />
+</DeclarationDoc>
+
+{/* source:cpp-filesystem-path:0001 */}
+Objects of type `path` represent paths on a filesystem. Only syntactic aspects of paths are handled: the pathname may represent a non-existing path or even one that is not allowed to exist on the current file system or OS.
+
+{/* source:cpp-filesystem-path:0002 */}
+The path name has the following syntax:
+
+{/* source:cpp-filesystem-path:0003 */}
+1.  *root-name*(optional): identifies the root on a filesystem with multiple roots (such as `"C:"` or `"//myserver"`). In case of ambiguity, the longest sequence of characters that forms a valid *root-name* is treated as the *root-name*. The standard library may define additional root-names besides the ones understood by the OS API.
+
+1.  *root-directory*(optional): a directory separator that, if present, marks this path as *absolute*. If it is missing (and the first element other than the root name is a file name), then the path is *relative* and requires another path as the starting location to resolve to a file name.
+
+1.  Zero or more of the following:
+
+{/* source:cpp-filesystem-path:0004 */}
+-  *file-name*: sequence of characters that aren't directory separators or preferred directory separators (additional limitations may be imposed by the OS or file system). This name may identify a file, a hard link, a symbolic link, or a directory. Two special *file-names* are recognized:
+
+-  *dot*: the file name consisting of a single dot character `.` is a directory name that refers to the current directory.
+
+-  *dot-dot*: the file name consisting of two dot characters `..` is a directory name that refers to the parent directory.
+
+-  *directory-separators*: the forward slash character `/` or the alternative character provided as `path::preferred_separator`. If this character is repeated, it is treated as a single directory separator: `/usr///////lib` is the same as `/usr/lib`.
+
+{/* source:cpp-filesystem-path:0005 */}
+A path can be *normalized* by following this algorithm:
+
+{/* source:cpp-filesystem-path:0006 */}
+1.  If the path is empty, stop (normal form of an empty path is an empty path).
+
+1.  Replace each *directory-separator* (which may consist of multiple slashes) with a single `path::preferred_separator`.
+
+1.  Replace each slash character in the *root-name* with `path::preferred_separator`.
+
+1.  Remove each *dot* and any immediately following *directory-separator*.
+
+1.  Remove each non-*dot-dot* filename immediately followed by a *directory-separator* and a *dot-dot*, along with any immediately following *directory-separator*.
+
+1.  If there is *root-directory*, remove all *dot-dots* and any *directory-separators* immediately following them.
+
+1.  If the last filename is *dot-dot*, remove any trailing *directory-separator*.
+
+1.  If the path is empty, add a *dot* (normal form of `./` is `.`).
+
+{/* source:cpp-filesystem-path:0007 */}
+The path can be traversed element-wise via iterators returned by the `[begin()](/docs/cpp/library/filesystem/path/begin)` and `[end()](/docs/cpp/library/filesystem/path/begin)` functions, which views the path in generic format and iterates over root name, root directory, and the subsequent file name elements (directory separators are skipped except the one that identifies the root directory). If the very last element in the path is a directory separator, the last iterator will dereference to an empty element.
+
+{/* source:cpp-filesystem-path:0008 */}
+Calling any non-const member function of a `path` invalidates all iterators referring to elements of that object.
+
+{/* source:cpp-filesystem-path:0009 */}
+If the OS uses a *native* syntax that is different from the portable *generic* syntax described above, library functions that are defined to accept "detected format" accept path names in both formats: a detected format argument is taken to be in the generic format if and only if it matches the generic format but is not acceptable to the operating system as a native path. On those OS where native format differs between pathnames of directories and pathnames of files, a generic pathname is treated as a directory path if it ends on a directory separator and a regular file otherwise.
+
+{/* source:cpp-filesystem-path:0010 */}
+In any case, the path class behaves as if it stores a pathname in the native format and automatically converts to generic format as needed (each member function specifies which format it interprets the path as).
+
+{/* source:cpp-filesystem-path:0011 */}
+On POSIX systems, the generic format is the native format and there is no need to distinguish or convert between them.
+
+{/* source:cpp-filesystem-path:0012 */}
+Paths are implicitly convertible to and from `[std::basic_strings](/docs/cpp/library/string/basic_string), which makes it possible to use them with other file APIs.
+
+{/* source:cpp-filesystem-path:0013 */}
+The [stream operators](/docs/cpp/library/filesystem/path/operator_ltltgtgt) use `[std::quoted](/docs/cpp/library/io/manip/quoted)` so that spaces do not cause truncation when later read by [stream input operator](/docs/cpp/library/filesystem/path/operator_ltltgtgt).
+
+{/* source:cpp-filesystem-path:0014 */}
+[Decomposition member functions](/docs/cpp/library/filesystem/path#Decomposition) (e.g. `[extension](/docs/cpp/library/filesystem/path/extension)`) return `filesystem::path` objects instead of string objects as other APIs do.
+
+### Member types
+
+{/* source:cpp-filesystem-path:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>character type used by the native encoding of the filesystem: `char` on POSIX, `wchar_t` on Windows</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`string_type`</DescriptionTerm>
+    <DescriptionBody>`std::basic_string<value_type>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`const_iterator`</DescriptionTerm>
+    <DescriptionBody>a constant [LegacyInputIterator](/docs/cpp/library/named_req/InputIterator) with a `value_type` of `path` that meets all requirements of [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator) except that for two equal dereferenceable iterators `a` and `b` of type `const_iterator`, there is no requirement that `*a` and `*b` refer to the same object.
+It is unspecified whether `const_iterator` is actually a [LegacyBidirectionalIterator](/docs/cpp/library/named_req/BidirectionalIterator)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`iterator`</DescriptionTerm>
+    <DescriptionBody>`const_iterator`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`format`](/docs/cpp/library/filesystem/path/format)</DescriptionTerm>
+    <DescriptionBody>determines how to interpret string representations of pathnames.
+The following enumerators are also defined:</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`native_format`](/docs/cpp/library/filesystem/path/format)</DescriptionTerm>
+    <DescriptionBody>native pathname format</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`generic_format`](/docs/cpp/library/filesystem/path/format)</DescriptionTerm>
+    <DescriptionBody>generic pathname format</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`auto_format`](/docs/cpp/library/filesystem/path/format)</DescriptionTerm>
+    <DescriptionBody>implementation-defined format, auto-detected where possible</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<br />(public member enum)
+
+### Member constants
+
+{/* source:cpp-filesystem-path:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>constexpr value_type preferred_separator[static]</DescriptionTerm>
+    <DescriptionBody>alternative directory separator which may be used in addition to the portable `/`. On Windows, this is the backslash character `\`. On POSIX, this is the same forward slash `/` as the portable separator <br /> (public static member constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-filesystem-path:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/filesystem/path/path)</DescriptionTerm>
+    <DescriptionBody>constructs a `path` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/filesystem/path/~path)</DescriptionTerm>
+    <DescriptionBody>destroys a `path` object <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/filesystem/path/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns another path <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`assign`](/docs/cpp/library/filesystem/path/assign)</DescriptionTerm>
+    <DescriptionBody>assigns contents <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Concatenation
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`append` `operator/=`](/docs/cpp/library/filesystem/path/append)</DescriptionTerm>
+    <DescriptionBody>appends elements to the path with a directory separator <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`concat` `operator+=`](/docs/cpp/library/filesystem/path/concat)</DescriptionTerm>
+    <DescriptionBody>concatenates two paths without introducing a directory separator <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Modifiers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`clear`](/docs/cpp/library/filesystem/path/clear)</DescriptionTerm>
+    <DescriptionBody>erases the contents <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_preferred`](/docs/cpp/library/filesystem/path/make_preferred)</DescriptionTerm>
+    <DescriptionBody>converts directory separators to preferred directory separator <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`remove_filename`](/docs/cpp/library/filesystem/path/remove_filename)</DescriptionTerm>
+    <DescriptionBody>removes filename path component <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace_filename`](/docs/cpp/library/filesystem/path/replace_filename)</DescriptionTerm>
+    <DescriptionBody>replaces the last path component with another path <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`replace_extension`](/docs/cpp/library/filesystem/path/replace_extension)</DescriptionTerm>
+    <DescriptionBody>replaces the extension <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap`](/docs/cpp/library/filesystem/path/swap)</DescriptionTerm>
+    <DescriptionBody>swaps two paths <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Format observers
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`c_str` `native` `operator string_type`](/docs/cpp/library/filesystem/path/native)</DescriptionTerm>
+    <DescriptionBody>returns the native version of the path <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`string` `wstring` `u8string` `u16string` `u32string`](/docs/cpp/library/filesystem/path/string)</DescriptionTerm>
+    <DescriptionBody>returns the path in native pathname format converted to a string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`generic_string` `generic_wstring` `generic_u8string` `generic_u16string` `generic_u32string`](/docs/cpp/library/filesystem/path/generic_string)</DescriptionTerm>
+    <DescriptionBody>returns the path in generic pathname format converted to a string <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Compare
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`compare`](/docs/cpp/library/filesystem/path/compare)</DescriptionTerm>
+    <DescriptionBody>compares the lexical representations of two paths lexicographically <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Generation
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`lexically_normal` `lexically_relative` `lexically_proximate`](/docs/cpp/library/filesystem/path/lexically_normal)</DescriptionTerm>
+    <DescriptionBody>converts path to normal form<br />converts path to relative form<br />converts path to proximate form <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Decomposition
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`root_name`](/docs/cpp/library/filesystem/path/root_name)</DescriptionTerm>
+    <DescriptionBody>returns the root-name of the path, if present <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`root_directory`](/docs/cpp/library/filesystem/path/root_directory)</DescriptionTerm>
+    <DescriptionBody>returns the root directory of the path, if present <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`root_path`](/docs/cpp/library/filesystem/path/root_path)</DescriptionTerm>
+    <DescriptionBody>returns the root path of the path, if present <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`relative_path`](/docs/cpp/library/filesystem/path/relative_path)</DescriptionTerm>
+    <DescriptionBody>returns path relative to the root path <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`parent_path`](/docs/cpp/library/filesystem/path/parent_path)</DescriptionTerm>
+    <DescriptionBody>returns the path of the parent path <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`filename`](/docs/cpp/library/filesystem/path/filename)</DescriptionTerm>
+    <DescriptionBody>returns the filename path component <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`stem`](/docs/cpp/library/filesystem/path/stem)</DescriptionTerm>
+    <DescriptionBody>returns the stem path component (filename without the final extension) <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`extension`](/docs/cpp/library/filesystem/path/extension)</DescriptionTerm>
+    <DescriptionBody>returns the file extension path component <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Queries
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/filesystem/path/empty)</DescriptionTerm>
+    <DescriptionBody>checks if the path is empty <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`has_root_path` `has_root_name` `has_root_directory` `has_relative_path` `has_parent_path` `has_filename` `has_stem` `has_extension`](/docs/cpp/library/filesystem/path/has_path)</DescriptionTerm>
+    <DescriptionBody>checks if the corresponding path element is not empty <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_absolute` `is_relative`](/docs/cpp/library/filesystem/path/is_absrel)</DescriptionTerm>
+    <DescriptionBody>checks if `[root_path()](/docs/cpp/library/filesystem/path/root_path)` uniquely identifies file system location <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+##### Iterators
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin` `end`](/docs/cpp/library/filesystem/path/begin)</DescriptionTerm>
+    <DescriptionBody>iterator access to the path as a sequence of elements <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-filesystem-path:0018 */}
+Defined in  namespace `std::filesystem`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`swap(std::filesystem::path)`](/docs/cpp/library/filesystem/path/swap2)(C++17)</DescriptionTerm>
+    <DescriptionBody>specializes the `[std::swap](/docs/cpp/library/algorithm/swap)` algorithm <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`hash_value`](/docs/cpp/library/filesystem/path/hash_value)(C++17)</DescriptionTerm>
+    <DescriptionBody>calculates a hash value for a path object <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator==` `operator!=` `operator\<` `operator\<=` `operator\>` `operator\>=` `operator\<=\>`](/docs/cpp/library/filesystem/path/operator_cmp)(C++17)(C++17)(until C++20)(C++17)(until C++20)(C++17)(until C++20)(C++17)(until C++20)(C++17)(until C++20)(C++20)</DescriptionTerm>
+    <DescriptionBody>lexicographically compares two paths <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator/`](/docs/cpp/library/filesystem/path/operator_slash)(C++17)</DescriptionTerm>
+    <DescriptionBody>concatenates two paths with a directory separator <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator\<\<` `operator\>\>`](/docs/cpp/library/filesystem/path/operator_ltltgtgt)(C++17)</DescriptionTerm>
+    <DescriptionBody>performs stream input and output on a quoted path <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`u8path`](/docs/cpp/library/filesystem/path/u8path)(C++17)(deprecated in C++20)</DescriptionTerm>
+    <DescriptionBody>creates a `path` from a UTF-8 encoded source <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Helper classes
+
+{/* source:cpp-filesystem-path:0019 */}
+Defined in  namespace `std`
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::hash\<std::filesystem::path\>`](/docs/cpp/library/filesystem/path/hash)(C++17)</DescriptionTerm>
+    <DescriptionBody>hash support for `std::filesystem::path` <br /> (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`std::formatter\<std::filesystem::path\>`](/docs/cpp/library/filesystem/path/formatter)(C++26)</DescriptionTerm>
+    <DescriptionBody>formatting support for `filesystem::path` <br /> (class template specialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Defect reports
+
+{/* source:cpp-filesystem-path:0020 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-filesystem-path:0021 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3657} standard="C++17">
+    <PublishedBehavior>[`hash`](/docs/cpp/library/filesystem/path/hash) for `path` was disabled</PublishedBehavior>
+    <CorrectedBehavior>enabled</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
