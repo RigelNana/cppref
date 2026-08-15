@@ -1,0 +1,242 @@
+---
+title: "Concepts library (since C++20)"
+description: "The concepts library provides definitions of fundamental library concepts that can be used to perform compile-time validation of template arguments and perform function dispatch based on properties of types. These concepts provide a foundation for equational reasoning in programs."
+source_url: "https://en.cppreference.com/w/cpp/concepts"
+language: "C++"
+---
+
+{/* source:cpp-concepts:0000 */}
+The concepts library provides definitions of fundamental library concepts that can be used to perform compile-time validation of template arguments and perform function dispatch based on properties of types. These concepts provide a foundation for equational reasoning in programs.
+
+{/* source:cpp-concepts:0001 */}
+Most concepts in the standard library impose both syntactic and semantic requirements. It is said that a standard concept is *satisfied* if its syntactic requirements are met, and is *modeled* if it is satisfied and its semantic requirements (if any) are also met.
+
+{/* source:cpp-concepts:0002 */}
+In general, only the syntactic requirements can be checked by the compiler. If the validity or meaning of a program depends whether a sequence of template arguments models a concept, and the concept is satisfied but not modeled, or if a semantic requirement is not met at the point of use, the program is ill-formed, [no diagnostic required](/docs/cpp/language/ndr).
+
+{/* source:cpp-concepts:0003 */}
+An expression is *equality-preserving* if it results in equal outputs given equal inputs, where
+
+{/* source:cpp-concepts:0004 */}
+- the inputs consist of its operands (not neccessarily making the expression semantically valid), and
+- the outputs consist of its result and all modifications to the operands by the expression, if any
+
+{/* source:cpp-concepts:0005 */}
+where, for convenience of wording, its "operands" refer to its largest sub-expressions that consist of an [id-expression](/docs/cpp/language/expressions#Primary_expressions) or invocations of [`std::move`](/docs/cpp/library/utility/move), [`std::forward`](/docs/cpp/library/utility/forward), and [`std::declval`](/docs/cpp/library/utility/declval).
+
+{/* source:cpp-concepts:0006 */}
+The cv-qualification and value category of each operand is determined by assuming that each template type parameter in its type denotes a cv-unqualified complete non-array object type.
+
+{/* source:cpp-concepts:0007 */}
+Every expression required to be equality preserving is further required to be stable, that is, two evaluations of it with the same input objects must have equal outputs without any explicit intervening modification of those input objects.
+
+{/* source:cpp-concepts:0008 */}
+Unless noted otherwise, every expression used in a [`requires expression`](/docs/cpp/language/templates/requires) of the [standard library concepts](/docs/cpp/library/concepts#Standard_library_concepts) is required to be equality preserving, and the evaluation of the expression may modify only its non-constant operands. Operands that are constant must not be modified.
+
+{/* source:cpp-concepts:0009 */}
+In the standard library, the following concepts are allowed to have non equality-preserving `requires` expressions:
+
+{/* source:cpp-concepts:0010 */}
+- [`output_iterator`](/docs/cpp/library/iterator/output_iterator)
+- [`indirectly_writable`](/docs/cpp/library/iterator/indirectly_writable)
+- [`invocable`](/docs/cpp/library/concepts/invocable)
+- [`weakly_incrementable`](/docs/cpp/library/iterator/weakly_incrementable)
+- [`range`](/docs/cpp/library/ranges/range)
+
+{/* source:cpp-concepts:0011 */}
+A [`requires expression`](/docs/cpp/language/templates/requires) that uses an expression that is non-modifying for some constant lvalue operand also implicitly requires additional variations of that expression that accept a non-constant lvalue or (possibly constant) rvalue for the given operand unless such an expression variation is explicitly required with differing semantics.
+
+{/* source:cpp-concepts:0012 */}
+These *implicit expression variations* must meet the same semantic requirements of the declared expression. The extent to which an implementation validates the syntax of the variations is unspecified.
+
+{/* source:cpp-concepts:0013 */}
+```cpp
+template<class T>
+concept C = requires(T a, T b, const T c, const T d)
+{
+    c == d;           // expression #1: does not modify the operands
+    a = std::move(b); // expression #2: modifies both operands
+    a = c;            // expression #3: modifies the left operand `a`
+};
+ 
+// Expression #1 implicitly requires additional expression variations that
+// meet the requirements for c == d (including non-modification),
+// as if the following expressions had been declared as well:
+ 
+// ------ const == const ------- ------ const == non-const ---
+//                                         c  ==           b;
+//            c == std::move(d);           c  == std::move(b);
+// std::move(c) ==           d;  std::move(c) ==           b;
+// std::move(c) == std::move(d); std::move(c) == std::move(b);
+ 
+// -- non-const == const ------- -- non-const == non-const ---
+//           a  ==           d;            a  ==           b;
+//           a  == std::move(d);           a  == std::move(b);
+// std::move(a) ==           d;  std::move(a) ==           b;
+// std::move(a) == std::move(d); std::move(a) == std::move(b);
+ 
+// Expression #3 implicitly requires additional expression variations that
+// meet the requirements for a = c
+// (including non-modification of the second operand),
+// as if the expressions a = b (non-constant lvalue variation)
+// and a = std::move(c) (const rvalue variation) had been declared.
+ 
+// Note: Since expression #2 already requires the non-constant rvalue variation
+// (a == std::move(b)) explicitly, expression #3 does not implicitly require it anymore.
+ 
+// The type T meets the explicitly stated syntactic requirements of
+// concept C above, but does not meet the additional implicit requirements
+// (i.e., T satisfies but does not model C):
+// a program requires C<T> is ill-formed (no diagnostic required).
+struct T
+{
+    bool operator==(const T&) const { return true; }
+    bool operator==(T&) = delete;
+};
+```
+
+{/* source:cpp-concepts:0014 */}
+Defined in namespace `std`
+
+**Core language concepts**
+
+Defined in header [`<concepts>`](/docs/cpp/library/headers/concepts)
+
+**Comparison concepts**
+
+Defined in header [`<concepts>`](/docs/cpp/library/headers/concepts)
+
+Defined in header [`<compare>`](/docs/cpp/library/headers/compare)
+
+**Object concepts**
+
+Defined in header [`<concepts>`](/docs/cpp/library/headers/concepts)
+
+**Callable concepts**
+
+Defined in header [`<concepts>`](/docs/cpp/library/headers/concepts)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[same_as](/docs/cpp/library/concepts/same_as)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is the same as another type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[derived_from](/docs/cpp/library/concepts/derived_from)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is derived from another type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[convertible_to](/docs/cpp/library/concepts/convertible_to)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is implicitly convertible to another type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[common_reference_with](/docs/cpp/library/concepts/common_reference_with)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that two types share a common reference type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[common_with](/docs/cpp/library/concepts/common_with)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that two types share a common type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[integral](/docs/cpp/library/concepts/integral)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an integral type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[signed_integral](/docs/cpp/library/concepts/signed_integral)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an integral type that is signed <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[unsigned_integral](/docs/cpp/library/concepts/unsigned_integral)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is an integral type that is unsigned <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[floating_point](/docs/cpp/library/concepts/floating_point)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is a floating-point type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[assignable_from](/docs/cpp/library/concepts/assignable_from)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is assignable from another type <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[swappable, swappable_with](/docs/cpp/library/concepts/swappable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type can be swapped or that two types can be swapped with each other <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[destructible](/docs/cpp/library/concepts/destructible)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of the type can be destroyed <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[constructible_from](/docs/cpp/library/concepts/constructible_from)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a variable of the type can be constructed from or bound to a set of argument types <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[default_initializable](/docs/cpp/library/concepts/default_initializable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be default constructed <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[move_constructible](/docs/cpp/library/concepts/move_constructible)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be move constructed <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[copy_constructible](/docs/cpp/library/concepts/copy_constructible)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be copy constructed and move constructed <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[*boolean-testable*](/docs/cpp/library/concepts/boolean-testable)﻿<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type can be used in Boolean contexts<br />(exposition-only concept\*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[equality_comparable, equality_comparable_with](/docs/cpp/library/concepts/equality_comparable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that operator `==` is an equivalence relation <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[totally_ordered, totally_ordered_with](/docs/cpp/library/concepts/totally_ordered)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that the comparison operators on the type yield a total order <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[three_way_comparable, three_way_comparable_with](/docs/cpp/library/utility/compare/three_way_comparable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that operator `<=>` produces consistent result on given types <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[movable](/docs/cpp/library/concepts/movable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be moved and swapped <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[copyable](/docs/cpp/library/concepts/copyable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be copied, moved, and swapped <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[semiregular](/docs/cpp/library/concepts/semiregular)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that an object of a type can be copied, moved, swapped, and default constructed <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[regular](/docs/cpp/library/concepts/regular)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a type is regular, that is, it is both [`semiregular`](/docs/cpp/library/concepts/semiregular) and [`equality_comparable`](/docs/cpp/library/concepts/equality_comparable) <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[invocable, regular_invocable](/docs/cpp/library/concepts/invocable)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type can be invoked with a given set of argument types <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[predicate](/docs/cpp/library/concepts/predicate)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type is a Boolean predicate <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[relation](/docs/cpp/library/concepts/relation)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a callable type is a binary relation <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[equivalence_relation](/docs/cpp/library/concepts/equivalence_relation)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`relation`](/docs/cpp/library/concepts/relation) imposes an equivalence relation <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[strict_weak_order](/docs/cpp/library/concepts/strict_weak_order)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a [`relation`](/docs/cpp/library/concepts/relation) imposes a strict weak ordering <br /> (concept)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-concepts:0015 */}
+Additional concepts can be found in [the iterators library](/docs/cpp/library/iterator#C.2B.2B20_iterator_concepts), [the algorithms library](/docs/cpp/library/iterator#Algorithm_concepts_and_utilities), and [the ranges library](/docs/cpp/library/ranges#Range_concepts).
+
+{/* source:cpp-concepts:0016 */}
+- [Named Requirements](/docs/cpp/library/named_req)

@@ -1,0 +1,111 @@
+---
+title: "std::assignable_from"
+description: "The concept assignable_from<LHS, RHS> specifies that an expression of the type and value category specified by RHS can be assigned to an lvalue expression whose type is specified by LHS."
+source_url: "https://en.cppreference.com/w/cpp/concepts/assignable_from"
+language: "C++"
+---
+
+{/* source:cpp-concepts-assignable-from:0000 */}
+<DeclarationDoc>
+Defined in header [`<concepts>`](/docs/cpp/library/headers/concepts)
+
+  <Declaration language="cpp" since="C++20" code={`template< class LHS, class RHS >
+concept assignable_from =
+    std::is_lvalue_reference_v<LHS> &&
+    std::common_reference_with<
+        const std::remove_reference_t<LHS>&,
+        const std::remove_reference_t<RHS>&> &&
+    requires(LHS lhs, RHS&& rhs) {
+        { lhs = std::forward<RHS>(rhs) } -> std::same_as<LHS>;
+
+    };`} />
+</DeclarationDoc>
+
+{/* source:cpp-concepts-assignable-from:0001 */}
+The concept `assignable_from<LHS, RHS>` specifies that an expression of the type and value category specified by `RHS` can be assigned to an lvalue expression whose type is specified by `LHS`.
+
+### Semantic requirements
+
+{/* source:cpp-concepts-assignable-from:0002 */}
+Given
+
+{/* source:cpp-concepts-assignable-from:0003 */}
+- `lhs`, an lvalue that refers to an object `lcopy` such that `decltype((lhs))` is `LHS`,
+- `rhs`, an expression such that `decltype((rhs))` is `RHS`,
+- `rcopy`, a distinct object that is equal to `rhs`,
+
+{/* source:cpp-concepts-assignable-from:0004 */}
+`assignable_from<LHS, RHS>` is modeled only if
+
+{/* source:cpp-concepts-assignable-from:0005 */}
+- `std::addressof(lhs = rhs) == std::addressof(lcopy)` (i.e., the assignment expression yields an lvalue referring to the left operand);
+- After evaluating `lhs = rhs`:
+  - `lhs` is equal to `rcopy`, unless `rhs` is a non-const xvalue that refers to `lcopy` (i.e., the assignment is a self-move-assignment),
+  - if `rhs` is a glvalue:
+    - If it is a non-const xvalue, the object to which it refers is in a valid but unspecified state;
+    - Otherwise, the object it refers to is not modified;
+
+### Equality preservation
+
+{/* source:cpp-concepts-assignable-from:0006 */}
+Expressions declared in [requires expressions](/docs/cpp/language/templates/requires) of the standard library concepts are required to be [equality-preserving](/docs/cpp/library/concepts#Equality_preservation) (except where stated otherwise).
+
+### Notes
+
+{/* source:cpp-concepts-assignable-from:0007 */}
+Assignment need not be a total function. In particular, if assigning to some object `x` can cause some other object `y` to be modified, then `x = y` is likely not in the domain of `=`. This typically happens if the right operand is owned directly or indirectly by the left operand (e.g., with smart pointers to nodes in a node-based data structure, or with something like `std::vector<std::any>`).
+
+### Example
+
+{/* source:cpp-concepts-assignable-from:0008 */}
+```cpp
+#include <atomic>
+#include <concepts>
+#include <string>
+ 
+int main()
+{
+    // Normal basic usage, checks lvalue reference assignment
+    static_assert(std::is_assignable_v<int&, int>);
+    static_assert(std::assignable_from<int&, int>);
+ 
+    static_assert(std::is_assignable_v<std::string&, std::string>);
+    static_assert(std::assignable_from<std::string&, std::string>);
+ 
+    // Fundamental types don't support assignment to an rvalue
+    static_assert(!std::is_assignable_v<int, int>);
+    static_assert(!std::assignable_from<int, int>);
+ 
+    // std::assignable_from doesn't accept all valid assignment expressions:
+ 
+    // rvalue reference assignment
+    static_assert(std::is_assignable_v<std::string&&, std::string>);
+    static_assert(!std::assignable_from<std::string&&, std::string>);
+ 
+    // rvalue assignment
+    static_assert(std::is_assignable_v<std::string, std::string>);
+    static_assert(!std::assignable_from<std::string, std::string>);
+ 
+    // std::atomic::operator= returns by value
+    static_assert(std::is_assignable_v<std::atomic<int>&, int>);
+    static_assert(!std::assignable_from<std::atomic<int>&, int>);
+}
+```
+
+### References
+
+{/* source:cpp-concepts-assignable-from:0009 */}
+C++23 standard (ISO/IEC 14882:2024): 18.4.8 Concept `assignable_from` [concept.assignable]
+
+{/* source:cpp-concepts-assignable-from:0010 */}
+C++20 standard (ISO/IEC 14882:2020): 18.4.8 Concept `assignable_from` [concept.assignable]
+
+### See also
+
+{/* source:cpp-concepts-assignable-from:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_assignable` `is_trivially_assignable` `is_nothrow_assignable`](/docs/cpp/library/meta/is_assignable) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type has an assignment operator for a specific argument (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

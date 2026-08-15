@@ -1,0 +1,82 @@
+---
+title: "std::generator<Ref,V,Allocator>::promise_type::operator new"
+description: "Allocates size bytes of uninitialized storage using default or user-provided allocator."
+source_url: "https://en.cppreference.com/w/cpp/coroutine/generator/promise_type/operator_new"
+language: "C++"
+---
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`void* operator new( std::size_t size )
+    requires std::same_as<Allocator, void> ||
+
+             std::default_initializable<Allocator>;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`template< class Alloc, class... Args >
+void* operator new( std::size_t size, std::allocator_arg_t,
+
+                    const Alloc& alloc, const Args&... );`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class This, class Alloc, class... Args >
+void* operator new( std::size_t size, const This&, std::allocator_arg_t,
+
+                    const Alloc& alloc, const Args&... );`} />
+</DeclarationDoc>
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0001 */}
+[Allocates](/docs/cpp/language/functions/coroutines#Dynamic_allocation) `size` bytes of uninitialized storage using default or user-provided allocator.
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0002 */}
+Let `A` be
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0003 */}
+- `Allocator`, if it is not `void`,
+- `Alloc` for (2,3), or
+- `std::allocator<void>` otherwise.
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0004 */}
+Let `B` be `std::allocator_traits<A>::template rebind_alloc<U>` where `U` is an unspecified type whose size and alignment are both [`__STDCPP_DEFAULT_NEW_ALIGNMENT__`](/docs/cpp/language/preprocessor/replace#Predefined_macros).
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0005 */}
+Initializes an allocator `b` of type `B` with:
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0006 */}
+1. `A()`,
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0007 */}
+2,3) `A(alloc)`.
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0008 */}
+Uses `b` to allocate storage for the smallest array of `U` sufficient to provide storage for a [coroutine state](/docs/cpp/language/functions/coroutines#Execution) of size `size`, and unspecified additional state necessary to ensure that [`operator delete`](/docs/cpp/library/ranges/generator/promise_type/operator_delete) can later deallocate this memory block with an allocator equal to `b`.
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0009 */}
+The program is ill-formed unless `std::allocator_traits<B>::pointer` is a pointer type and for overloads [(2,3)](/docs/cpp/library/ranges/generator/promise_type/operator_new#Version_2), `std::same_as<Allocator, void> || std::convertible_to<const Alloc&, Allocator>` is modeled.
+
+### Parameters
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0010 */}
+<ParameterList>
+  <Parameter name="size">the size of the storage to allocate</Parameter>
+  <Parameter name="alloc">a user provided allocator of type `Alloc`</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0011 */}
+A pointer to the allocated storage.
+
+### Exceptions
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0012 */}
+1-3) May throw.
+
+### Defect reports
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-coroutine-generator-promise-type-operator-new:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3900} standard="C++23">
+    <PublishedBehavior>overloads [(2,3)](/docs/cpp/library/ranges/generator/promise_type/operator_new#Version_2) were constrained on conversion of `Alloc` to `Allocator`</PublishedBehavior>
+    <CorrectedBehavior>mandated</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

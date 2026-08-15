@@ -1,0 +1,234 @@
+---
+title: "std::generator"
+description: "The class template std::generator presents a view of the elements yielded by the evaluation of a coroutine."
+source_url: "https://en.cppreference.com/w/cpp/coroutine/generator"
+language: "C++"
+---
+
+{/* source:cpp-coroutine-generator:0000 */}
+<DeclarationDoc>
+Defined in header [`<generator>`](/docs/cpp/library/headers/generator)
+
+  <Declaration id="1" language="cpp" since="C++23" code={`template<
+    class Ref,
+    class V = void,
+    class Allocator = void >
+class generator
+
+    : public ranges::view_interface<generator<Ref, V, Allocator>>`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`namespace pmr {
+    template< class Ref, class V = void >
+    using generator =
+        std::generator<Ref, V, std::pmr::polymorphic_allocator<>>;
+
+}`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-coroutine-generator:0001 */}
+    1. The class template `std::generator` presents a [`view`](/docs/cpp/library/ranges/view) of the elements yielded by the evaluation of a [`coroutine`](/docs/cpp/language/functions/coroutines).
+
+    {/* source:cpp-coroutine-generator:0002 */}
+    2. Convenience alias template for the `generator` using the [polymorphic allocator](/docs/cpp/library/memory/polymorphic_allocator).
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-coroutine-generator:0003 */}
+A `std::generator` generates a sequence of elements by repeatedly resuming the coroutine from which it was returned. Each time a `co_yield` statement is evaluated, the coroutine produces one element of the sequence. When the `co_yield` statement is of the form `co_yield ranges::elements_of(rng)`, each element of the [`range`](/docs/cpp/library/ranges/range) `rng` is successively produced as an element of the sequence.
+
+{/* source:cpp-coroutine-generator:0004 */}
+`std::generator` models [`view`](/docs/cpp/library/ranges/view) and [`input_range`](/docs/cpp/library/ranges/input_range).
+
+{/* source:cpp-coroutine-generator:0005 */}
+The behavior of a program that adds a specialization for `std::generator` is undefined.
+
+### Template parameters
+
+{/* source:cpp-coroutine-generator:0006 */}
+<ParameterList>
+  <Parameter name="Ref">the reference type (`ranges::range_reference_t`) of the generator. If `V` is `void`, both the reference type and the value type are inferred from `Ref`</Parameter>
+  <Parameter name="V">the value type (`ranges::range_value_t`) of the generator, or `void`</Parameter>
+  <Parameter name="Allocator">an allocator type or `void`</Parameter>
+</ParameterList>
+
+{/* source:cpp-coroutine-generator:0007 */}
+If `Allocator` is not `void`, then the behavior is undefined if `Allocator` does not meet the [*Allocator*](/docs/cpp/library/named_req/Allocator) requirements.
+
+### Member types
+
+{/* source:cpp-coroutine-generator:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value` (private)</DescriptionTerm>
+    <DescriptionBody>`std::conditional_t<std::is_void_v<V>, std::remove_cvref_t<Ref>, V>;` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`reference` (private)</DescriptionTerm>
+    <DescriptionBody>`std::conditional_t<std::is_void_v<V>, Ref&&, Ref>;` (exposition-only member type*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`yielded`</DescriptionTerm>
+    <DescriptionBody>`std::conditional_t<std::is_reference_v<reference>, reference, const reference&>`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Type requirements
+
+{/* source:cpp-coroutine-generator:0009 */}
+**Type requirements**
+
+- `std::allocator_traits<Allocator>::pointer` is a pointer type.
+- `value` is a cv-unqualified object type.
+- `reference` is either a reference type, or a cv-unqualified object type that models [`copy_constructible`](/docs/cpp/library/concepts/copy_constructible).
+- Let `RRef` denote `std::remove_reference_t<reference>&&`, if `reference` is a reference type, and `reference` otherwise. `std::common_reference_with<reference&&, value&>` is modeled. `std::common_reference_with<reference&&, RRef&&>` is modeled. `std::common_reference_with<RRef&&, const value&>` is modeled.
+
+{/* source:cpp-coroutine-generator:0010 */}
+The program is ill-formed if any of these type requirements is not satisfied.
+
+### Data members
+
+{/* source:cpp-coroutine-generator:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`active_` (private)</DescriptionTerm>
+    <DescriptionBody>Internally, each active instance of `std::generator` is associated with a stack (handled as if by object of type `std::unique_ptr<std::stack<std::coroutine_handle<>>>`). When [`begin`](/docs/cpp/library/ranges/generator/begin) is called, a new stack is created and the generator is added to the stack. When `co_yield ranges::elements_of(rng)` is evaluated in a generator body, `rng` is converted to a generator and added to the stack that contains the enclosing generator. When a generator iterator is [`incremented`](/docs/cpp/library/ranges/generator/iterator#increment), the coroutine at the top of the associated stack is resumed. When a generator finishes (i.e. when [`promise_type::final_suspend`](/docs/cpp/library/ranges/generator/promise_type/final_suspend) is called), it is removed from the stack. (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`coroutine_` (private)</DescriptionTerm>
+    <DescriptionBody>a handle of type `std::coroutine_handle<promise_type>` (exposition-only member object*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-coroutine-generator:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/ranges/generator/generator)</DescriptionTerm>
+    <DescriptionBody>constructs a `generator` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/ranges/generator/~generator)</DescriptionTerm>
+    <DescriptionBody>effectively destroys the entire stack of yielded generators (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/ranges/generator/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns a `generator` object (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`begin`](/docs/cpp/library/ranges/generator/begin)</DescriptionTerm>
+    <DescriptionBody>resumes the initially suspended coroutine and returns an iterator to its handle (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`end`](/docs/cpp/library/ranges/generator/end)</DescriptionTerm>
+    <DescriptionBody>returns [`std::default_sentinel`](/docs/cpp/library/iterator/default_sentinel) (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+#### Inherited from [`std::ranges::view_interface`](/docs/cpp/library/ranges/view_interface)
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`empty`](/docs/cpp/library/ranges/view_interface/empty)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is empty. Provided if it satisfies [`sized_range`](/docs/cpp/library/ranges/sized_range) or [`forward_range`](/docs/cpp/library/ranges/forward_range). (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cbegin`](/docs/cpp/library/ranges/view_interface/cbegin)<InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a constant iterator to the beginning of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cend`](/docs/cpp/library/ranges/view_interface/cend)<InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>returns a sentinel for the constant iterator of the range. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator bool`](/docs/cpp/library/ranges/view_interface/operator_bool)</DescriptionTerm>
+    <DescriptionBody>returns whether the derived view is not empty. Provided if [`ranges::empty`](/docs/cpp/library/ranges/empty) is applicable to it. (public member function of `std::ranges::view_interface<D>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Nested classes
+
+{/* source:cpp-coroutine-generator:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`promise_type`](/docs/cpp/library/ranges/generator/promise_type)</DescriptionTerm>
+    <DescriptionBody>the promise type (public member class)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iterator`](/docs/cpp/library/ranges/generator/iterator)</DescriptionTerm>
+    <DescriptionBody>the iterator type (exposition-only member class*)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-coroutine-generator:0014 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_generator`](/docs/cpp/library/feature_test#cpp_lib_generator) | [`202207L`](/docs/cpp/library/compiler_support/23#cpp_lib_generator_202207L) | (C++23) | [`std::generator`](/docs/cpp/library/ranges/generator#top) – synchronous [coroutine](/docs/cpp/library/utility/coroutine) generator for [ranges](/docs/cpp/library/ranges) |
+
+### Example
+
+{/* source:cpp-coroutine-generator:0015 */}
+```cpp
+#include <generator>
+#include <iostream>
+ 
+template<typename T>
+struct Tree
+{
+    T value;
+    Tree *left{}, *right{};
+ 
+    std::generator<const T&> traverse_inorder() const
+    {
+        if (left)
+            co_yield std::ranges::elements_of(left->traverse_inorder());
+ 
+        co_yield value;
+ 
+        if (right)
+            co_yield std::ranges::elements_of(right->traverse_inorder());
+    }
+};
+ 
+int main()
+{
+    Tree<char> tree[]
+    {
+                                    {'D', tree + 1, tree + 2},
+        //                            │
+        //            ┌───────────────┴────────────────┐
+        //            │                                │
+                    {'B', tree + 3, tree + 4},       {'F', tree + 5, tree + 6},
+        //            │                                │
+        //  ┌─────────┴─────────────┐      ┌───────────┴─────────────┐
+        //  │                       │      │                         │
+          {'A'},                  {'C'}, {'E'},                    {'G'}
+    };
+ 
+    for (char x : tree->traverse_inorder())
+        std::cout << x << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+A B C D E F G
+```
+
+### References
+
+{/* source:cpp-coroutine-generator:0016 */}
+C++23 standard (ISO/IEC 14882:2024): 26.8 Range generators [coro.generator]
+
+### See also
+
+{/* source:cpp-coroutine-generator:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`noop_coroutine`](/docs/cpp/library/utility/coroutine/noop_coroutine)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>creates a coroutine handle that has no observable effects when resumed or destroyed (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

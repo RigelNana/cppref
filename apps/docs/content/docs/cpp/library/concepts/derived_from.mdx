@@ -1,0 +1,72 @@
+---
+title: "std::derived_from"
+description: "The concept derived_from<Derived, Base> is satisfied if and only if Base is a class type that is either Derived or a public and unambiguous base of Derived, ignoring cv-qualifiers."
+source_url: "https://en.cppreference.com/w/cpp/concepts/derived_from"
+language: "C++"
+---
+
+{/* source:cpp-concepts-derived-from:0000 */}
+<DeclarationDoc>
+Defined in header [`<concepts>`](/docs/cpp/library/headers/concepts)
+
+  <Declaration language="cpp" since="C++20" code={`template< class Derived, class Base >
+concept derived_from =
+    std::is_base_of_v<Base, Derived> &&
+
+    std::is_convertible_v<const volatile Derived*, const volatile Base*>;`} />
+</DeclarationDoc>
+
+{/* source:cpp-concepts-derived-from:0001 */}
+The concept `derived_from<Derived, Base>` is satisfied if and only if `Base` is a class type that is either `Derived` or a public and unambiguous base of `Derived`, ignoring cv-qualifiers.
+
+{/* source:cpp-concepts-derived-from:0002 */}
+Note that this behavior is different to `std::is_base_of` when `Base` is a private or protected base of `Derived`.
+
+### Example
+
+{/* source:cpp-concepts-derived-from:0003 */}
+```cpp
+#include <concepts>
+ 
+class A {};
+ 
+class B : public A {};
+ 
+class C : private A {};
+ 
+// std::derived_from == true only for public inheritance or exact same class
+static_assert(std::derived_from<B, B> == true);      // same class: true
+static_assert(std::derived_from<int, int> == false); // same primitive type: false
+static_assert(std::derived_from<B, A> == true);      // public inheritance: true
+static_assert(std::derived_from<C, A> == false);     // private inheritance: false
+ 
+// std::is_base_of == true also for private inheritance
+static_assert(std::is_base_of_v<B, B> == true);      // same class: true
+static_assert(std::is_base_of_v<int, int> == false); // same primitive type: false
+static_assert(std::is_base_of_v<A, B> == true);      // public inheritance: true
+static_assert(std::is_base_of_v<A, C> == true);      // private inheritance: true
+ 
+int main() {}
+```
+
+### References
+
+{/* source:cpp-concepts-derived-from:0004 */}
+C++23 standard (ISO/IEC 14882:2024): 18.4.3 Concept `derived_from` [concept.derived]
+
+{/* source:cpp-concepts-derived-from:0005 */}
+C++20 standard (ISO/IEC 14882:2020): 18.4.3 Concept `derived_from` [concept.derived]
+
+### See also
+
+{/* source:cpp-concepts-derived-from:0006 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_base_of`](/docs/cpp/library/meta/is_base_of) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a base of the other type (class template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`is_convertible`, `is_nothrow_convertible`](/docs/cpp/library/meta/is_convertible) <InlineRevision since="C++11" /> <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if a type can be converted to the other type (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

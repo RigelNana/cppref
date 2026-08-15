@@ -1,0 +1,119 @@
+---
+title: "std::generator<Ref,V,Allocator>::promise_type::yield_value"
+description: "An implementation of coroutine interface functions used internally to support operator co_yield."
+source_url: "https://en.cppreference.com/w/cpp/coroutine/generator/promise_type/yield_value"
+language: "C++"
+---
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++23" code={`std::suspend_always yield_value( yielded val ) noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++23" code={`auto yield_value( const std::remove_reference_t<yielded>& lval )
+    requires std::is_rvalue_reference_v<yielded> &&
+             std::constructible_from<std::remove_cvref_t<yielded>,
+
+                 const std::remove_reference_t<yielded>&>;`} />
+  <Declaration id="3" language="cpp" since="C++23" code={`template< class R2, class V2, class Alloc2, class Unused >
+    requires std::same_as<typename std::generator<T2, V2, Alloc2>::yielded, 
+                          yielded>
+auto yield_value( ranges::elements_of<std::generator<T2, V2, Alloc2>&&,
+
+                                      Unused> g ) noexcept;`} />
+  <Declaration id="4" language="cpp" since="C++23" code={`template< class R2, class V2, class Alloc2, class Unused >
+    requires std::same_as<typename std::generator<T2, V2, Alloc2>::yielded, 
+                          yielded>
+auto yield_value( ranges::elements_of<std::generator<T2, V2, Alloc2>&,
+
+                                      Unused> g ) noexcept;`} />
+  <Declaration id="5" language="cpp" since="C++23" code={`template< ranges::input_range R, class Alloc >
+    requires std::convertible_to<ranges::range_reference_t<R>, yielded>
+
+auto yield_value( ranges::elements_of<R, Alloc> r );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-coroutine-generator-promise-type-yield-value:0001 */}
+    An implementation of coroutine interface functions used internally to support `operator co_yield`.
+
+    {/* source:cpp-coroutine-generator-promise-type-yield-value:0002 */}
+    (`[`yielded`](/docs/cpp/library/ranges/generator#Member_types)` is a reference type defined in [`std::generator`](/docs/cpp/library/ranges/generator).)
+
+    {/* source:cpp-coroutine-generator-promise-type-yield-value:0003 */}
+    1. Assigns `std::addressof(val)` to [`value_`](/docs/cpp/library/ranges/generator/promise_type#value). Returns `{}`.
+
+    {/* source:cpp-coroutine-generator-promise-type-yield-value:0004 */}
+    2. Returns an awaitable object `x` of an unspecified type that stores an object of type `std::remove_cvref_t<`[`yielded`](/docs/cpp/library/ranges/generator#yielded)`>`. `x` is [direct-non-list-initialized](/docs/cpp/language/initialization/direct_initialization) with `lval`, whose member functions are configured so that [`value_`](/docs/cpp/library/ranges/generator/promise_type#value) points to that stored object. Then suspends the coroutine.
+
+    {/* source:cpp-coroutine-generator-promise-type-yield-value:0005 */}
+    3, 4) Let `x` be some [`generator`](/docs/cpp/library/ranges/generator) object. Returns an awaitable object of an unspecified type into which `g.range` is moved, whose member `await_ready` returns `false`, whose member `await_suspend` pushes `g.range.coroutine_` into [`*x.active_`](/docs/cpp/library/ranges/generator#active) and resumes execution of the coroutine referred to by `g.range.coroutine_`, and whose member `await_resume` evaluates `std::rethrow_exception(except_)` if `bool(except_)` is `true`. If `bool(except_)` is `false`, the `await_resume` member has no effects.
+
+    {/* source:cpp-coroutine-generator-promise-type-yield-value:0006 */}
+    The coroutine referred to by `g.range.coroutine_` must be suspended at its initial suspend point. Otherwise the behavior is undefined.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0007 */}
+5. Equivalent to:
+
+```cpp
+auto nested = [](std::allocator_arg_t, Alloc, ranges::iterator_t<R> i,
+                 ranges::sentinel_t<R> s) ->
+    std::generator<yielded, void, Alloc>
+{
+    for (; i != s; ++i)
+        co_yield static_cast<yielded>(*i);
+};
+ 
+return yield_value(ranges::elements_of(nested(
+    allocator_arg, r.allocator, ranges::begin(r.range), ranges::end(r.range))));
+```
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0008 */}
+2,3) A handle referring to the coroutine whose promise object is `*this` must be at the top of [`*active_`](/docs/cpp/library/ranges/generator#active) of some generator object. Otherwise, the behavior is undefined.
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0009 */}
+2-5) A [yield-expression](/docs/cpp/language/functions/coroutines#co_yield) that calls these overload has the type `void`.
+
+### Parameters
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0010 */}
+<ParameterList>
+  <Parameter name="val">a value which is a result of the yield-expression evaluation</Parameter>
+  <Parameter name="lval">an lvalue which is a result of the yield-expression evaluation</Parameter>
+  <Parameter name="g">a range of elements produced by a generator</Parameter>
+  <Parameter name="r">a range of elements</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0011 */}
+1. The awaitable object of type `std::suspend_always`.
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0012 */}
+2-5) An awaitable object of an unspecified type as described above.
+
+### Exceptions
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0013 */}
+2,5) May throw any exception thrown by the initialization of the stored object.
+
+### Example
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0014 */}
+This section is incomplete Reason: no example
+
+### Defect reports
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-coroutine-generator-promise-type-yield-value:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3899} standard="C++23">
+    <PublishedBehavior>`yield_value` on a range of elements produced by lvalue generator used generic `elements_of` overload</PublishedBehavior>
+    <CorrectedBehavior>used special `elements_of` overload for such generators</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={4119} standard="C++23">
+    <PublishedBehavior>`range_value_t` in `generator`'s template argument as part of the return type of `nested` in [(5)](/docs/cpp/library/ranges/generator/promise_type/yield_value#Version_5) may be ill-formed</PublishedBehavior>
+    <CorrectedBehavior>used `void`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
