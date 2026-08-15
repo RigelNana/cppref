@@ -1,0 +1,163 @@
+---
+title: "std::nested_exception"
+description: "std::nested_exception is a polymorphic mixin class which can capture and store the current exception, making it possible to nest exceptions of arbitrary types within each other."
+source_url: "https://en.cppreference.com/w/cpp/error/nested_exception"
+language: "C++"
+---
+
+{/* source:cpp-error-nested-exception:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration language="cpp" since="C++11" code={`class nested_exception;`} />
+</DeclarationDoc>
+
+{/* source:cpp-error-nested-exception:0001 */}
+`std::nested_exception` is a polymorphic mixin class which can capture and store the current exception, making it possible to nest exceptions of arbitrary types within each other.
+
+{/* source:cpp-error-nested-exception:0002 */}
+<Revision since="C++26">
+All member functions of `std::nested_exception` are `constexpr`.
+</Revision>
+
+### Member functions
+
+{/* source:cpp-error-nested-exception:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/error/nested_exception/nested_exception)</DescriptionTerm>
+    <DescriptionBody>constructs a `nested_exception` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/error/nested_exception/~nested_exception) [virtual]</DescriptionTerm>
+    <DescriptionBody>destructs a nested exception <br /> (virtual public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/error/nested_exception/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>replaces the contents of a `nested_exception` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rethrow_nested`](/docs/cpp/library/error/nested_exception/rethrow_nested)</DescriptionTerm>
+    <DescriptionBody>throws the stored exception <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`nested_ptr`](/docs/cpp/library/error/nested_exception/nested_ptr)</DescriptionTerm>
+    <DescriptionBody>obtains a pointer to the stored exception <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Non-member functions
+
+{/* source:cpp-error-nested-exception:0004 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`throw_with_nested`](/docs/cpp/library/error/throw_with_nested) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>throws its argument with `std::nested_exception` mixed in <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rethrow_if_nested`](/docs/cpp/library/error/rethrow_if_nested) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>throws the exception from a `std::nested_exception` <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Notes
+
+{/* source:cpp-error-nested-exception:0005 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_constexpr_exceptions`](/docs/cpp/library/feature_test#cpp_lib_constexpr_exceptions) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_exceptions_202411L) | (C++26) | `constexpr` for exception types |
+
+### Example
+
+{/* source:cpp-error-nested-exception:0006 */}
+Demonstrates construction and recursion through a nested exception object.
+
+```cpp
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+ 
+// prints the explanatory string of an exception. If the exception is nested,
+// recurses to print the explanatory string of the exception it holds
+void print_exception(const std::exception& e, int level =  0)
+{
+    std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';
+    try
+    {
+        std::rethrow_if_nested(e);
+    }
+    catch (const std::exception& nestedException)
+    {
+        print_exception(nestedException, level + 1);
+    }
+    catch (...) {}
+}
+ 
+// sample function that catches an exception and wraps it in a nested exception
+void open_file(const std::string& s)
+{
+    try
+    {
+        std::ifstream file(s);
+        file.exceptions(std::ios_base::failbit);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error("Couldn't open " + s));
+    }
+}
+ 
+// sample function that catches an exception and wraps it in a nested exception
+void run()
+{
+    try
+    {
+        open_file("nonexistent.file");
+    }
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error("run() failed"));
+    }
+}
+ 
+// runs the sample function above and prints the caught exception
+int main()
+{
+    try
+    {
+        run();
+    }
+    catch (const std::exception& e)
+    {
+        print_exception(e);
+    }
+}
+```
+
+Possible output:
+
+```text
+exception: run() failed
+ exception: Couldn't open nonexistent.file
+  exception: basic_ios::clear
+```
+
+### See also
+
+{/* source:cpp-error-nested-exception:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`exception_ptr`](/docs/cpp/library/error/exception_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>shared pointer type for handling exception objects <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`throw_with_nested`](/docs/cpp/library/error/throw_with_nested) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>throws its argument with `std::nested_exception` mixed in <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rethrow_if_nested`](/docs/cpp/library/error/rethrow_if_nested) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>throws the exception from a `std::nested_exception` <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,138 @@
+---
+title: "std::uncaught_exception, std::uncaught_exceptions"
+description: "Detects if the current thread has a live exception object, that is, an exception has been thrown or rethrown and not yet entered a matching catch clause."
+source_url: "https://en.cppreference.com/w/cpp/error/exception/uncaught_exception"
+language: "C++"
+---
+
+{/* source:cpp-error-exception-uncaught-exception:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration id="1" language="cpp" until="C++11" code={`bool uncaught_exception() throw();`} />
+  <Declaration id="1" language="cpp" since="C++11" removed="C++20" code={`bool uncaught_exception() noexcept;`} /> (deprecated in C++17)
+  <Declaration id="2" language="cpp" since="C++17" code={`int uncaught_exceptions() noexcept;`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+
+  <DeclarationDescription>
+    {/* source:cpp-error-exception-uncaught-exception:0001 */}
+    1. Detects if the current thread has a live exception object, that is, an exception has been thrown or rethrown and not yet entered a matching catch clause, [`std::terminate`](/docs/cpp/library/error/terminate) or [`std::unexpected`](/docs/cpp/library/error/unexpected). In other words, `std::uncaught_exception` detects if [stack unwinding](/docs/cpp/language/exceptions/throw#Stack_unwinding) is currently in progress.
+
+    {/* source:cpp-error-exception-uncaught-exception:0002 */}
+    2. Detects how many exceptions in the current thread have been thrown or rethrown and not yet entered their matching catch clauses.
+
+    {/* source:cpp-error-exception-uncaught-exception:0003 */}
+    Sometimes it's safe to throw an exception even while <InlineRevision until="C++17">`std::uncaught_exception() == true`</InlineRevision> <InlineRevision since="C++17">`std::uncaught_exceptions() > 0`</InlineRevision>. For example, if stack unwinding causes an object to be destructed, the destructor for that object could run code that throws an exception as long as the exception is caught by some catch block before escaping the destructor.
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-error-exception-uncaught-exception:0004 */}
+(none)
+
+### Return value
+
+{/* source:cpp-error-exception-uncaught-exception:0005 */}
+1. `true` if stack unwinding is currently in progress in this thread, `false` otherwise.
+
+{/* source:cpp-error-exception-uncaught-exception:0006 */}
+2. The number of uncaught exception objects in the current thread.
+
+### Notes
+
+{/* source:cpp-error-exception-uncaught-exception:0007 */}
+An example where int-returning `uncaught_exceptions` is used is the [boost.log](https://www.boost.org/doc/libs/release/libs/log/doc/html/index.html) library: the expression `BOOST_LOG(logger) << foo();` first creates a guard object and records the number of uncaught exceptions in its constructor. The output is performed by the guard object's destructor unless `foo()` throws (in which case the number of uncaught exceptions in the destructor is greater than what the constructor observed).
+
+{/* source:cpp-error-exception-uncaught-exception:0008 */}
+[`std::experimental::scope_fail`](/docs/cpp/library/experimental/lib_extensions_3/scope_fail) and [`std::experimental::scope_success`](/docs/cpp/library/experimental/lib_extensions_3/scope_success) in LFTS v3 rely on the functionality of `uncaught_exceptions`, because their destructors need to do different things that depend on whether is called during stack unwinding.
+
+{/* source:cpp-error-exception-uncaught-exception:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_uncaught_exceptions`](/docs/cpp/library/feature_test#cpp_lib_uncaught_exceptions) | [`201411L`](/docs/cpp/library/compiler_support/17#cpp_lib_uncaught_exceptions_201411L) | (C++17) | `std::uncaught_exceptions` |
+| [`__cpp_lib_constexpr_exceptions`](/docs/cpp/library/feature_test#cpp_lib_constexpr_exceptions) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_exceptions_202411L) | (C++26) | `constexpr` for exception types |
+
+### Example
+
+{/* source:cpp-error-exception-uncaught-exception:0010 */}
+```cpp
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+
+struct Foo
+{
+    char id{'?'};
+    int count = std::uncaught_exceptions();
+
+    ~Foo()
+    {
+        count == std::uncaught_exceptions()
+            ? std::cout << id << ".~Foo() called normally\n"
+            : std::cout << id << ".~Foo() called during stack unwinding\n";
+    }
+};
+
+int main()
+{
+    Foo f{'f'};
+
+    try
+    {
+        Foo g{'g'};
+        std::cout << "Exception thrown\n";
+        throw std::runtime_error("test exception");
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << "Exception caught: " << e.what() << '\n';
+    }
+}
+```
+
+Possible output:
+
+```text
+Exception thrown
+g.~Foo() called during stack unwinding
+Exception caught: test exception
+f.~Foo() called normally
+```
+
+### Defect reports
+
+{/* source:cpp-error-exception-uncaught-exception:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-error-exception-uncaught-exception:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={70} standard="C++98">
+    <PublishedBehavior>the exception specification of `uncaught_exception()` was missing</PublishedBehavior>
+    <CorrectedBehavior>specified as `throw()`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-error-exception-uncaught-exception:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`terminate`](/docs/cpp/library/error/terminate)</DescriptionTerm>
+    <DescriptionBody>function called when exception handling fails <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exception_ptr`](/docs/cpp/library/error/exception_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>shared pointer type for handling exception objects <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`current_exception`](/docs/cpp/library/error/current_exception) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>captures the current exception in a [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-error-exception-uncaught-exception:0014 */}
+1. [GOTW issue 47: Uncaught Exceptions](http://www.gotw.ca/gotw/047.htm)
+2. [Rationale for `std::uncaught_exceptions`](https://wg21.link/n4152) (N4125)

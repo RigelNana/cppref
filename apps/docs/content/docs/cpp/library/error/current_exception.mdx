@@ -1,0 +1,142 @@
+---
+title: "std::current_exception"
+description: "If called during exception handling, captures the current exception object and creates an std::exception_ptr."
+source_url: "https://en.cppreference.com/w/cpp/error/current_exception"
+language: "C++"
+---
+
+{/* source:cpp-error-current-exception:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration language="cpp" since="C++11" code={`std::exception_ptr current_exception() noexcept;`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-error-current-exception:0001 */}
+If called during exception handling (typically, in a `catch` clause), captures the current exception object and creates an [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr) that holds either a copy or a reference to that exception object (depending on the implementation). The referenced object remains valid at least as long as there is an `exception_ptr` object that refers to it.
+
+{/* source:cpp-error-current-exception:0002 */}
+If the implementation of this function requires a call to `new` and the call fails, the returned pointer will hold a reference to an instance of [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc).
+
+{/* source:cpp-error-current-exception:0003 */}
+If the implementation of this function requires copying the captured exception object and its copy constructor throws an exception, the returned pointer will hold a reference to the exception thrown. If the copy constructor of the thrown exception object also throws, the returned pointer may hold a reference to an instance of [`std::bad_exception`](/docs/cpp/library/error/bad_exception) to break the endless loop.
+
+{/* source:cpp-error-current-exception:0004 */}
+If the function is called when no exception is being handled, an empty `std::exception_ptr` is returned.
+
+{/* source:cpp-error-current-exception:0005 */}
+This function can be called in a [`std::terminate_handler`](/docs/cpp/library/error/terminate_handler) to retrieve the exception which has provoked the invocation of [`std::terminate`](/docs/cpp/library/error/terminate).
+
+### Return value
+
+{/* source:cpp-error-current-exception:0006 */}
+An instance of [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr) holding a reference to the exception object, or a copy of the exception object, or to an instance of [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) or to an instance of [`std::bad_exception`](/docs/cpp/library/error/bad_exception).
+
+### Notes
+
+{/* source:cpp-error-current-exception:0007 */}
+On the implementations that follow [Itanium C++ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html) (GCC, Clang, etc), exceptions are allocated on the heap when thrown (except for `std::bad_alloc` in some cases), and this function simply creates the smart pointer referencing the previously-allocated object, On MSVC, exceptions are allocated on stack when thrown, and this function performs the heap allocation and copies the exception object.
+
+{/* source:cpp-error-current-exception:0008 */}
+On Windows in managed CLR environments [[1]](https://learn.microsoft.com/en-us/cpp/dotnet/exceptions-in-cpp-cli), the implementation will store a [`std::bad_exception`](/docs/cpp/library/error/bad_exception) when the current exception is a managed exception ([[2]](https://github.com/microsoft/STL/blob/65aab97a8e75e7ba409002e518ed799006dfb285/stl/src/excptptr.cpp#L367)). Note that `catch (...)` catches also managed exceptions:
+
+{/* source:cpp-error-current-exception:0009 */}
+```cpp
+#include <exception>
+
+int main()
+{
+    try
+    {
+        throw gcnew System::Exception("Managed exception");
+    }
+    catch (...)
+    {
+        std::exception_ptr ex = std::current_exception();
+        try
+        {
+            std::rethrow_exception(ex);
+        }
+        catch (std::bad_exception const &)
+        {
+            // This will be printed.
+            std::cout << "Bad exception" << std::endl;
+        }
+    }
+}
+```
+
+{/* source:cpp-error-current-exception:0010 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_constexpr_exceptions`](/docs/cpp/library/feature_test#cpp_lib_constexpr_exceptions) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_exceptions_202411L) | (C++26) | `constexpr` for exception types |
+
+### Example
+
+{/* source:cpp-error-current-exception:0011 */}
+```cpp
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+void handle_eptr(std::exception_ptr eptr) // passing by value is OK
+{
+    try
+    {
+        if (eptr)
+            std::rethrow_exception(eptr);
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << "Caught exception: '" << e.what() << "'\n";
+    }
+}
+
+int main()
+{
+    std::exception_ptr eptr;
+
+    try
+    {
+        [[maybe_unused]]
+        char ch = std::string().at(1); // this generates a std::out_of_range
+    }
+    catch(...)
+    {
+        eptr = std::current_exception(); // capture
+    }
+
+    handle_eptr(eptr);
+
+} // destructor for std::out_of_range called here, when the eptr is destructed
+```
+
+Possible output:
+
+```text
+Caught exception: 'basic_string::at: __n (which is 1) >= this->size() (which is 0)'
+```
+
+### See also
+
+{/* source:cpp-error-current-exception:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`exception_ptr`](/docs/cpp/library/error/exception_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>shared pointer type for handling exception objects <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rethrow_exception`](/docs/cpp/library/error/rethrow_exception) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>throws the exception from an [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_exception_ptr`](/docs/cpp/library/error/make_exception_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates an [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr) from an exception object <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`uncaught_exception uncaught_exceptions`](/docs/cpp/library/error/exception/uncaught_exception)(removed in C++20*) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>checks if exception handling is currently in progress <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

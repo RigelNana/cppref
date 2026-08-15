@@ -1,0 +1,105 @@
+---
+title: "std::terminate"
+description: "std::terminate() is called by the C++ runtime when the program cannot continue."
+source_url: "https://en.cppreference.com/w/cpp/error/terminate"
+language: "C++"
+---
+
+{/* source:cpp-error-terminate:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration language="cpp" until="C++11" code={`void terminate();`} />
+  <Declaration language="cpp" since="C++11" code={`[[noreturn]] void terminate() noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-error-terminate:0001 */}
+`std::terminate()` is called by the C++ runtime when the program cannot continue for any of the following reasons:
+
+{/* source:cpp-error-terminate:0002 */}
+1. An [exception is thrown](/docs/cpp/language/exceptions/throw) and not caught (it is implementation-defined whether any stack unwinding is done in this case).
+
+{/* source:cpp-error-terminate:0003 */}
+2. A function directly invoked by the exception handling mechanism while handling an exception that has not yet been caught exits via an exception (e.g. a destructor of some local object, or a copy constructor constructing a catch-clause parameter).
+
+{/* source:cpp-error-terminate:0004 */}
+3. The constructor or the destructor of a static <InlineRevision since="C++11">or thread-local</InlineRevision> object throws an exception.
+
+{/* source:cpp-error-terminate:0005 */}
+4. A function registered with [`std::atexit`](/docs/cpp/library/utility/program/atexit) <InlineRevision since="C++11">or [`std::at_quick_exit`](/docs/cpp/library/utility/program/at_quick_exit)</InlineRevision> throws an exception.
+
+{/* source:cpp-error-terminate:0006 */}
+<Revision until="C++17">
+5. A [dynamic exception specification](/docs/cpp/language/exceptions/except_spec) is violated and the default handler for [`std::unexpected`](/docs/cpp/library/error/unexpected) is executed.
+6. A non-default handler for [`std::unexpected`](/docs/cpp/library/error/unexpected) throws an exception that violates the previously violated dynamic exception specification, if the specification does not include [`std::bad_exception`](/docs/cpp/library/error/bad_exception).
+</Revision>
+
+{/* source:cpp-error-terminate:0007 */}
+<Revision since="C++11">
+7. A [noexcept specification](/docs/cpp/language/exceptions/noexcept_spec) is violated (it is implementation-defined whether any stack unwinding is done in this case).
+8. [`std::nested_exception::rethrow_nested`](/docs/cpp/library/error/nested_exception/rethrow_nested) is called for an object that isn't holding a captured exception.
+9. An exception is thrown from the initial function of [`std::thread`](/docs/cpp/library/thread/thread).
+10. A joinable [`std::thread`](/docs/cpp/library/thread/thread) is destroyed or assigned to.
+11. [`std::condition_variable::wait`](/docs/cpp/library/thread/condition_variable/wait), [`std::condition_variable::wait_until`](/docs/cpp/library/thread/condition_variable/wait_until), or [`std::condition_variable::wait_for`](/docs/cpp/library/thread/condition_variable/wait_for) fails to reach its postcondition (e.g. if relocking the mutex throws).
+</Revision>
+
+{/* source:cpp-error-terminate:0008 */}
+<Revision since="C++17">
+12. A function invoked by a [parallel algorithm](/docs/cpp/library/algorithm) exits via an uncaught exception and the [execution policy](/docs/cpp/library/algorithm/execution_policy_tag_t) specifies termination.
+</Revision>
+
+{/* source:cpp-error-terminate:0009 */}
+`std::terminate()` may also be called directly from the program.
+
+{/* source:cpp-error-terminate:0010 */}
+When `std::terminate` is called due to a thrown exception, an implicit try/catch handler is considered active. Thus, calling [`std::current_exception`](/docs/cpp/library/error/current_exception) will return the thrown exception.
+
+{/* source:cpp-error-terminate:0011 */}
+In any case, `std::terminate` calls the currently installed `std::terminate_handler`. The default `std::terminate_handler` calls [`std::abort`](/docs/cpp/library/utility/program/abort).
+
+{/* source:cpp-error-terminate:0012 */}
+<Revision until="C++11">
+If a destructor reset the terminate handler during stack unwinding and the unwinding later led to `terminate` being called, the handler that was installed at the end of the throw expression is the one that will be called. (note: it was ambiguous whether re-throwing applied the new handlers)
+</Revision>
+<Revision since="C++11">
+If a destructor reset the terminate handler during stack unwinding, it is unspecified which handler is called if the unwinding later led to `terminate` being called.
+</Revision>
+
+### Notes
+
+{/* source:cpp-error-terminate:0013 */}
+If the handler mechanism is not wanted, e.g. because it requires atomic operations which may bloat binary size, a direct call to [`std::abort`](/docs/cpp/library/utility/program/abort) is preferred when terminating the program abnormally.
+
+{/* source:cpp-error-terminate:0014 */}
+Some compiler intrinsics, e.g. [__builtin_trap](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html) (gcc, clang, and icc) or [__debugbreak](https://docs.microsoft.com/en-us/cpp/intrinsics/debugbreak?view=msvc-160) (msvc), can be used to terminate the program as fast as possible.
+
+### Defect reports
+
+{/* source:cpp-error-terminate:0015 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-error-terminate:0016 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2111} standard="C++11">
+    <PublishedBehavior>effect of calling [`std::set_terminate`](/docs/cpp/library/error/set_terminate) during stack unwinding differs from C++98 and breaks some ABIs</PublishedBehavior>
+    <CorrectedBehavior>made unspecified</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-error-terminate:0017 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`terminate_handler`](/docs/cpp/library/error/terminate_handler)</DescriptionTerm>
+    <DescriptionBody>the type of the function called by `std::terminate` <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`abort`](/docs/cpp/library/utility/program/abort)</DescriptionTerm>
+    <DescriptionBody>causes abnormal program termination (without cleaning up) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`breakpoint`](/docs/cpp/library/error/breakpoint) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>pauses the running program when called <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

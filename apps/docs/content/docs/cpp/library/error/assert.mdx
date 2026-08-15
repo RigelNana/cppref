@@ -1,0 +1,180 @@
+---
+title: "assert"
+description: "The definition of the macro assert depends on another macro, NDEBUG, which is not defined by the standard library."
+source_url: "https://en.cppreference.com/w/cpp/error/assert"
+language: "C++"
+---
+
+{/* source:cpp-error-assert:0000 */}
+<DeclarationDoc>
+Defined in header [`<cassert>`](/docs/cpp/library/headers/cassert)
+
+Disabled assertion
+
+  <Declaration id="1" language="cpp" until="C++26" code={`#define assert(condition) ((void)0)`} />
+  <Declaration id="1" language="cpp" since="C++26" code={`#define assert(...)       ((void)0)`} />
+
+Enabled assertion
+
+  <Declaration id="2" language="cpp" until="C++26" code={`#define assert(condition) /* unspecified */`} />
+  <Declaration id="2" language="cpp" since="C++26" code={`#define assert(...)       /* unspecified */`} />
+</DeclarationDoc>
+
+{/* source:cpp-error-assert:0001 */}
+The definition of the macro `assert` depends on another macro, `NDEBUG`, which is not defined by the standard library.
+
+{/* source:cpp-error-assert:0002 */}
+1. If `NDEBUG` is defined as a macro name at the point in the source code where [`<cassert>`](/docs/cpp/library/headers/cassert) or [`<assert.h>`](/docs/cpp/library/headers/cassert) is included, the assertion is disabled: `assert` does nothing.
+
+{/* source:cpp-error-assert:0003 */}
+2. Otherwise, the assertion is enabled:
+
+<Revision until="C++26">
+`assert` checks if its argument (which must have scalar type):
+
+- If the argument compares unequal to zero, there are no further effects.
+- Otherwise, `assert` creates a diagnostic on the standard error stream and calls [`std::abort()`](/docs/cpp/library/utility/program/abort).
+</Revision>
+<Revision since="C++26">
+`assert` puts a diagnostic test into programs and expands to an expression of type `void`. `__VA_ARGS__` is evaluated and [contextually converted to `bool`](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions):
+
+- If the evaluation yields `true`, there are no further effects.
+- Otherwise, `assert` creates a diagnostic on the standard error stream and calls [`std::abort()`](/docs/cpp/library/utility/program/abort).
+</Revision>
+
+{/* source:cpp-error-assert:0004 */}
+The diagnostic information has an implementation-defined format, but it always includes the following information:
+
+{/* source:cpp-error-assert:0005 */}
+<Revision until="C++26">
+- the text of `condition`
+</Revision>
+<Revision since="C++26">
+- `#__VA_ARGS__`
+</Revision>
+
+{/* source:cpp-error-assert:0006 */}
+- the source file name (i.e., [`__FILE__`](/docs/cpp/language/preprocessor/replace#Predefined_macros))
+- the source line number (i.e., [`__LINE__`](/docs/cpp/language/preprocessor/replace#Predefined_macros))
+- the name of the enclosing function (i.e., [`__func__`](/docs/cpp/language/functions/function#func))
+
+{/* source:cpp-error-assert:0007 */}
+<Revision since="C++11">
+The expression `assert(E)` is guaranteed to be a [constant subexpression](/docs/cpp/language/expressions/constant_expression#Constant_subexpression), if either
+
+- `NDEBUG` is defined at the point where `assert` is last defined or redefined, or
+- `E`, [contextually converted to `bool`](/docs/cpp/language/expressions/implicit_cast#Contextual_conversions), is a constant subexpression that evaluates to `true`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-error-assert:0008 */}
+<ParameterList>
+  <Parameter name="condition">expression of scalar type</Parameter>
+</ParameterList>
+
+### Notes
+
+{/* source:cpp-error-assert:0009 */}
+<Revision until="C++26">
+Because `assert` is a [function-like macro](/docs/cpp/language/preprocessor/replace), commas anywhere in the argument that are not protected by parentheses are interpreted as macro argument separators. Such commas are often found in template argument lists and list-initialization:
+
+```cpp
+assert(std::is_same_v<int, int>);        // error: assert does not take two arguments
+assert((std::is_same_v<int, int>));      // OK: one argument
+static_assert(std::is_same_v<int, int>); // OK: not a macro
+
+std::complex<double> c;
+assert(c == std::complex<double>{0, 0});   // error
+assert((c == std::complex<double>{0, 0})); // OK
+```
+</Revision>
+
+{/* source:cpp-error-assert:0010 */}
+There is no standardized interface to add an additional message to `assert` errors. A portable way to include one is to use a [comma operator](/docs/cpp/language/expressions/operator_other#Built-in_comma_operator) provided it has not been [overloaded](/docs/cpp/language/expressions/operators), or use `&&` with a string literal:
+
+{/* source:cpp-error-assert:0011 */}
+```cpp
+assert(("There are five lights", 2 + 2 == 5));
+assert(2 + 2 == 5 && "There are five lights");
+```
+
+{/* source:cpp-error-assert:0012 */}
+The implementation of `assert` in [Microsoft CRT](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/assert-macro-assert-wassert) does not conform to C++11 and later revisions, because its underlying function (`_wassert`) takes neither `__func__` nor an equivalent replacement.
+
+{/* source:cpp-error-assert:0013 */}
+Since C++20, the values needed for the diagnostic message can also be obtained from [`std::source_location::current()`](/docs/cpp/library/utility/source_location/current).
+
+{/* source:cpp-error-assert:0014 */}
+Even though the change of `assert` in C23/C++26 is not formally a defect report, the C committee [recommends](https://www.open-std.org/jtc1/sc22/wg14/www/previous.html) implementations to backport the change to old modes.
+
+### Example
+
+{/* source:cpp-error-assert:0015 */}
+```cpp
+#include <iostream>
+// uncomment to disable assert()
+// #define NDEBUG
+#include <cassert>
+
+// Use (void) to silence unused warnings.
+#define assertm(exp, msg) assert((void(msg), exp))
+
+int main()
+{
+    assert(2 + 2 == 4);
+    std::cout << "Checkpoint #1\n";
+
+    assert((void("void helps to avoid 'unused value' warning"), 2 * 2 == 4));
+    std::cout << "Checkpoint #2\n";
+
+    assert((010 + 010 == 16) && "Yet another way to add an assert message");
+    std::cout << "Checkpoint #3\n";
+
+    assertm((2 + 2) % 3 == 1, "Success");
+    std::cout << "Checkpoint #4\n";
+
+    assertm(2 + 2 == 5, "Failed"); // assertion fails
+    std::cout << "Execution continues past the last assert\n"; // No output
+}
+```
+
+Possible output:
+
+```text
+Checkpoint #1
+Checkpoint #2
+Checkpoint #3
+Checkpoint #4
+main.cpp:23: int main(): Assertion `((void)"Failed", 2 + 2 == 5)' failed.
+Aborted
+```
+
+### Defect reports
+
+{/* source:cpp-error-assert:0016 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-error-assert:0017 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2234} standard="C++11">
+    <PublishedBehavior>`assert` could not be used in constant expression</PublishedBehavior>
+    <CorrectedBehavior>can be used</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-error-assert:0018 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`static_assert` declaration](/docs/cpp/language/declarations/static_assert) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>performs compile-time assertion checking</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`abort`](/docs/cpp/library/utility/program/abort)</DescriptionTerm>
+    <DescriptionBody>causes abnormal program termination (without cleaning up) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**[C documentation](/docs/c/library/error/assert) for `assert`**

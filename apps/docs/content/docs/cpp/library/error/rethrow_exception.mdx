@@ -1,0 +1,112 @@
+---
+title: "std::rethrow_exception"
+description: "Throws the previously captured exception object referred-to by the exception pointer p, or a copy of that object."
+source_url: "https://en.cppreference.com/w/cpp/error/rethrow_exception"
+language: "C++"
+---
+
+{/* source:cpp-error-rethrow-exception:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration language="cpp" since="C++11" code={`[[noreturn]] void rethrow_exception( std::exception_ptr p );`} />
+  <InlineRevision since="C++26">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-error-rethrow-exception:0001 */}
+Throws the previously captured exception object referred-to by the exception pointer `p`, or a copy of that object.
+
+{/* source:cpp-error-rethrow-exception:0002 */}
+It is unspecified whether a copy is made. If a copy is made, the storage for it is allocated in an unspecified way.
+
+{/* source:cpp-error-rethrow-exception:0003 */}
+The behavior is undefined if `p` is null.
+
+### Parameters
+
+{/* source:cpp-error-rethrow-exception:0004 */}
+<ParameterList>
+  <Parameter name="p">non-null [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr)</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-error-rethrow-exception:0005 */}
+The exception object referred-to by `p` if no copy is made.
+
+{/* source:cpp-error-rethrow-exception:0006 */}
+Otherwise, a copy of such exception object if the implementation successfully copied the exception object.
+
+{/* source:cpp-error-rethrow-exception:0007 */}
+Otherwise, [`std::bad_alloc`](/docs/cpp/library/memory/new/bad_alloc) or the exception thrown when copying the exception object, if allocation or copying fails, respectively.
+
+### Notes
+
+{/* source:cpp-error-rethrow-exception:0008 */}
+Before [P1675R2](https://wg21.link/P1675R2), `rethrow_exception` was not allowed to copy the exception object, which is unimplementable on some platforms where exception objects are allocated on the stack.
+
+{/* source:cpp-error-rethrow-exception:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | --- | --- | --- |
+| [`__cpp_lib_constexpr_exceptions`](/docs/cpp/library/feature_test#cpp_lib_constexpr_exceptions) | [`202411L`](/docs/cpp/library/compiler_support/26#cpp_lib_constexpr_exceptions_202411L) | (C++26) | `constexpr` for exception types |
+
+### Example
+
+{/* source:cpp-error-rethrow-exception:0010 */}
+```cpp
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+void handle_eptr(std::exception_ptr eptr) // passing by value is OK
+{
+    try
+    {
+        if (eptr)
+            std::rethrow_exception(eptr);
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << "Caught exception: '" << e.what() << "'\n";
+    }
+}
+
+int main()
+{
+    std::exception_ptr eptr;
+
+    try
+    {
+        [[maybe_unused]]
+        char ch = std::string().at(1); // this generates a std::out_of_range
+    }
+    catch(...)
+    {
+        eptr = std::current_exception(); // capture
+    }
+
+    handle_eptr(eptr);
+
+} // destructor for std::out_of_range called here, when the eptr is destructed
+```
+
+Possible output:
+
+```text
+Caught exception: 'basic_string::at: __n (which is 1) >= this->size() (which is 0)'
+```
+
+### See also
+
+{/* source:cpp-error-rethrow-exception:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`exception_ptr`](/docs/cpp/library/error/exception_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>shared pointer type for handling exception objects <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`current_exception`](/docs/cpp/library/error/current_exception) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>captures the current exception in a [`std::exception_ptr`](/docs/cpp/library/error/exception_ptr) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

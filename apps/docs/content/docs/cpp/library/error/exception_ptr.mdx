@@ -1,0 +1,96 @@
+---
+title: "std::exception_ptr"
+description: "std::exception_ptr is a nullable pointer-like type that manages an exception object which has been thrown and captured with std::current_exception."
+source_url: "https://en.cppreference.com/w/cpp/error/exception_ptr"
+language: "C++"
+---
+
+{/* source:cpp-error-exception-ptr:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration language="cpp" since="C++11" code={`using exception_ptr = /*unspecified*/`} />
+</DeclarationDoc>
+
+{/* source:cpp-error-exception-ptr:0001 */}
+`std::exception_ptr` is a nullable pointer-like type that manages an exception object which has been thrown and captured with [`std::current_exception`](/docs/cpp/library/error/current_exception). An instance of `std::exception_ptr` may be passed to another function, possibly on another thread, where the exception may be rethrown and handled with a `catch` clause.
+
+{/* source:cpp-error-exception-ptr:0002 */}
+A default-constructed `std::exception_ptr` is a null pointer; it does not point to an exception object.
+
+{/* source:cpp-error-exception-ptr:0003 */}
+Two instances of `std::exception_ptr` compare equal only if they are both null or both point at the same exception object.
+
+{/* source:cpp-error-exception-ptr:0004 */}
+`std::exception_ptr` is not implicitly convertible to any arithmetic, enumeration, or pointer type. It is contextually convertible to `bool`, and will evaluate to `false` if it is null, `true` otherwise.
+
+{/* source:cpp-error-exception-ptr:0005 */}
+The exception object referenced by an `std::exception_ptr` remains valid as long as there remains at least one `std::exception_ptr` that is referencing it: `std::exception_ptr` is a shared-ownership smart pointer (note: this is in addition to the usual [exception object lifetime rules](/docs/cpp/language/exceptions/throw#The_exception_object)).
+
+{/* source:cpp-error-exception-ptr:0006 */}
+`std::exception_ptr` meets the requirements of [`NullablePointer`](/docs/cpp/library/named_req/NullablePointer).
+
+### Example
+
+{/* source:cpp-error-exception-ptr:0007 */}
+```cpp
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+void handle_eptr(std::exception_ptr eptr) // passing by value is OK
+{
+    try
+    {
+        if (eptr)
+            std::rethrow_exception(eptr);
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << "Caught exception: '" << e.what() << "'\n";
+    }
+}
+
+int main()
+{
+    std::exception_ptr eptr;
+
+    try
+    {
+        [[maybe_unused]]
+        char ch = std::string().at(1); // this generates a std::out_of_range
+    }
+    catch(...)
+    {
+        eptr = std::current_exception(); // capture
+    }
+
+    handle_eptr(eptr);
+
+} // destructor for std::out_of_range called here, when the eptr is destructed
+```
+
+Possible output:
+
+```text
+Caught exception: 'basic_string::at: __n (which is 1) >= this->size() (which is 0)'
+```
+
+### See also
+
+{/* source:cpp-error-exception-ptr:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`make_exception_ptr`](/docs/cpp/library/error/make_exception_ptr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>creates an `std::exception_ptr` from an exception object <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`current_exception`](/docs/cpp/library/error/current_exception) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>captures the current exception in a `std::exception_ptr` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`rethrow_exception`](/docs/cpp/library/error/rethrow_exception) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>throws the exception from an `std::exception_ptr` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

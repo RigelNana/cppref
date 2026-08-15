@@ -1,0 +1,182 @@
+---
+title: "std::set_terminate"
+description: "Makes f the new global terminate handler function and returns the previously installed std::terminate_handler."
+source_url: "https://en.cppreference.com/w/cpp/error/set_terminate"
+language: "C++"
+---
+
+{/* source:cpp-error-set-terminate:0000 */}
+<DeclarationDoc>
+Defined in header [`<exception>`](/docs/cpp/library/headers/exception)
+
+  <Declaration language="cpp" until="C++11" code={`std::terminate_handler set_terminate( std::terminate_handler f ) throw();`} />
+  <Declaration language="cpp" since="C++11" code={`std::terminate_handler set_terminate( std::terminate_handler f ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-error-set-terminate:0001 */}
+Makes `f` the new global terminate handler function and returns the previously installed [`std::terminate_handler`](/docs/cpp/library/error/terminate_handler). `f` shall terminate execution of the program without returning to its caller, otherwise the behavior is undefined.
+
+{/* source:cpp-error-set-terminate:0002 */}
+<Revision since="C++11">
+This function is thread-safe. Every call to `std::set_terminate` *synchronizes-with* (see [`std::memory_order`](/docs/cpp/library/atomic/memory_order)) subsequent calls to `std::set_terminate` and [`std::get_terminate`](/docs/cpp/library/error/get_terminate).
+</Revision>
+
+### Parameters
+
+{/* source:cpp-error-set-terminate:0003 */}
+<ParameterList>
+  <Parameter name="f">pointer to function of type [`std::terminate_handler`](/docs/cpp/library/error/terminate_handler), or null pointer</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-error-set-terminate:0004 */}
+The previously-installed terminate handler, or a null pointer value if none was installed.
+
+### Example
+
+{/* source:cpp-error-set-terminate:0005 */}
+```cpp
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+
+int main()
+{
+    std::set_terminate([]()
+    {
+        std::cout << "Unhandled exception\n" << std::flush;
+        std::abort();
+    });
+    throw 1;
+}
+```
+
+Possible output:
+
+```text
+Unhandled exception
+bash: line 7:  7743 Aborted                 (core dumped) ./a.out
+```
+
+{/* source:cpp-error-set-terminate:0006 */}
+The terminate handler will also work for launched threads, so it can be used as an alternative to wrapping the thread function with a try/catch block. In the following example, since the exception is unhandled, [`std::terminate`](/docs/cpp/library/error/terminate) will be called.
+
+{/* source:cpp-error-set-terminate:0007 */}
+```cpp
+#include <iostream>
+#include <thread>
+
+void run()
+{
+    throw std::runtime_error("Thread failure");
+}
+
+int main()
+{
+    try
+    {
+        std::thread t{run};
+        t.join();
+        return EXIT_SUCCESS;
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << "Exception: " << ex.what() << '\n';
+    }
+    catch (...)
+    {
+        std::cerr << "Unknown exception caught\n";
+    }
+    return EXIT_FAILURE;
+}
+```
+
+Possible output:
+
+```text
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  Thread failure
+Aborted (core dumped)
+```
+
+{/* source:cpp-error-set-terminate:0008 */}
+With the introduction of the terminate handler, the exception thrown from the non-main thread can be analyzed, and exit can be gracefully performed.
+
+{/* source:cpp-error-set-terminate:0009 */}
+```cpp
+#include <iostream>
+#include <thread>
+
+class foo
+{
+public:
+    foo() { std::cerr << "foo::foo()\n"; }
+    ~foo() { std::cerr << "foo::~foo()\n"; }
+};
+
+// Static object, expecting destructor on exit
+foo f;
+
+void run()
+{
+    throw std::runtime_error("Thread failure");
+}
+
+int main()
+{
+    std::set_terminate([]()
+    {
+        try
+        {
+            std::exception_ptr eptr{std::current_exception()};
+            if (eptr)
+            {
+                std::rethrow_exception(eptr);
+            }
+            else
+            {
+                std::cerr << "Exiting without exception\n";
+            }
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << "Exception: " << ex.what() << '\n';
+        }
+        catch (...)
+        {
+            std::cerr << "Unknown exception caught\n";
+        }
+        std::exit(EXIT_FAILURE);
+    });
+
+    std::thread t{run};
+    t.join();
+}
+```
+
+Output:
+
+```text
+foo::foo()
+Exception: Thread failure
+foo::~foo()
+```
+
+### See also
+
+{/* source:cpp-error-set-terminate:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`terminate`](/docs/cpp/library/error/terminate)</DescriptionTerm>
+    <DescriptionBody>function called when exception handling fails <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`get_terminate`](/docs/cpp/library/error/get_terminate) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>obtains the current terminate_handler <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`terminate_handler`](/docs/cpp/library/error/terminate_handler)</DescriptionTerm>
+    <DescriptionBody>the type of the function called by [`std::terminate`](/docs/cpp/library/error/terminate) <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
