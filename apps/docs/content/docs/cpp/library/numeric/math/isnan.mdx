@@ -1,0 +1,136 @@
+---
+title: "std::isnan"
+description: "Determines if the given floating point number num is a not-a-number (NaN) value."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/isnan"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-isnan:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" since="C++11" until="C++23" code={`bool isnan( float num );
+bool isnan( double num );
+
+bool isnan( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr bool isnan( /*floating-point-type*/ num );`} />
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr typename /*deduced-simd-t*/<V>::mask_type
+
+  isnan ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/isnan#Notes)
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" since="C++11" code={`template< class Integer >
+bool isnan( Integer num );`} /> (constexpr since C++23)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-isnan:0001 */}
+    1) Determines if the given floating point number `num` is a not-a-number (NaN) value.<InlineRevision since="C++23"> The library provides overloads for all cv-unqualified floating-point types as the type of the parameter `num`.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-isnan:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::isnan` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-isnan:0003 */}
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+
+### Parameters
+
+{/* source:cpp-numeric-math-isnan:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+  <Parameter name="v_num">a data-parallel object of std::basic_simd specialization where its element type is a floating-point type</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-isnan:0005 */}
+1) `true` if `num` is a NaN, `false` otherwise.
+
+{/* source:cpp-numeric-math-isnan:0006 */}
+S) A data-parallel mask object where the ith element equals `true` if `v_num[i]` is a NaN or `false` otherwise for all `i` in the range `[​0​, v_num.size())`.
+
+### Notes
+
+{/* source:cpp-numeric-math-isnan:0007 */}
+There are many different NaN values with different sign bits and payloads, see [std::nan](/docs/cpp/library/numeric/math/nan.2) and [std::numeric_limits::quiet_NaN](/docs/cpp/library/utility/types/numeric_limits/quiet_NaN).
+
+{/* source:cpp-numeric-math-isnan:0008 */}
+NaN values never compare equal to themselves or to other NaN values. Copying a NaN is not required, by IEEE-754, to preserve its bit representation (sign and [payload](/docs/cpp/library/numeric/math/nan.2)), though most implementation do.
+
+{/* source:cpp-numeric-math-isnan:0009 */}
+Another way to test if a floating-point value is NaN is to compare it with itself: `bool is_nan(double x) { return x != x; }`.
+
+{/* source:cpp-numeric-math-isnan:0010 */}
+[GCC](https://gcc.gnu.org/wiki/FloatingPointMath) and [Clang](https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior) support a `-ffinite-math` option (additionally implied by `-ffast-math`), which allows the respective compiler to assume the nonexistence of special IEEE-754 floating point values such as NaN, infinity, or negative zero. In other words, `std::isnan` is assumed to always return `false` under this option.
+
+{/* source:cpp-numeric-math-isnan:0011 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::isnan(num)` has the same effect as `std::isnan(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-isnan:0012 */}
+```cpp
+#include <cfloat>
+#include <cmath>
+#include <iostream>
+ 
+int main()
+{
+    std::cout << std::boolalpha
+              << "isnan(NaN) = " << std::isnan(NAN) << '\n'
+              << "isnan(Inf) = " << std::isnan(INFINITY) << '\n'
+              << "isnan(0.0) = " << std::isnan(0.0) << '\n'
+              << "isnan(DBL_MIN/2.0) = " << std::isnan(DBL_MIN / 2.0) << '\n'
+              << "isnan(0.0 / 0.0)   = " << std::isnan(0.0 / 0.0) << '\n'
+              << "isnan(Inf - Inf)   = " << std::isnan(INFINITY - INFINITY) << '\n';
+}
+```
+
+Output:
+
+```text
+isnan(NaN) = true
+isnan(Inf) = false
+isnan(0.0) = false
+isnan(DBL_MIN/2.0) = false
+isnan(0.0 / 0.0)   = true
+isnan(Inf - Inf)   = true
+```
+
+### See also
+
+{/* source:cpp-numeric-math-isnan:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`nan`, `nanf`, `nanl`](/docs/cpp/library/numeric/math/nan.2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>not-a-number (NaN) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fpclassify`](/docs/cpp/library/numeric/math/fpclassify) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>categorizes the given floating-point value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`isfinite`](/docs/cpp/library/numeric/math/isfinite) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the given number has finite value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`isinf`](/docs/cpp/library/numeric/math/isinf) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the given number is infinite <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`isnormal`](/docs/cpp/library/numeric/math/isnormal) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if the given number is normal <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`isunordered`](/docs/cpp/library/numeric/math/isunordered) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if two floating-point values are unordered <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/isnan) for isnan

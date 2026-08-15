@@ -1,0 +1,117 @@
+---
+
+title: "std::log10(std::valarray)"
+
+description: "For each element in va computes common (base 10) logarithm of the value of the element."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/log10"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-log10:0000 */}
+<DeclarationDoc>
+Defined in header [`<valarray>`](/docs/cpp/library/headers/valarray)
+  <Declaration language="cpp" code={`template< class T >
+valarray<T> log10( const valarray<T>& va );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-log10:0001 */}
+For each element in `va` computes common (base 10) logarithm of the value of the element.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-log10:0002 */}
+<ParameterList>
+  <Parameter name="va">value array to apply the operation to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-log10:0003 */}
+Value array containing common logarithms of the values in `va`.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-log10:0004 */}
+Unqualified function (`log10`) is used to perform the computation. If such function is not available, [`std::log10`](/docs/cpp/library/numeric/math/log10) is used due to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-numeric-valarray-log10:0005 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-log10:0006 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Possible implementation
+
+{/* source:cpp-numeric-valarray-log10:0007 */}
+```cpp
+template<class T>
+valarray<T> log10(const valarray<T>& va)
+{
+    valarray<T> other = va;
+    for (T& i : other)
+        i = log10(i);
+ 
+    return other; // proxy object may be returned
+}
+```
+
+### Example
+
+{/* source:cpp-numeric-valarray-log10:0008 */}
+Output:
+```cpp
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <valarray>
+ 
+void show(char const* title, const std::valarray<float>& va)
+{
+    std::cout << title << " : " << std::right;
+    for (float x : va)
+        std::cout << std::setw(6) << x;
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    const std::valarray<float> n{-2.f, -1.f, 0.f, 1.f, 2.f, 3.f, INFINITY};
+    const std::valarray<float> pow10{std::pow(10.f, n)};
+    const std::valarray<float> log10_pow10{std::log10(pow10)};
+ 
+    show("n      ", n);
+    show("10ⁿ    ", pow10);
+    show("lg(10ⁿ)", log10_pow10);
+}
+```
+Output:
+```text
+n       :     -2    -1     0     1     2     3   inf
+10ⁿ     :   0.01   0.1     1    10   100  1000   inf
+lg(10ⁿ) :     -2    -1     0     1     2     3   inf
+```
+
+### See also
+
+{/* source:cpp-numeric-valarray-log10:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`log(std::valarray)`](/docs/cpp/library/numeric/valarray/log)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::log`](/docs/cpp/library/numeric/math/log) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log10`, `log10f`, `log10l`](/docs/cpp/library/numeric/math/log10) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes common (base `10`) logarithm (`log10(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log10(std::complex)`](/docs/cpp/library/numeric/complex/log10)</DescriptionTerm>
+    <DescriptionBody>complex common logarithm with the branch cuts along the negative real axis <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

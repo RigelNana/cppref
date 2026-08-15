@@ -1,0 +1,112 @@
+---
+
+title: "std::exp(std::valarray)"
+
+description: "For each element in va computes e raised to the power equal to the value of the element."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/exp"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-exp:0000 */}
+<DeclarationDoc>
+Defined in header [`<valarray>`](/docs/cpp/library/headers/valarray)
+  <Declaration language="cpp" code={`template< class T >
+valarray<T> exp( const valarray<T>& va );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-exp:0001 */}
+For each element in `va` computes *e* raised to the power equal to the value of the element.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-exp:0002 */}
+<ParameterList>
+  <Parameter name="va">value array to apply the operation to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-exp:0003 */}
+Value array containing *e* raised by the values in `va`.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-exp:0004 */}
+Unqualified function (`exp`) is used to perform the computation. If such function is not available, [`std::exp`](/docs/cpp/library/numeric/math/exp) is used due to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-numeric-valarray-exp:0005 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-exp:0006 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Possible implementation
+
+{/* source:cpp-numeric-valarray-exp:0007 */}
+```cpp
+template<class T>
+valarray<T> exp(const valarray<T>& va)
+{
+    valarray<T> other = va;
+    for (T& i : other)
+        i = exp(i);
+ 
+    return other; // proxy object may be returned
+}
+```
+
+### Example
+
+{/* source:cpp-numeric-valarray-exp:0008 */}
+This example demonstrates the [Euler's identity `eiπ  = -1`](https://en.wikipedia.org/wiki/Euler%27s_identity) and the related exponents.
+```cpp
+#include <complex>
+#include <iostream>
+#include <numbers>
+#include <valarray>
+ 
+int main()
+{
+    const double pi = std::numbers::pi;
+    std::valarray<std::complex<double>> v =
+    {
+        {0, 0}, {0, pi / 2}, {0, pi}, {0, 3 * pi / 2}, {0, 2 * pi}
+    };
+    std::valarray<std::complex<double>> v2 = std::exp(v);
+    for (std::cout << std::showpos << std::fixed; auto n : v2)
+        std::cout << n << '\n';
+}
+```
+Output:
+```text
+(+1.000000,+0.000000)
+(+0.000000,+1.000000)
+(-1.000000,+0.000000)
+(-0.000000,-1.000000)
+(+1.000000,-0.000000)
+```
+
+### See also
+
+{/* source:cpp-numeric-valarray-exp:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`log(std::valarray)`](/docs/cpp/library/numeric/valarray/log)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::log`](/docs/cpp/library/numeric/math/log) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exp`, `expf`, `expl`](/docs/cpp/library/numeric/math/exp) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns `e` raised to the given power (`ex`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exp(std::complex)`](/docs/cpp/library/numeric/complex/exp)</DescriptionTerm>
+    <DescriptionBody>complex base *e* exponential <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

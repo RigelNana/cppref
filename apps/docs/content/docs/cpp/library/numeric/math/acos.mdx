@@ -1,0 +1,164 @@
+---
+title: "std::acos, std::acosf, std::acosl"
+description: "Computes the principal value of the arc cosine of num."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/acos"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-acos:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       acos ( float num );
+double      acos ( double num );
+
+long double acos ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            acos ( /*floating-point-type*/ num );`} /> (constexpr since C++26)
+  <Declaration id="2" language="cpp" since="C++11" code={`float       acosf( float num );`} /> (constexpr since C++26)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double acosl( long double num );`} /> (constexpr since C++26)
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            acos ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/acos#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      acos ( Integer num );`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-acos:0001 */}
+    1-3) Computes the principal value of the arc cosine of `num`.<InlineRevision since="C++23"> The library provides overloads of `std::acos` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-acos:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::acos` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-acos:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-acos:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-acos:0005 */}
+If no errors occur, the arc cosine of `num` (`arccos(num)`) in the range `[0, π]`, is returned.
+
+{/* source:cpp-numeric-math-acos:0006 */}
+If a domain error occurs, an implementation-defined value is returned (NaN where supported).
+
+{/* source:cpp-numeric-math-acos:0007 */}
+If a range error occurs due to underflow, the correct result (after rounding) is returned.
+
+### Error handling
+
+{/* source:cpp-numeric-math-acos:0008 */}
+Errors are reported as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-acos:0009 */}
+Domain error occurs if `num` is outside the range `[-1.0, 1.0]`.
+
+{/* source:cpp-numeric-math-acos:0010 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-acos:0011 */}
+- If the argument is `+1`, the value `+0` is returned.
+- If `|num| > 1`, a domain error occurs and NaN is returned.
+- if the argument is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-acos:0012 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::acos(num)` has the same effect as `std::acos(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-acos:0013 */}
+```cpp
+#include <cerrno>
+#include <cfenv>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+ 
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::cout << "acos(-1) = " << std::acos(-1) << '\n'
+              << "acos(0.0) = " << std::acos(0.0) << '\n'
+              << "2*acos(0.0) = " << 2 * std::acos(0) << '\n'
+              << "acos(0.5) = " << std::acos(0.5) << '\n'
+              << "3*acos(0.5) = " << 3 * std::acos(0.5) << '\n'
+              << "acos(1) = " << std::acos(1) << '\n';
+ 
+    // error handling
+    errno = 0;
+    std::feclearexcept(FE_ALL_EXCEPT);
+ 
+    std::cout << "acos(1.1) = " << std::acos(1.1) << '\n';
+ 
+    if (errno == EDOM)
+        std::cout << "    errno == EDOM: " << std::strerror(errno) << '\n';
+    if (std::fetestexcept(FE_INVALID))
+        std::cout << "    FE_INVALID raised" << '\n';
+}
+```
+
+Output:
+
+```text
+acos(-1) = 3.14159
+acos(0.0) = 1.5708
+2*acos(0.0) = 3.14159
+acos(0.5) = 1.0472
+3*acos(0.5) = 3.14159
+acos(1) = 0
+acos(1.1) = nan
+    errno == EDOM: Numerical argument out of domain
+    FE_INVALID raised
+```
+
+### See also
+
+{/* source:cpp-numeric-math-acos:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`asin`, `asinf`, `asinl`](/docs/cpp/library/numeric/math/asin) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes arc sine (`arcsin(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atan`, `atanf`, `atanl`](/docs/cpp/library/numeric/math/atan) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes arc tangent (`arctan(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atan2`, `atan2f`, `atan2l`](/docs/cpp/library/numeric/math/atan2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>arc tangent, using signs to determine quadrants <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cos`, `cosf`, `cosl`](/docs/cpp/library/numeric/math/cos) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes cosine (`cos(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`acos(std::complex)`](/docs/cpp/library/numeric/complex/acos) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes arc cosine of a complex number (`arccos(z)`) <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`acos(std::valarray)`](/docs/cpp/library/numeric/valarray/acos)</DescriptionTerm>
+    <DescriptionBody>applies the function std::acos to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/acos) for acos

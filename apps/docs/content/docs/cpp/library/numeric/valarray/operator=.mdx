@@ -1,0 +1,129 @@
+---
+
+title: "std::valarray<T>::operator="
+
+description: "Replaces the contents of the numeric array."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/operator="
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-operator:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`valarray<T>& operator=( const valarray<T>& other );`} />
+  <Declaration id="2" language="cpp"since="C++11" code={`valarray<T>& operator=( valarray<T>&& other ) noexcept;`} />
+  <Declaration id="3" language="cpp" code={`valarray<T>& operator=( const T& val );`} />
+  <Declaration id="4" language="cpp" code={`valarray<T>& operator=( const std::slice_array<T>& other );`} />
+  <Declaration id="5" language="cpp" code={`valarray<T>& operator=( const std::gslice_array<T>& other );`} />
+  <Declaration id="6" language="cpp" code={`valarray<T>& operator=( const std::mask_array<T>& other );`} />
+  <Declaration id="7" language="cpp" code={`valarray<T>& operator=( const std::indirect_array<T>& other );`} />
+  <Declaration id="8" language="cpp"since="C++11" code={`valarray<T>& operator=( std::initializer_list<T> il );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-operator:0001 */}
+Replaces the contents of the numeric array.
+
+{/* source:cpp-numeric-valarray-operator:0002 */}
+1) Copy assignment operator. If `size() != other.size()`, first resizes `*this` as if by `resize(other.size())`. Each element of `*this` is assigned the value of the corresponding element of `other`.
+
+{/* source:cpp-numeric-valarray-operator:0003 */}
+2) Move assignment operator. Replaces the contents of `*this` with those of `other`. The value of `other` is unspecified after this operation. The complexity of this operation may be linear if T has non-trivial destructors, but is usually constant otherwise.
+
+{/* source:cpp-numeric-valarray-operator:0004 */}
+3) Replaces each value in `*this` with a copy of `val`.
+
+{/* source:cpp-numeric-valarray-operator:0005 */}
+4-7) Replaces the contents of `*this` with the result of a generalized subscripting operation. The behavior is undefined if [`size()`](/docs/cpp/library/numeric/valarray/size) does not equal the length of `other` or if any value on the left depends on the value on the right (e.g. `v = v[v > 2]`).
+
+{/* source:cpp-numeric-valarray-operator:0006 */}
+8) Assigns the contents of initializer list `il`. Equivalent to `*this = valarray(il)`.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-operator:0007 */}
+<ParameterList>
+  <Parameter name="other">another numeric array (or a mask) to assign</Parameter>
+  <Parameter name="val">the value to initialize each element with</Parameter>
+  <Parameter name="il">initializer list to assign</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-operator:0008 */}
+`*this`
+
+### Exceptions
+
+{/* source:cpp-numeric-valarray-operator:0009 */}
+1,3-8) May throw implementation-defined exceptions.
+
+### Example
+
+{/* source:cpp-numeric-valarray-operator:0010 */}
+Output:
+```cpp
+#include <iomanip>
+#include <iostream>
+#include <valarray>
+ 
+void print(const char* rem, const std::valarray<int>& v)
+{
+    std::cout << std::left << std::setw(36) << rem << std::right;
+    for (int n : v)
+        std::cout << std::setw(3) << n;
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    std::valarray<int> v1(3);
+    v1 = -1; // (3) from a scalar 
+    print("assigned from scalar: ", v1);
+ 
+    v1 = {1, 2, 3, 4, 5, 6}; // (8): from initializer list of different size
+    print("assigned from initializer_list:", v1);
+ 
+    std::valarray<int> v2(3);
+    v2 = v1[std::slice(0, 3, 2)]; // (4): from slice array
+    print("every 2nd element starting at pos 0:", v2);
+ 
+    v2 = v1[v1 % 2 == 0]; // (6): from mask array
+    print("values that are even:", v2);
+ 
+    std::valarray<std::size_t> idx = {0, 1, 2, 4}; // index array
+    v2.resize(4); // sizes must match when assigning from gen subscript
+    v2 = v1[idx]; // (7): from indirect array
+    print("values at positions 0, 1, 2, 4:", v2);
+}
+```
+Output:
+```text
+assigned from scalar:                -1 -1 -1
+assigned from initializer_list:       1  2  3  4  5  6
+every 2nd element starting at pos 0:  1  3  5
+values that are even:                 2  4  6
+values at positions 0, 1, 2, 4:       1  2  3  5
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-valarray-operator:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-valarray-operator:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={624} standard="C++98">
+    <PublishedBehavior>the behaviors of overloads (4-7) were<br />unclear if the length of `other` is not [`size()`](/docs/cpp/library/numeric/valarray/size)</PublishedBehavior>
+    <CorrectedBehavior>the behaviors are<br />undefined in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={630} standard="C++98">
+    <PublishedBehavior>the behavior of the copy assignment operator<br />was undefined if `size() != other.size()`</PublishedBehavior>
+    <CorrectedBehavior>resizes `*this`<br />first in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={2071} standard="C++11">
+    <PublishedBehavior>the move assignment operator resized<br />`*this` if `size() != other.size()`</PublishedBehavior>
+    <CorrectedBehavior>not required to<br />resize in this case</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

@@ -1,0 +1,111 @@
+---
+title: "MATH_ERRNO, MATH_ERREXCEPT, math_errhandling"
+description: "The macro constant math_errhandling expands to an expression of type int that is either equal to MATH_ERRNO, or equal to MATH_ERREXCEPT, or equal to their bitwise OR (MATH_ERRNO | MATH_ERREXCEPT)."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/math_errhandling"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-math-errhandling:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration language="cpp" since="C++11" code={`#define MATH_ERRNO        1`} />
+  <Declaration language="cpp" since="C++11" code={`#define MATH_ERREXCEPT    2`} />
+  <Declaration language="cpp" since="C++11" code={`#define math_errhandling  /*implementation defined*/`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-math-errhandling:0001 */}
+The macro constant `math_errhandling` expands to an expression of type `int` that is either equal to `MATH_ERRNO`, or equal to `MATH_ERREXCEPT`, or equal to their bitwise OR (`MATH_ERRNO | MATH_ERREXCEPT`).
+
+{/* source:cpp-numeric-math-math-errhandling:0002 */}
+The value of `math_errhandling` indicates the type of error handling that is performed by the floating-point operators and [functions](/docs/cpp/library/numeric/math):
+
+{/* source:cpp-numeric-math-math-errhandling:0003 */}
+Constant
+ Explanation
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`MATH_ERREXCEPT`</DescriptionTerm>
+    <DescriptionBody>Indicates that floating-point exceptions are used: at least [FE_DIVBYZERO](/docs/cpp/library/numeric/fenv/FE_exceptions), [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions), and [FE_OVERFLOW](/docs/cpp/library/numeric/fenv/FE_exceptions) are defined in [`<cfenv>`](/docs/cpp/library/headers/cfenv).</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>`MATH_ERRNO`</DescriptionTerm>
+    <DescriptionBody>Indicates that floating-point operations use the variable [errno](/docs/cpp/library/error/errno) to report errors.</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-numeric-math-math-errhandling:0004 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559), `math_errhandling & MATH_ERREXCEPT` is required to be non-zero.
+
+{/* source:cpp-numeric-math-math-errhandling:0005 */}
+The following floating-point error conditions are recognized:
+
+{/* source:cpp-numeric-math-math-errhandling:0006 */}
+| Condition | Explanation | errno | Floating-point exception | Example |
+| --- | --- | --- | --- | --- |
+| Domain error | The argument is outside the range in which the operation is mathematically defined (the description of [each function](/docs/cpp/library/numeric/math) lists the required domain errors) | [EDOM](/docs/cpp/library/error/errno_macros) | [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) | `std::acos(2)` |
+| Pole error | The mathematical result of the function is exactly infinite or undefined | [ERANGE](/docs/cpp/library/error/errno_macros) | [FE_DIVBYZERO](/docs/cpp/library/numeric/fenv/FE_exceptions) | `std::log(0.0)`, `1.0 / 0.0` |
+| Range error due to overflow | The mathematical result is finite, but becomes infinite after rounding, or becomes the largest representable finite value after rounding down | [ERANGE](/docs/cpp/library/error/errno_macros) | [FE_OVERFLOW](/docs/cpp/library/numeric/fenv/FE_exceptions) | `std::pow(DBL_MAX, 2)` |
+| Range error due to underflow | The result is non-zero, but becomes zero after rounding, or becomes subnormal with a loss of precision | [ERANGE](/docs/cpp/library/error/errno_macros) or unchanged (implementation-defined) | [FE_UNDERFLOW](/docs/cpp/library/numeric/fenv/FE_exceptions) or nothing (implementation-defined) | `DBL_TRUE_MIN / 2` |
+| Inexact result | The result has to be rounded to fit in the destination type | Unchanged | [FE_INEXACT](/docs/cpp/library/numeric/fenv/FE_exceptions) or nothing (unspecified) | `std::sqrt(2)`, `1.0 / 10.0` |
+
+### Notes
+
+{/* source:cpp-numeric-math-math-errhandling:0007 */}
+Whether [FE_INEXACT](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised by the mathematical library functions is unspecified in general, but may be explicitly specified in the description of the function (e.g. [std::rint](/docs/cpp/library/numeric/math/rint) vs [std::nearbyint](/docs/cpp/library/numeric/math/nearbyint)).
+
+{/* source:cpp-numeric-math-math-errhandling:0008 */}
+Before C++11, floating-point exceptions were not specified, [EDOM](/docs/cpp/library/error/errno_macros) was required for any domain error, [ERANGE](/docs/cpp/library/error/errno_macros) was required for overflows and implementation-defined for underflows.
+
+### Example
+
+{/* source:cpp-numeric-math-math-errhandling:0009 */}
+```cpp
+#include <cerrno>
+#include <cfenv>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::cout << "MATH_ERRNO is "
+              << (math_errhandling & MATH_ERRNO ? "set" : "not set") << '\n'
+              << "MATH_ERREXCEPT is "
+              << (math_errhandling & MATH_ERREXCEPT ? "set" : "not set") << '\n';
+    std::feclearexcept(FE_ALL_EXCEPT);
+    errno = 0;
+    std::cout <<  "log(0) = " << std::log(0) << '\n';
+    if (errno == ERANGE)
+        std::cout << "errno = ERANGE (" << std::strerror(errno) << ")\n";
+    if (std::fetestexcept(FE_DIVBYZERO))
+        std::cout << "FE_DIVBYZERO (pole error) reported\n";
+}
+```
+
+Possible output:
+
+```text
+MATH_ERRNO is set
+MATH_ERREXCEPT is set
+log(0) = -inf
+errno = ERANGE (Numerical result out of range)
+FE_DIVBYZERO (pole error) reported
+```
+
+### See also
+
+{/* source:cpp-numeric-math-math-errhandling:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`FE_ALL_EXCEPT`, `FE_DIVBYZERO`, `FE_INEXACT`, `FE_INVALID`, `FE_OVERFLOW`, `FE_UNDERFLOW`](/docs/cpp/library/numeric/fenv/FE_exceptions) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>floating-point exceptions <br /> (macro constant)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`errno`](/docs/cpp/library/error/errno)</DescriptionTerm>
+    <DescriptionBody>macro which expands to POSIX-compatible thread-local error number variable<br />(macro variable)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/math_errhandling) for math_errhandling

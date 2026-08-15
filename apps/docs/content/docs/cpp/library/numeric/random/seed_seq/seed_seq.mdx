@@ -1,0 +1,86 @@
+---
+title: "std::seed_seq::seed_seq"
+description: "The default constructor. After construction, v is empty."
+source_url: "https://en.cppreference.com/w/cpp/numeric/random/seed_seq/seed_seq"
+language: "C++"
+---
+
+{/* source:cpp-numeric-random-seed-seq-seed-seq:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`seed_seq() noexcept;`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`seed_seq( const seed_seq& ) = delete;`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`template< class InputIt >
+seed_seq( InputIt begin, InputIt end );`} />
+  <Declaration id="4" language="cpp" since="C++11" code={`template< class T >
+seed_seq( std::initializer_list<T> il );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0001 */}
+    1. The default constructor. After construction, <i>[`v`](/docs/cpp/library/numeric/random/seed_seq#v)</i> is empty.
+
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0002 */}
+    2. The copy constructor is deleted: `std::seed_seq` is not copyable.
+
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0003 */}
+    3. Constructs a `std::seed_seq` with the values in the range `[begin, end)`. Equivalent to default-initializing <i>[`v`](/docs/cpp/library/numeric/random/seed_seq#v)</i> followed by `for (InputIt s = begin; s != end; ++s)`<br /><i>[`v`](/docs/cpp/library/numeric/random/seed_seq#v)</i>`.push_back(modseed(*s));`, where mod_seed(x)=x mod 232 .
+
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0004 */}
+    If `std::iterator_traits<InputIt>::value_type` is not an integer type, the program is ill-formed.
+
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0005 */}
+    If `InputIt` does not satisfy the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator), the behavior is undefined.
+
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0006 */}
+    4. Equivalent to `seed_seq(il.begin(), il.end())`. This constructor enables [list-initialization](/docs/cpp/language/initialization/list_initialization) from the list of seed values.
+
+    {/* source:cpp-numeric-random-seed-seq-seed-seq:0007 */}
+    This overload participates in overload resolution only if `T` is an integer type.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-numeric-random-seed-seq-seed-seq:0008 */}
+<ParameterList>
+  <Parameter name="begin, end">the pair of iterators denoting the initial seed sequence</Parameter>
+  <Parameter name="il">the initial seed sequence</Parameter>
+</ParameterList>
+
+### Example
+
+{/* source:cpp-numeric-random-seed-seq-seed-seq:0009 */}
+```cpp
+#include <iterator>
+#include <random>
+#include <sstream>
+ 
+int main()
+{
+    std::seed_seq s1; // default-constructible
+    std::seed_seq s2{1, 2, 3}; // can use list-initialization
+    std::seed_seq s3 = {-1, 0, 1}; // another form of list-initialization
+    int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    std::seed_seq s4(a, a + 10); // can use iterators
+    std::istringstream buf("1 2 3 4 5"); 
+    std::istream_iterator<int> beg(buf), end;
+    std::seed_seq s5(beg, end); // even stream input iterators
+}
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-random-seed-seq-seed-seq:0010 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-random-seed-seq-seed-seq:0011 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2180} standard="C++11">
+    <PublishedBehavior>all constructors were non-throwing</PublishedBehavior>
+    <CorrectedBehavior>only overload ([1](/docs/cpp/library/numeric/random/seed_seq/seed_seq#Version_1)) is non-throwing</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3422} standard="C++11">
+    <PublishedBehavior>1. overload ([1](/docs/cpp/library/numeric/random/seed_seq/seed_seq#Version_1)) was not noexcept<br />2. overload ([4](/docs/cpp/library/numeric/random/seed_seq/seed_seq#Version_4)) was not constrainted</PublishedBehavior>
+    <CorrectedBehavior>1.made noexcept<br />2. constrained</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

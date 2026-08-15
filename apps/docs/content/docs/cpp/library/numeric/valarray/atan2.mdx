@@ -1,0 +1,154 @@
+---
+
+title: "std::atan2(std::valarray)"
+
+description: "Computes the inverse tangent of y / x using the signs of arguments to correctly determine quadrant."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/atan2"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-atan2:0000 */}
+<DeclarationDoc>
+Defined in header [`<valarray>`](/docs/cpp/library/headers/valarray)
+  <Declaration id="1" language="cpp" code={`template< class T > 
+std::valarray<T> atan2( const std::valarray<T>& y, const std::valarray<T>& x );`} />
+  <Declaration id="2" language="cpp" code={`template< class T > 
+std::valarray<T> atan2( const std::valarray<T>& y,
+
+                        const typename std::valarray<T>::value_type& vx );`} />
+  <Declaration id="3" language="cpp" code={`template< class T > 
+std::valarray<T> atan2( const typename std::valarray<T>::value_type& vy,
+
+                        const std::valarray<T>& x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-atan2:0001 */}
+Computes the inverse tangent of `y / x` using the signs of arguments to correctly determine quadrant.
+
+{/* source:cpp-numeric-valarray-atan2:0002 */}
+1) Computes the inverse tangent of each pair of corresponding values from `y` and `x`.
+
+{/* source:cpp-numeric-valarray-atan2:0003 */}
+The behavior is undefined if `x.size() != y.size()`.
+
+{/* source:cpp-numeric-valarray-atan2:0004 */}
+2) Computes the inverse tangent of `vx` and each value in the numeric array `y`.
+
+{/* source:cpp-numeric-valarray-atan2:0005 */}
+3) Computes the inverse tangent of `vy` and each value in the numeric array `x`.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-atan2:0006 */}
+<ParameterList>
+  <Parameter name="x, y">numeric arrays to compute inverse tangent of</Parameter>
+  <Parameter name="vy, vx">values to compute inverse tangent of</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-atan2:0007 */}
+A numeric array containing the results of computation of inverse tangent.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-atan2:0008 */}
+Unqualified function (`atan2`) is used to perform the computation. If such function is not available, [`std::atan2`](/docs/cpp/library/numeric/math/atan2) is used due to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-numeric-valarray-atan2:0009 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-atan2:0010 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Example
+
+{/* source:cpp-numeric-valarray-atan2:0011 */}
+Output:
+```cpp
+#include <algorithm>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <valarray>
+ 
+void show(char const* title, const std::valarray<double>& va)
+{
+    std::cout << title << ' ';
+    std::for_each(std::begin(va), std::end(va), [](const double x)
+    { 
+        std::cout << ' ' << std::right << std::setw(4) << x << "°";
+    });
+    std::cout << '\n';
+}
+ 
+const double pi = std::acos(-1.0); // C++20: std::numbers::pi
+ 
+int main()
+{
+    auto degrees_to_radians = [](double const& x) { return (pi * x / 180); };
+    auto radians_to_degrees = [](double const& x) { return (180 * x / pi); };
+ 
+    const std::valarray<double> degrees{-90, -60, -45, -30, 0, 30, 45, 60, 90};
+    const std::valarray<double> radians = degrees.apply(degrees_to_radians);
+ 
+    const auto sin = std::sin(radians);
+    const auto cos = std::cos(radians);
+ 
+    show("(1)", std::atan2(sin, cos).apply(radians_to_degrees));
+    show("(2)", std::atan2(sin/cos, 1.0).apply(radians_to_degrees));
+    show("(3)", std::atan2(1.0, cos/sin).apply(radians_to_degrees));
+}
+```
+Output:
+```text
+(1)   -90°  -60°  -45°  -30°    0°   30°   45°   60°   90°
+(2)   -90°  -60°  -45°  -30°    0°   30°   45°   60°   90°
+(3)    90°  120°  135°  150°    0°   30°   45°   60°   90°
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-valarray-atan2:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-valarray-atan2:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3074} standard="C++98">
+    <PublishedBehavior>`T` is deduced from both the scalar and the `valarray` for (2,3), disallowing mixed-type calls</PublishedBehavior>
+    <CorrectedBehavior>only deduce `T` from the `valarray`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-numeric-valarray-atan2:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`asin(std::valarray)`](/docs/cpp/library/numeric/valarray/asin)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::asin`](/docs/cpp/library/numeric/math/asin) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`acos(std::valarray)`](/docs/cpp/library/numeric/valarray/acos)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::acos`](/docs/cpp/library/numeric/math/acos) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atan(std::valarray)`](/docs/cpp/library/numeric/valarray/atan)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::atan`](/docs/cpp/library/numeric/math/atan) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atan2`, `atan2f`, `atan2l`](/docs/cpp/library/numeric/math/atan2) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>arc tangent, using signs to determine quadrants <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`arg`](/docs/cpp/library/numeric/complex/arg)</DescriptionTerm>
+    <DescriptionBody>returns the phase angle <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

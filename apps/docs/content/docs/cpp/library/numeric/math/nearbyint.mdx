@@ -1,0 +1,152 @@
+---
+title: "std::nearbyint, std::nearbyintf, std::nearbyintl"
+description: "Rounds the floating-point argument num to an integer value in floating-point format, using the current rounding mode."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/nearbyint"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-nearbyint:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       nearbyint ( float num );
+double      nearbyint ( double num );
+
+long double nearbyint ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            nearbyint ( /*floating-point-type*/ num );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`float       nearbyintf( float num );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`long double nearbyintl( long double num );`} />
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            nearbyint ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/nearbyint#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      nearbyint ( Integer num );`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-nearbyint:0001 */}
+    1-3) Rounds the floating-point argument `num` to an integer value in floating-point format, using the [current rounding mode](/docs/cpp/library/numeric/fenv/FE_round).<InlineRevision since="C++23"> The library provides overloads of `std::nearbyint` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-nearbyint:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::nearbyint` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-nearbyint:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-nearbyint:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-nearbyint:0005 */}
+The nearest integer value to `num`, according to the [current rounding mode](/docs/cpp/library/numeric/fenv/FE_round), is returned.
+
+### Error handling
+
+{/* source:cpp-numeric-math-nearbyint:0006 */}
+This function is not subject to any of the errors specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-nearbyint:0007 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-nearbyint:0008 */}
+- [FE_INEXACT](/docs/cpp/library/numeric/fenv/FE_exceptions) is never raised.
+- If `num` is ±∞, it is returned, unmodified.
+- If `num` is ±0, it is returned, unmodified.
+- If `num` is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-nearbyint:0009 */}
+The only difference between `std::nearbyint` and [std::rint](/docs/cpp/library/numeric/math/rint) is that `std::nearbyint` never raises [FE_INEXACT](/docs/cpp/library/numeric/fenv/FE_exceptions).
+
+{/* source:cpp-numeric-math-nearbyint:0010 */}
+The largest representable floating-point values are exact integers in all standard floating-point formats, so `std::nearbyint` never overflows on its own; however the result may overflow any integer type (including [std::intmax_t](/docs/cpp/library/utility/types/integer)), when stored in an integer variable.
+
+{/* source:cpp-numeric-math-nearbyint:0011 */}
+If the current rounding mode is [FE_TONEAREST](/docs/cpp/library/numeric/fenv/FE_round), this function rounds to even in halfway cases (like [std::rint](/docs/cpp/library/numeric/math/rint), but unlike [std::round](/docs/cpp/library/numeric/math/round)).
+
+{/* source:cpp-numeric-math-nearbyint:0012 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::nearbyint(num)` has the same effect as `std::nearbyint(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-nearbyint:0013 */}
+```cpp
+#include <cfenv>
+#include <cmath>
+#include <iostream>
+#pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::fesetround(FE_TONEAREST);
+    std::cout << "rounding to nearest: \n"
+              << "nearbyint(+2.3) = " << std::nearbyint(2.3)
+              << "  nearbyint(+2.5) = " << std::nearbyint(2.5)
+              << "  nearbyint(+3.5) = " << std::nearbyint(3.5) << '\n'
+              << "nearbyint(-2.3) = " << std::nearbyint(-2.3)
+              << "  nearbyint(-2.5) = " << std::nearbyint(-2.5)
+              << "  nearbyint(-3.5) = " << std::nearbyint(-3.5) << '\n';
+ 
+    std::fesetround(FE_DOWNWARD);
+    std::cout << "rounding down:\n"
+              << "nearbyint(+2.3) = " << std::nearbyint(2.3)
+              << "  nearbyint(+2.5) = " << std::nearbyint(2.5)
+              << "  nearbyint(+3.5) = " << std::nearbyint(3.5) << '\n'
+              << "nearbyint(-2.3) = " << std::nearbyint(-2.3)
+              << "  nearbyint(-2.5) = " << std::nearbyint(-2.5)
+              << "  nearbyint(-3.5) = " << std::nearbyint(-3.5) << '\n';
+ 
+    std::cout << "nearbyint(-0.0) = " << std::nearbyint(-0.0)  << '\n'
+              << "nearbyint(-Inf) = " << std::nearbyint(-INFINITY) << '\n';
+}
+```
+
+Output:
+
+```text
+rounding to nearest: 
+nearbyint(+2.3) = 2  nearbyint(+2.5) = 2  nearbyint(+3.5) = 4
+nearbyint(-2.3) = -2  nearbyint(-2.5) = -2  nearbyint(-3.5) = -4
+rounding down:
+nearbyint(+2.3) = 2  nearbyint(+2.5) = 2  nearbyint(+3.5) = 3
+nearbyint(-2.3) = -3  nearbyint(-2.5) = -3  nearbyint(-3.5) = -4
+nearbyint(-0.0) = -0
+nearbyint(-Inf) = -inf
+```
+
+### See also
+
+{/* source:cpp-numeric-math-nearbyint:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`rint`, `rintf`, `rintl`, `lrint`, `lrintf`, `lrintl`, `llrint`, `llrintf`, `llrintl`](/docs/cpp/library/numeric/math/rint) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>nearest integer using current rounding mode with<br />exception if the result differs <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`round`, `roundf`, `roundl`, `lround`, `lroundf`, `lroundl`, `llround`, `llroundf`, `llroundl`](/docs/cpp/library/numeric/math/round) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>nearest integer, rounding away from zero in halfway cases <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fegetround`, `fesetround`](/docs/cpp/library/numeric/fenv/feround) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>gets or sets rounding direction <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/nearbyint) for nearbyint

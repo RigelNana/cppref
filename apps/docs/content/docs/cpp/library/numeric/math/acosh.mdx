@@ -1,0 +1,159 @@
+---
+title: "std::acosh, std::acoshf, std::acoshl"
+description: "Computes the inverse hyperbolic cosine of num."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/acosh"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-acosh:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       acosh ( float num );
+double      acosh ( double num );
+
+long double acosh ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            acosh ( /*floating-point-type*/ num );`} /> (constexpr since C++26)
+  <Declaration id="2" language="cpp" since="C++11" code={`float       acoshf( float num );`} /> (constexpr since C++26)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double acoshl( long double num );`} /> (constexpr since C++26)
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            acosh ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/acosh#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      acosh ( Integer num );`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-acosh:0001 */}
+    1-3) Computes the inverse hyperbolic cosine of `num`.<InlineRevision since="C++23"> The library provides overloads of `std::acosh` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-acosh:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::acosh` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-acosh:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-acosh:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-acosh:0005 */}
+If no errors occur, the inverse hyperbolic cosine of `num` (`cosh-1 (num)`, or `arcosh(num)`) on the interval `[0, +∞]`, is returned.
+
+{/* source:cpp-numeric-math-acosh:0006 */}
+If a domain error occurs, an implementation-defined value is returned (NaN where supported).
+
+### Error handling
+
+{/* source:cpp-numeric-math-acosh:0007 */}
+Errors are reported as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-acosh:0008 */}
+If the argument is less than 1, a domain error occurs.
+
+{/* source:cpp-numeric-math-acosh:0009 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-acosh:0010 */}
+- if the argument is less than 1, [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised an NaN is returned.
+- if the argument is 1, +0 is returned.
+- if the argument is +∞, +∞ is returned.
+- if the argument is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-acosh:0011 */}
+Although the C standard (to which C++ refers for this function) names this function "arc hyperbolic cosine", the inverse functions of the hyperbolic functions are the area functions. Their argument is the area of a hyperbolic sector, not an arc. The correct name is "inverse hyperbolic cosine" (used by POSIX) or "area hyperbolic cosine".
+
+{/* source:cpp-numeric-math-acosh:0012 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::acosh(num)` has the same effect as `std::acosh(static_cast<double>(num))`.
+
+### Examples
+
+{/* source:cpp-numeric-math-acosh:0013 */}
+```cpp
+#include <cerrno>
+#include <cfenv>
+#include <cfloat>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+ 
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::cout << "acosh(1) = " << std::acosh(1) << '\n'
+              << "acosh(10) = " << std::acosh(10) << '\n'
+              << "acosh(DBL_MAX) = " << std::acosh(DBL_MAX) << '\n'
+              << "acosh(Inf) = " << std::acosh(INFINITY) << '\n';
+ 
+    // error handling
+    errno = 0;
+    std::feclearexcept(FE_ALL_EXCEPT);
+ 
+    std::cout << "acosh(0.5) = " << std::acosh(0.5) << '\n';
+ 
+    if (errno == EDOM)
+        std::cout << "    errno == EDOM: " << std::strerror(errno) << '\n';
+    if (std::fetestexcept(FE_INVALID))
+        std::cout << "    FE_INVALID raised\n";
+}
+```
+
+Possible output:
+
+```text
+acosh(1) = 0
+acosh(10) = 2.99322
+acosh(DBL_MAX) = 710.476
+acosh(Inf) = inf
+acosh(0.5) = -nan
+    errno == EDOM: Numerical argument out of domain
+    FE_INVALID raised
+```
+
+### See also
+
+{/* source:cpp-numeric-math-acosh:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`asinh`, `asinhf`, `asinhl`](/docs/cpp/library/numeric/math/asinh) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes the inverse hyperbolic sine (`arsinh(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`atanh`, `atanhf`, `atanhl`](/docs/cpp/library/numeric/math/atanh) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes the inverse hyperbolic tangent (`artanh(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`cosh`, `coshf`, `coshl`](/docs/cpp/library/numeric/math/cosh) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes hyperbolic cosine (`cosh(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`acosh(std::complex)`](/docs/cpp/library/numeric/complex/acosh) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes area hyperbolic cosine of a complex number (`arcosh(z)`) <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/acosh) for acosh
+
+### External links
+
+{/* source:cpp-numeric-math-acosh:0015 */}
+[Weisstein, Eric W. "Inverse Hyperbolic Cosine."](https://mathworld.wolfram.com/InverseHyperbolicCosine.html) From MathWorld — A Wolfram Web Resource.

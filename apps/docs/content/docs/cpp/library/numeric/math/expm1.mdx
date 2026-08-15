@@ -1,0 +1,159 @@
+---
+title: "std::expm1, std::expm1f, std::expm1l"
+description: "Computes the e (Euler's number, 2.7182818...) raised to the given power num, minus 1.0."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/expm1"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-expm1:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       expm1 ( float num );
+double      expm1 ( double num );
+
+long double expm1 ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            expm1 ( /*floating-point-type*/ num );`} /> (constexpr since C++26)
+  <Declaration id="2" language="cpp" since="C++11" code={`float       expm1f( float num );`} /> (constexpr since C++26)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double expm1l( long double num );`} /> (constexpr since C++26)
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            expm1 ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/expm1#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      expm1 ( Integer num );`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-expm1:0001 */}
+    1-3) Computes the *e* ([Euler's number](https://en.wikipedia.org/wiki/E_(mathematical_constant)), `2.7182818...`) raised to the given power `num`, minus `1.0`. This function is more accurate than the expression `std::exp(num) - 1.0` if `num` is close to zero.<InlineRevision since="C++23"> The library provides overloads of `std::expm1` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-expm1:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::expm1` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-expm1:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-expm1:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-expm1:0005 */}
+If no errors occur `enum -1` is returned.
+
+{/* source:cpp-numeric-math-expm1:0006 */}
+If a range error due to overflow occurs, [+HUGE_VAL](/docs/cpp/library/numeric/math/HUGE_VAL), `+HUGE_VALF`, or `+HUGE_VALL` is returned.
+
+{/* source:cpp-numeric-math-expm1:0007 */}
+If a range error occurs due to underflow, the correct result (after rounding) is returned.
+
+### Error handling
+
+{/* source:cpp-numeric-math-expm1:0008 */}
+Errors are reported as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-expm1:0009 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-expm1:0010 */}
+- If the argument is ±0, it is returned, unmodified.
+- If the argument is -∞, -1 is returned.
+- If the argument is +∞, +∞ is returned.
+- If the argument is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-expm1:0011 */}
+The functions `std::expm1` and [std::log1p](/docs/cpp/library/numeric/math/log1p) are useful for financial calculations, for example, when calculating small daily interest rates: `(1+x)n -1` can be expressed as `std::expm1(n * std::log1p(x))`. These functions also simplify writing accurate inverse hyperbolic functions.
+
+{/* source:cpp-numeric-math-expm1:0012 */}
+For IEEE-compatible type `double`, overflow is guaranteed if `709.8 < num`.
+
+{/* source:cpp-numeric-math-expm1:0013 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::expm1(num)` has the same effect as `std::expm1(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-expm1:0014 */}
+```cpp
+#include <cerrno>
+#include <cfenv>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::cout << "expm1(1) = " << std::expm1(1) << '\n'
+              << "Interest earned in 2 days on $100, compounded daily at 1%\n"
+              << "    on a 30/360 calendar = "
+              << 100 * std::expm1(2 * std::log1p(0.01 / 360)) << '\n'
+              << "exp(1e-16)-1 = " << std::exp(1e-16) - 1
+              << ", but expm1(1e-16) = " << std::expm1(1e-16) << '\n';
+ 
+    // special values
+    std::cout << "expm1(-0) = " << std::expm1(-0.0) << '\n'
+              << "expm1(-Inf) = " << std::expm1(-INFINITY) << '\n';
+ 
+    // error handling
+    errno = 0;
+    std::feclearexcept(FE_ALL_EXCEPT);
+ 
+    std::cout << "expm1(710) = " << std::expm1(710) << '\n';
+ 
+    if (errno == ERANGE)
+        std::cout << "    errno == ERANGE: " << std::strerror(errno) << '\n';
+    if (std::fetestexcept(FE_OVERFLOW))
+        std::cout << "    FE_OVERFLOW raised\n";
+}
+```
+
+Possible output:
+
+```text
+expm1(1) = 1.71828
+Interest earned in 2 days on $100, compounded daily at 1%
+    on a 30/360 calendar = 0.00555563
+exp(1e-16)-1 = 0, but expm1(1e-16) = 1e-16
+expm1(-0) = -0
+expm1(-Inf) = -1
+expm1(710) = inf
+    errno == ERANGE: Result too large
+    FE_OVERFLOW raised
+```
+
+### See also
+
+{/* source:cpp-numeric-math-expm1:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`exp`, `expf`, `expl`](/docs/cpp/library/numeric/math/exp) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns `e` raised to the given power (`ex`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exp2`, `exp2f`, `exp2l`](/docs/cpp/library/numeric/math/exp2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns `2` raised to the given power (`2x`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log1p`, `log1pf`, `log1pl`](/docs/cpp/library/numeric/math/log1p) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>natural logarithm (to base `e`) of `1` plus the given number (`ln(1+x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/expm1) for expm1

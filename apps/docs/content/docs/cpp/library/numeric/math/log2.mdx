@@ -1,0 +1,167 @@
+---
+title: "std::log2, std::log2f, std::log2l"
+description: "Computes the binary (base-2) logarithm of num."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/log2"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-log2:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       log2 ( float num );
+double      log2 ( double num );
+
+long double log2 ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            log2 ( /*floating-point-type*/ num );`} /> (constexpr since C++26)
+  <Declaration id="2" language="cpp" since="C++11" code={`float       log2f( float num );`} /> (constexpr since C++26)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double log2l( long double num );`} /> (constexpr since C++26)
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            log2 ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/log2#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      log2 ( Integer num );`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-log2:0001 */}
+    1-3) Computes the [binary (base-*2*) logarithm](https://en.wikipedia.org/wiki/Binary_logarithm) of `num`.<InlineRevision since="C++23"> The library provides overloads of `std::log2` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-log2:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::log2` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-log2:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-log2:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-log2:0005 */}
+If no errors occur, the base-*2* logarithm of `num` (`log2(num)` or `lb(num)`) is returned.
+
+{/* source:cpp-numeric-math-log2:0006 */}
+If a domain error occurs, an implementation-defined value is returned (NaN where supported).
+
+{/* source:cpp-numeric-math-log2:0007 */}
+If a pole error occurs, [-HUGE_VAL](/docs/cpp/library/numeric/math/HUGE_VAL), `-HUGE_VALF`, or `-HUGE_VALL` is returned.
+
+### Error handling
+
+{/* source:cpp-numeric-math-log2:0008 */}
+Errors are reported as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-log2:0009 */}
+Domain error occurs if `num` is less than zero.
+
+{/* source:cpp-numeric-math-log2:0010 */}
+Pole error may occur if `num` is zero.
+
+{/* source:cpp-numeric-math-log2:0011 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-log2:0012 */}
+- If the argument is ±0, -∞ is returned and [FE_DIVBYZERO](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+- If the argument is 1, +0 is returned.
+- If the argument is negative, NaN is returned and [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+- If the argument is +∞, +∞ is returned.
+- If the argument is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-log2:0013 */}
+For integer `num`, the binary logarithm can be interpreted as the zero-based index of the most significant 1 bit in the input.
+
+{/* source:cpp-numeric-math-log2:0014 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::log2(num)` has the same effect as `std::log2(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-log2:0015 */}
+```cpp
+#include <cerrno>
+#include <cfenv>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::cout << "log2(65536) = " << std::log2(65536) << '\n'
+              << "log2(0.125) = " << std::log2(0.125) << '\n'
+              << "log2(0x020f) = " << std::log2(0x020f)
+              << " (highest set bit is in position 9)\n"
+              << "base-5 logarithm of 125 = "
+              << std::log2(125) / std::log2(5) << '\n';
+ 
+    // special values
+    std::cout << "log2(1) = " << std::log2(1) << '\n'
+              << "log2(+Inf) = " << std::log2(INFINITY) << '\n';
+ 
+    // error handling
+    errno = 0;
+    std::feclearexcept(FE_ALL_EXCEPT);
+ 
+    std::cout << "log2(0) = " << std::log2(0) << '\n';
+ 
+    if (errno == ERANGE)
+        std::cout << "    errno == ERANGE: " << std::strerror(errno) << '\n';
+    if (std::fetestexcept(FE_DIVBYZERO))
+        std::cout << "    FE_DIVBYZERO raised\n";
+}
+```
+
+Possible output:
+
+```text
+log2(65536) = 16
+log2(0.125) = -3
+log2(0x020f) = 9.04166 (highest set bit is in position 9)
+base-5 logarithm of 125 = 3
+log2(1) = 0
+log2(+Inf) = inf
+log2(0) = -inf
+    errno == ERANGE: Numerical result out of range
+    FE_DIVBYZERO raised
+```
+
+### See also
+
+{/* source:cpp-numeric-math-log2:0016 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`log`, `logf`, `logl`](/docs/cpp/library/numeric/math/log) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes natural (base `e`) logarithm (`ln(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log10`, `log10f`, `log10l`](/docs/cpp/library/numeric/math/log10) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes common (base `10`) logarithm (`log10(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log1p`, `log1pf`, `log1pl`](/docs/cpp/library/numeric/math/log1p) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>natural logarithm (to base `e`) of `1` plus the given number (`ln(1+x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exp2`, `exp2f`, `exp2l`](/docs/cpp/library/numeric/math/exp2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns `2` raised to the given power (`2x`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/log2) for log2

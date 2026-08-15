@@ -1,0 +1,191 @@
+---
+
+title: "std::pow(std::valarray)"
+
+description: "Raises a value to a power."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/pow"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-pow:0000 */}
+<DeclarationDoc>
+Defined in header [`<valarray>`](/docs/cpp/library/headers/valarray)
+  <Declaration id="1" language="cpp" code={`template< class T > 
+std::valarray<T> pow( const std::valarray<T>& base, const std::valarray<T>& exp );`} />
+  <Declaration id="2" language="cpp" code={`template< class T > 
+std::valarray<T> pow( const std::valarray<T>& base, 
+
+                      const typename std::valarray<T>::value_type& vexp );`} />
+  <Declaration id="3" language="cpp" code={`template< class T > 
+std::valarray<T> pow( const typename std::valarray<T>::value_type& vbase,
+
+                      const std::valarray<T>& exp );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-pow:0001 */}
+Raises a value to a power.
+
+{/* source:cpp-numeric-valarray-pow:0002 */}
+1) Computes the values of each element in the numeric array `base` raised to the power specified by the corresponding element from the numeric array `exp`.
+
+{/* source:cpp-numeric-valarray-pow:0003 */}
+The behavior is undefined if `base.size() != exp.size()`.
+
+{/* source:cpp-numeric-valarray-pow:0004 */}
+2) Computes the values of each element in the numeric array `base` raised to the power `vexp`.
+
+{/* source:cpp-numeric-valarray-pow:0005 */}
+3) Computes the values of `vbase` raised to the power defined by the elements in the numeric array `exp`.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-pow:0006 */}
+<ParameterList>
+  <Parameter name="base">numeric array containing the values of the base</Parameter>
+  <Parameter name="exp">numeric array containing the values of the exponent</Parameter>
+  <Parameter name="vbase">a value defining the base</Parameter>
+  <Parameter name="vexp">a value defining the exponent</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-pow:0007 */}
+A numeric array containing the results of exponentiation.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-pow:0008 */}
+Unqualified function (`pow`) is used to perform the computation. If such function is not available, [`std::pow`](/docs/cpp/library/numeric/math/pow) is used due to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-numeric-valarray-pow:0009 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-pow:0010 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Example
+
+{/* source:cpp-numeric-valarray-pow:0011 */}
+Output:
+```cpp
+#include <cmath>
+#include <cstddef>
+#include <iomanip>
+#include <iostream>
+#include <valarray>
+ 
+class show
+{
+    friend std::ostream& operator<<(std::ostream& os, show const& r)
+    {
+        constexpr char const* sup[]
+        {
+            "\u2070", "\u00B9", "\u00B2", "\u00B3", "\u2074",
+            "\u2075", "\u2076", "\u2077", "\u2078", "\u2079"
+        };
+ 
+        for (std::size_t n = 0; n != r.bases.size(); ++n)
+        {
+            os << std::left << r.bases[n] << std::left;
+            if (n < r.exponents.size())
+                os << sup[r.exponents[n] % 10] << ' ';
+            else
+                os << "  ";
+        }
+ 
+        if (r.results.size() != 0)
+        {
+            os << '=';
+            for (std::size_t n = 0; n != r.results.size(); ++n)
+                os << ' ' << r.results[n];
+        }
+ 
+        return os << '\n';
+    }
+ 
+public:
+    std::valarray<int> bases{}, exponents{}, results{};
+};
+ 
+int main()
+{
+    constexpr int base{2};
+    constexpr int exponent{5};
+    const std::valarray<int> bases{1, 2, 3, 4, 5, 6, 7};
+    const std::valarray<int> exponents{0, 1, 2, 3, 4, 5, 6};
+    const std::valarray<int> powers1 = std::pow(bases, exponents);
+    const std::valarray<int> powers2 = std::pow(bases, exponent);
+    const std::valarray<int> powers3 = std::pow(base, exponents);
+ 
+    std::cout
+        << "pow(const std::valarray<T>& base, const std::valarray<T>& exp); (1)\n"
+        << "base : " << show{bases}
+        << "exp  : " << show{exponents}
+        << "pow  : " << show{bases, exponents, powers1}
+        << '\n'
+        << "pow(const std::valarray<T>& base, const value_type& vexp); (2)\n"
+        << "base : " << show{bases}
+        << "vexp : " << exponent << '\n'
+        << "pow  : " << show{bases, std::valarray<int>(exponent, bases.size()), powers2}
+        << '\n'
+        << "pow(const value_type& vbase, const std::valarray<T>& exp); (3)\n"
+        << "vbase: " << base << '\n'
+        << "exp  : " << show{exponents}
+        << "pow  : " << show{std::valarray<int>(base, bases.size()), exponents, powers3};
+}
+```
+Output:
+```text
+pow(const std::valarray<T>& base, const std::valarray<T>& exp); (1)
+base : 1  2  3  4  5  6  7
+exp  : 0  1  2  3  4  5  6
+pow  : 1⁰ 2¹ 3² 4³ 5⁴ 6⁵ 7⁶ = 1 2 9 64 625 7776 117649
+ 
+pow(const std::valarray<T>& base, const value_type& vexp); (2)
+base : 1  2  3  4  5  6  7
+vexp : 5
+pow  : 1⁵ 2⁵ 3⁵ 4⁵ 5⁵ 6⁵ 7⁵ = 1 32 243 1024 3125 7776 16807
+ 
+pow(const value_type& vbase, const std::valarray<T>& exp); (3)
+vbase: 2
+exp  : 0  1  2  3  4  5  6
+pow  : 2⁰ 2¹ 2² 2³ 2⁴ 2⁵ 2⁶ = 1 2 4 8 16 32 64
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-valarray-pow:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-valarray-pow:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={3074} standard="C++98">
+    <PublishedBehavior>`T` is deduced from both the scalar and the `valarray` for (2,3), disallowing mixed-type calls</PublishedBehavior>
+    <CorrectedBehavior>only deduce `T` from the `valarray`</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-numeric-valarray-pow:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`sqrt(std::valarray)`](/docs/cpp/library/numeric/valarray/sqrt)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::sqrt`](/docs/cpp/library/numeric/math/sqrt) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pow`, `powf`, `powl`](/docs/cpp/library/numeric/math/pow) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>raises a number to the given power (`xy`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`pow(std::complex)`](/docs/cpp/library/numeric/complex/pow)</DescriptionTerm>
+    <DescriptionBody>complex power, one or both arguments may be a complex number <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

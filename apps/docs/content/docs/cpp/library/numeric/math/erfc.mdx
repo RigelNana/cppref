@@ -1,0 +1,144 @@
+---
+title: "std::erfc, std::erfcf, std::erfcl"
+description: "Computes the complementary error function of num, that is 1.0 - std::erf (num), but without loss of precision for large num."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/erfc"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-erfc:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       erfc ( float num );
+double      erfc ( double num );
+
+long double erfc ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            erfc ( /*floating-point-type*/ num );`} /> (constexpr since C++26)
+  <Declaration id="2" language="cpp" since="C++11" code={`float       erfcf( float num );`} /> (constexpr since C++26)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double erfcl( long double num );`} /> (constexpr since C++26)
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            erfc ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/erfc#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      erfc ( Integer num );`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-erfc:0001 */}
+    1-3) Computes the [complementary error function](https://en.wikipedia.org/wiki/Complementary_error_function) of `num`, that is `1.0 - std::erf(num)`, but without loss of precision for large `num`.<InlineRevision since="C++23"> The library provides overloads of `std::erfc` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-erfc:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::erfc` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-erfc:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-erfc:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-erfc:0005 */}
+2 √ π
+
+{/* source:cpp-numeric-math-erfc:0006 */}
+If a range error occurs due to underflow, the correct result (after rounding) is returned.
+
+### Error handling
+
+{/* source:cpp-numeric-math-erfc:0007 */}
+Errors are reported as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-erfc:0008 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-erfc:0009 */}
+- If the argument is +∞, +0 is returned.
+- If the argument is -∞, 2 is returned.
+- If the argument is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-erfc:0010 */}
+For the IEEE-compatible type `double`, underflow is guaranteed if `num > 26.55`.
+
+{/* source:cpp-numeric-math-erfc:0011 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::erfc(num)` has the same effect as `std::erfc(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-erfc:0012 */}
+```cpp
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+ 
+double normalCDF(double x) // Phi(-∞, x) aka N(x)
+{
+    return std::erfc(-x / std::sqrt(2)) / 2;
+}
+ 
+int main()
+{
+    std::cout << "normal cumulative distribution function:\n"
+              << std::fixed << std::setprecision(2);
+    for (double n = 0; n < 1; n += 0.1)
+        std::cout << "normalCDF(" << n << ") = " << 100 * normalCDF(n) << "%\n";
+ 
+    std::cout << "special values:\n"
+              << "erfc(-Inf) = " << std::erfc(-INFINITY) << '\n'
+              << "erfc(Inf) = " << std::erfc(INFINITY) << '\n';
+}
+```
+
+Output:
+
+```text
+normal cumulative distribution function:
+normalCDF(0.00) = 50.00%
+normalCDF(0.10) = 53.98%
+normalCDF(0.20) = 57.93%
+normalCDF(0.30) = 61.79%
+normalCDF(0.40) = 65.54%
+normalCDF(0.50) = 69.15%
+normalCDF(0.60) = 72.57%
+normalCDF(0.70) = 75.80%
+normalCDF(0.80) = 78.81%
+normalCDF(0.90) = 81.59%
+normalCDF(1.00) = 84.13%
+special values:
+erfc(-Inf) = 2.00
+erfc(Inf) = 0.00
+```
+
+### See also
+
+{/* source:cpp-numeric-math-erfc:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`erf`, `erff`, `erfl`](/docs/cpp/library/numeric/math/erf) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>error function <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/erfc) for erfc
+
+### External links
+
+{/* source:cpp-numeric-math-erfc:0014 */}
+[Weisstein, Eric W. "Erfc."](https://mathworld.wolfram.com/Erfc.html) From MathWorld — A Wolfram Web Resource.

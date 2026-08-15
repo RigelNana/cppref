@@ -1,0 +1,139 @@
+---
+
+title: "std::sinh(std::valarray)"
+
+description: "For each element in va computes hyperbolic sine of the value of the element."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/sinh"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-sinh:0000 */}
+<DeclarationDoc>
+Defined in header [`<valarray>`](/docs/cpp/library/headers/valarray)
+  <Declaration language="cpp" code={`template< class T >
+valarray<T> sinh( const valarray<T>& va );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-sinh:0001 */}
+For each element in `va` computes hyperbolic sine of the value of the element.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-sinh:0002 */}
+<ParameterList>
+  <Parameter name="va">value array to apply the operation to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-sinh:0003 */}
+Value array containing hyperbolic sine of the values in `va`.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-sinh:0004 */}
+Unqualified function (`sinh`) is used to perform the computation. If such function is not available, [`std::sinh`](/docs/cpp/library/numeric/math/sinh) is used due to [argument-dependent lookup](/docs/cpp/language/functions/adl).
+
+{/* source:cpp-numeric-valarray-sinh:0005 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-sinh:0006 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Possible implementation
+
+{/* source:cpp-numeric-valarray-sinh:0007 */}
+```cpp
+template<class T>
+valarray<T> sinh(const valarray<T>& va)
+{
+    valarray<T> other = va;
+    for (T& i : other)
+        i = sinh(i);
+ 
+    return other; // proxy object may be returned
+}
+```
+
+### Example
+
+{/* source:cpp-numeric-valarray-sinh:0008 */}
+Output:
+```cpp
+#include <cmath>
+#include <complex>
+#include <iomanip>
+#include <iostream>
+#include <valarray>
+ 
+template<typename T>
+void show(char const* title, const std::valarray<T>& va)
+{
+    std::cout << title << " : " << std::right;
+    for (T x : va)
+        std::cout << std::fixed << x << ' ';
+    std::cout << '\n';
+}
+ 
+template<typename T>
+void sinh_for(std::valarray<T> const& z)
+{
+    // Hyperbolic sine is sinh(z) = (eᶻ - e⁻ᶻ) / 2.
+ 
+    const std::valarray<T> sinh_z{std::sinh(z)};
+    const std::valarray<T> e_z{std::exp(z)};
+    const std::valarray<T> e_neg_z{std::exp(-z)};
+    const std::valarray<T> sinh_def{(e_z - e_neg_z) / 2.0f};
+ 
+    show("n         ", z);
+    show("sinh(n)   ", sinh_z);
+    show("(eⁿ-e⁻ⁿ)/2", sinh_def);
+ 
+    std::cout.put('\n');
+}
+ 
+int main()
+{
+    sinh_for(std::valarray<float>{-.2f, -.1f, 0.f, .1f, .2f, INFINITY});
+    sinh_for(std::valarray<std::complex<double>>{{-.2,-.1}, {.2,.1}});
+}
+```
+Output:
+```text
+n          : -0.200000 -0.100000 0.000000 0.100000 0.200000 inf 
+sinh(n)    : -0.201336 -0.100167 0.000000 0.100167 0.201336 inf 
+(eⁿ-e⁻ⁿ)/2 : -0.201336 -0.100167 0.000000 0.100167 0.201336 inf 
+ 
+n          : (-0.200000,-0.100000) (0.200000,0.100000) 
+sinh(n)    : (-0.200330,-0.101837) (0.200330,0.101837) 
+(eⁿ-e⁻ⁿ)/2 : (-0.200330,-0.101837) (0.200330,0.101837)
+```
+
+### See also
+
+{/* source:cpp-numeric-valarray-sinh:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`cosh(std::valarray)`](/docs/cpp/library/numeric/valarray/cosh)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::cosh`](/docs/cpp/library/numeric/math/cosh) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tanh(std::valarray)`](/docs/cpp/library/numeric/valarray/tanh)</DescriptionTerm>
+    <DescriptionBody>applies the function [`std::tanh`](/docs/cpp/library/numeric/math/tanh) to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sinh`, `sinhf`, `sinhl`](/docs/cpp/library/numeric/math/sinh) <InlineRevision since="C++11" /> <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes hyperbolic sine (`sinh(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sinh(std::complex)`](/docs/cpp/library/numeric/complex/sinh)</DescriptionTerm>
+    <DescriptionBody>computes hyperbolic sine of a complex number (`sinh(z)`) <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

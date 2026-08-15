@@ -1,0 +1,101 @@
+---
+title: "std::random_device::random_device"
+description: "Default constructs a new std::random_device object with an implementation-defined token."
+source_url: "https://en.cppreference.com/w/cpp/numeric/random/random_device/random_device"
+language: "C++"
+---
+
+{/* source:cpp-numeric-random-random-device-random-device:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" since="C++11" code={`random_device() : random_device( /*implementation-defined*/ ) {}`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`explicit random_device( const std::string& token );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`random_device( const random_device& ) = delete;`} />
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-random-random-device-random-device:0001 */}
+    1. Default constructs a new [`std::random_device`](/docs/cpp/library/numeric/random/random_device) object with an implementation-defined `token`.
+
+    {/* source:cpp-numeric-random-random-device-random-device:0002 */}
+    2. Constructs a new [`std::random_device`](/docs/cpp/library/numeric/random/random_device) object, making use of the argument `token` in an implementation-defined manner.
+
+    {/* source:cpp-numeric-random-random-device-random-device:0003 */}
+    3. The copy constructor is deleted: `std::random_device` is not copyable nor movable.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Exceptions
+
+{/* source:cpp-numeric-random-random-device-random-device:0004 */}
+Throws an implementation-defined exception derived from [`std::exception`](/docs/cpp/library/error/exception) on failure.
+
+### Notes
+
+{/* source:cpp-numeric-random-random-device-random-device:0005 */}
+The implementation in [libstdc++](https://github.com/gcc-mirror/gcc/blob/master/libstdc%2B%2B-v3/src/c%2B%2B11/random.cc#L319) expects `token` to name the source of random bytes. Possible token values include `"default"`, `"hw"`, `"rand_s"`, `"rdseed"`, `"rdrand"`, `"rdrnd"`, `"/dev/urandom"`, `"/dev/random"`, `"mt19937"`, and integer string specifying the seed of the mt19937 engine. (Token values other than `"default"` are only valid for certain targets.)
+
+{/* source:cpp-numeric-random-random-device-random-device:0006 */}
+The implementation in [libc++](https://github.com/llvm/llvm-project/blob/main/libcxx/src/random.cpp#L124), when configured to use character device as the source, expects `token` to be the name of a character device that produces random numbers when read from; otherwise it expects `token` to be `"/dev/urandom"`.
+
+{/* source:cpp-numeric-random-random-device-random-device:0007 */}
+Both libstdc++ and libc++ throw an exception if provided an unsupported token. [Microsoft's stdlib](https://github.com/microsoft/STL/blob/c10ae01b4d9508eed9d5f059a120ee7223b6ac12/stl/inc/random#L5026) ignores the token entirely.
+
+### Example
+
+{/* source:cpp-numeric-random-random-device-random-device:0008 */}
+Demonstrates commonly available types of `std::random_device` on Linux.
+
+```cpp
+#include <iostream>
+#include <random>
+ 
+void demo(std::random_device&& rd)
+{
+    static std::uniform_int_distribution<int> d(0, 9);
+    for (int n = 0; n != 10; ++n)
+        std::cout << d(rd) << ' ';
+    std::cout << '\n';
+}
+ 
+int main()
+{
+    // Note: How the supplied token is handled is implementation-defined!
+ 
+    // Default token for random_device is usually /dev/urandom on Linux
+    demo(std::random_device {});
+ 
+    // Request /dev/random, blocks when entropy is empty
+    // Works on libstdc++, ignored in msvc++, might throw on libc++ (as of Nov 2022)
+    demo(std::random_device {"/dev/random"});
+ 
+    // Request non-blocking /dev/urandom, ensures that RDRAND is not used
+    // Works on libstdc++ and libc++, ignored in msvc++ (as of Nov 2022)
+    demo(std::random_device {"/dev/urandom"});
+ 
+    // Request "hw", will use hardware-based random generation like rdrand
+    // Works on libstdc++, ignored in msvc++, throws on libc++ (as of Nov 2022)
+    demo(std::random_device {"hw"});
+}
+```
+
+Possible output:
+
+```text
+9 5 2 7 5 9 4 1 0 7 
+4 7 6 5 1 5 5 1 8 6 
+3 3 6 1 4 1 4 1 0 2 
+4 6 3 9 1 9 4 0 9 3
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-random-random-device-random-device:0009 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-random-random-device-random-device:0010 */}
+<DefectReportList>
+  <DefectReport kind="paper" id="P0935R0" standard="C++11">
+    <PublishedBehavior>default constructor was explicit</PublishedBehavior>
+    <CorrectedBehavior>made implicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

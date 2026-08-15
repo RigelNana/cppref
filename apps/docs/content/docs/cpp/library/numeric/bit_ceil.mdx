@@ -1,0 +1,118 @@
+---
+title: "std::bit_ceil"
+description: "Calculates the smallest integral power of two that is not smaller than x."
+source_url: "https://en.cppreference.com/w/cpp/numeric/bit_ceil"
+language: "C++"
+---
+
+{/* source:cpp-numeric-bit-ceil:0000 */}
+<DeclarationDoc>
+Defined in header [`<bit>`](/docs/cpp/library/headers/bit)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+constexpr T bit_ceil( T x );`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-bit-ceil:0001 */}
+Calculates the smallest integral power of two that is not smaller than `x`.
+
+{/* source:cpp-numeric-bit-ceil:0002 */}
+If that value is not representable in `T`, the behavior is undefined. Call to this function is permitted in [constant evaluation](/docs/cpp/language/expressions/constant_expression) only if the undefined behavior does not occur.
+
+{/* source:cpp-numeric-bit-ceil:0003 */}
+This overload participates in overload resolution only if `T` is an unsigned integer type (that is, `unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, `unsigned long long`, or an extended unsigned integer type).
+
+### Parameters
+
+{/* source:cpp-numeric-bit-ceil:0004 */}
+<ParameterList>
+  <Parameter name="x">value of unsigned integer type</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-bit-ceil:0005 */}
+The smallest integral power of two that is not smaller than `x`.
+
+### Exceptions
+
+{/* source:cpp-numeric-bit-ceil:0006 */}
+Throws nothing.
+
+### Notes
+
+{/* source:cpp-numeric-bit-ceil:0007 */}
+Prior to [P1956R1](https://wg21.link/P1956R1), the proposed name for this function template was `ceil2`.
+
+{/* source:cpp-numeric-bit-ceil:0008 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_int_pow2`](/docs/cpp/library/feature_test#cpp_lib_int_pow2) | [`202002L`](/docs/cpp/library/compiler_support/20#cpp_lib_int_pow2_202002L) | (C++20) | [Integral power-of-2 operations](/docs/cpp/library/numeric#Bit_manipulation_.28since_C.2B.2B20.29) |
+
+### Possible implementation
+
+{/* source:cpp-numeric-bit-ceil:0009 */}
+See possible implementations in [libstdc++ (gcc)](https://github.com/gcc-mirror/gcc/blob/62c25d7adb1a5664982449dda0e7f9ca63cf4735/libstdc%2B%2B-v3/include/std/bit#L217-L248) and [libc++ (clang)](https://github.com/llvm/llvm-project/blob/llvmorg-14.0.4/libcxx/include/bit#L304-L321).
+
+{/* source:cpp-numeric-bit-ceil:0010 */}
+```cpp
+template<std::unsigned_integral T>
+    requires !std::same_as<T, bool> && !std::same_as<T, char> &&
+             !std::same_as<T, char8_t> && !std::same_as<T, char16_t> &&
+             !std::same_as<T, char32_t> && !std::same_as<T, wchar_t>
+constexpr T bit_ceil(T x) noexcept
+{
+    if (x <= 1u)
+        return T(1);
+    if constexpr (std::same_as<T, decltype(+x)>)
+        return T(1) << std::bit_width(T(x - 1));
+    else
+    {   // for types subject to integral promotion
+        constexpr int offset_for_ub =
+            std::numeric_limits<unsigned>::digits - std::numeric_limits<T>::digits;
+        return T(1u << (std::bit_width(T(x - 1)) + offset_for_ub) >> offset_for_ub);
+    }
+}
+```
+
+### Example
+
+{/* source:cpp-numeric-bit-ceil:0011 */}
+```cpp
+#include <bit>
+#include <bitset>
+#include <iostream>
+ 
+int main()
+{
+    using bin = std::bitset<8>;
+    for (auto x{0U}; 0XA != x; ++x)
+        std::cout << "bit_ceil( " << bin(x) << " ) = "
+                  << bin(std::bit_ceil(x)) << '\n';
+}
+```
+
+Output:
+
+```text
+bit_ceil( 00000000 ) = 00000001
+bit_ceil( 00000001 ) = 00000001
+bit_ceil( 00000010 ) = 00000010
+bit_ceil( 00000011 ) = 00000100
+bit_ceil( 00000100 ) = 00000100
+bit_ceil( 00000101 ) = 00001000
+bit_ceil( 00000110 ) = 00001000
+bit_ceil( 00000111 ) = 00001000
+bit_ceil( 00001000 ) = 00001000
+bit_ceil( 00001001 ) = 00010000
+```
+
+### See also
+
+{/* source:cpp-numeric-bit-ceil:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`bit_floor`](/docs/cpp/library/utility/bit/bit_floor) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>finds the largest integral power of 2 not greater than the given value (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

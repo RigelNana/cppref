@@ -1,0 +1,125 @@
+---
+title: "std::has_single_bit"
+description: "Checks if x is an integral power of two."
+source_url: "https://en.cppreference.com/w/cpp/numeric/has_single_bit"
+language: "C++"
+---
+
+{/* source:cpp-numeric-has-single-bit:0000 */}
+<DeclarationDoc>
+Defined in header [`<bit>`](/docs/cpp/library/headers/bit)
+
+  <Declaration language="cpp" since="C++20" code={`template< class T >
+constexpr bool has_single_bit( T x ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-has-single-bit:0001 */}
+Checks if `x` is an integral power of two.
+
+{/* source:cpp-numeric-has-single-bit:0002 */}
+This overload participates in overload resolution only if `T` is an unsigned integer type (that is, `unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, `unsigned long long`, or an extended unsigned integer type).
+
+### Parameters
+
+{/* source:cpp-numeric-has-single-bit:0003 */}
+<ParameterList>
+  <Parameter name="x">value of unsigned integer type</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-has-single-bit:0004 */}
+`true` if `x` is an integral power of two; otherwise `false`.
+
+### Notes
+
+{/* source:cpp-numeric-has-single-bit:0005 */}
+Prior to [P1956R1](https://wg21.link/P1956R1), the proposed name for this function template was `ispow2`.
+
+{/* source:cpp-numeric-has-single-bit:0006 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_int_pow2`](/docs/cpp/library/feature_test#cpp_lib_int_pow2) | [`202002L`](/docs/cpp/library/compiler_support/20#cpp_lib_int_pow2_202002L) | (C++20) | [Integral power-of-2 operations](/docs/cpp/library/numeric#Bit_manipulation_.28since_C.2B.2B20.29) |
+
+### Possible implementation
+
+{/* source:cpp-numeric-has-single-bit:0007 */}
+**First version**
+
+```cpp
+template<std::unsigned_integral T>
+    requires !std::same_as<T, bool> && !std::same_as<T, char> &&
+             !std::same_as<T, char8_t> && !std::same_as<T, char16_t> &&
+             !std::same_as<T, char32_t> && !std::same_as<T, wchar_t>
+constexpr bool has_single_bit(T x) noexcept
+{
+    return x && !(x & (x - 1));
+}
+```
+
+**Second version**
+
+```cpp
+template<std::unsigned_integral T>
+    requires !std::same_as<T, bool> && !std::same_as<T, char> &&
+             !std::same_as<T, char8_t> && !std::same_as<T, char16_t> &&
+             !std::same_as<T, char32_t> && !std::same_as<T, wchar_t>
+constexpr bool has_single_bit(T x) noexcept
+{
+    return std::popcount(x) == 1;
+}
+```
+
+### Example
+
+{/* source:cpp-numeric-has-single-bit:0008 */}
+```cpp
+#include <bit>
+#include <bitset>
+#include <cmath>
+#include <iostream>
+ 
+int main()
+{
+    for (auto u{0u}; u != 0B1010; ++u)
+    {
+        std::cout << "u = " << u << " = " << std::bitset<4>(u);
+        if (std::has_single_bit(u))
+            std::cout << " = 2^" << std::log2(u) << " (is power of two)";
+        std::cout << '\n';
+    }
+}
+```
+
+Output:
+
+```text
+u = 0 = 0000
+u = 1 = 0001 = 2^0 (is power of two)
+u = 2 = 0010 = 2^1 (is power of two)
+u = 3 = 0011
+u = 4 = 0100 = 2^2 (is power of two)
+u = 5 = 0101
+u = 6 = 0110
+u = 7 = 0111
+u = 8 = 1000 = 2^3 (is power of two)
+u = 9 = 1001
+```
+
+### See also
+
+{/* source:cpp-numeric-has-single-bit:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`popcount`](/docs/cpp/library/utility/bit/popcount) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>counts the number of `1` bits in an unsigned integer (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`count`](/docs/cpp/library/utility/bitset/count)</DescriptionTerm>
+    <DescriptionBody>returns the number of bits set to `true` (public member function of `std::bitset<N>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`test`](/docs/cpp/library/utility/bitset/test)</DescriptionTerm>
+    <DescriptionBody>accesses specific bit (public member function of `std::bitset<N>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,127 @@
+---
+
+title: "std::valarray<T>::operator+,-,~,!"
+
+description: "Applies unary operators to each element in the numeric array."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/operator_arith"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-operator-arith:0000 */}
+<DeclarationDoc>
+  <Declaration id="1" language="cpp" code={`valarray<T> operator+() const;`} />
+  <Declaration id="2" language="cpp" code={`valarray<T> operator-() const;`} />
+  <Declaration id="3" language="cpp" code={`valarray<T> operator~() const;`} />
+  <Declaration id="4" language="cpp" code={`valarray<bool> operator!() const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-operator-arith:0001 */}
+Applies unary operators to each element in the numeric array.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-operator-arith:0002 */}
+(none)
+
+### Return value
+
+{/* source:cpp-numeric-valarray-operator-arith:0003 */}
+A numeric array containing elements with values obtained by applying corresponding operator to the values in `*this`.
+
+### Exceptions
+
+{/* source:cpp-numeric-valarray-operator-arith:0004 */}
+May throw implementation-defined exceptions.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-operator-arith:0005 */}
+Each of the operators can only be instantiated if the following requirements are met:
+
+{/* source:cpp-numeric-valarray-operator-arith:0006 */}
+- The indicated operator can be applied to type `T`.
+- The result value can be unambiguously converted to `T` (1-3) or `bool` (4).
+
+{/* source:cpp-numeric-valarray-operator-arith:0007 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-operator-arith:0008 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Example
+
+{/* source:cpp-numeric-valarray-operator-arith:0009 */}
+Possible output:
+```cpp
+#include <iostream>
+#include <string_view>
+#include <valarray>
+ 
+template<typename T>
+void print(std::string_view const note,
+           std::valarray<T> const vala, // by-value, see Notes above
+           std::string_view const term = "\n")
+{
+    std::cout << note << std::boolalpha << std::showpos;
+    for (T const element : vala)
+        std::cout << '\t' << element;
+    std::cout << term;
+}
+ 
+int main()
+{
+    std::valarray<int> x{1, 2, 3, 4};
+    print<int>("x: ", x);
+    print<int>("+x: ", +x);
+    print<int>("+ + x: ", + + x);
+    print<int>("-x: ", -x);
+    print<int>("- - x: ", - - x, "\n\n");
+ 
+    std::valarray<short> y{0, 1, -1, 0x7fff};
+    print<short>("y: ", y);
+    print<short>("~y: ", ~y);
+    print<short>("~~y: ", ~~y, "\n\n");
+ 
+    std::valarray<bool> z{true, false};
+    print<bool>("z: ", z);
+    print<bool>("!z: ", !z);
+    print<bool>("!!z: ", !!z);
+}
+```
+Output:
+```text
+x:      +1      +2      +3      +4
++x:     +1      +2      +3      +4
++ + x:  +1      +2      +3      +4
+-x:     -1      -2      -3      -4
+- - x:  +1      +2      +3      +4
+ 
+y:      +0      +1      -1      +32767
+~y:     -1      -2      +0      -32768
+~~y:    +0      +1      -1      +32767
+ 
+z:      true    false
+!z:     false   true
+!!z:    true    false
+```
+
+### See also
+
+{/* source:cpp-numeric-valarray-operator-arith:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+=`, `operator-=`, `operator*=`, `operator/=`, `operator%=`, `operator&=`, `operator|=`, `operator^=`, `operator<<=`, `operator>>=`](/docs/cpp/library/numeric/valarray/operator_arith2)</DescriptionTerm>
+    <DescriptionBody>applies compound assignment operator to each element of the valarray <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+`, `operator-`, `operator*`, `operator/`, `operator%`, `operator&`, `operator|`, `operator^`, `operator<<`, `operator>>`, `operator&&`, `operator||`](/docs/cpp/library/numeric/valarray/operator_arith3)</DescriptionTerm>
+    <DescriptionBody>applies binary operators to each element of two valarrays, or a valarray and a value <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

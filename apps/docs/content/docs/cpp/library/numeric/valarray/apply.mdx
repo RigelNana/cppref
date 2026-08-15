@@ -1,0 +1,110 @@
+---
+
+title: "std::valarray<T>::apply"
+
+description: "Returns a new valarray of the same size with values which are acquired by applying function func to the previous values of the elements."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/apply"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-apply:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" code={`valarray<T> apply( T func(T) ) const;`} />
+  <Declaration language="cpp" code={`valarray<T> apply( T func(const T&) ) const;`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-apply:0001 */}
+Returns a new valarray of the same size with values which are acquired by applying function `func` to the previous values of the elements.
+
+### Parameters
+
+{/* source:cpp-numeric-valarray-apply:0002 */}
+<ParameterList>
+  <Parameter name="func">function to apply to the values</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-valarray-apply:0003 */}
+The resulting valarray with values acquired by applying function `func`.
+
+### Notes
+
+{/* source:cpp-numeric-valarray-apply:0004 */}
+The function can be implemented with the return type different from [`std::valarray`](/docs/cpp/library/numeric/valarray). In this case, the replacement type has the following properties:
+
+{/* source:cpp-numeric-valarray-apply:0005 */}
+- All const member functions of [`std::valarray`](/docs/cpp/library/numeric/valarray) are provided.
+- [`std::valarray`](/docs/cpp/library/numeric/valarray), [`std::slice_array`](/docs/cpp/library/numeric/valarray/slice_array), [`std::gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array), [`std::mask_array`](/docs/cpp/library/numeric/valarray/mask_array) and [`std::indirect_array`](/docs/cpp/library/numeric/valarray/indirect_array) can be constructed from the replacement type.
+- For every function taking a const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) <InlineRevision since="C++11">except [`begin()`](/docs/cpp/library/numeric/valarray/begin2) and [`end()`](/docs/cpp/library/numeric/valarray/end2)</InlineRevision>, identical functions taking the replacement types shall be added;
+- For every function taking two const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) arguments, identical functions taking every combination of const [`std::valarray<T>&`](/docs/cpp/library/numeric/valarray) and replacement types shall be added.
+- The return type does not add more than two levels of template nesting over the most deeply-nested argument type.
+
+### Possible implementation
+
+{/* source:cpp-numeric-valarray-apply:0006 */}
+Following straightforward implementations can be replaced by expression templates for a higher efficiency.
+
+{/* source:cpp-numeric-valarray-apply:0007 */}
+```cpp
+template<class T>
+valarray<T> valarray<T>::apply(T func(T)) const
+{
+    valarray<T> other = *this;
+    for (T& i : other)
+        i = func(i);
+    return other;
+}
+ 
+template<class T>
+valarray<T> valarray<T>::apply(T func(const T&)) const
+{
+    valarray<T> other = *this;
+    for (T& i : other)
+        i = func(i);
+    return other;
+}
+```
+
+### Example
+
+{/* source:cpp-numeric-valarray-apply:0008 */}
+Calculates and prints the first 10 factorials.
+```cpp
+#include <cmath>
+#include <iostream>
+#include <valarray>
+ 
+int main()
+{
+    std::valarray<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    v = v.apply([](int n) -> int
+                {
+                    return std::round(std::tgamma(n + 1));
+                });
+    for (auto n : v)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+```
+Output:
+```text
+1 2 6 24 120 720 5040 40320 362880 3628800
+```
+
+### See also
+
+{/* source:cpp-numeric-valarray-apply:0009 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`for_each`](/docs/cpp/library/algorithm/for_each)</DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::for_each`](/docs/cpp/library/algorithm/ranges/for_each)<InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>applies a function to a range of elements<br />(algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

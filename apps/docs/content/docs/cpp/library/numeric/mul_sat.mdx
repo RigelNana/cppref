@@ -1,0 +1,123 @@
+---
+title: "std::mul_sat"
+description: "Computes the saturating multiplication x × y. This operation (unlike built-in arithmetic operations on integers) behaves as-if it is a mathematical operation with an infinite range. Let q denote the result of such operation. Returns:"
+source_url: "https://en.cppreference.com/w/cpp/numeric/mul_sat"
+language: "C++"
+---
+
+{/* source:cpp-numeric-mul-sat:0000 */}
+<DeclarationDoc>
+Defined in header [`<numeric>`](/docs/cpp/library/headers/numeric)
+
+  <Declaration language="cpp" since="C++26" code={`template< class T >
+constexpr T mul_sat( T x, T y ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-mul-sat:0001 */}
+Computes the [saturating](https://en.wikipedia.org/wiki/Saturation_arithmetic) multiplication `x × y`. This operation (unlike built-in [arithmetic operations on integers](/docs/cpp/language/expressions/operator_arithmetic#Overflows)) behaves as-if it is a mathematical operation with an infinite range. Let `q` denote the result of such operation. Returns:
+
+{/* source:cpp-numeric-mul-sat:0002 */}
+- `q`, if `q` is representable as a value of type `T`. Otherwise, the largest or smallest value of type `T`, whichever is closer to the `q`.
+
+{/* source:cpp-numeric-mul-sat:0003 */}
+This overload participates in overload resolution only if `T` is an [integer type](/docs/cpp/language/basic_concepts/types#Integer_types), that is: `signed char`, `short`, `int`, `long`, `long long`, an extended signed integer type, or an unsigned version of such types. In particular, `T` must not be (possibly cv-qualified) `bool`, `char`, `wchar_t`, `char8_t`, `char16_t`, and `char32_t`, as these types are not intended for arithmetic.
+
+### Parameters
+
+{/* source:cpp-numeric-mul-sat:0004 */}
+<ParameterList>
+  <Parameter name="x">integer values</Parameter>
+  <Parameter name="y">integer values</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-mul-sat:0005 */}
+Saturated `x × y`.
+
+### Notes
+
+{/* source:cpp-numeric-mul-sat:0006 */}
+Unlike the built-in arithmetic operators on integers, the [integral promotion](/docs/cpp/language/expressions/implicit_cast#Integral_promotion) does not apply to the `x` and `y` arguments.
+
+{/* source:cpp-numeric-mul-sat:0007 */}
+If two arguments of different type are passed, the call fails to compile, i.e. the behavior relative to [template argument deduction](/docs/cpp/language/templates/template_argument_deduction) is the same as for [`std::min`](/docs/cpp/library/algorithm/min) or [`std::max`](/docs/cpp/library/algorithm/max).
+
+{/* source:cpp-numeric-mul-sat:0008 */}
+Most modern hardware architectures have efficient support for saturation arithmetic on SIMD vectors, including SSE2 for x86 and NEON for ARM.
+
+{/* source:cpp-numeric-mul-sat:0009 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_saturation_arithmetic`](/docs/cpp/library/feature_test#cpp_lib_saturation_arithmetic) | [`202311L`](/docs/cpp/library/compiler_support/26#cpp_lib_saturation_arithmetic_202311L) | (C++26) | Saturation arithmetic |
+
+### Possible implementation
+
+{/* source:cpp-numeric-mul-sat:0010 */}
+See [libstdc++ (gcc)](https://github.com/gcc-mirror/gcc/tree/master/libstdc%2B%2B-v3/include/bits/sat_arith.h#L42).
+
+### Example
+
+{/* source:cpp-numeric-mul-sat:0011 */}
+Can be previewed on [Compiler Explorer](https://godbolt.org/z/T58GEKPM6).
+
+```cpp
+#include <climits>
+#include <numeric>
+ 
+static_assert
+(""
+    && (std::mul_sat<int>(2, 3) == 6) // not saturated
+    && (std::mul_sat<int>(INT_MAX / 2, 3) == INT_MAX) // saturated
+    && (std::mul_sat<int>(-2, 3) == -6) // not saturated
+    && (std::mul_sat<int>(INT_MIN / -2, -3) == INT_MIN) // saturated
+    && (std::mul_sat<unsigned>(2, 3) == 6) // not saturated
+    && (std::mul_sat<unsigned>(UINT_MAX / 2, 3) == UINT_MAX) // saturated
+);
+ 
+int main() {}
+```
+
+### See also
+
+{/* source:cpp-numeric-mul-sat:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`add_sat`](/docs/cpp/library/numeric/add_sat) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>saturating addition operation on two integers (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`sub_sat`](/docs/cpp/library/numeric/sub_sat) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>saturating subtraction operation on two integers (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`div_sat`](/docs/cpp/library/numeric/div_sat) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>saturating division operation on two integers (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`saturate_cast`](/docs/cpp/library/numeric/saturate_cast) <InlineRevision since="C++26" /></DescriptionTerm>
+    <DescriptionBody>returns an integer value clamped to the range of another integer type (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`clamp`](/docs/cpp/library/algorithm/clamp) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>clamps a value between a pair of boundary values (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`in_range`](/docs/cpp/library/utility/in_range) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>checks if an integer value is in the range of a given integer type (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`min`](/docs/cpp/library/utility/types/numeric_limits/min) [static]</DescriptionTerm>
+    <DescriptionBody>returns the smallest finite value of the given non-floating-point type, or the smallest positive normal value of the given floating-point type (public static member function of `std::numeric_limits<T>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`max`](/docs/cpp/library/utility/types/numeric_limits/max) [static]</DescriptionTerm>
+    <DescriptionBody>returns the largest finite value of the given type (public static member function of `std::numeric_limits<T>`)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-numeric-mul-sat:0013 */}
+1. [A branch-free implementation of saturation arithmetic](http://locklessinc.com/articles/sat_arithmetic/) — Locklessinc.com, 2012
+2. [C++ Weekly - Ep 459 - C++26's Saturating Math Operations](https://youtu.be/XNMnQOFrEIY) — Youtube.com, 2024-12-16

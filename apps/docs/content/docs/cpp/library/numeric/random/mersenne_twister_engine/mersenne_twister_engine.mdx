@@ -1,0 +1,108 @@
+---
+title: "std::mersenne_twister_engine<UIntType,w,n,m,r,a,u,d,s,b,t,c,l,f>::mersenne_twister_engine"
+description: "Constructs the pseudo-random number engine."
+source_url: "https://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/mersenne_twister_engine"
+language: "C++"
+---
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" since="C++11" code={`mersenne_twister_engine() : mersenne_twister_engine(default_seed) {}`} />
+  <Declaration language="cpp" id="2" since="C++11" code={`explicit mersenne_twister_engine( result_type value );`} />
+  <Declaration language="cpp" id="3" since="C++11" code={`template< class SeedSeq >
+explicit mersenne_twister_engine( SeedSeq& seq );`} />
+  <Declaration language="cpp" id="4" since="C++11" code={`mersenne_twister_engine( const mersenne_twister_engine& other );`} /> (implicitly declared)
+
+  <DeclarationDescription>
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0001 */}
+Constructs the pseudo-random number engine.
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0002 */}
+1. The default constructor. If the default-constructed engine is of type `std::mt19937`, the 10000th consecutive invocation of it produces the value `4123659995`. If the default-constructed engine is of type `std::mt19937_64`, the 10000th consecutive invocation of it produces the value `9981545732273789042`.
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0003 */}
+2. Constructs the engine with a seed value `value`. Given 2w as `p`, the engine's initial [state](/docs/cpp/library/numeric/random/mersenne_twister_engine#Generator_properties) is determined as follows: Sets X-n to `value % p`. For each integer `i` in [`i - n``, ``-1``]`, sets Xi to [f·(Xi-1 xor (Xi-1 rshift (w-2)))+i mod n] mod p, where xor and rshift stand for built-in [bitwise XOR](/docs/cpp/language/expressions/operator_arithmetic#Bitwise_logic_operators) and [bitwise right-shift](/docs/cpp/language/expressions/operator_arithmetic#Bitwise_shift_operators) respectively.
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0004 */}
+3. Constructs the engine with a seed sequence `seq`. Given std::size_t(w / 32) + 1 as `k`, the engine's initial [state](/docs/cpp/library/numeric/random/mersenne_twister_engine#Generator_properties) is determined as follows: Creates an invented array object `a` of length `n * k`. Calls `seq.generate(a + 0, a + n * k)`. For each integer `i` in `[``-n``, ``-1``]`, sets Xi to (∑k-1 j=0 ak(i+n)+j·232j ) mod 2w . If the most significant `w − r` bits of X-n are zero, and if each of the other resulting Xi is `0`, changes X-n to 2w-1 .
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0005 */}
+This overload participates in overload resolution only if `SeedSeq` meets the requirements of [*SeedSequence*](/docs/cpp/library/named_req/SeedSequence).
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0006 */}
+4. The copy constructor. Upon construction, `*this == other` is `true`.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0007 */}
+<ParameterList>
+  <Parameter name="value">seed value to use in the initialization of the internal state</Parameter>
+  <Parameter name="seq">seed sequence to use in the initialization of the internal state</Parameter>
+</ParameterList>
+
+### Complexity
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0008 */}
+O(n).
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0009 */}
+3. Same as the complexity of the `seq.generate` call.
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0010 */}
+4. O(n).
+
+### Exceptions
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0011 */}
+3. If `SeedSeq` is not [`std::seed_seq`](/docs/cpp/library/numeric/random/seed_seq), throws the exceptions thrown by the `seq.generate` call.
+
+### Example
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0012 */}
+
+This section is incomplete Reason: demos for overloads (2-4) required
+
+```cpp
+#include <cassert>
+#include <random>
+ 
+int main()
+{
+    std::mt19937 gen32; // overload (1)
+    std::mt19937_64 gen64; // overload (1)
+    gen32.discard(10000 - 1);
+    gen64.discard(10000 - 1);
+    assert(gen32() == 4123659995);
+    assert(gen64() == 9981545732273789042ull);
+}
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2181} standard="C++11">
+    <PublishedBehavior>overload ( [3](/docs/cpp/library/numeric/random/mersenne_twister_engine/mersenne_twister_engine#Version_3)) would not throw even if the `seq.generate` call throws</PublishedBehavior>
+    <CorrectedBehavior>propagates the exception</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="paper" id="P0935R0" standard="C++11">
+    <PublishedBehavior>the default constructor was explicit</PublishedBehavior>
+    <CorrectedBehavior>made implicit</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-numeric-random-mersenne-twister-engine-mersenne-twister-engine:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`seed`](/docs/cpp/library/numeric/random/mersenne_twister_engine/seed)</DescriptionTerm>
+    <DescriptionBody>sets the current state of the engine <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,166 @@
+---
+title: "std::log, std::logf, std::logl"
+description: "Computes the natural (base e) logarithm of num."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/log"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-log:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       log ( float num );
+double      log ( double num );
+
+long double log ( long double num );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`/*floating-point-type*/
+            log ( /*floating-point-type*/ num );`} /> (constexpr since C++26)
+  <Declaration id="2" language="cpp" since="C++11" code={`float       logf( float num );`} /> (constexpr since C++26)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double logl( long double num );`} /> (constexpr since C++26)
+[SIMD overload](/docs/cpp/library/numeric/simd#Math_functions) <InlineRevision since="C++26" />
+Defined in header [`<simd>`](/docs/cpp/library/headers/simd)
+  <Declaration id="S" language="cpp" since="C++26" code={`template< /*math-floating-point*/ V >
+constexpr /*deduced-simd-t*/<V> 
+
+            log ( const V& v_num );`} />
+[Additional overloads](/docs/cpp/library/numeric/math/log#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      log ( Integer num );`} /> (constexpr since C++26)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-log:0001 */}
+    1-3) Computes the [natural (base *e*) logarithm](https://en.wikipedia.org/wiki/Natural_logarithm) of `num`.<InlineRevision since="C++23"> The library provides overloads of `std::log` for all cv-unqualified floating-point types as the type of the parameter.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-log:0002 */}
+<Revision since="C++26">
+S) The SIMD overload performs an element-wise `std::log` on `v_num`.
+(See [`math-floating-point`](/docs/cpp/library/numeric/simd#math-floating-point) and [`deduced-simd-t`](/docs/cpp/library/numeric/simd#deduced-simd-t) for their definitions.)
+</Revision>
+
+{/* source:cpp-numeric-math-log:0003 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-log:0004 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-log:0005 */}
+If no errors occur, the natural (base-*e*) logarithm of `num` (`ln(num)` or `loge(num)`) is returned.
+
+{/* source:cpp-numeric-math-log:0006 */}
+If a domain error occurs, an implementation-defined value is returned (NaN where supported).
+
+{/* source:cpp-numeric-math-log:0007 */}
+If a pole error occurs, [-HUGE_VAL](/docs/cpp/library/numeric/math/HUGE_VAL), `-HUGE_VALF`, or `-HUGE_VALL` is returned.
+
+### Error handling
+
+{/* source:cpp-numeric-math-log:0008 */}
+Errors are reported as specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-log:0009 */}
+Domain error occurs if `num` is less than zero.
+
+{/* source:cpp-numeric-math-log:0010 */}
+Pole error may occur if `num` is zero.
+
+{/* source:cpp-numeric-math-log:0011 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-log:0012 */}
+- If the argument is ±0, -∞ is returned and [FE_DIVBYZERO](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+- If the argument is 1, +0 is returned.
+- If the argument is negative, NaN is returned and [FE_INVALID](/docs/cpp/library/numeric/fenv/FE_exceptions) is raised.
+- If the argument is +∞, +∞ is returned.
+- If the argument is NaN, NaN is returned.
+
+### Notes
+
+{/* source:cpp-numeric-math-log:0013 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::log(num)` has the same effect as `std::log(static_cast<double>(num))`.
+
+### Example
+
+{/* source:cpp-numeric-math-log:0014 */}
+```cpp
+#include <cerrno>
+#include <cfenv>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::cout << "log(1) = " << std::log(1) << '\n'
+              << "base-5 logarithm of 125 = " << std::log(125) / std::log(5) << '\n';
+ 
+    // special values
+    std::cout << "log(1) = " << std::log(1) << '\n'
+              << "log(+Inf) = " << std::log(INFINITY) << '\n';
+ 
+    // error handling
+    errno = 0;
+    std::feclearexcept(FE_ALL_EXCEPT);
+ 
+    std::cout << "log(0) = " << std::log(0) << '\n';
+ 
+    if (errno == ERANGE)
+        std::cout << "    errno == ERANGE: " << std::strerror(errno) << '\n';
+    if (std::fetestexcept(FE_DIVBYZERO))
+        std::cout << "    FE_DIVBYZERO raised\n";
+}
+```
+
+Possible output:
+
+```text
+log(1) = 0
+base-5 logarithm of 125 = 3
+log(1) = 0
+log(+Inf) = inf
+log(0) = -inf
+    errno == ERANGE: Numerical result out of range
+    FE_DIVBYZERO raised
+```
+
+### See also
+
+{/* source:cpp-numeric-math-log:0015 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`log10`, `log10f`, `log10l`](/docs/cpp/library/numeric/math/log10) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>computes common (base `10`) logarithm (`log10(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log2`, `log2f`, `log2l`](/docs/cpp/library/numeric/math/log2) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>base `2` logarithm of the given number (`log2(x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log1p`, `log1pf`, `log1pl`](/docs/cpp/library/numeric/math/log1p) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>natural logarithm (to base `e`) of `1` plus the given number (`ln(1+x)`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exp`, `expf`, `expl`](/docs/cpp/library/numeric/math/exp) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>returns `e` raised to the given power (`ex`) <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log(std::complex)`](/docs/cpp/library/numeric/complex/log)</DescriptionTerm>
+    <DescriptionBody>complex natural logarithm with the branch cuts along the negative real axis <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`log(std::valarray)`](/docs/cpp/library/numeric/valarray/log)</DescriptionTerm>
+    <DescriptionBody>applies the function std::log to each element of valarray <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/log) for log

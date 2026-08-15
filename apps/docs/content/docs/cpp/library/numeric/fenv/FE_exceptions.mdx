@@ -1,0 +1,104 @@
+---
+title: "FE_DIVBYZERO, FE_INEXACT, FE_INVALID, FE_OVERFLOW, FE_UNDERFLOW, FE_ALL_EXCEPT"
+description: "All these macro constants (except FE_ALL_EXCEPT) expand to integer constant expressions that are distinct powers of 2, which uniquely identify all supported floating-point exceptions. Each macro is defined only if it is supported."
+source_url: "https://en.cppreference.com/w/cpp/numeric/fenv/FE_exceptions"
+language: "C++"
+---
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0000 */}
+<DeclarationDoc>
+Defined in header [`<cfenv>`](/docs/cpp/library/headers/cfenv)
+
+  <Declaration language="cpp" since="C++11" code={`#define FE_DIVBYZERO    /*implementation defined power of 2*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_INEXACT      /*implementation defined power of 2*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_INVALID      /*implementation defined power of 2*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_OVERFLOW     /*implementation defined power of 2*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_UNDERFLOW    /*implementation defined power of 2*/`} />
+  <Declaration language="cpp" since="C++11" code={String.raw`#define FE_ALL_EXCEPT   FE_DIVBYZERO | FE_INEXACT | \
+                        FE_INVALID | FE_OVERFLOW |  \
+
+                        FE_UNDERFLOW`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0001 */}
+All these macro constants (except `FE_ALL_EXCEPT`) expand to integer constant expressions that are distinct powers of 2, which uniquely identify all supported floating-point exceptions. Each macro is defined only if it is supported.
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0002 */}
+The macro constant `FE_ALL_EXCEPT`, which expands to the bitwise OR of all other `FE_*`, is always defined and is zero if floating-point exceptions are not supported by the implementation.
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0003 */}
+| Constant | Explanation |
+| --- | --- |
+| `FE_DIVBYZERO` | pole error occurred in an earlier floating-point operation |
+| `FE_INEXACT` | inexact result: rounding was necessary to store the result of an earlier floating-point operation |
+| `FE_INVALID` | domain error occurred in an earlier floating-point operation |
+| `FE_OVERFLOW` | the result of the earlier floating-point operation was too large to be representable |
+| `FE_UNDERFLOW` | the result of the earlier floating-point operation was subnormal with a loss of precision |
+| `FE_ALL_EXCEPT` | bitwise OR of all supported floating-point exceptions |
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0004 */}
+The implementation may define additional macro constants in [`<cfenv>`](/docs/cpp/library/headers/cfenv) to identify additional floating-point exceptions. All such constants begin with `FE_` followed by at least one uppercase letter.
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0005 */}
+See [`math_errhandling`](/docs/cpp/library/numeric/math/math_errhandling) for further details.
+
+### Example
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0006 */}
+```cpp
+#include <cfenv>
+#include <cmath>
+#include <iostream>
+ 
+// #pragma STDC FENV_ACCESS ON
+ 
+volatile double zero = 0.0; // volatile not needed where FENV_ACCESS is supported
+volatile double one = 1.0;  // volatile not needed where FENV_ACCESS is supported
+ 
+int main()
+{
+    std::feclearexcept(FE_ALL_EXCEPT);
+    std::cout <<  "1.0/0.0 = " << 1.0 / zero << '\n';
+    if (std::fetestexcept(FE_DIVBYZERO))
+        std::cout << "division by zero reported\n";
+    else
+        std::cout << "division by zero not reported\n";
+ 
+    std::feclearexcept(FE_ALL_EXCEPT);
+    std::cout << "1.0/10 = " << one / 10 << '\n';
+    if (std::fetestexcept(FE_INEXACT))
+        std::cout << "inexact result reported\n";
+    else
+        std::cout << "inexact result not reported\n";
+ 
+    std::feclearexcept(FE_ALL_EXCEPT);
+    std::cout << "sqrt(-1) = " << std::sqrt(-1) << '\n';
+    if (std::fetestexcept(FE_INVALID))
+        std::cout << "invalid result reported\n";
+    else
+        std::cout << "invalid result not reported\n";
+}
+```
+
+Possible output:
+
+```text
+1.0/0.0 = inf
+division by zero reported
+1.0/10 = 0.1
+inexact result reported
+sqrt(-1) = -nan
+invalid result reported
+```
+
+### See also
+
+{/* source:cpp-numeric-fenv-fe-exceptions:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`math_errhandling`, `MATH_ERRNO`, `MATH_ERREXCEPT`](/docs/cpp/library/numeric/math/math_errhandling) <InlineRevision since="C++11" />, <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>defines the error handling mechanism used by the common mathematical functions <br /> (macro constant)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/fenv/FE_exceptions) for floating point exception macros

@@ -1,0 +1,146 @@
+---
+title: "std::modf, std::modff, std::modfl"
+description: "Decomposes given floating point value num into integral and fractional parts, each having the same type and sign as num."
+source_url: "https://en.cppreference.com/w/cpp/numeric/math/modf"
+language: "C++"
+---
+
+{/* source:cpp-numeric-math-modf:0000 */}
+<DeclarationDoc>
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="1" language="cpp" until="C++23" code={`float       modf ( float num, float* iptr );
+double      modf ( double num, double* iptr );
+
+long double modf ( long double num, long double* iptr );`} />
+  <Declaration id="1" language="cpp" since="C++23" code={`constexpr /* floating-point-type */
+            modf ( /* floating-point-type */ num,
+
+                   /* floating-point-type */* iptr );`} />
+  <Declaration id="2" language="cpp" since="C++11" code={`float       modff( float num, float* iptr );`} /> (constexpr since C++23)
+  <Declaration id="3" language="cpp" since="C++11" code={`long double modfl( long double num, long double* iptr );`} /> (constexpr since C++23)
+[Additional overloads](/docs/cpp/library/numeric/math/modf#Notes) <InlineRevision since="C++11" />
+Defined in header [`<cmath>`](/docs/cpp/library/headers/cmath)
+  <Declaration id="A" language="cpp" code={`template< class Integer >
+double      modf ( Integer num, double* iptr );`} /> (constexpr since C++23)
+
+  <DeclarationDescription>
+    {/* source:cpp-numeric-math-modf:0001 */}
+    1-3) Decomposes given floating point value `num` into integral and fractional parts, each having the same type and sign as `num`. The integral part (in floating-point format) is stored in the object pointed to by `iptr`.<InlineRevision since="C++23"> The library provides overloads of `std::modf` for all cv-unqualified floating-point types as the type of the parameter `num` and the pointed-to type of `iptr`.</InlineRevision>
+  </DeclarationDescription>
+</DeclarationDoc>
+
+{/* source:cpp-numeric-math-modf:0002 */}
+<Revision since="C++11">
+A) Additional overloads are provided for all integer types, which are treated as `double`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-numeric-math-modf:0003 */}
+<ParameterList>
+  <Parameter name="num">floating-point or integer value</Parameter>
+  <Parameter name="iptr">pointer to floating-point value to store the integral part to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-numeric-math-modf:0004 */}
+If no errors occur, returns the fractional part of `num` with the same sign as `num`. The integral part is put into the value pointed to by `iptr`.
+
+{/* source:cpp-numeric-math-modf:0005 */}
+The sum of the returned value and the value stored in `*iptr` gives `num` (allowing for rounding).
+
+### Error handling
+
+{/* source:cpp-numeric-math-modf:0006 */}
+This function is not subject to any errors specified in [math_errhandling](/docs/cpp/library/numeric/math/math_errhandling).
+
+{/* source:cpp-numeric-math-modf:0007 */}
+If the implementation supports IEEE floating-point arithmetic (IEC 60559),
+
+{/* source:cpp-numeric-math-modf:0008 */}
+- If `num` is ±0, ±0 is returned, and ±0 is stored in `*iptr`.
+- If `num` is ±∞, ±0 is returned, and ±∞ is stored in `*iptr`.
+- If `num` is NaN, NaN is returned, and NaN is stored in `*iptr`.
+- The returned value is exact, [the current rounding mode](/docs/cpp/library/numeric/fenv/FE_round) is ignored.
+
+### Notes
+
+{/* source:cpp-numeric-math-modf:0009 */}
+This function behaves as if implemented as follows:
+
+{/* source:cpp-numeric-math-modf:0010 */}
+```cpp
+double modf(double num, double* iptr)
+{
+#pragma STDC FENV_ACCESS ON
+    int save_round = std::fegetround();
+    std::fesetround(FE_TOWARDZERO);
+    *iptr = std::nearbyint(num);
+    std::fesetround(save_round);
+    return std::copysign(std::isinf(num) ? 0.0 : num - (*iptr), num);
+}
+```
+
+{/* source:cpp-numeric-math-modf:0011 */}
+The additional overloads are not required to be provided exactly as (A). They only need to be sufficient to ensure that for their argument `num` of integer type, `std::modf(num, iptr)` has the same effect as `std::modf(static_cast<double>(num), iptr)`.
+
+### Example
+
+{/* source:cpp-numeric-math-modf:0012 */}
+Compares different floating-point decomposition functions:
+
+```cpp
+#include <cmath>
+#include <iostream>
+#include <limits>
+ 
+int main()
+{
+    double f = 123.45;
+    std::cout << "Given the number " << f << " or " << std::hexfloat
+              << f << std::defaultfloat << " in hex,\n";
+ 
+    double f3;
+    double f2 = std::modf(f, &f3);
+    std::cout << "modf() makes " << f3 << " + " << f2 << '\n';
+ 
+    int i;
+    f2 = std::frexp(f, &i);
+    std::cout << "frexp() makes " << f2 << " * 2^" << i << '\n';
+ 
+    i = std::ilogb(f);
+    std::cout << "logb()/ilogb() make " << f / std::scalbn(1.0, i) << " * "
+              << std::numeric_limits<double>::radix
+              << "^" << std::ilogb(f) << '\n';
+ 
+    // special values
+    f2 = std::modf(-0.0, &f3);
+    std::cout << "modf(-0) makes " << f3 << " + " << f2 << '\n';
+    f2 = std::modf(-INFINITY, &f3);
+    std::cout << "modf(-Inf) makes " << f3 << " + " << f2 << '\n';
+}
+```
+
+Possible output:
+
+```text
+Given the number 123.45 or 0x1.edccccccccccdp+6 in hex,
+modf() makes 123 + 0.45
+frexp() makes 0.964453 * 2^7
+logb()/ilogb() make 1.92891 * 2^6
+modf(-0) makes -0 + -0
+modf(-Inf) makes -INF + -0
+```
+
+### See also
+
+{/* source:cpp-numeric-math-modf:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`trunc`, `truncf`, `truncl`](/docs/cpp/library/numeric/math/trunc) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>nearest integer not greater in magnitude than the given value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/math/modf) for modf

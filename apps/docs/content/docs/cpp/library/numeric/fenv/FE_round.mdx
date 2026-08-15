@@ -1,0 +1,149 @@
+---
+title: "FE_DOWNWARD, FE_TONEAREST, FE_TOWARDZERO, FE_UPWARD"
+description: "Each of these macro constants expands to a nonnegative integer constant expression, which can be used with std::fesetround and std::fegetround to indicate one of the supported floating-point rounding modes. The implementation may define additional rounding mode constants in <cfenv>, which should all begin with FE_ followed by at least one uppercase letter. Each macro is only defined if it is supported."
+source_url: "https://en.cppreference.com/w/cpp/numeric/fenv/FE_round"
+language: "C++"
+---
+
+{/* source:cpp-numeric-fenv-fe-round:0000 */}
+<DeclarationDoc>
+Defined in header [`<cfenv>`](/docs/cpp/library/headers/cfenv)
+
+  <Declaration language="cpp" since="C++11" code={`#define FE_DOWNWARD     /*implementation defined*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_TONEAREST    /*implementation defined*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_TOWARDZERO   /*implementation defined*/`} />
+  <Declaration language="cpp" since="C++11" code={`#define FE_UPWARD       /*implementation defined*/`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-fenv-fe-round:0001 */}
+Each of these macro constants expands to a nonnegative integer constant expression, which can be used with [`std::fesetround`](/docs/cpp/library/numeric/fenv/feround) and [`std::fegetround`](/docs/cpp/library/numeric/fenv/feround) to indicate one of the supported floating-point rounding modes. The implementation may define additional rounding mode constants in [`<cfenv>`](/docs/cpp/library/headers/cfenv), which should all begin with `FE_` followed by at least one uppercase letter. Each macro is only defined if it is supported.
+
+{/* source:cpp-numeric-fenv-fe-round:0002 */}
+| Constant | Explanation |
+| --- | --- |
+| `FE_DOWNWARD` | rounding towards negative infinity |
+| `FE_TONEAREST` | rounding towards nearest representable value |
+| `FE_TOWARDZERO` | rounding towards zero |
+| `FE_UPWARD` | rounding towards positive infinity |
+
+{/* source:cpp-numeric-fenv-fe-round:0003 */}
+Additional rounding modes may be supported by an implementation.
+
+{/* source:cpp-numeric-fenv-fe-round:0004 */}
+The current rounding mode affects the following:
+
+{/* source:cpp-numeric-fenv-fe-round:0005 */}
+- results of floating-point [arithmetic operators](/docs/cpp/language/expressions/operator_arithmetic) outside of constant expressions
+
+{/* source:cpp-numeric-fenv-fe-round:0006 */}
+```cpp
+double x = 1;
+x / 10; // 0.09999999999999999167332731531132594682276248931884765625
+     // or 0.1000000000000000055511151231257827021181583404541015625
+```
+
+{/* source:cpp-numeric-fenv-fe-round:0007 */}
+- results of standard library [mathematical functions](/docs/cpp/library/numeric/math)
+
+{/* source:cpp-numeric-fenv-fe-round:0008 */}
+```cpp
+std::sqrt(2); // 1.41421356237309492343001693370752036571502685546875
+           // or 1.4142135623730951454746218587388284504413604736328125
+```
+
+{/* source:cpp-numeric-fenv-fe-round:0009 */}
+- floating-point to floating-point implicit conversion and casts
+
+{/* source:cpp-numeric-fenv-fe-round:0010 */}
+```cpp
+double d = 1 + std::numeric_limits<double>::epsilon();
+float f = d; // 1.00000000000000000000000
+          // or 1.00000011920928955078125
+```
+
+{/* source:cpp-numeric-fenv-fe-round:0011 */}
+- string conversions such as [`std::strtod`](/docs/cpp/library/text/byte/strtof) or [`std::printf`](/docs/cpp/library/io/c/printf)
+
+{/* source:cpp-numeric-fenv-fe-round:0012 */}
+```cpp
+std::stof("0.1"); // 0.0999999940395355224609375
+               // or 0.100000001490116119384765625
+```
+
+{/* source:cpp-numeric-fenv-fe-round:0013 */}
+- the library rounding functions [`std::nearbyint`](/docs/cpp/library/numeric/math/nearbyint), [`std::rint`](/docs/cpp/library/numeric/math/rint), [`std::lrint`](/docs/cpp/library/numeric/math/rint)
+
+{/* source:cpp-numeric-fenv-fe-round:0014 */}
+```cpp
+std::lrint(2.1); // 2 or 3
+```
+
+{/* source:cpp-numeric-fenv-fe-round:0015 */}
+The current rounding mode does NOT affect the following:
+
+{/* source:cpp-numeric-fenv-fe-round:0016 */}
+- floating-point to integer implicit conversion and casts (always towards zero),
+- results of floating-point arithmetic operators in expressions executed at compile time (always to nearest),
+- the library functions [`std::round`](/docs/cpp/library/numeric/math/round), [`std::lround`](/docs/cpp/library/numeric/math/round), [`std::llround`](/docs/cpp/library/numeric/math/round), [`std::ceil`](/docs/cpp/library/numeric/math/ceil), [`std::floor`](/docs/cpp/library/numeric/math/floor), [`std::trunc`](/docs/cpp/library/numeric/math/trunc).
+
+{/* source:cpp-numeric-fenv-fe-round:0017 */}
+As with any [floating-point environment](/docs/cpp/library/numeric/fenv) functionality, rounding is only guaranteed if `#pragma STDC FENV_ACCESS ON` is set.
+
+{/* source:cpp-numeric-fenv-fe-round:0018 */}
+Compilers that do not support the pragma may offer their own ways to support current rounding mode. For example Clang and GCC have the option `-frounding-math` intended to disable optimizations that would change the meaning of rounding-sensitive code.
+
+### Example
+
+{/* source:cpp-numeric-fenv-fe-round:0019 */}
+```cpp
+#include <cfenv>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <string>
+// #pragma STDC FENV_ACCESS ON
+ 
+int main()
+{
+    std::fesetround(FE_DOWNWARD);
+    std::cout << "rounding down: \n" << std::setprecision(50)
+              << "         pi = " << std::acos(-1.f) << '\n'
+              << "stof(\"1.1\") = " << std::stof("1.1") << '\n'
+              << "  rint(2.1) = " << std::rint(2.1) << "\n\n";
+    std::fesetround(FE_UPWARD);
+    std::cout << "rounding up: \n"
+              << "         pi = " << std::acos(-1.f) << '\n'
+              << "stof(\"1.1\") = " << std::stof("1.1") << '\n'
+              << "  rint(2.1) = " << std::rint(2.1) << '\n';
+}
+```
+
+Output:
+
+```text
+rounding down:
+         pi = 3.141592502593994140625
+stof("1.1") = 1.099999904632568359375
+  rint(2.1) = 2
+ 
+rounding up:
+         pi = 3.1415927410125732421875
+stof("1.1") = 1.10000002384185791015625
+  rint(2.1) = 3
+```
+
+### See also
+
+{/* source:cpp-numeric-fenv-fe-round:0020 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`float_round_style`](/docs/cpp/library/utility/types/numeric_limits/float_round_style)</DescriptionTerm>
+    <DescriptionBody>indicates floating-point rounding modes <br /> (enum)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`fegetround`, `fesetround`](/docs/cpp/library/numeric/fenv/feround) <InlineRevision since="C++11" />, <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>gets or sets rounding direction <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/fenv/FE_round) for floating-point rounding macros

@@ -1,0 +1,173 @@
+---
+
+title: "std::slice_array"
+
+description: "std::slice_array is a helper template used by the valarray subscript operator with std::slice argument. It has reference semantics to a subset of the array specified by the std::slice object."
+
+source_url: "https://en.cppreference.com/w/cpp/numeric/valarray/slice_array"
+
+language: "C++"
+
+---
+
+{/* source:cpp-numeric-valarray-slice-array:0000 */}
+<DeclarationDoc>
+Defined in header [`<valarray>`](/docs/cpp/library/headers/valarray)
+  <Declaration language="cpp" code={`template< class T > class slice_array;`} />
+</DeclarationDoc>
+
+{/* source:cpp-numeric-valarray-slice-array:0001 */}
+`std::slice_array` is a helper template used by the [valarray subscript operator](/docs/cpp/library/numeric/valarray/operator_at) with [`std::slice`](/docs/cpp/library/numeric/valarray/slice) argument. It has reference semantics to a subset of the array specified by the [`std::slice`](/docs/cpp/library/numeric/valarray/slice) object.
+
+### Member types
+
+{/* source:cpp-numeric-valarray-slice-array:0002 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>`value_type`</DescriptionTerm>
+    <DescriptionBody>`T`</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Member functions
+
+{/* source:cpp-numeric-valarray-slice-array:0003 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`(constructor)`](/docs/cpp/library/numeric/valarray/slice_array/slice_array)</DescriptionTerm>
+    <DescriptionBody>constructs a `slice_array` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`(destructor)`](/docs/cpp/library/numeric/valarray/slice_array/~slice_array)</DescriptionTerm>
+    <DescriptionBody>destroys a `slice_array` <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator=`](/docs/cpp/library/numeric/valarray/slice_array/operator_assignment)</DescriptionTerm>
+    <DescriptionBody>assigns contents <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`operator+=`, `operator-=`, `operator*=`, `operator/=`, `operator%=`, `operator&=`, `operator|=`, `operator^=`, `operator<<=`, `operator>>=`](/docs/cpp/library/numeric/valarray/slice_array/operator_arith)</DescriptionTerm>
+    <DescriptionBody>performs arithmetic operation on the array referred by slice. <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### Example
+
+{/* source:cpp-numeric-valarray-slice-array:0004 */}
+Output:
+```cpp
+#include <iostream>
+#include <valarray>
+ 
+class Matrix
+{
+    int dim;
+    std::valarray<int> data;
+public:
+    explicit Matrix(int dim, int init = 0)
+        : dim{dim}, data(init, dim*dim) {}
+    void clear(int value = 0) { data = value; }
+    void identity() { clear(); diagonal() = 1; }
+    int& operator()(int x, int y) { return data[dim * y + x]; }
+ 
+    std::slice_array<int> diagonal()
+    {
+        return data[std::slice(0, dim, dim + 1)];
+    }
+    std::slice_array<int> secondary_diagonal()
+    {
+        return data[std::slice(dim - 1, dim, dim - 1)];
+    }
+    std::slice_array<int> row(std::size_t row)
+    {
+        return data[std::slice(dim * row, dim, 1)];
+    }
+    std::slice_array<int> column(std::size_t col)
+    {
+        return data[std::slice(col, dim, dim)];
+    }
+    template<unsigned, unsigned> friend class MatrixStack;
+};
+ 
+template<unsigned dim = 3, unsigned max = 8> class MatrixStack
+{
+    std::valarray<int> stack;
+    unsigned count = 0;
+public:
+    MatrixStack() : stack(dim * dim * max) {}
+    void print_all() const
+    { 
+        std::valarray<int> row(dim*count);
+        for (unsigned r = 0; r != dim; ++r) // screen row
+        {
+            row = stack[std::gslice(r * dim, {count, dim}, {dim * dim, 1})];
+            for (unsigned i = 0; i != row.size(); ++i)
+                std::cout << row[i] << ((i + 1) % dim ? " " : " │ ");
+            std::cout << '\n';
+        }
+    }
+    void push_back(Matrix const& m)
+    {
+        if (count < max)
+        {
+            stack[std::slice(count * dim * dim, dim * dim, 1)]
+                = m.data[std::slice(0, dim * dim, 1)];
+            ++count;
+        }
+    }
+};
+ 
+int main()
+{
+    constexpr int dim = 3;
+    Matrix m{dim};
+    MatrixStack<dim,12> stack;
+ 
+    m.identity();
+    stack.push_back(m);
+ 
+    m.clear(1);
+    m.secondary_diagonal() = 3;
+    stack.push_back(m);
+ 
+    for (int i = 0; i != dim; ++i)
+    {
+        m.clear();
+        m.row(i) = i + 1;
+        stack.push_back(m);
+    }
+ 
+    for (int i = 0; i != dim; ++i)
+    {
+        m.clear();
+        m.column(i) = i + 1;
+        stack.push_back(m);
+    }
+ 
+    m.clear();
+    m.row(1) = std::valarray<int>{4, 5, 6};
+    stack.push_back(m);
+ 
+    m.clear();
+    m.column(1) = std::valarray<int>{7, 8, 9};
+    stack.push_back(m);
+ 
+    stack.print_all();
+}
+```
+Output:
+```text
+1 0 0 │ 1 1 3 │ 1 1 1 │ 0 0 0 │ 0 0 0 │ 1 0 0 │ 0 2 0 │ 0 0 3 │ 0 0 0 │ 0 7 0 │
+0 1 0 │ 1 3 1 │ 0 0 0 │ 2 2 2 │ 0 0 0 │ 1 0 0 │ 0 2 0 │ 0 0 3 │ 4 5 6 │ 0 8 0 │
+0 0 1 │ 3 1 1 │ 0 0 0 │ 0 0 0 │ 3 3 3 │ 1 0 0 │ 0 2 0 │ 0 0 3 │ 0 0 0 │ 0 9 0 │
+```
+
+### See also
+
+{/* source:cpp-numeric-valarray-slice-array:0005 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`gslice_array`](/docs/cpp/library/numeric/valarray/gslice_array)</DescriptionTerm>
+    <DescriptionBody>proxy to a subset of a valarray after applying a gslice <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

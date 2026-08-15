@@ -1,0 +1,113 @@
+---
+title: "std::independent_bits_engine<Engine,W,UIntType>::independent_bits_engine"
+description: "Constructs new pseudo-random engine adaptor."
+source_url: "https://en.cppreference.com/w/cpp/numeric/random/independent_bits_engine/independent_bits_engine"
+language: "C++"
+---
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0000 */}
+<DeclarationDoc>
+  <Declaration language="cpp" id="1" since="C++11" code={`independent_bits_engine();`} />
+  <Declaration language="cpp" id="2" since="C++11" code={`explicit independent_bits_engine( result_type s );`} />
+  <Declaration language="cpp" id="3" since="C++11" code={`template< class SeedSeq >
+explicit independent_bits_engine( SeedSeq& seq );`} />
+  <Declaration language="cpp" id="4" since="C++11" code={`explicit independent_bits_engine( const Engine& e );`} />
+  <Declaration language="cpp" id="5" since="C++11" code={`explicit independent_bits_engine( Engine&& e );`} />
+
+  <DeclarationDescription>
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0001 */}
+Constructs new pseudo-random engine adaptor.
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0002 */}
+1. Default constructor. The underlying engine is also default-constructed.
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0003 */}
+2. Constructs the underlying engine with `s`.
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0004 */}
+3. Constructs the underlying engine with seed sequence `seq`.
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0005 */}
+This overload participates in overload resolution only if `Sseq` satisfies the requirements of [*SeedSequence*](/docs/cpp/library/named_req/SeedSequence).
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0006 */}
+4. Constructs the underlying engine with a copy of `e`.
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0007 */}
+5. Move-constructs the underlying engine with `e`. `e` holds unspecified, but valid state afterwards.
+
+  </DeclarationDescription>
+</DeclarationDoc>
+
+### Parameters
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0008 */}
+<ParameterList>
+  <Parameter name="s">integer value to construct the underlying engine with</Parameter>
+  <Parameter name="seq">seed sequence to construct the underlying engine with</Parameter>
+  <Parameter name="e">pseudo-random number engine to initialize with</Parameter>
+</ParameterList>
+
+### Exceptions
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0009 */}
+3. If `SeedSeq` is not [`std::seed_seq`](/docs/cpp/library/numeric/random/seed_seq), throws the exceptions thrown by the `seq.generate` call.
+
+### Example
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0010 */}
+```cpp
+#include <iostream>
+#include <random>
+ 
+int main()
+{
+    auto print = [](auto rem, auto engine, int count)
+    {
+        std::cout << rem << ": ";
+        for (int i {}; i != count; ++i)
+            std::cout << static_cast<unsigned>(engine()) << ' ';
+        std::cout << '\n';
+    };
+ 
+    std::independent_bits_engine<std::mt19937, /*bits*/ 1, unsigned short>
+        e1; // default-constructed
+    print("e1", e1, 8);
+ 
+    std::independent_bits_engine<std::mt19937, /*bits*/ 1, unsigned int>
+        e2(1); // constructed with 1
+    print("e2", e2, 8);
+ 
+    std::random_device rd;
+    std::independent_bits_engine<std::mt19937, /*bits*/ 3, unsigned long>
+        e3(rd()); // seeded with rd()
+    print("e3", e3, 8);
+ 
+    std::seed_seq s {3, 1, 4, 1, 5};
+    std::independent_bits_engine<std::mt19937, /*bits*/ 3, unsigned long long>
+        e4(s); // seeded with seed-sequence s
+    print("e4", e4, 8);
+}
+```
+
+Possible output:
+
+```text
+e1: 0 0 0 1 0 1 1 1
+e2: 1 1 0 0 1 1 1 1
+e3: 3 1 5 4 3 2 3 4
+e4: 0 2 4 4 4 3 3 6
+```
+
+### Defect reports
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-numeric-random-independent-bits-engine-independent-bits-engine:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2181} standard="C++11">
+    <PublishedBehavior>overload ( [3](/docs/cpp/library/numeric/random/independent_bits_engine/independent_bits_engine#Version_3)) would not throw even if the `seq.generate` call throws</PublishedBehavior>
+    <CorrectedBehavior>propagates the exception</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
