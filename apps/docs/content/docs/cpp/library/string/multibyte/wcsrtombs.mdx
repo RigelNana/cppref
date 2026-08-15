@@ -1,0 +1,116 @@
+---
+title: "std::wcsrtombs"
+description: "Converts a sequence of wide characters from the array whose first element is pointed to by *src to its narrow multibyte representation that begins in the conversion state described by *ps. If dst is not null, converted characters are stored in the successive elements of the char array pointed to by dst. No more than len bytes are written to the destination array."
+source_url: "https://en.cppreference.com/w/cpp/string/multibyte/wcsrtombs"
+language: "C++"
+---
+
+{/* source:cpp-string-multibyte-wcsrtombs:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cwchar>`](/docs/cpp/library/headers/cwchar)
+  <Declaration language="cpp" code={`std::size_t wcsrtombs( char* dst,
+                       const wchar_t** src,
+                       std::size_t len,
+
+                       std::mbstate_t* ps );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-multibyte-wcsrtombs:0001 */}
+
+Converts a sequence of wide characters from the array whose first element is pointed to by `*src` to its narrow multibyte representation that begins in the conversion state described by `*ps`. If `dst` is not null, converted characters are stored in the successive elements of the char array pointed to by `dst`. No more than `len` bytes are written to the destination array.
+
+
+{/* source:cpp-string-multibyte-wcsrtombs:0002 */}
+
+Each character is converted as if by a call to [`std::wcrtomb`](/docs/cpp/library/text/multibyte/wcrtomb). The conversion stops if:
+
+
+{/* source:cpp-string-multibyte-wcsrtombs:0003 */}
+
+- The null character was converted and stored. `src` is set to a null pointer and `*ps` represents the initial shift state.
+- A `wchar_t` was found that does not correspond to a valid character in the current C locale. `src` is set to point at the first unconverted wide character.
+- The next multibyte character to be stored would exceed `len`. `src` is set to point at the first unconverted wide character. This condition is not checked if `dst` is a null pointer.
+
+### Parameters
+
+{/* source:cpp-string-multibyte-wcsrtombs:0004 */}
+
+<ParameterList>
+  <Parameter name="dst">pointer to narrow character array where the multibyte characters will be stored</Parameter>
+  <Parameter name="src">pointer to pointer to the first element of a null-terminated wide string</Parameter>
+  <Parameter name="len">number of bytes available in the array pointed to by dst</Parameter>
+  <Parameter name="ps">pointer to the conversion state object</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-multibyte-wcsrtombs:0005 */}
+
+On success, returns the number of bytes (including any shift sequences, but excluding the terminating `'\0'`) written to the character array whose first element is pointed to by `dst`. If `dst` is a null pointer, returns the number of bytes that would have been written (again, excluding the terminating null character `'\0'`).
+
+
+{/* source:cpp-string-multibyte-wcsrtombs:0006 */}
+
+On conversion error (if invalid wide character was encountered), returns `static_cast<std::size_t>(-1)`, stores [`EILSEQ`](/docs/cpp/library/error/errno_macros) in [`errno`](/docs/cpp/library/error/errno), and leaves `*ps` in unspecified state.
+
+
+### Example
+
+{/* source:cpp-string-multibyte-wcsrtombs:0007 */}
+
+```cpp
+#include <clocale>
+#include <cwchar>
+#include <iostream>
+#include <string>
+#include <vector>
+ 
+void print_wide(const wchar_t* wstr)
+{
+    std::mbstate_t state = std::mbstate_t();
+    std::size_t len = 1 + std::wcsrtombs(nullptr, &wstr, 0, &state);
+    std::vector<char> mbstr(len);
+    std::wcsrtombs(&mbstr[0], &wstr, mbstr.size(), &state);
+    std::cout << "multibyte string: " << &mbstr[0] << '\n'
+              << "Length, including '\\0': " << mbstr.size() << '\n';
+}
+ 
+int main()
+{
+    std::setlocale(LC_ALL, "en_US.utf8");
+    // UTF-8 narrow multibyte encoding
+    const wchar_t* wstr = L"z\u00df\u6c34\U0001d10b"; // or L"zß水𝄋"
+    print_wide(wstr);
+}
+```
+
+Output:
+
+```text
+multibyte string: zß水𝄋
+Length, including '\0': 11
+```
+
+### See also
+
+{/* source:cpp-string-multibyte-wcsrtombs:0008 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wcrtomb`](/docs/cpp/library/text/multibyte/wcrtomb)</DescriptionTerm>
+    <DescriptionBody>converts a wide character to its multibyte representation, given state <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mbsrtowcs`](/docs/cpp/library/text/multibyte/mbsrtowcs)</DescriptionTerm>
+    <DescriptionBody>converts a narrow multibyte character string to wide string, given state <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_out`](/docs/cpp/library/text/locale/codecvt/out) [virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `InternT` to `ExternT`, such as when writing to file <br /> (virtual protected member function of `std::codecvt<InternT,ExternT,StateT>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/multibyte/wcsrtombs) for `wcsrtombs`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

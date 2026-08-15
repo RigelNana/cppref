@@ -1,0 +1,135 @@
+---
+title: "std::ispunct"
+description: "Checks if the given character is a punctuation character as classified by the current C locale. The default C locale classifies the characters (!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~) as punctuation."
+source_url: "https://en.cppreference.com/w/cpp/string/byte/ispunct"
+language: "C++"
+---
+
+{/* source:cpp-string-byte-ispunct:0000 */}
+<DeclarationDoc>
+Defined in header [`<cctype>`](/docs/cpp/library/headers/cctype)
+  <Declaration language="cpp" code={`int ispunct( int ch );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-byte-ispunct:0001 */}
+Checks if the given character is a punctuation character as classified by the current C locale. The default C locale classifies the characters (!"#$%&'()*+,-./:;\<=\>?@[\\]^_\`\{|\}~) as punctuation.
+
+{/* source:cpp-string-byte-ispunct:0002 */}
+The behavior is undefined if the value of `ch` is not representable as `unsigned char` and is not equal to [`EOF`](/docs/cpp/library/io/c).
+
+### Parameters
+
+{/* source:cpp-string-byte-ispunct:0003 */}
+<ParameterList>
+  <Parameter name="ch">character to classify</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-byte-ispunct:0004 */}
+Non-zero value if the character is a punctuation character, zero otherwise.
+
+### Notes
+
+{/* source:cpp-string-byte-ispunct:0005 */}
+Like all other functions from [`<cctype>`](/docs/cpp/library/headers/cctype), the behavior of `std::ispunct` is undefined if the argument's value is neither representable as `unsigned char` nor equal to [`EOF`](/docs/cpp/library/io/c). To use these functions safely with plain `chars` (or `signed chars`), the argument should first be converted to `unsigned char`:
+
+{/* source:cpp-string-byte-ispunct:0006 */}
+```cpp
+bool my_ispunct(char ch)
+{
+    return std::ispunct(static_cast<unsigned char>(ch));
+}
+```
+
+{/* source:cpp-string-byte-ispunct:0007 */}
+Similarly, they should not be directly used with standard algorithms when the iterator's value type is `char` or `signed char`. Instead, convert the value to `unsigned char` first:
+
+{/* source:cpp-string-byte-ispunct:0008 */}
+```cpp
+int count_puncts(const std::string& s)
+{
+    return std::count_if(s.begin(), s.end(),
+                      // static_cast<int(*)(int)>(std::ispunct)         // wrong
+                      // [](int c){ return std::ispunct(c); }           // wrong
+                      // [](char c){ return std::ispunct(c); }          // wrong
+                         [](unsigned char c){ return std::ispunct(c); } // correct
+                        );
+}
+```
+
+### Example
+
+{/* source:cpp-string-byte-ispunct:0009 */}
+```cpp
+#include <cctype>
+#include <clocale>
+#include <iostream>
+ 
+int main()
+{
+    unsigned char c = '\xd7'; // the character × (multiplication sign) in ISO-8859-1
+ 
+    std::cout << "ispunct(\'\\xd7\', default C locale) returned "
+              << std::boolalpha << (bool)std::ispunct(c) << '\n';
+ 
+    std::setlocale(LC_ALL, "en_GB.iso88591");
+    std::cout << "ispunct(\'\\xd7\', ISO-8859-1 locale) returned "
+              << std::boolalpha << (bool)std::ispunct(c) << '\n';
+}
+```
+Possible output:
+```text
+ispunct('\xd7', default C locale) returned false
+ispunct('\xd7', ISO-8859-1 locale) returned true
+```
+
+### See also
+
+{/* source:cpp-string-byte-ispunct:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`ispunct(std::locale)`](/docs/cpp/library/text/locale/ispunct)</DescriptionTerm>
+    <DescriptionBody>checks if a character is classified as punctuation by a locale <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iswpunct`](/docs/cpp/library/text/wide/iswpunct)</DescriptionTerm>
+    <DescriptionBody>checks if a wide character is a punctuation character <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/byte/ispunct) for `ispunct`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-string-byte-ispunct:0011 */}
+| ASCII values | characters | [`iscntrl`](/docs/cpp/library/text/byte/iscntrl)<br />
+[`iswcntrl`](/docs/cpp/library/text/wide/iswcntrl) | [`isprint`](/docs/cpp/library/text/byte/isprint)<br />
+[`iswprint`](/docs/cpp/library/text/wide/iswprint) | [`isspace`](/docs/cpp/library/text/byte/isspace)<br />
+[`iswspace`](/docs/cpp/library/text/wide/iswspace) | [`isblank`](/docs/cpp/library/text/byte/isblank)<br />
+[`iswblank`](/docs/cpp/library/text/wide/iswblank) | [`isgraph`](/docs/cpp/library/text/byte/isgraph)<br />
+[`iswgraph`](/docs/cpp/library/text/wide/iswgraph) | **`ispunct`**<br />
+[`iswpunct`](/docs/cpp/library/text/wide/iswpunct) | [`isalnum`](/docs/cpp/library/text/byte/isalnum)<br />
+[`iswalnum`](/docs/cpp/library/text/wide/iswalnum) | [`isalpha`](/docs/cpp/library/text/byte/isalpha)<br />
+[`iswalpha`](/docs/cpp/library/text/wide/iswalpha) | [`isupper`](/docs/cpp/library/text/byte/isupper)<br />
+[`iswupper`](/docs/cpp/library/text/wide/iswupper) | [`islower`](/docs/cpp/library/text/byte/islower)<br />
+[`iswlower`](/docs/cpp/library/text/wide/iswlower) | [`isdigit`](/docs/cpp/library/text/byte/isdigit)<br />
+[`iswdigit`](/docs/cpp/library/text/wide/iswdigit) | [`isxdigit`](/docs/cpp/library/text/byte/isxdigit)<br />
+[`iswxdigit`](/docs/cpp/library/text/wide/iswxdigit) |  |  |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decimal | hexadecimal | octal |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 0–8 | `\x0`–`\x8` | `\0`–`\10` | control codes (`NUL`, etc.) | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 9 | `\x9` | `\11` | tab (`\t`) | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 10–13 | `\xA`–`\xD` | `\12`–`\15` | whitespaces (`\n`, `\v`, `\f`, `\r`) | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 14–31 | `\xE`–`\x1F` | `\16`–`\37` | control codes | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 32 | `\x20` | `\40` | space | **`0`** | **`≠0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 33–47 | `\x21`–`\x2F` | `\41`–`\57` | `!"#$%&'()*+,-./` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 48–57 | `\x30`–`\x39` | `\60`–`\71` | `0123456789` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** |
+| 58–64 | `\x3A`–`\x40` | `\72`–`\100` | `:;<=>?@` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 65–70 | `\x41`–`\x46` | `\101`–`\106` | `ABCDEF` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** |
+| 71–90 | `\x47`–`\x5A` | `\107`–`\132` | `GHIJKLMNOP`<br />`QRSTUVWXYZ` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** |
+| 91–96 | `\x5B`–`\x60` | `\133`–`\140` | [\\\\]^_\` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 97–102 | `\x61`–`\x66` | `\141`–`\146` | `abcdef` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** |
+| 103–122 | `\x67`–`\x7A` | `\147`–`\172` | `ghijklmnop`<br />`qrstuvwxyz` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`0`** |
+| 123–126 | `\x7B`–`\x7E` | `\172`–`\176` | \{\\|\}~ | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 127 | `\x7F` | `\177` | backspace character (`DEL`) | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |

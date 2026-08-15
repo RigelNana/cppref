@@ -1,0 +1,116 @@
+---
+title: "std::wcrtomb"
+description: "Converts a wide character to its narrow multibyte representation."
+source_url: "https://en.cppreference.com/w/cpp/string/multibyte/wcrtomb"
+language: "C++"
+---
+
+{/* source:cpp-string-multibyte-wcrtomb:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cwchar>`](/docs/cpp/library/headers/cwchar)
+  <Declaration language="cpp" code={`std::size_t wcrtomb( char* s, wchar_t wc, std::mbstate_t* ps );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-multibyte-wcrtomb:0001 */}
+
+Converts a wide character to its narrow multibyte representation.
+
+
+{/* source:cpp-string-multibyte-wcrtomb:0002 */}
+
+If `s` is not a null pointer, the function determines the number of bytes necessary to store the multibyte character representation of `wc` (including any shift sequences, and taking into account the current multibyte conversion state `*ps`), and stores the multibyte character representation in the character array whose first element is pointed to by `s`, updating `*ps` as necessary. At most `MB_CUR_MAX` bytes can be written by this function.
+
+
+{/* source:cpp-string-multibyte-wcrtomb:0003 */}
+
+If `s` is a null pointer, the call is equivalent to `std::wcrtomb(buf, L'\0', ps)` for some internal buffer `buf`.
+
+
+{/* source:cpp-string-multibyte-wcrtomb:0004 */}
+
+If wc is the null wide character `L'\0'`, a null byte is stored, preceded by any shift sequence necessary to restore the initial shift state and the conversion state parameter `*ps` is updated to represent the initial shift state.
+
+
+### Parameters
+
+{/* source:cpp-string-multibyte-wcrtomb:0005 */}
+
+<ParameterList>
+  <Parameter name="s">pointer to narrow character array where the multibyte character will be stored</Parameter>
+  <Parameter name="wc">the wide character to convert</Parameter>
+  <Parameter name="ps">pointer to the conversion state object used when interpreting the multibyte string</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-multibyte-wcrtomb:0006 */}
+
+On success, returns the number of bytes (including any shift sequences) written to the character array whose first element is pointed to by `s`. 
+
+
+{/* source:cpp-string-multibyte-wcrtomb:0007 */}
+
+On failure (if `wc` is not a valid wide character), returns `static_cast<std::size_t>(-1)`, stores [`EILSEQ`](/docs/cpp/library/error/errno_macros) in [`errno`](/docs/cpp/library/error/errno), and leaves `*ps` in unspecified state.
+
+
+### Example
+
+{/* source:cpp-string-multibyte-wcrtomb:0008 */}
+
+```cpp
+#include <clocale>
+#include <cwchar>
+#include <iostream>
+#include <string>
+ 
+void print_wide(const std::wstring& wstr)
+{
+    std::mbstate_t state{};
+    for (wchar_t wc : wstr)
+    {
+        std::string mb(MB_CUR_MAX, '\0');
+        std::size_t ret = std::wcrtomb(&mb[0], wc, &state);
+        std::cout << "multibyte char " << mb << " is " << ret << " bytes\n";
+    }
+}
+ 
+int main()
+{
+    std::setlocale(LC_ALL, "en_US.utf8");
+    std::wstring wstr = L"z\u00df\u6c34\U0001f34c"; // or L"zß水🍌"
+    print_wide(wstr);
+}
+```
+
+Output:
+
+```text
+multibyte char z is 1 bytes
+multibyte char ß is 2 bytes
+multibyte char 水 is 3 bytes
+multibyte char 🍌 is 4 bytes
+```
+
+### See also
+
+{/* source:cpp-string-multibyte-wcrtomb:0009 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wctomb`](/docs/cpp/library/text/multibyte/wctomb)</DescriptionTerm>
+    <DescriptionBody>converts a wide character to its multibyte representation <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`mbrtowc`](/docs/cpp/library/text/multibyte/mbrtowc)</DescriptionTerm>
+    <DescriptionBody>converts the next multibyte character to wide character, given state <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_out`](/docs/cpp/library/text/locale/codecvt/out) [virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `InternT` to `ExternT`, such as when writing to file <br /> (virtual protected member function of `std::codecvt<InternT,ExternT,StateT>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/multibyte/wcrtomb) for `wcrtomb`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,148 @@
+---
+title: "std::mbrtoc32"
+description: "Converts a narrow multibyte character to its UTF-32 character representation."
+source_url: "https://en.cppreference.com/w/cpp/string/multibyte/mbrtoc32"
+language: "C++"
+---
+
+{/* source:cpp-string-multibyte-mbrtoc32:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cuchar>`](/docs/cpp/library/headers/cuchar)
+  <Declaration language="cpp" since="C++11" code={`std::size_t mbrtoc32( char32_t* pc32,
+                      const char* s,
+                      std::size_t n,
+
+                      std::mbstate_t* ps );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-multibyte-mbrtoc32:0001 */}
+
+Converts a narrow multibyte character to its UTF-32 character representation.
+
+
+{/* source:cpp-string-multibyte-mbrtoc32:0002 */}
+
+If `s` is not a null pointer, inspects at most `n` bytes of the multibyte character string, beginning with the byte pointed to by `s` to determine the number of bytes necessary to complete the next multibyte character (including any shift sequences). If the function determines that the next multibyte character in `s` is complete and valid, converts it to the corresponding 32-bit character and stores it in `*pc32` (if `pc32` is not null).
+
+
+{/* source:cpp-string-multibyte-mbrtoc32:0003 */}
+
+If the multibyte character in `*s` corresponds to a multi-char32_t sequence (not possible with UTF-32), then after the first call to this function, `*ps` is updated in such a way that the next calls to `mbrtoc32` will write out the additional char32_t, without considering `*s`.
+
+
+{/* source:cpp-string-multibyte-mbrtoc32:0004 */}
+
+If `s` is a null pointer, the values of `n` and `pc32` are ignored and the call is equivalent to `std::mbrtoc32(nullptr, "", 1, ps)`.
+
+
+{/* source:cpp-string-multibyte-mbrtoc32:0005 */}
+
+If the wide character produced is the null character, the conversion state `*ps` represents the initial shift state.
+
+
+{/* source:cpp-string-multibyte-mbrtoc32:0006 */}
+
+The multibyte encoding used by this function is specified by the currently active C locale.
+
+
+### Parameters
+
+{/* source:cpp-string-multibyte-mbrtoc32:0007 */}
+
+<ParameterList>
+  <Parameter name="pc32">pointer to the location where the resulting 32-bit character will be written</Parameter>
+  <Parameter name="s">pointer to the multibyte character string used as input</Parameter>
+  <Parameter name="n">limit on the number of bytes in s that can be examined</Parameter>
+  <Parameter name="ps">pointer to the conversion state object used when interpreting the multibyte string</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-multibyte-mbrtoc32:0008 */}
+
+The first of the following that applies:
+
+
+{/* source:cpp-string-multibyte-mbrtoc32:0009 */}
+
+- `​0​` if the character converted from `s` (and stored in `*pc32` if non-null) was the null character.
+- the number of bytes `[1...n]` of the multibyte character successfully converted from `s`.
+- `-3` if the next char32_t from a multi-char32_t character has now been written to `*pc32`. No bytes are processed from the input in this case.
+- `-2` if the next `n` bytes constitute an incomplete, but so far valid, multibyte character. Nothing is written to `*pc32`.
+- `-1` if encoding error occurs. Nothing is written to `*pc32`, the value [`EILSEQ`](/docs/cpp/library/error/errno_macros) is stored in [`errno`](/docs/cpp/library/error/errno) and the value of `*ps` is unspecified.
+
+### Examples
+
+{/* source:cpp-string-multibyte-mbrtoc32:0010 */}
+
+```cpp
+#include <cassert>
+#include <clocale>
+#include <cstring>
+#include <cuchar>
+#include <cwchar>
+#include <iomanip>
+#include <iostream>
+ 
+int main()
+{
+    std::setlocale(LC_ALL, "en_US.utf8");
+ 
+    std::string str = "z\u00df\u6c34\U0001F34C"; // or u8"zß水🍌"
+ 
+    std::cout << "Processing " << str.size() << " bytes: [ " << std::showbase;
+    for (unsigned char c : str)
+        std::cout << std::hex << +c << ' ';
+    std::cout << "]\n";
+ 
+    std::mbstate_t state{}; // zero-initialized to initial state
+    char32_t c32;
+    const char* ptr = str.c_str(), *end = str.c_str() + str.size() + 1;
+ 
+    while (std::size_t rc = std::mbrtoc32(&c32, ptr, end - ptr, &state))
+    {
+        std::cout << "Next UTF-32 char: " << std::hex
+                  << static_cast<int>(c32) << " obtained from ";
+        assert(rc != (std::size_t) - 3); // no surrogates in UTF-32
+        if (rc == (std::size_t) - 1)
+            break;
+        if (rc == (std::size_t) - 2)
+            break;
+        std::cout << std::dec << rc << " bytes [ ";
+        for (std::size_t n = 0; n < rc; ++n)
+            std::cout << std::hex << +static_cast<unsigned char>(ptr[n]) << ' ';
+        std::cout << "]\n";
+        ptr += rc;
+    }
+}
+```
+
+Output:
+
+```text
+Processing 10 bytes: [ 0x7a 0xc3 0x9f 0xe6 0xb0 0xb4 0xf0 0x9f 0x8d 0x8c ]
+Next UTF-32 char: 0x7a obtained from 1 bytes [ 0x7a ]
+Next UTF-32 char: 0xdf obtained from 2 bytes [ 0xc3 0x9f ]
+Next UTF-32 char: 0x6c34 obtained from 3 bytes [ 0xe6 0xb0 0xb4 ]
+Next UTF-32 char: 0x1f34c obtained from 4 bytes [ 0xf0 0x9f 0x8d 0x8c ]
+```
+
+### See also
+
+{/* source:cpp-string-multibyte-mbrtoc32:0011 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`c32rtomb`](/docs/cpp/library/text/multibyte/c32rtomb) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a UTF-32 character to narrow multibyte encoding <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_in`](/docs/cpp/library/text/locale/codecvt/in) [virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `ExternT` to `InternT`, such as when reading from file <br /> (virtual protected member function of `std::codecvt<InternT,ExternT,StateT>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/multibyte/mbrtoc32) for `mbrtoc32`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

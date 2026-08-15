@@ -1,0 +1,131 @@
+---
+title: "std::strtof, std::strtod, std::strtold"
+description: "Interprets a floating point value in a byte string pointed to by str."
+source_url: "https://en.cppreference.com/w/cpp/string/byte/strtof"
+language: "C++"
+---
+
+{/* source:cpp-string-byte-strtof:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+  <Declaration id="1" language="cpp" since="C++11" code={`float       strtof ( const char* str, char** str_end );`} />
+  <Declaration id="2" language="cpp" code={`double      strtod ( const char* str, char** str_end );`} />
+  <Declaration id="3" language="cpp" since="C++11" code={`long double strtold( const char* str, char** str_end );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-byte-strtof:0001 */}
+Interprets a floating point value in a byte string pointed to by `str`.
+
+{/* source:cpp-string-byte-strtof:0002 */}
+Function discards any whitespace characters (as determined by `std::isspace`) until first non-whitespace character is found. Then it takes as many characters as possible to form a valid floating-point representation and converts them to a floating-point value. The valid floating-point value can be one of the following:
+
+{/* source:cpp-string-byte-strtof:0003 */}
+- decimal floating-point expression. It consists of the following parts: {/* source:cpp-string-byte-strtof:0004 */}
+    - (optional) plus or minus sign
+    - nonempty sequence of decimal digits optionally containing decimal-point character (as determined by the current C [locale](/docs/cpp/library/text/locale/setlocale)) (defines significand)
+    - (optional) `e` or `E` followed with optional minus or plus sign and nonempty sequence of decimal digits (defines exponent to base 10)
+
+{/* source:cpp-string-byte-strtof:0005 */}
+<Revision since="C++11">
+- hexadecimal floating-point expression. It consists of the following parts:
+    - (optional) plus or minus sign
+    - `0x` or `0X`
+    - nonempty sequence of hexadecimal digits optionally containing a decimal-point character (as determined by the current C [locale](/docs/cpp/library/text/locale/setlocale)) (defines significand)
+    - (optional) `p` or `P` followed with optional minus or plus sign and nonempty sequence of decimal digits (defines exponent to base 2)
+- infinity expression. It consists of the following parts:
+    - (optional) plus or minus sign
+    - `INF` or `INFINITY` ignoring case
+- not-a-number expression. It consists of the following parts:
+    - (optional) plus or minus sign
+    - `NAN` or `NAN(`*char_sequence*`)` ignoring case of the `NAN` part. *char_sequence* can only contain digits, Latin letters, and underscores. The result is a quiet NaN floating-point value.
+</Revision>
+
+{/* source:cpp-string-byte-strtof:0006 */}
+- any other expression that may be accepted by the currently installed C [locale](/docs/cpp/library/text/locale/setlocale)
+
+{/* source:cpp-string-byte-strtof:0007 */}
+The functions sets the pointer pointed to by `str_end` to point to the character past the last character interpreted. If `str_end` is a null pointer, it is ignored.
+
+### Parameters
+
+{/* source:cpp-string-byte-strtof:0008 */}
+<ParameterList>
+  <Parameter name="str">pointer to the null-terminated byte string to be interpreted</Parameter>
+  <Parameter name="str_end">pointer to a pointer to character.</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-byte-strtof:0009 */}
+Floating point value corresponding to the contents of `str` on success. If the converted value falls out of range of corresponding return type, range error occurs and [`HUGE_VAL`](/docs/cpp/library/numeric/math/HUGE_VAL), [`HUGE_VALF`](/docs/cpp/library/numeric/math/HUGE_VAL) or [`HUGE_VALL`](/docs/cpp/library/numeric/math/HUGE_VAL) is returned. If no conversion can be performed, `0` is returned and `*str_end` is set to `str`.
+
+### Example
+
+{/* source:cpp-string-byte-strtof:0010 */}
+```cpp
+#include <cerrno>
+#include <clocale>
+#include <cstdlib>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    const char* p = "111.11 -2.22 0X1.BC70A3D70A3D7P+6 -Inf 1.18973e+4932zzz";
+    char* end{};
+    std::cout << "Parsing \"" << p << "\":\n";
+    errno = 0;
+    for (double f = std::strtod(p, &end); p != end; f = std::strtod(p, &end))
+    {
+        std::cout << "  '" << std::string(p, end - p) << "' -> ";
+        p = end;
+        if (errno == ERANGE)
+        {
+            std::cout << "range error, got ";
+            errno = 0;
+        }
+        std::cout << f << '\n';
+    }
+ 
+    if (std::setlocale(LC_NUMERIC, "de_DE.utf8"))
+    {
+        std::cout << "With de_DE.utf8 locale:\n";
+        std::cout << "  '123.45' -> " << std::strtod("123.45", 0) << '\n';
+        std::cout << "  '123,45' -> " << std::strtod("123,45", 0) << '\n';
+    }
+}
+```
+Possible output:
+```text
+Parsing "111.11 -2.22 0X1.BC70A3D70A3D7P+6 -Inf 1.18973e+4932zzz":
+  '111.11' -> 111.11
+  ' -2.22' -> -2.22
+  ' 0X1.BC70A3D70A3D7P+6' -> 111.11
+  ' -Inf' -> -inf
+  ' 1.18973e+4932' -> range error, got inf
+With de_DE.utf8 locale:
+  '123.45' -> 123
+  '123,45' -> 123.45
+```
+
+### See also
+
+{/* source:cpp-string-byte-strtof:0011 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`atof`](/docs/cpp/library/text/byte/atof)</DescriptionTerm>
+    <DescriptionBody>converts a byte string to a floating point value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wcstof`, `wcstod`, `wcstold`](/docs/cpp/library/text/wide/wcstof)</DescriptionTerm>
+    <DescriptionBody>converts a wide string to a floating-point value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`from_chars`](/docs/cpp/library/text/from_chars) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>converts a character sequence to an integer or floating-point value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/byte/strtof) for `strtof, strtod, strtold`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

@@ -1,0 +1,114 @@
+---
+title: "std::tolower"
+description: "Converts the given character to lowercase according to the character conversion rules defined by the currently installed C locale."
+source_url: "https://en.cppreference.com/w/cpp/string/byte/tolower"
+language: "C++"
+---
+
+{/* source:cpp-string-byte-tolower:0000 */}
+<DeclarationDoc>
+Defined in header [`<cctype>`](/docs/cpp/library/headers/cctype)
+  <Declaration language="cpp" code={`int tolower( int ch );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-byte-tolower:0001 */}
+Converts the given character to lowercase according to the character conversion rules defined by the currently installed C locale.
+
+{/* source:cpp-string-byte-tolower:0002 */}
+In the default `"C"` locale, the following uppercase letters `ABCDEFGHIJKLMNOPQRSTUVWXYZ` are replaced with respective lowercase letters `abcdefghijklmnopqrstuvwxyz`.
+
+### Parameters
+
+{/* source:cpp-string-byte-tolower:0003 */}
+<ParameterList>
+  <Parameter name="ch">character to be converted. If the value of `ch` is not representable as `unsigned char` and does not equal [`EOF`](/docs/cpp/library/io/c), the behavior is undefined</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-byte-tolower:0004 */}
+Lowercase version of `ch` or unmodified `ch` if no lowercase version is listed in the current C locale.
+
+### Notes
+
+{/* source:cpp-string-byte-tolower:0005 */}
+Like all other functions from [`<cctype>`](/docs/cpp/library/headers/cctype), the behavior of `std::tolower` is undefined if the argument's value is neither representable as `unsigned char` nor equal to [`EOF`](/docs/cpp/library/io/c). To use these functions safely with plain `chars` (or `signed chars`), the argument should first be converted to `unsigned char`:
+
+{/* source:cpp-string-byte-tolower:0006 */}
+```cpp
+char my_tolower(char ch)
+{
+    return static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+}
+```
+
+{/* source:cpp-string-byte-tolower:0007 */}
+Similarly, they should not be directly used with standard algorithms when the iterator's value type is `char` or `signed char`. Instead, convert the value to `unsigned char` first:
+
+{/* source:cpp-string-byte-tolower:0008 */}
+```cpp
+std::string str_tolower(std::string s)
+{
+    std::transform(s.begin(), s.end(), s.begin(),
+                // static_cast<int(*)(int)>(std::tolower)         // wrong
+                // [](int c){ return std::tolower(c); }           // wrong
+                // [](char c){ return std::tolower(c); }          // wrong
+                   [](unsigned char c){ return std::tolower(c); } // correct
+                  );
+    return s;
+}
+```
+
+### Example
+
+{/* source:cpp-string-byte-tolower:0009 */}
+```cpp
+#include <cctype>
+#include <clocale>
+#include <iostream>
+ 
+int main()
+{
+    unsigned char c = '\xb4'; // the character Ž in ISO-8859-15
+                              // but ´ (acute accent) in ISO-8859-1
+ 
+    std::setlocale(LC_ALL, "en_US.iso88591");
+    std::cout << std::hex << std::showbase;
+    std::cout << "in iso8859-1, tolower('0xb4') gives " << std::tolower(c) << '\n';
+    std::setlocale(LC_ALL, "en_US.iso885915");
+    std::cout << "in iso8859-15, tolower('0xb4') gives " << std::tolower(c) << '\n';
+}
+```
+Possible output:
+```text
+in iso8859-1, tolower('0xb4') gives 0xb4
+in iso8859-15, tolower('0xb4') gives 0xb8
+```
+
+### See also
+
+{/* source:cpp-string-byte-tolower:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`toupper`](/docs/cpp/library/text/byte/toupper)</DescriptionTerm>
+    <DescriptionBody>converts a character to uppercase <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`tolower(std::locale)`](/docs/cpp/library/text/locale/tolower)</DescriptionTerm>
+    <DescriptionBody>converts a character to lowercase using the `ctype` facet of a locale <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`towlower`](/docs/cpp/library/text/wide/towlower)</DescriptionTerm>
+    <DescriptionBody>converts a wide character to lowercase <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/byte/tolower) for `tolower`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+### External links
+
+{/* source:cpp-string-byte-tolower:0011 */}
+1. [ISO/IEC 8859-1](https://en.wikipedia.org/wiki/ISO/IEC_8859-1). From Wikipedia.
+2. [ISO/IEC 8859-15](https://en.wikipedia.org/wiki/ISO/IEC_8859-15). From Wikipedia.

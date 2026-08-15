@@ -1,0 +1,147 @@
+---
+title: "std::wcstof, std::wcstod, std::wcstold"
+description: "Interprets a floating point value in a wide string pointed to by str."
+source_url: "https://en.cppreference.com/w/cpp/string/wide/wcstof"
+language: "C++"
+---
+
+{/* source:cpp-string-wide-wcstof:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cwchar>`](/docs/cpp/library/headers/cwchar)
+
+  <Declaration id="1" since="C++11" language="cpp" code={
+`float       wcstof( const wchar_t* str, wchar_t** str_end );`
+  } />
+  <Declaration id="2" language="cpp" code={
+`double      wcstod( const wchar_t* str, wchar_t** str_end );`
+  } />
+  <Declaration id="3" since="C++11" language="cpp" code={
+`long double wcstold( const wchar_t* str, wchar_t** str_end );`
+  } />
+</DeclarationDoc>
+
+{/* source:cpp-string-wide-wcstof:0001 */}
+
+Interprets a floating point value in a wide string pointed to by `str`.
+
+{/* source:cpp-string-wide-wcstof:0002 */}
+
+Function discards any whitespace characters (as determined by [`std::iswspace`](/docs/cpp/library/text/wide/iswspace)) until first non-whitespace character is found. Then it takes as many characters as possible to form a valid floating-point representation and converts them to a floating-point value. The valid floating-point value can be one of the following:
+
+{/* source:cpp-string-wide-wcstof:0003 */}
+
+- decimal floating-point expression. It consists of the following parts:
+
+  {/* source:cpp-string-wide-wcstof:0004 */}
+
+  - (optional) plus or minus sign
+  - nonempty sequence of decimal digits optionally containing decimal-point character (as determined by the current C [locale](/docs/cpp/library/text/locale/setlocale)) (defines significand)
+  - (optional) `e` or `E` followed with optional minus or plus sign and nonempty sequence of decimal digits (defines exponent to base 10)
+
+{/* source:cpp-string-wide-wcstof:0005 */}
+
+<Revision since="C++11">
+
+- hexadecimal floating-point expression. It consists of the following parts:
+  - (optional) plus or minus sign
+  - `0x` or `0X`
+  - nonempty sequence of hexadecimal digits optionally containing a decimal-point character (as determined by the current C [locale](/docs/cpp/library/text/locale/setlocale)) (defines significand)
+  - (optional) `p` or `P` followed with optional minus or plus sign and nonempty sequence of decimal digits (defines exponent to base 2)
+- infinity expression. It consists of the following parts:
+  - (optional) plus or minus sign
+  - `INF` or `INFINITY` ignoring case
+- not-a-number expression. It consists of the following parts:
+  - (optional) plus or minus sign
+  - `NAN` or `NAN(`*char_sequence*`)` ignoring case of the `NAN` part. *char_sequence* can only contain digits, Latin letters, and underscores. The result is a quiet NaN floating-point value.
+
+</Revision>
+
+{/* source:cpp-string-wide-wcstof:0006 */}
+
+- any other expression that may be accepted by the currently installed C [locale](/docs/cpp/library/text/locale/setlocale)
+
+{/* source:cpp-string-wide-wcstof:0007 */}
+
+The functions sets the pointer pointed to by `str_end` to point to the wide character past the last character interpreted. If `str_end` is a null pointer, it is ignored.
+
+### Parameters
+
+{/* source:cpp-string-wide-wcstof:0008 */}
+
+<ParameterList>
+  <Parameter name="str">pointer to the null-terminated wide string to be interpreted</Parameter>
+  <Parameter name="str_end">pointer to a pointer to a wide character</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-wide-wcstof:0009 */}
+
+Floating point value corresponding to the contents of `str` on success. If the converted value falls out of range of corresponding return type, range error occurs and [`HUGE_VAL`](/docs/cpp/library/numeric/math/HUGE_VAL), [`HUGE_VALF`](/docs/cpp/library/numeric/math/HUGE_VAL) or [`HUGE_VALL`](/docs/cpp/library/numeric/math/HUGE_VAL) is returned. If no conversion can be performed, `0` is returned.
+
+### Example
+
+{/* source:cpp-string-wide-wcstof:0010 */}
+
+```cpp
+#include <cerrno>
+#include <clocale>
+#include <cwchar>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    const wchar_t* p = L"111.11 -2.22 0X1.BC70A3D70A3D7P+6 -Inf 1.18973e+4932zzz";
+    wchar_t* end;
+    std::wcout << "Parsing L\"" << p << "\":\n";
+    for (double f = std::wcstod(p, &end); p != end; f = std::wcstod(p, &end))
+    {
+        std::wcout << "  '" << std::wstring(p, end-p) << "' -> ";
+        p = end;
+        if (errno == ERANGE)
+        {
+            std::wcout << "range error, got ";
+            errno = 0;
+        }
+        std::wcout << f << '\n';
+    }
+ 
+    if (std::setlocale(LC_NUMERIC, "de_DE.utf8"))
+    {
+        std::wcout << L"With de_DE.utf8 locale:\n";
+        std::wcout << L"  '123.45' -> " << std::wcstod(L"123.45", 0) << L'\n';
+        std::wcout << L"  '123,45' -> " << std::wcstod(L"123,45", 0) << L'\n';
+    }
+}
+```
+
+Output:
+
+```text
+Parsing L"111.11 -2.22 0X1.BC70A3D70A3D7P+6 -Inf 1.18973e+4932zzz":
+  '111.11' -> 111.11
+  ' -2.22' -> -2.22
+  ' 0X1.BC70A3D70A3D7P+6' -> 111.11
+  ' -Inf' -> -inf
+  ' 1.18973e+4932' -> range error, got inf
+With de_DE.utf8 locale:
+  '123.45' -> 123
+  '123,45' -> 123.45
+```
+
+### See also
+
+{/* source:cpp-string-wide-wcstof:0011 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`strtof strtod strtold`](/docs/cpp/library/text/byte/strtof)</DescriptionTerm>
+    <DescriptionBody>converts a byte string to a floating-point value <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/wide/wcstof) for `wcstof`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

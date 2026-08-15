@@ -1,0 +1,110 @@
+---
+title: "std::strxfrm"
+description: "Transforms the null-terminated byte string pointed to by src into the implementation-defined form such that comparing two transformed strings with std::strcmp gives the same result as comparing the original strings with std::strcoll, in the current C locale."
+source_url: "https://en.cppreference.com/w/cpp/string/byte/strxfrm"
+language: "C++"
+---
+
+{/* source:cpp-string-byte-strxfrm:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstring>`](/docs/cpp/library/headers/cstring)
+  <Declaration language="cpp" code={`std::size_t strxfrm( char* dest, const char* src, std::size_t count );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-byte-strxfrm:0001 */}
+Transforms the null-terminated byte string pointed to by `src` into the implementation-defined form such that comparing two transformed strings with [`std::strcmp`](/docs/cpp/library/text/byte/strcmp) gives the same result as comparing the original strings with [`std::strcoll`](/docs/cpp/library/text/byte/strcoll), in the current C locale.
+
+{/* source:cpp-string-byte-strxfrm:0002 */}
+The first `count` characters of the transformed string are written to destination, including the terminating null character, and the length of the full transformed string is returned, excluding the terminating null character.
+
+{/* source:cpp-string-byte-strxfrm:0003 */}
+The behavior is undefined if the `dest` array is not large enough. The behavior is undefined if `dest` and `src` overlap.
+
+{/* source:cpp-string-byte-strxfrm:0004 */}
+If `count` is `0`, then `dest` is allowed to be a null pointer.
+
+### Notes
+
+{/* source:cpp-string-byte-strxfrm:0005 */}
+The correct length of the buffer that can receive the entire transformed string is `1 + std::strxfrm(nullptr, src, 0)`.
+
+{/* source:cpp-string-byte-strxfrm:0006 */}
+This function is used when making multiple locale-dependent comparisons using the same string or set of strings, because it is more efficient to use `std::strxfrm` to transform all the strings just once, and subsequently compare the transformed strings with [`std::strcmp`](/docs/cpp/library/text/byte/strcmp).
+
+### Parameters
+
+{/* source:cpp-string-byte-strxfrm:0007 */}
+<ParameterList>
+  <Parameter name="dest">pointer to the first element of the array where the transformed string will be written</Parameter>
+  <Parameter name="src">pointer to the first character of a null-terminated byte string to transform</Parameter>
+  <Parameter name="count">maximum number of characters to be written</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-byte-strxfrm:0008 */}
+The length of the transformed string, not including the terminating null-character.
+
+### Example
+
+{/* source:cpp-string-byte-strxfrm:0009 */}
+```cpp
+#include <cassert>
+#include <cstring>
+#include <iomanip>
+#include <iostream>
+#include <string>
+ 
+int main()
+{
+    char* loc = std::setlocale(LC_COLLATE, "cs_CZ.iso88592");
+    assert(loc);
+ 
+    std::string in1 = "hrnec";
+    std::string out1(1 + std::strxfrm(nullptr, in1.c_str(), 0), ' ');
+    std::string in2 = "chrt";
+    std::string out2(1 + std::strxfrm(nullptr, in2.c_str(), 0), ' ');
+ 
+    std::strxfrm(&out1[0], in1.c_str(), out1.size());
+    std::strxfrm(&out2[0], in2.c_str(), out2.size());
+ 
+    std::cout << "In the Czech locale: ";
+    if (out1 < out2)
+        std::cout << in1 << " before " << in2 << '\n';
+    else
+        std::cout << in2 << " before " << in1 << '\n';
+ 
+    std::cout << "In lexicographical comparison: ";
+    if (in1 < in2)
+        std::cout << in1 << " before " << in2 << '\n';
+    else
+        std::cout << in2 << " before " << in1 << '\n';
+}
+```
+Possible output:
+```text
+In the Czech locale: hrnec before chrt
+In lexicographical comparison: chrt before hrnec
+```
+
+### See also
+
+{/* source:cpp-string-byte-strxfrm:0010 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`wcsxfrm`](/docs/cpp/library/text/wide/wcsxfrm)</DescriptionTerm>
+    <DescriptionBody>transform a wide string so that `wcscmp` would produce the same result as `wcscoll` <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_transform`](/docs/cpp/library/text/locale/collate/transform)[virtual]</DescriptionTerm>
+    <DescriptionBody>transforms a string so that collation can be replaced by comparison <br /> (virtual protected member function of `std::collate<CharT>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`strcoll`](/docs/cpp/library/text/byte/strcoll)</DescriptionTerm>
+    <DescriptionBody>compares two strings in accordance to the current locale <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/byte/strxfrm) for `strxfrm`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

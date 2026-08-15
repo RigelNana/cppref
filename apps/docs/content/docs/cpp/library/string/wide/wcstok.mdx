@@ -1,0 +1,111 @@
+---
+title: "std::wcstok"
+description: "Finds the next token in a null-terminated wide string pointed to by str. The separator characters are identified by null-terminated wide string pointed to by delim."
+source_url: "https://en.cppreference.com/w/cpp/string/wide/wcstok"
+language: "C++"
+---
+
+{/* source:cpp-string-wide-wcstok:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cwchar>`](/docs/cpp/library/headers/cwchar)
+
+  <Declaration language="cpp" code={
+`wchar_t* wcstok( wchar_t* str, const wchar_t* delim, wchar_t ** ptr);`
+  } />
+</DeclarationDoc>
+
+{/* source:cpp-string-wide-wcstok:0001 */}
+
+Finds the next token in a null-terminated wide string pointed to by `str`. The separator characters are identified by null-terminated wide string pointed to by `delim`.
+
+{/* source:cpp-string-wide-wcstok:0002 */}
+
+This function is designed to be called multiples times to obtain successive tokens from the same string.
+
+{/* source:cpp-string-wide-wcstok:0003 */}
+
+- If `str != nullptr`, the call is treated as the first call to `std::wcstok` for this particular wide string. The function searches for the first wide character which is *not* contained in `delim`.
+  - If no such wide character was found, there are no tokens in `str` at all, and the function returns a null pointer.
+  - If such wide character was found, it is the *beginning of the token*. The function then searches from that point on for the first wide character that *is* contained in `delim`.
+    - If no such wide character was found, `str` has only one token, and future calls to `std::wcstok` will return a null pointer.
+    - If such wide character was found, it is *replaced* by the null wide character `L'\0'` and the parser state (typically a pointer to the following wide character) is stored in the user-provided location `*ptr`.
+  - The function then returns the pointer to the beginning of the token.
+- If `str == nullptr`, the call is treated as a subsequent calls to `std::wcstok`: the function continues from where it left in previous invocation with the same `*ptr`. The behavior is the same as if the pointer to the wide character that follows the last detected token is passed as `str`.
+
+### Parameters
+
+{/* source:cpp-string-wide-wcstok:0004 */}
+
+<ParameterList>
+  <Parameter name="str">pointer to the null-terminated wide string to tokenize</Parameter>
+  <Parameter name="delim">pointer to the null-terminated wide string identifying delimiters</Parameter>
+  <Parameter name="ptr">pointer to an object of type `wchar_t*`, which is used by wcstok to store its internal state</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-wide-wcstok:0005 */}
+
+Pointer to the beginning of the next token or null pointer if there are no more tokens.
+
+### Note
+
+{/* source:cpp-string-wide-wcstok:0006 */}
+
+This function is destructive: it writes the `L'\0'` characters in the elements of the string `str`. In particular, a wide string literal cannot be used as the first argument of `std::wcstok`.
+
+{/* source:cpp-string-wide-wcstok:0007 */}
+
+Unlike [`std::strtok`](/docs/cpp/library/text/byte/strtok), this function does not update static storage: it stores the parser state in the user-provided location.
+
+{/* source:cpp-string-wide-wcstok:0008 */}
+
+Unlike most other tokenizers, the delimiters in `std::wcstok` can be different for each subsequent token, and can even depend on the contents of the previous tokens.
+
+### Example
+
+{/* source:cpp-string-wide-wcstok:0009 */}
+
+```cpp
+#include <cwchar>
+#include <iostream>
+ 
+int main()
+{
+    wchar_t input[100] = L"A bird came down the walk";
+    wchar_t* buffer;
+    wchar_t* token = std::wcstok(input, L" ", &buffer);
+    while (token)
+    {
+        std::wcout << token << '\n';
+        token = std::wcstok(nullptr, L" ", &buffer);
+    }
+}
+```
+
+Output:
+
+```text
+A
+bird
+came
+down
+the
+walk
+```
+
+### See also
+
+{/* source:cpp-string-wide-wcstok:0010 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`strtok`](/docs/cpp/library/text/byte/strtok)</DescriptionTerm>
+    <DescriptionBody>finds the next token in a byte string <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/wide/wcstok) for `wcstok`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

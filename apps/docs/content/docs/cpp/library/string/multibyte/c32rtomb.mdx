@@ -1,0 +1,124 @@
+---
+title: "std::c32rtomb"
+description: "Converts a UTF-32 character to its narrow multibyte representation."
+source_url: "https://en.cppreference.com/w/cpp/string/multibyte/c32rtomb"
+language: "C++"
+---
+
+{/* source:cpp-string-multibyte-c32rtomb:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cuchar>`](/docs/cpp/library/headers/cuchar)
+  <Declaration language="cpp" since="C++11" code={`std::size_t c32rtomb( char* s, char32_t c32, std::mbstate_t* ps );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-multibyte-c32rtomb:0001 */}
+
+Converts a UTF-32 character to its narrow multibyte representation.
+
+
+{/* source:cpp-string-multibyte-c32rtomb:0002 */}
+
+If `s` is not a null pointer, the function determines the number of bytes necessary to store the multibyte character representation of `c32` (including any shift sequences, and taking into account the current multibyte conversion state `*ps`), and stores the multibyte character representation in the character array whose first element is pointed to by `s`, updating `*ps` as necessary. At most `MB_CUR_MAX` bytes can be written by this function.
+
+
+{/* source:cpp-string-multibyte-c32rtomb:0003 */}
+
+If `s` is a null pointer, the call is equivalent to `std::c32rtomb(buf, U'\0', ps)` for some internal buffer `buf`.
+
+
+{/* source:cpp-string-multibyte-c32rtomb:0004 */}
+
+If `c32` is the null wide character `U'\0'`, a null byte is stored, preceded by any shift sequence necessary to restore the initial shift state and the conversion state parameter `*ps` is updated to represent the initial shift state.
+
+
+{/* source:cpp-string-multibyte-c32rtomb:0005 */}
+
+The multibyte encoding used by this function is specified by the currently active C locale.
+
+
+### Parameters
+
+{/* source:cpp-string-multibyte-c32rtomb:0006 */}
+
+<ParameterList>
+  <Parameter name="s">pointer to narrow character array where the multibyte character will be stored</Parameter>
+  <Parameter name="c32">the 32-bit character to convert</Parameter>
+  <Parameter name="ps">pointer to the conversion state object used when interpreting the multibyte string</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-multibyte-c32rtomb:0007 */}
+
+On success, returns the number of bytes (including any shift sequences) written to the character array whose first element is pointed to by `s`. This value may be `​0​`, e.g. when processing the first char32_t in multi-char32_t-character sequence (does not occur in UTF-32).
+
+
+{/* source:cpp-string-multibyte-c32rtomb:0008 */}
+
+On failure (if `c32` is not a valid 32-bit character), returns `-1`, stores [`EILSEQ`](/docs/cpp/library/error/errno_macros) in [`errno`](/docs/cpp/library/error/errno), and leaves `*ps` in unspecified state.
+
+
+### Example
+
+{/* source:cpp-string-multibyte-c32rtomb:0009 */}
+
+```cpp
+#include <climits>
+#include <clocale>
+#include <cuchar>
+#include <iomanip>
+#include <iostream>
+#include <string_view>
+ 
+int main()
+{
+    std::setlocale(LC_ALL, "en_US.utf8");
+    std::u32string_view strv = U"zß水🍌"; // or z\u00df\u6c34\U0001F34C
+    std::cout << "Processing " << strv.size() << " UTF-32 code units: [ ";
+    for (char32_t c : strv)
+        std::cout << std::showbase << std::hex << static_cast<int>(c) << ' ';
+    std::cout << "]\n";
+ 
+    std::mbstate_t state{};
+    char out[MB_LEN_MAX]{};
+    for (char32_t c : strv)
+    {
+        std::size_t rc = std::c32rtomb(out, c, &state);
+        std::cout << static_cast<int>(c) << " converted to [ ";
+        if (rc != (std::size_t) - 1)
+            for (unsigned char c8 : std::string_view{out, rc})
+                std::cout << +c8 << ' ';
+        std::cout << "]\n";
+    }
+}
+```
+
+Output:
+
+```text
+Processing 4 UTF-32 code units: [ 0x7a 0xdf 0x6c34 0x1f34c ]
+0x7a converted to [ 0x7a ]
+0xdf converted to [ 0xc3 0x9f ]
+0x6c34 converted to [ 0xe6 0xb0 0xb4 ]
+0x1f34c converted to [ 0xf0 0x9f 0x8d 0x8c ]
+```
+
+### See also
+
+{/* source:cpp-string-multibyte-c32rtomb:0010 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`mbrtoc32`](/docs/cpp/library/text/multibyte/mbrtoc32) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>converts a narrow multibyte character to UTF-32 encoding <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_out`](/docs/cpp/library/text/locale/codecvt/out) [virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `InternT` to `ExternT`, such as when writing to file <br /> (virtual protected member function of `std::codecvt<InternT,ExternT,StateT>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/multibyte/c32rtomb) for `c32rtomb`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>

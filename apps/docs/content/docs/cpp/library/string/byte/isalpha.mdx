@@ -1,0 +1,144 @@
+---
+title: "std::isalpha"
+description: "Checks if the given character is an alphabetic character as classified by the currently installed C locale. In the default locale, the following characters are alphabetic:"
+source_url: "https://en.cppreference.com/w/cpp/string/byte/isalpha"
+language: "C++"
+---
+
+{/* source:cpp-string-byte-isalpha:0000 */}
+<DeclarationDoc>
+Defined in header [`<cctype>`](/docs/cpp/library/headers/cctype)
+  <Declaration language="cpp" code={`int isalpha( int ch );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-byte-isalpha:0001 */}
+Checks if the given character is an alphabetic character as classified by the currently installed C locale. In the default locale, the following characters are alphabetic:
+
+{/* source:cpp-string-byte-isalpha:0002 */}
+- uppercase letters `ABCDEFGHIJKLMNOPQRSTUVWXYZ`
+- lowercase letters `abcdefghijklmnopqrstuvwxyz`
+
+{/* source:cpp-string-byte-isalpha:0003 */}
+In locales other than `"C"`, an alphabetic character is a character for which `std::isupper()` or `std::islower()` returns non-zero or any other character considered alphabetic by the locale. In any case, `std::iscntrl()`, `std::isdigit()`, `std::ispunct()` and `std::isspace()` will return zero for this character.
+
+{/* source:cpp-string-byte-isalpha:0004 */}
+The behavior is undefined if the value of `ch` is not representable as `unsigned char` and is not equal to [`EOF`](/docs/cpp/library/io/c).
+
+### Parameters
+
+{/* source:cpp-string-byte-isalpha:0005 */}
+<ParameterList>
+  <Parameter name="ch">character to classify</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-byte-isalpha:0006 */}
+Non-zero value if the character is an alphabetic character, zero otherwise.
+
+### Notes
+
+{/* source:cpp-string-byte-isalpha:0007 */}
+Like all other functions from [`<cctype>`](/docs/cpp/library/headers/cctype), the behavior of `std::isalpha` is undefined if the argument's value is neither representable as `unsigned char` nor equal to [`EOF`](/docs/cpp/library/io/c). To use these functions safely with plain `chars` (or `signed chars`), the argument should first be converted to `unsigned char`:
+
+{/* source:cpp-string-byte-isalpha:0008 */}
+```cpp
+bool my_isalpha(char ch)
+{
+    return std::isalpha(static_cast<unsigned char>(ch));
+}
+```
+
+{/* source:cpp-string-byte-isalpha:0009 */}
+Similarly, they should not be directly used with standard algorithms when the iterator's value type is `char` or `signed char`. Instead, convert the value to `unsigned char` first:
+
+{/* source:cpp-string-byte-isalpha:0010 */}
+```cpp
+int count_alphas(const std::string& s)
+{
+    return std::count_if(s.begin(), s.end(),
+                      // static_cast<int(*)(int)>(std::isalpha)         // wrong
+                      // [](int c){ return std::isalpha(c); }           // wrong
+                      // [](char c){ return std::isalpha(c); }          // wrong
+                         [](unsigned char c){ return std::isalpha(c); } // correct
+                        );
+}
+```
+
+### Example
+
+{/* source:cpp-string-byte-isalpha:0011 */}
+Demonstrates the use of `std::isalpha` with different locales (OS-specific).
+```cpp
+#include <cctype>
+#include <clocale>
+#include <iostream>
+ 
+int main()
+{
+    unsigned char c = '\xdf'; // German letter ß in ISO-8859-1
+ 
+    std::cout << "isalpha(\'\\xdf\', default C locale) returned "
+              << std::boolalpha << !!std::isalpha(c) << '\n';
+ 
+    std::setlocale(LC_ALL, "de_DE.iso88591");
+    std::cout << "isalpha(\'\\xdf\', ISO-8859-1 locale) returned "
+              << static_cast<bool>(std::isalpha(c)) << '\n';
+ 
+}
+```
+Possible output:
+```text
+isalpha('\xdf', default C locale) returned false
+isalpha('\xdf', ISO-8859-1 locale) returned true
+```
+
+### See also
+
+{/* source:cpp-string-byte-isalpha:0012 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`isalpha(std::locale)`](/docs/cpp/library/text/locale/isalpha)</DescriptionTerm>
+    <DescriptionBody>checks if a character is classified as alphabetic by a locale <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`iswalpha`](/docs/cpp/library/text/wide/iswalpha)</DescriptionTerm>
+    <DescriptionBody>checks if a wide character is alphabetic <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/byte/isalpha) for `isalpha`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+{/* source:cpp-string-byte-isalpha:0013 */}
+| ASCII values | characters | [`iscntrl`](/docs/cpp/library/text/byte/iscntrl)<br />
+[`iswcntrl`](/docs/cpp/library/text/wide/iswcntrl) | [`isprint`](/docs/cpp/library/text/byte/isprint)<br />
+[`iswprint`](/docs/cpp/library/text/wide/iswprint) | [`isspace`](/docs/cpp/library/text/byte/isspace)<br />
+[`iswspace`](/docs/cpp/library/text/wide/iswspace) | [`isblank`](/docs/cpp/library/text/byte/isblank)<br />
+[`iswblank`](/docs/cpp/library/text/wide/iswblank) | [`isgraph`](/docs/cpp/library/text/byte/isgraph)<br />
+[`iswgraph`](/docs/cpp/library/text/wide/iswgraph) | [`ispunct`](/docs/cpp/library/text/byte/ispunct)<br />
+[`iswpunct`](/docs/cpp/library/text/wide/iswpunct) | [`isalnum`](/docs/cpp/library/text/byte/isalnum)<br />
+[`iswalnum`](/docs/cpp/library/text/wide/iswalnum) | **`isalpha`**<br />
+[`iswalpha`](/docs/cpp/library/text/wide/iswalpha) | [`isupper`](/docs/cpp/library/text/byte/isupper)<br />
+[`iswupper`](/docs/cpp/library/text/wide/iswupper) | [`islower`](/docs/cpp/library/text/byte/islower)<br />
+[`iswlower`](/docs/cpp/library/text/wide/iswlower) | [`isdigit`](/docs/cpp/library/text/byte/isdigit)<br />
+[`iswdigit`](/docs/cpp/library/text/wide/iswdigit) | [`isxdigit`](/docs/cpp/library/text/byte/isxdigit)<br />
+[`iswxdigit`](/docs/cpp/library/text/wide/iswxdigit) |  |  |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decimal | hexadecimal | octal |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 0–8 | `\x0`–`\x8` | `\0`–`\10` | control codes (`NUL`, etc.) | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 9 | `\x9` | `\11` | tab (`\t`) | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 10–13 | `\xA`–`\xD` | `\12`–`\15` | whitespaces (`\n`, `\v`, `\f`, `\r`) | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 14–31 | `\xE`–`\x1F` | `\16`–`\37` | control codes | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 32 | `\x20` | `\40` | space | **`0`** | **`≠0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 33–47 | `\x21`–`\x2F` | `\41`–`\57` | `!"#$%&'()*+,-./` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 48–57 | `\x30`–`\x39` | `\60`–`\71` | `0123456789` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** |
+| 58–64 | `\x3A`–`\x40` | `\72`–`\100` | `:;<=>?@` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 65–70 | `\x41`–`\x46` | `\101`–`\106` | `ABCDEF` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** |
+| 71–90 | `\x47`–`\x5A` | `\107`–`\132` | `GHIJKLMNOP`<br />`QRSTUVWXYZ` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** |
+| 91–96 | `\x5B`–`\x60` | `\133`–`\140` | [\\\\]^_\` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 97–102 | `\x61`–`\x66` | `\141`–`\146` | `abcdef` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** |
+| 103–122 | `\x67`–`\x7A` | `\147`–`\172` | `ghijklmnop`<br />`qrstuvwxyz` | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`≠0`** | **`0`** | **`0`** |
+| 123–126 | `\x7B`–`\x7E` | `\172`–`\176` | \{\\|\}~ | **`0`** | **`≠0`** | **`0`** | **`0`** | **`≠0`** | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |
+| 127 | `\x7F` | `\177` | backspace character (`DEL`) | **`≠0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** | **`0`** |

@@ -1,0 +1,146 @@
+---
+title: "std::strtok"
+description: "Finds the next token in a null-terminated byte string pointed to by str. The separator characters are identified by null-terminated byte string pointed to by delim."
+source_url: "https://en.cppreference.com/w/cpp/string/byte/strtok"
+language: "C++"
+---
+
+{/* source:cpp-string-byte-strtok:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstring>`](/docs/cpp/library/headers/cstring)
+  <Declaration language="cpp" code={`char* strtok( char* str, const char* delim );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-byte-strtok:0001 */}
+Finds the next token in a null-terminated byte string pointed to by `str`. The separator characters are identified by null-terminated byte string pointed to by `delim`.
+
+{/* source:cpp-string-byte-strtok:0002 */}
+This function is designed to be called multiple times to obtain successive tokens from the same string.
+
+{/* source:cpp-string-byte-strtok:0003 */}
+- If `str` is not a null pointer, the call is treated as the first call to `strtok` for this particular string. The function searches for the first character which is *not* contained in `delim`. {/* source:cpp-string-byte-strtok:0004 */}
+    - If no such character was found, there are no tokens in `str` at all, and the function returns a null pointer.
+    - If such character was found, it is the *beginning of the token*. The function then searches from that point on for the first character that *is* contained in `delim`.
+        - If no such character was found, `str` has only one token, and the future calls to `strtok` will return a null pointer.
+        - If such character was found, it is *replaced* by the null character `'\0'` and the pointer to the following character is stored in a static location for subsequent invocations.
+    - The function then returns the pointer to the beginning of the token.
+
+{/* source:cpp-string-byte-strtok:0005 */}
+- If `str` is a null pointer, the call is treated as a subsequent call to `strtok`: the function continues from where it left in previous invocation. The behavior is the same as if the previously stored pointer is passed as `str`.
+
+### Parameters
+
+{/* source:cpp-string-byte-strtok:0006 */}
+<ParameterList>
+  <Parameter name="str">pointer to the null-terminated byte string to tokenize</Parameter>
+  <Parameter name="delim">pointer to the null-terminated byte string identifying delimiters</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-byte-strtok:0007 */}
+Pointer to the beginning of the next token or a `nullptr` if there are no more tokens.
+
+### Notes
+
+{/* source:cpp-string-byte-strtok:0008 */}
+This function is destructive: it writes the `'\0'` characters in the elements of the string `str`. In particular, a [string literal](/docs/cpp/language/expressions/string_literal) cannot be used as the first argument of `std::strtok`.
+
+{/* source:cpp-string-byte-strtok:0009 */}
+Each call to this function modifies a static variable: is not thread safe.
+
+{/* source:cpp-string-byte-strtok:0010 */}
+Unlike most other tokenizers, the delimiters in `std::strtok` can be different for each subsequent token, and can even depend on the contents of the previous tokens.
+
+### Possible implementation
+
+{/* source:cpp-string-byte-strtok:0011 */}
+```cpp
+char* strtok(char* str, const char* delim)
+{
+    static char* buffer;
+ 
+    if (str != nullptr)
+        buffer = str;
+ 
+    buffer += std::strspn(buffer, delim);
+ 
+    if (*buffer == '\0')
+        return nullptr;
+ 
+    char* const tokenBegin = buffer;
+ 
+    buffer += std::strcspn(buffer, delim);
+ 
+    if (*buffer != '\0')
+        *buffer++ = '\0';
+ 
+    return tokenBegin;
+}
+```
+
+{/* source:cpp-string-byte-strtok:0012 */}
+Actual C++ library implementations of this function delegate to the C library, where it may be implemented directly (as in [MUSL libc](https://github.com/bminor/musl/blob/master/src/string/strtok.c)), or in terms of its reentrant version (as in [GNU libc](https://github.com/bminor/glibc/blob/master/string/strtok.c)).
+
+### Example
+
+{/* source:cpp-string-byte-strtok:0013 */}
+```cpp
+#include <cstring>
+#include <iomanip>
+#include <iostream>
+ 
+int main() 
+{
+    char input[] = "one + two * (three - four)!";
+    const char* delimiters = "! +- (*)";
+    char* token = std::strtok(input, delimiters);
+    while (token)
+    {
+        std::cout << std::quoted(token) << ' ';
+        token = std::strtok(nullptr, delimiters);
+    }
+ 
+    std::cout << "\nContents of the input string now:\n\"";
+    for (std::size_t n = 0; n < sizeof input; ++n)
+    {
+        if (const char c = input[n]; c != '\0')
+            std::cout << c;
+        else
+            std::cout << "\\0";
+    }
+    std::cout << "\"\n";
+}
+```
+Output:
+```text
+"one" "two" "three" "four" 
+Contents of the input string now:
+"one\0+ two\0* (three\0- four\0!\0"
+```
+
+### See also
+
+{/* source:cpp-string-byte-strtok:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`strpbrk`](/docs/cpp/library/text/byte/strpbrk)</DescriptionTerm>
+    <DescriptionBody>finds the first location of any character from a set of separators <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`strcspn`](/docs/cpp/library/text/byte/strcspn)</DescriptionTerm>
+    <DescriptionBody>returns the length of the maximum initial segment that consists<br />of only the characters not found in another byte string <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`strspn`](/docs/cpp/library/text/byte/strspn)</DescriptionTerm>
+    <DescriptionBody>returns the length of the maximum initial segment that consists<br />of only the characters found in another byte string <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::split_view`, `views::split`](/docs/cpp/library/ranges/split_view) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>a [`view`](/docs/cpp/library/ranges/view) over the subranges obtained from splitting another [`view`](/docs/cpp/library/ranges/view) using a delimiter<br />(class template) (range adaptor object)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/byte/strtok) for `strtok`</DescriptionTerm>
+    <DescriptionBody></DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

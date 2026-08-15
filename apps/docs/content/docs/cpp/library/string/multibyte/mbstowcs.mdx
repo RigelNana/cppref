@@ -1,0 +1,113 @@
+---
+title: "std::mbstowcs"
+description: "Converts a multibyte character string from the array whose first element is pointed to by src to its wide character representation. Converted characters are stored in the successive elements of the array pointed to by dst. No more than len wide characters are written to the destination array."
+source_url: "https://en.cppreference.com/w/cpp/string/multibyte/mbstowcs"
+language: "C++"
+---
+
+{/* source:cpp-string-multibyte-mbstowcs:0000 */}
+
+<DeclarationDoc>
+Defined in header [`<cstdlib>`](/docs/cpp/library/headers/cstdlib)
+  <Declaration language="cpp" code={`std::size_t mbstowcs( wchar_t* dst, const char* src, std::size_t len );`} />
+</DeclarationDoc>
+
+{/* source:cpp-string-multibyte-mbstowcs:0001 */}
+
+Converts a multibyte character string from the array whose first element is pointed to by `src` to its wide character representation. Converted characters are stored in the successive elements of the array pointed to by `dst`. No more than `len` wide characters are written to the destination array.
+
+
+{/* source:cpp-string-multibyte-mbstowcs:0002 */}
+
+Each character is converted as if by a call to [`std::mbtowc`](/docs/cpp/library/text/multibyte/mbtowc), except that the mbtowc conversion state is unaffected. The conversion stops if:
+
+
+{/* source:cpp-string-multibyte-mbstowcs:0003 */}
+
+- The multibyte null character was converted and stored.
+- An invalid (in the current C locale) multibyte character was encountered.
+- The next wide character to be stored would exceed `len`.
+
+### Notes
+
+{/* source:cpp-string-multibyte-mbstowcs:0004 */}
+
+In most implementations, this function updates a global static object of type [`std::mbstate_t`](/docs/cpp/library/text/multibyte/mbstate_t) as it processes through the string, and cannot be called simultaneously by two threads, [`std::mbsrtowcs`](/docs/cpp/library/text/multibyte/mbsrtowcs) should be used in such cases.
+
+
+{/* source:cpp-string-multibyte-mbstowcs:0005 */}
+
+POSIX specifies a common extension: if `dst` is a null pointer, this function returns the number of wide characters that would be written to `dst`, if converted. Similar behavior is standard for [`std::mbsrtowcs`](/docs/cpp/library/text/multibyte/mbsrtowcs).
+
+
+### Parameters
+
+{/* source:cpp-string-multibyte-mbstowcs:0006 */}
+
+<ParameterList>
+  <Parameter name="dst">pointer to wide character array where the wide string will be stored</Parameter>
+  <Parameter name="src">pointer to the first element of a null-terminated multibyte string to convert</Parameter>
+  <Parameter name="len">number of wide characters available in the array pointed to by dst</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-string-multibyte-mbstowcs:0007 */}
+
+On success, returns the number of wide characters, excluding the terminating `L'\0'`, written to the destination array.
+
+
+{/* source:cpp-string-multibyte-mbstowcs:0008 */}
+
+On conversion error (if invalid multibyte character was encountered), returns `static_cast<std::size_t> (-1)`.
+
+
+### Example
+
+{/* source:cpp-string-multibyte-mbstowcs:0009 */}
+
+```cpp
+#include <clocale>
+#include <cstdlib>
+#include <iostream>
+ 
+int main()
+{
+    std::setlocale(LC_ALL, "en_US.utf8");
+    std::wcout.imbue(std::locale("en_US.utf8"));
+    const char* mbstr = "z\u00df\u6c34\U0001f34c"; // or u8"zß水🍌"
+                        // or "\x7a\xc3\x9f\xe6\xb0\xb4\xf0\x9f\x8d\x8c";
+    wchar_t wstr[5];
+    std::mbstowcs(wstr, mbstr, 5);
+    std::wcout << "wide string: " << wstr << '\n';
+}
+```
+
+Output:
+
+```text
+wide string: zß水🍌
+```
+
+### See also
+
+{/* source:cpp-string-multibyte-mbstowcs:0010 */}
+
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`mbsrtowcs`](/docs/cpp/library/text/multibyte/mbsrtowcs)</DescriptionTerm>
+    <DescriptionBody>converts a narrow multibyte character string to wide string, given state <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`wcstombs`](/docs/cpp/library/text/multibyte/wcstombs)</DescriptionTerm>
+    <DescriptionBody>converts a wide string to narrow multibyte character string <br /> (function)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`do_in`](/docs/cpp/library/text/locale/codecvt/in) [virtual]</DescriptionTerm>
+    <DescriptionBody>converts a string from `ExternT` to `InternT`, such as when reading from file <br /> (virtual protected member function of `std::codecvt<InternT,ExternT,StateT>`)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[C documentation](/docs/c/library/string/multibyte/mbstowcs) for `mbstowcs`</DescriptionTerm>
+    <DescriptionBody />
+  </DescriptionItem>
+</DescriptionList>
