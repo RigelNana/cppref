@@ -1,0 +1,117 @@
+---
+title: "std::type_info::operator==, std::type_info::operator!="
+description: "Checks if the objects refer to the same types."
+source_url: "https://en.cppreference.com/w/cpp/types/type_info/operator_cmp"
+language: "C++"
+---
+
+{/* source:cpp-types-type-info-operator-cmp:0000 */}
+<DeclarationDoc>
+<Declaration language="cpp" id="1" code={`bool operator==( const type_info& rhs ) const;`} />
+(noexcept since C++11)
+<InlineRevision since="C++23">constexpr</InlineRevision>
+<Declaration language="cpp" id="2" until="C++20" code={`bool operator!=( const type_info& rhs ) const;`} />
+(noexcept since C++11)
+</DeclarationDoc>
+
+{/* source:cpp-types-type-info-operator-cmp:0001 */}
+Checks if the objects refer to the same types.
+
+{/* source:cpp-types-type-info-operator-cmp:0002 */}
+<Revision since="C++20">
+The `!=` operator is [synthesized](/docs/cpp/language/expressions/default_comparisons#Other_defaulted_comparison_operators) from `operator==`.
+</Revision>
+
+### Parameters
+
+{/* source:cpp-types-type-info-operator-cmp:0003 */}
+<ParameterList>
+  <Parameter name="rhs">another type information object to compare to</Parameter>
+</ParameterList>
+
+### Return value
+
+{/* source:cpp-types-type-info-operator-cmp:0004 */}
+`true` if the comparison operation holds true, `false` otherwise.
+
+### Notes
+
+{/* source:cpp-types-type-info-operator-cmp:0005 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_constexpr_typeinfo`](/docs/cpp/library/feature_test#cpp_lib_constexpr_typeinfo) | [`202106L`](/docs/cpp/library/compiler_support/23#cpp_lib_constexpr_typeinfo_202106L) | (C++23) | Constexpr for `std::type_info::operator==` |
+
+### Example
+
+{/* source:cpp-types-type-info-operator-cmp:0006 */}
+```cpp
+#include <iostream>
+#include <string>
+#include <typeinfo>
+#include <utility>
+ 
+class person
+{
+public:
+    explicit person(std::string n) : name_(std::move(n)) {}
+    virtual const std::string& name() const { return name_; }
+ 
+private:
+    std::string name_;
+};
+ 
+class employee : public person
+{
+public:
+    employee(std::string n, std::string p)
+        : person(std::move(n)), profession_(std::move(p)) {}
+ 
+    const std::string& profession() const { return profession_; }
+ 
+private:
+    std::string profession_;
+};
+ 
+void print_info(const person& p)
+{
+    if (typeid(person) == typeid(p))
+        std::cout << p.name() << " is not an employee\n";
+    else if (typeid(employee) == typeid(p))
+    {
+        std::cout << p.name() << " is an employee ";
+        auto& emp = dynamic_cast<const employee&>(p);
+        std::cout << "who works in " << emp.profession() << '\n';
+    }
+}
+ 
+int main()
+{
+    print_info(employee{"Paul","Economics"});
+    print_info(person{"Kate"});
+ 
+#if __cpp_lib_constexpr_typeinfo
+    if constexpr (typeid(employee) != typeid(person)) // C++23
+        std::cout << "class `employee` != class `person`\n";
+#endif
+}
+```
+
+Possible output:
+
+
+
+```text
+Paul is an employee who works in Economics
+Kate is not an employee
+class `employee` != class `person`
+```
+
+### See also
+
+{/* source:cpp-types-type-info-operator-cmp:0007 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[before](/docs/cpp/library/utility/types/type_info/before)</DescriptionTerm>
+    <DescriptionBody>checks whether the referred type precedes referred type of another `type_info` <br /> object in the implementation defined order, i.e. orders the referred types <br /> (public member function)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

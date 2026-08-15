@@ -1,0 +1,124 @@
+---
+title: "offsetof"
+description: "The macro offsetof expands to an integral constant expression of type std::size_t, the value of which is the offset, in bytes, from the beginning of an object of specified type to its specified subobject, including padding bits if any."
+source_url: "https://en.cppreference.com/w/cpp/types/offsetof"
+language: "C++"
+---
+
+{/* source:cpp-types-offsetof:0000 */}
+<DeclarationDoc>
+Defined in header [`<cstddef>`](/docs/cpp/library/headers/cstddef)
+<Declaration language="cpp" code={`#define offsetof(type, member) /* implementation-defined */`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-offsetof:0001 */}
+The macro offsetof expands to an integral constant expression of type [`std::size_t`](/docs/cpp/library/utility/types/size_t), the value of which is the offset, in bytes, from the beginning of an object of specified type to its specified subobject, including [padding bits](/docs/cpp/language/basic_concepts/objects#Object_representation_and_value_representation) if any.
+
+{/* source:cpp-types-offsetof:0002 */}
+Given an object `o` of type `type` and static storage duration, `o.member` shall be an lvalue constant expression that refers to a subobject of `o`. Otherwise, the behavior is undefined. Particularly, if `member` is a [static data member](/docs/cpp/language/classes/static), a [bit-field](/docs/cpp/language/classes/bit_field), or a [member function](/docs/cpp/language/classes/member_functions), the behavior is undefined.
+
+{/* source:cpp-types-offsetof:0003 */}
+If `type` is not a <InlineRevision until="C++11">[*PODType*](/docs/cpp/library/named_req/PODType)</InlineRevision> <InlineRevision since="C++11">[standard-layout](/docs/cpp/language/classes/data_members#Standard-layout) type</InlineRevision>, <InlineRevision until="C++17">the result of `offsetof` is undefined</InlineRevision> <InlineRevision since="C++17">use of the `offsetof` macro is conditionally-supported</InlineRevision>.
+
+{/* source:cpp-types-offsetof:0004 */}
+The expression `offsetof(type, member)` is never [type-dependent](/docs/cpp/language/templates/dependent_name#Dependent_types) and it is value-dependent if and only if `type` is dependent.
+
+### Exceptions
+
+{/* source:cpp-types-offsetof:0005 */}
+`offsetof` throws no exceptions.
+
+{/* source:cpp-types-offsetof:0006 */}
+<Revision since="C++11">
+The expression `noexcept(offsetof(type, member))` always evaluates to `true`.
+</Revision>
+
+### Notes
+
+{/* source:cpp-types-offsetof:0007 */}
+<Revision since="C++11">
+The offset of the first member of a standard-layout type is always zero ([empty-base optimization](/docs/cpp/language/classes/ebo) is mandatory).
+</Revision>
+
+{/* source:cpp-types-offsetof:0008 */}
+`offsetof` cannot be implemented in standard C++ and requires compiler support: [GCC](https://github.com/gcc-mirror/gcc/blob/68ec60c4a377b532ec2d265ea542107c36b1d15c/gcc/ginclude/stddef.h#L406), [LLVM](https://github.com/llvm-mirror/clang/blob/release_70/lib/Headers/stddef.h#L120).
+
+{/* source:cpp-types-offsetof:0009 */}
+`member` is not restricted to a direct member. It can denote a subobject of a given member, such as an element of an array member. This is specified by [C DR 496](https://open-std.org/JTC1/SC22/WG14/www/docs/n2396.htm#dr_496).
+
+{/* source:cpp-types-offsetof:0010 */}
+It is specified in C23 that defining a new type containing an unparenthesized comma in `offsetof` is undefined behavior, and such usage is generally not supported by implementations in C++ modes: `offsetof(struct Foo { int a, b; }, a)` is rejected by all known implementations.
+
+### Example
+
+{/* source:cpp-types-offsetof:0011 */}
+```cpp
+#include <cstddef>
+#include <iostream>
+ 
+struct S
+{
+    char   m0;
+    double m1;
+    short  m2;
+    char   m3;
+//  private: int z; // warning: 'S' is a non-standard-layout type
+};
+ 
+int main()
+{
+    std::cout
+        << "offset of char   m0 = " << offsetof(S, m0) << '\n'
+        << "offset of double m1 = " << offsetof(S, m1) << '\n'
+        << "offset of short  m2 = " << offsetof(S, m2) << '\n'
+        << "offset of char   m3 = " << offsetof(S, m3) << '\n';
+}
+```
+
+Possible output:
+
+
+
+```text
+offset of char   m0 = 0
+offset of double m1 = 8
+offset of short  m2 = 16
+offset of char   m3 = 18
+```
+
+### Defect reports
+
+{/* source:cpp-types-offsetof:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-types-offsetof:0013 */}
+<DefectReportList>
+  <DefectReport kind="cwg" id={273} standard="C++98">
+    <PublishedBehavior>`offsetof` may not work if unary `operator&` is overloaded</PublishedBehavior>
+    <CorrectedBehavior>required to work correctly even <br /> if `operator&` is overloaded</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={306} standard="C++98">
+    <PublishedBehavior>the behavior was not specified when `type` is not a [*PODType*](/docs/cpp/library/named_req/PODType)</PublishedBehavior>
+    <CorrectedBehavior>the result is undefined in this case</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={449} standard="C++98">
+    <PublishedBehavior>other requirements of `offsetof` were <br /> removed by the resolution of [LWG issue 306](https://cplusplus.github.io/LWG/issue306)</PublishedBehavior>
+    <CorrectedBehavior>added them back</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-types-offsetof:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[size_t](/docs/cpp/library/utility/types/size_t)</DescriptionTerm>
+    <DescriptionBody>unsigned integer type returned by the [`sizeof`](/docs/cpp/language/expressions/sizeof) operator <br /> (typedef)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[is_standard_layout](/docs/cpp/library/meta/is_standard_layout) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>checks if a type is a [standard-layout](/docs/cpp/language/classes/data_members#Standard-layout) type <br /> (class template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+**[C documentation](/docs/c/library/types/offsetof) for `offsetof`**

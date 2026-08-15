@@ -1,0 +1,146 @@
+---
+title: "std::launder"
+description: "std::launder is a devirtualization fence that returns a pointer to an object at the same address that p represents."
+source_url: "https://en.cppreference.com/w/cpp/utility/launder"
+language: "C++"
+---
+
+{/* source:cpp-utility-launder:0000 */}
+<DeclarationDoc>
+Defined in header [`<new>`](/docs/cpp/library/headers/new)
+
+  <Declaration language="cpp" since="C++17" code={`template< class T >
+constexpr T* launder( T* p ) noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-utility-launder:0001 */}
+Devirtualization fence with respect to `p`. Returns a pointer to an object at the same address that `p` represents, while the object can be a new base class subobject whose most derived class is different from that of the original `*p` object.
+
+{/* source:cpp-utility-launder:0002 */}
+Formally, given
+
+{/* source:cpp-utility-launder:0003 */}
+- the pointer `p` represents the address `A` of a byte in memory
+- an object `x` is located at the address `A`
+- `x` is within its [lifetime](/docs/cpp/language/basic_concepts/lifetime)
+- the type of `x` is the same as `T`, ignoring cv-qualifiers at every level
+- every byte that would be reachable through the result is reachable through `p` (bytes are reachable through a pointer that points to an object `y` if those bytes are within the storage of an object `z` that is [pointer-interconvertible](/docs/cpp/language/expressions/static_cast#pointer-interconvertible) with `y`, or within the immediately enclosing array of which `z` is an element).
+
+{/* source:cpp-utility-launder:0004 */}
+Then `std::launder(p)` returns a value of type `T*` that points to the object `x`. Otherwise, the behavior is undefined.
+
+{/* source:cpp-utility-launder:0005 */}
+The program is ill-formed if `T` is a function type or (possibly cv-qualified) `void`.
+
+{/* source:cpp-utility-launder:0006 */}
+`std::launder` may be used in a [core constant expression](/docs/cpp/language/expressions/constant_expression) if and only if the (converted) value of its argument may be used in place of the function invocation. In other words, `std::launder` does not relax restrictions in constant evaluation.
+
+### Notes
+
+{/* source:cpp-utility-launder:0007 */}
+`std::launder` has no effect on its argument. Its return value must be used to access the object. Thus, it's always an error to discard the return value.
+
+{/* source:cpp-utility-launder:0008 */}
+Typical uses of `std::launder` include:
+
+{/* source:cpp-utility-launder:0009 */}
+- Obtaining a pointer to an object created in the storage of an existing object of the same type, where pointers to the old object cannot be [reused](/docs/cpp/language/basic_concepts/lifetime#Storage_reuse) (for instance, because either object is a base class subobject);
+- Obtaining a pointer to an object created by placement `new` from a pointer to an object providing storage for that object.
+
+{/* source:cpp-utility-launder:0010 */}
+The *reachability* restriction ensures that `std::launder` cannot be used to access bytes not accessible through the original pointer, thereby interfering with the compiler's escape analysis.
+
+{/* source:cpp-utility-launder:0011 */}
+```cpp
+int x[10];
+auto p = std::launder(reinterpret_cast<int(*)[10]>(&x[0])); // OK
+ 
+int x2[2][10];
+auto p2 = std::launder(reinterpret_cast<int(*)[10]>(&x2[0][0]));
+// Undefined behavior: x2[1] would be reachable through the resulting pointer to x2[0]
+// but is not reachable from the source
+ 
+struct X { int a[10]; } x3, x4[2]; // standard layout; assume no padding
+auto p3 = std::launder(reinterpret_cast<int(*)[10]>(&x3.a[0])); // OK
+auto p4 = std::launder(reinterpret_cast<int(*)[10]>(&x4[0].a[0]));
+// Undefined behavior: x4[1] would be reachable through the resulting pointer to x4[0].a
+// (which is pointer-interconvertible with x4[0]) but is not reachable from the source
+ 
+struct Y { int a[10]; double y; } x5;
+auto p5 = std::launder(reinterpret_cast<int(*)[10]>(&x5.a[0]));
+// Undefined behavior: x5.y would be reachable through the resulting pointer to x5.a
+// but is not reachable from the source
+```
+
+### Example
+
+{/* source:cpp-utility-launder:0012 */}
+```cpp
+#include <cassert>
+#include <cstddef>
+#include <new>
+ 
+struct Base
+{
+    virtual int transmogrify();
+};
+ 
+struct Derived : Base
+{
+    int transmogrify() override
+    {
+        new(this) Base;
+        return 2;
+    }
+};
+ 
+int Base::transmogrify()
+{
+    new(this) Derived;
+    return 1;
+}
+ 
+static_assert(sizeof(Derived) == sizeof(Base));
+ 
+int main()
+{
+    // Case 1: the new object failed to be transparently replaceable because
+    // it is a base subobject but the old object is a complete object.
+    Base base;
+    int n = base.transmogrify();
+    // int m = base.transmogrify(); // undefined behavior
+    int m = std::launder(&base)->transmogrify(); // OK
+    assert(m + n == 3);
+ 
+    // Case 2: access to a new object whose storage is provided
+    // by a byte array through a pointer to the array.
+    struct Y { int z; };
+    alignas(Y) std::byte s[sizeof(Y)];
+    Y* q = new(&s) Y{2};
+    const int f = reinterpret_cast<Y*>(&s)->z; // Class member access is undefined
+                                               // behavior: reinterpret_cast<Y*>(&s)
+                                               // has value "pointer to s" and does
+                                               // not point to a Y object
+    const int g = q->z; // OK
+    const int h = std::launder(reinterpret_cast<Y*>(&s))->z; // OK
+ 
+    [](...){}(f, g, h); // evokes [[maybe_unused]] effect
+}
+```
+
+### Defect reports
+
+{/* source:cpp-utility-launder:0013 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-utility-launder:0014 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={2859} standard="C++17">
+    <PublishedBehavior>definition of *reachable* did not consider pointer arithmetic from pointer-interconvertible object</PublishedBehavior>
+    <CorrectedBehavior>included</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={3495} standard="C++17">
+    <PublishedBehavior>`std::launder` might make pointer to an inactive member dereferenceable in constant expression</PublishedBehavior>
+    <CorrectedBehavior>forbidden</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>

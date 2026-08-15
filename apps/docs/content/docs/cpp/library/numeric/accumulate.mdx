@@ -1,0 +1,187 @@
+---
+title: "std::accumulate"
+description: "Computes the sum of the given value init and the elements in the range [first, last)."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/accumulate"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-accumulate:0000 */}
+<DeclarationDoc>
+Defined in header [`<numeric>`](/docs/cpp/library/headers/numeric)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class T >
+T accumulate( InputIt first, InputIt last, T init );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" code={`template< class InputIt, class T, class BinaryOp >
+T accumulate( InputIt first, InputIt last, T init, BinaryOp op );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-accumulate:0001 */}
+Computes the sum of the given value `init` and the elements in the range [`first`, `last`).
+
+{/* source:cpp-algorithm-accumulate:0002 */}
+1. 1) Initializes the accumulator `acc` (of type `T`) with the initial value `init` and then modifies it with <InlineRevision until="C++20">`acc = acc + *i`</InlineRevision><InlineRevision since="C++20">`acc = std::move(acc) + *i`</InlineRevision> for every iterator `i` in the range [`first`, `last`) in order.
+
+{/* source:cpp-algorithm-accumulate:0003 */}
+2. 2) Initializes the accumulator `acc` (of type `T`) with the initial value `init` and then modifies it with <InlineRevision until="C++20">`acc = op(acc, *i)`</InlineRevision><InlineRevision since="C++20">`acc = op(std::move(acc), *i)`</InlineRevision> for every iterator `i` in the range [`first`, `last`) in order.
+
+{/* source:cpp-algorithm-accumulate:0004 */}
+If any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-accumulate:0005 */}
+- `T` is not [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible).
+- `T` is not [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable).
+- `op` modifies any element of [`first`, `last`).
+- `op` invalidates any iterator or subrange in [`first`, `last`].
+
+### Parameters
+
+{/* source:cpp-algorithm-accumulate:0006 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to sum</Parameter>
+  <Parameter name="init">initial value of the sum</Parameter>
+  <Parameter name="op">
+binary operation function object that will be applied. The signature of the function should be equivalent to the following:
+
+`Ret fun(const Type1 &a, const Type2 &b);`
+
+The signature does not need to have `const &`.
+The type `Type1` must be such that an object of type `T` can be implicitly converted to `Type1`. The type `Type2` must be such that an object of type `InputIt` can be dereferenced and then implicitly converted to `Type2`. The type `Ret` must be such that an object of type `T` can be assigned a value of type `Ret`.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-accumulate:0007 */}
+`acc` after all modifications.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-accumulate:0008 */}
+[`accumulate (1)`](/docs/cpp/library/numeric/accumulate#Version_1)
+
+```cpp
+template<class InputIt, class T>
+constexpr // since C++20
+T accumulate(InputIt first, InputIt last, T init)
+{
+    for (; first != last; ++first)
+        init = std::move(init) + *first; // std::move since C++20
+ 
+    return init;
+}
+```
+
+[`accumulate (2)`](/docs/cpp/library/numeric/accumulate#Version_2)
+
+```cpp
+template<class InputIt, class T, class BinaryOperation>
+constexpr // since C++20
+T accumulate(InputIt first, InputIt last, T init, BinaryOperation op)
+{
+    for (; first != last; ++first)
+        init = op(std::move(init), *first); // std::move since C++20
+ 
+    return init;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-accumulate:0009 */}
+`std::accumulate` performs a left [fold](https://en.wikipedia.org/wiki/Fold_(higher-order_function)). In order to perform a right fold, one must reverse the order of the arguments to the binary operator, and use reverse iterators.
+
+{/* source:cpp-algorithm-accumulate:0010 */}
+If left to type inference, `op` operates on values of the same type as `init` which can result in unwanted casting of the iterator elements. For example, `std::accumulate(v.begin(), v.end(), 0)` likely does not give the result one wishes for when `v` is of type `std::vector<double>`.
+
+### Example
+
+{/* source:cpp-algorithm-accumulate:0011 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <string>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+ 
+    int sum = std::accumulate(v.begin(), v.end(), 0);
+    int product = std::accumulate(v.begin(), v.end(), 1, std::multiplies<int>());
+ 
+    auto dash_fold = [](std::string a, int b)
+    {
+        return std::move(a) + '-' + std::to_string(b);
+    };
+ 
+    std::string s = std::accumulate(std::next(v.begin()), v.end(),
+                                    std::to_string(v[0]), // start with first element
+                                    dash_fold);
+ 
+    // Right fold using reverse iterators
+    std::string rs = std::accumulate(std::next(v.rbegin()), v.rend(),
+                                     std::to_string(v.back()), // start with last element
+                                     dash_fold);
+ 
+    std::cout << "sum: " << sum << '\n'
+              << "product: " << product << '\n'
+              << "dash-separated string: " << s << '\n'
+              << "dash-separated string (right-folded): " << rs << '\n';
+}
+```
+
+Output:
+
+```text
+sum: 55
+product: 3628800
+dash-separated string: 1-2-3-4-5-6-7-8-9-10
+dash-separated string (right-folded): 10-9-8-7-6-5-4-3-2-1
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-accumulate:0012 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-accumulate:0013 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={242} standard="C++98">
+    <PublishedBehavior>`op` could not have side effects</PublishedBehavior>
+    <CorrectedBehavior>it cannot modify the ranges involved</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-accumulate:0014 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`adjacent_difference`](/docs/cpp/library/numeric/adjacent_difference)</DescriptionTerm>
+    <DescriptionBody>computes the differences between adjacent elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inner_product`](/docs/cpp/library/numeric/inner_product)</DescriptionTerm>
+    <DescriptionBody>computes the inner product of two ranges of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_sum`](/docs/cpp/library/numeric/partial_sum)</DescriptionTerm>
+    <DescriptionBody>computes the partial sum of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`reduce`](/docs/cpp/library/numeric/reduce) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>similar to `std::accumulate`, except out of order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`ranges::fold_left`](/docs/cpp/library/algorithm/ranges/fold_left) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>left-folds a range of elements (algorithm function object)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

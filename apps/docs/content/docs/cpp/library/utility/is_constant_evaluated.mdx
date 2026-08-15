@@ -1,0 +1,149 @@
+---
+title: "std::is_constant_evaluated"
+description: "Detects whether the function call occurs within a constant-evaluated context."
+source_url: "https://en.cppreference.com/w/cpp/types/is_constant_evaluated"
+language: "C++"
+---
+
+{/* source:cpp-types-is-constant-evaluated:0000 */}
+<DeclarationDoc>
+Defined in header [`<type_traits>`](/docs/cpp/library/headers/type_traits)
+
+  <Declaration language="cpp" since="C++20" code={`constexpr bool is_constant_evaluated() noexcept;`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-is-constant-evaluated:0001 */}
+Detects whether the function call occurs within a constant-evaluated context. Returns `true` if the evaluation of the call occurs within the evaluation of an expression or conversion that is [manifestly constant-evaluated](/docs/cpp/language/expressions/constant_expression#Manifestly_constant-evaluated_expressions); otherwise returns `false`.
+
+{/* source:cpp-types-is-constant-evaluated:0002 */}
+To determine whether initializers of following variables are manifestly constant-evaluated, compilers may first perform a trial constant evaluation:
+
+{/* source:cpp-types-is-constant-evaluated:0003 */}
+- variables with reference type or const-qualified integral or enumeration type;
+- static and thread local variables.
+
+{/* source:cpp-types-is-constant-evaluated:0004 */}
+It is not recommended to depend on the result in this case.
+
+{/* source:cpp-types-is-constant-evaluated:0005 */}
+```cpp
+int y = 0;
+const int a = std::is_constant_evaluated() ? y : 1;
+// Trial constant evaluation fails. The constant evaluation is discarded.
+// Variable a is dynamically initialized with 1
+ 
+const int b = std::is_constant_evaluated() ? 2 : y;
+// Constant evaluation with std::is_constant_evaluated() == true succeeds.
+// Variable b is statically initialized with 2
+```
+
+### Parameters
+
+{/* source:cpp-types-is-constant-evaluated:0006 */}
+(none)
+
+### Return value
+
+{/* source:cpp-types-is-constant-evaluated:0007 */}
+`true` if the evaluation of the call occurs within the evaluation of an expression or conversion that is manifestly constant-evaluated; otherwise `false`.
+
+### Possible implementation
+
+{/* source:cpp-types-is-constant-evaluated:0008 */}
+```cpp
+// This implementation requires C++23 if consteval.
+constexpr bool is_constant_evaluated() noexcept
+{
+    if consteval
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
+}
+```
+
+### Notes
+
+{/* source:cpp-types-is-constant-evaluated:0009 */}
+When directly used as the condition of [`static_assert`](/docs/cpp/language/declarations/static_assert) declaration or [constexpr if statement](/docs/cpp/language/statements/if#constexpr_if), `std::is_constant_evaluated()` always returns `true`.
+
+{/* source:cpp-types-is-constant-evaluated:0010 */}
+Because [if consteval](/docs/cpp/language/statements/if#Consteval_if) is absent in C++20, `std::is_constant_evaluated` is typically implemented using a compiler extension.
+
+{/* source:cpp-types-is-constant-evaluated:0011 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_is_constant_evaluated`](/docs/cpp/library/feature_test#cpp_lib_is_constant_evaluated) | [`201811L`](/docs/cpp/library/compiler_support/20#cpp_lib_is_constant_evaluated_201811L) | (C++20) | `std::is_constant_evaluated` |
+
+### Example
+
+{/* source:cpp-types-is-constant-evaluated:0012 */}
+```cpp
+#include <cmath>
+#include <iostream>
+#include <type_traits>
+ 
+constexpr double power(double b, int x)
+{
+    if (std::is_constant_evaluated() && !(b == 0.0 && x < 0))
+    {
+        // A constant-evaluation context: Use a constexpr-friendly algorithm.
+        if (x == 0)
+            return 1.0;
+        double r {1.0};
+        double p {x > 0 ? b : 1.0 / b};
+        for (auto u = unsigned(x > 0 ? x : -x); u != 0; u /= 2)
+        {
+            if (u & 1)
+                r *= p;
+            p *= p;
+        }
+        return r;
+    }
+    else
+    {
+        // Let the code generator figure it out.
+        return std::pow(b, double(x));
+    }
+}
+ 
+int main()
+{
+    // A constant-expression context
+    constexpr double kilo = power(10.0, 3);
+    int n = 3;
+    // Not a constant expression, because n cannot be converted to an rvalue
+    // in a constant-expression context
+    // Equivalent to std::pow(10.0, double(n))
+    double mucho = power(10.0, n);
+ 
+    std::cout << kilo << " " << mucho << "\n"; // (3)
+}
+```
+
+Output:
+
+```text
+1000 1000
+```
+
+### See also
+
+{/* source:cpp-types-is-constant-evaluated:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`constexpr` specifier](/docs/cpp/language/declarations/constexpr) <InlineRevision since="C++11" /></DescriptionTerm>
+    <DescriptionBody>specifies that the value of a variable or function can be computed at compile time</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`consteval` specifier](/docs/cpp/language/declarations/consteval) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>specifies that a function is an *immediate function*, that is, every call to the function must be in a constant evaluation</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`constinit` specifier](/docs/cpp/language/declarations/constinit) <InlineRevision since="C++20" /></DescriptionTerm>
+    <DescriptionBody>asserts that a variable has static initialization, i.e. [zero initialization](/docs/cpp/language/initialization/zero_initialization) and [constant initialization](/docs/cpp/language/initialization/constant_initialization)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

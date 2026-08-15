@@ -1,0 +1,94 @@
+---
+title: "std::endian"
+description: "Indicates the endianness of all scalar types."
+source_url: "https://en.cppreference.com/w/cpp/types/endian"
+language: "C++"
+---
+
+{/* source:cpp-types-endian:0000 */}
+<DeclarationDoc>
+Defined in header [`<bit>`](/docs/cpp/library/headers/bit)
+
+  <Declaration language="cpp" since="C++20" code={`enum class endian
+{
+    little = /* implementation-defined */,
+    big    = /* implementation-defined */,
+    native = /* implementation-defined */,
+
+};`} />
+</DeclarationDoc>
+
+{/* source:cpp-types-endian:0001 */}
+Indicates the [endianness](https://en.wikipedia.org/wiki/Endianness#Overview) of all [scalar types](/docs/cpp/language/basic_concepts/type-id):
+
+{/* source:cpp-types-endian:0002 */}
+- If all scalar types are little-endian, `std::endian::native` equals `std::endian::little`.
+- If all scalar types are big-endian, `std::endian::native` equals `std::endian::big`.
+
+{/* source:cpp-types-endian:0003 */}
+Corner case platforms are also supported:
+
+{/* source:cpp-types-endian:0004 */}
+- If all scalar types have `sizeof` equal to `1`, endianness does not matter and all three values, `std::endian::little`, `std::endian::big`, and `std::endian::native` are the same.
+- If the platform uses mixed endian, `std::endian::native` equals neither `std::endian::big` nor `std::endian::little`.
+
+### Possible implementation
+
+{/* source:cpp-types-endian:0005 */}
+```cpp
+enum class endian
+{
+#if defined(_MSC_VER) && !defined(__clang__)
+    little = 0,
+    big    = 1,
+    native = little
+#else
+    little = __ORDER_LITTLE_ENDIAN__,
+    big    = __ORDER_BIG_ENDIAN__,
+    native = __BYTE_ORDER__
+#endif
+};
+```
+
+### Notes
+
+{/* source:cpp-types-endian:0006 */}
+| [Feature-test](/docs/cpp/library/utility/feature_test) macro | Value | Std | Feature |
+| --- | ---: | --- | --- |
+| [`__cpp_lib_endian`](/docs/cpp/library/feature_test#cpp_lib_endian) | [`201907L`](/docs/cpp/library/compiler_support/20#cpp_lib_endian_201907L) | (C++20) | `std::endian` |
+
+### Example
+
+{/* source:cpp-types-endian:0007 */}
+```cpp
+#include <bit>
+#include <iostream>
+ 
+int main()
+{
+    if constexpr (std::endian::native == std::endian::big)
+        std::cout << "big-endian\n";
+    else if constexpr (std::endian::native == std::endian::little)
+        std::cout << "little-endian\n";
+    else
+        std::cout << "mixed-endian\n";
+}
+```
+
+Possible output:
+
+```text
+mixed-endian
+```
+
+### See also
+
+{/* source:cpp-types-endian:0008 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`byteswap`](/docs/cpp/library/utility/bit/byteswap) <InlineRevision since="C++23" /></DescriptionTerm>
+    <DescriptionBody>reverses the bytes in the given integer value <br /> (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
+
+[C documentation](/docs/c/library/numeric/endian) for `endian`

@@ -1,0 +1,275 @@
+---
+title: "std::partial_sum"
+description: "Computes the partial sums of the elements in the subranges of the range [first, last) and writes them to the range beginning at d_first."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/partial_sum"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-partial-sum:0000 */}
+<DeclarationDoc>
+Defined in header [`<numeric>`](/docs/cpp/library/headers/numeric)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt, class OutputIt >
+OutputIt partial_sum( InputIt first, InputIt last,
+
+                      OutputIt d_first );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" code={`template< class InputIt, class OutputIt, class BinaryOp >
+OutputIt partial_sum( InputIt first, InputIt last,
+
+                      OutputIt d_first, BinaryOp op );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-partial-sum:0001 */}
+1. 1) If [`first`, `last`) is empty, does nothing.
+
+{/* source:cpp-algorithm-partial-sum:0002 */}
+2. Otherwise, performs the following operations in order:
+   - Creates an accumulator `acc`, whose type is the [value type](/docs/cpp/library/iterator#Types_and_writability) of `InputIt`, and initializes it with `*first`.
+   - Assigns `acc` to `*d_first`.
+   - For each integer `i` in [`1`, `std::distance(first, last)`), performs the following operations in order:
+
+{/* source:cpp-algorithm-partial-sum:0003 */}
+   - a) Computes <InlineRevision until="C++20">`acc + *iter`</InlineRevision><InlineRevision since="C++20">`std::move(acc) + *iter`</InlineRevision>, where `iter` is the next `i`th iterator of `first`.
+
+{/* source:cpp-algorithm-partial-sum:0004 */}
+   - b) Assigns the result to `acc`.
+
+{/* source:cpp-algorithm-partial-sum:0005 */}
+   - c) Assigns `acc`[[1]](/docs/cpp/library/numeric/partial_sum#cite_note-1) to `*dest`, where `dest` is the next `i`th iterator of `d_first`.
+
+{/* source:cpp-algorithm-partial-sum:0006 */}
+3. 2) Same as (1), but computes <InlineRevision until="C++20">`op(acc, *iter)`</InlineRevision><InlineRevision since="C++20">`op(std::move(acc), *iter)`</InlineRevision> instead.
+
+{/* source:cpp-algorithm-partial-sum:0007 */}
+Given `binary_op` as the actual binary operation:
+
+{/* source:cpp-algorithm-partial-sum:0008 */}
+- If any of the following conditions is satisfied, the program is ill-formed:
+
+{/* source:cpp-algorithm-partial-sum:0009 */}
+  - The value type of `InputIt` is not constructible from `*first`.
+  - `acc` is not [writable](/docs/cpp/library/iterator#Types_and_writability) to `d_first`.
+  - The result of <InlineRevision until="C++20">`binary_op(acc, *iter)`</InlineRevision><InlineRevision since="C++20">`binary_op(std::move(acc), *iter)`</InlineRevision> is not implicitly convertible to the value type of `InputIt`.
+
+{/* source:cpp-algorithm-partial-sum:0010 */}
+- Given `d_last` as the iterator to be [returned](/docs/cpp/library/numeric/partial_sum#Return_value), if any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-partial-sum:0011 */}
+  - `binary_op` modifies any element of [`first`, `last`) or [`d_first`, `d_last`).
+  - `binary_op` invalidates any iterator or subrange in [`first`, `last`] or [`d_first`, `d_last`].
+
+{/* source:cpp-algorithm-partial-sum:0012 */}
+1. [↑](/docs/cpp/library/numeric/partial_sum#cite_ref-1) The actual value to be assigned is the result of the assignment in the previous step. We assume the assignment result is `acc` here.
+
+### Parameters
+
+{/* source:cpp-algorithm-partial-sum:0013 */}
+<ParameterList>
+  <Parameter name="first, last">the range of elements to sum</Parameter>
+  <Parameter name="d_first">the beginning of the destination range; may be equal to `first`</Parameter>
+  <Parameter name="op">
+binary operation function object that will be applied. The signature of the function should be equivalent to the following:
+
+`Ret fun(const Type1 &a, const Type2 &b);`
+
+The signature does not need to have `const &`.
+The type `Type1` must be such that an object of type `std::iterator_traits<InputIt>::value_type` can be implicitly converted to `Type1`. The type `Type2` must be such that an object of type `InputIt` can be dereferenced and then implicitly converted to `Type2`. The type `Ret` must be such that an object of type `InputIt` can be dereferenced and assigned a value of type `Ret`.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+- `OutputIt` must meet the requirements of [*LegacyOutputIterator*](/docs/cpp/library/named_req/OutputIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-partial-sum:0014 */}
+Iterator to the element past the last element written, or `d_first` if [`first`, `last`) is empty.
+
+### Complexity
+
+{/* source:cpp-algorithm-partial-sum:0015 */}
+Given `N` as `std::distance(first, last)`:
+
+{/* source:cpp-algorithm-partial-sum:0016 */}
+1. 1) Exactly `N`-1 applications of `operator+`.
+
+{/* source:cpp-algorithm-partial-sum:0017 */}
+2. 2) Exactly `N`-1 applications of the binary function `op`.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-partial-sum:0018 */}
+[`partial_sum (1)`](/docs/cpp/library/numeric/partial_sum#Version_1)
+
+```cpp
+template<class InputIt, class OutputIt>
+constexpr // since C++20
+OutputIt partial_sum(InputIt first, InputIt last, OutputIt d_first)
+{
+    if (first == last)
+        return d_first;
+ 
+    typename std::iterator_traits<InputIt>::value_type sum = *first;
+    *d_first = sum;
+ 
+    while (++first != last)
+    {
+        sum = std::move(sum) + *first; // std::move since C++20
+        *++d_first = sum;
+    }
+ 
+    return ++d_first;
+ 
+    // or, since C++14:
+    // return std::partial_sum(first, last, d_first, std::plus<>());
+}
+```
+
+[`partial_sum (2)`](/docs/cpp/library/numeric/partial_sum#Version_2)
+
+```cpp
+template<class InputIt, class OutputIt, class BinaryOp>
+constexpr // since C++20
+OutputIt partial_sum(InputIt first, InputIt last, 
+                     OutputIt d_first, BinaryOp op)
+{
+    if (first == last)
+        return d_first;
+ 
+    typename std::iterator_traits<InputIt>::value_type acc = *first;
+    *d_first = acc;
+ 
+    while (++first != last)
+    {
+        acc = op(std::move(acc), *first); // std::move since C++20
+        *++d_first = acc;
+    }
+ 
+    return ++d_first;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-partial-sum:0019 */}
+`acc` was introduced because of the resolution of [LWG issue 539](https://cplusplus.github.io/LWG/issue539). The reason of using `acc` rather than directly summing up the results (i.e. `*(d_first + 2) = (*first + *(first + 1)) + *(first + 2);`) is because the semantic of the latter is confusing if the following types mismatch:
+
+{/* source:cpp-algorithm-partial-sum:0020 */}
+- the value type of `InputIt`
+- the writable type(s) of `OutputIt`
+- the types of the parameters of `operator+` or `op`
+- the return type of `operator+` or `op`
+
+{/* source:cpp-algorithm-partial-sum:0021 */}
+`acc` serves as the intermediate object to store and provide the values for each step of the computation:
+
+{/* source:cpp-algorithm-partial-sum:0022 */}
+- its type is the value type of `InputIt`
+- it is written to `d_first`
+- its value is passed to `operator+` or `op`
+- it stores the return value of `operator+` or `op`
+
+{/* source:cpp-algorithm-partial-sum:0023 */}
+```cpp
+enum not_int { x = 1, y = 2 };
+ 
+char i_array[4] = {100, 100, 100, 100};
+not_int e_array[4] = {x, x, y, y};
+int  o_array[4];
+ 
+// OK: uses operator+(char, char) and assigns char values to int array
+std::partial_sum(i_array, i_array + 4, o_array);
+ 
+// Error: cannot assign not_int values to int array
+std::partial_sum(e_array, e_array + 4, o_array);
+ 
+// OK: performs conversions when needed
+// 1. creates “acc” of type char (the value type)
+// 2. the char arguments are used for long multiplication (char -> long)
+// 3. the long product is assigned to “acc” (long -> char)
+// 4. “acc” is assigned to an element of “o_array” (char -> int)
+// 5. go back to step 2 to process the remaining elements in the input range
+std::partial_sum(i_array, i_array + 4, o_array, std::multiplies<long>{});
+```
+
+### Example
+
+{/* source:cpp-algorithm-partial-sum:0024 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v(10, 2); // v = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
+ 
+    std::cout << "The first " << v.size() << " even numbers are: ";
+    // write the result to the cout stream
+    std::partial_sum(v.cbegin(), v.cend(), 
+                     std::ostream_iterator<int>(std::cout, " "));
+    std::cout << '\n';
+ 
+    // write the result back to the vector v
+    std::partial_sum(v.cbegin(), v.cend(),
+                     v.begin(), std::multiplies<int>());
+ 
+    std::cout << "The first " << v.size() << " powers of 2 are: ";
+    for (int n : v)
+        std::cout << n << ' ';
+    std::cout << '\n';
+}
+```
+
+Output:
+
+```text
+The first 10 even numbers are: 2 4 6 8 10 12 14 16 18 20 
+The first 10 powers of 2 are: 2 4 8 16 32 64 128 256 512 1024
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-partial-sum:0025 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-partial-sum:0026 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={242} standard="C++98">
+    <PublishedBehavior>`op` could not have side effects</PublishedBehavior>
+    <CorrectedBehavior>it cannot modify the ranges involved</CorrectedBehavior>
+  </DefectReport>
+  <DefectReport kind="lwg" id={539} standard="C++98">
+    <PublishedBehavior>the type requirements needed for the result evaluations and assignments to be valid were missing</PublishedBehavior>
+    <CorrectedBehavior>added</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-partial-sum:0027 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`adjacent_difference`](/docs/cpp/library/numeric/adjacent_difference)</DescriptionTerm>
+    <DescriptionBody>computes the differences between adjacent elements in a range (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`accumulate`](/docs/cpp/library/numeric/accumulate)</DescriptionTerm>
+    <DescriptionBody>sums up or folds a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`inclusive_scan`](/docs/cpp/library/numeric/inclusive_scan) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>similar to `std::partial_sum`, includes the `i`th input element in the `i`th sum (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`exclusive_scan`](/docs/cpp/library/numeric/exclusive_scan) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>similar to `std::partial_sum`, excludes the `i`th input element from the `i`th sum (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>

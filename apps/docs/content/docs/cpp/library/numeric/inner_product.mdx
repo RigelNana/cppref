@@ -1,0 +1,184 @@
+---
+title: "std::inner_product"
+description: "Computes inner product (i.e. sum of products) or performs ordered map/reduce operation on the range [first1, last1) and the range of std::distance(first1, last1) elements beginning at first2."
+source_url: "https://en.cppreference.com/w/cpp/algorithm/inner_product"
+language: "C++"
+---
+
+{/* source:cpp-algorithm-inner-product:0000 */}
+<DeclarationDoc>
+Defined in header [`<numeric>`](/docs/cpp/library/headers/numeric)
+
+  <Declaration id="1" language="cpp" code={`template< class InputIt1, class InputIt2, class T >
+T inner_product( InputIt1 first1, InputIt1 last1,
+
+                 InputIt2 first2, T init );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+
+  <Declaration id="2" language="cpp" code={`template< class InputIt1, class InputIt2, class T,
+          class BinaryOp1, class BinaryOp2 >
+T inner_product( InputIt1 first1, InputIt1 last1,
+                 InputIt2 first2, T init,
+
+                 BinaryOp1 op1, BinaryOp2 op2 );`} />
+  <InlineRevision since="C++20">constexpr</InlineRevision>
+</DeclarationDoc>
+
+{/* source:cpp-algorithm-inner-product:0001 */}
+Computes inner product (i.e. sum of products) or performs ordered map/reduce operation on the range [`first1`, `last1`) and the range of `std::distance(first1, last1)` elements beginning at `first2`.
+
+{/* source:cpp-algorithm-inner-product:0002 */}
+1. 1) Initializes the accumulator `acc` (of type `T`) with the initial value `init` and then modifies it with the expression <InlineRevision until="C++20">`acc = acc + (*i1) * (*i2)`</InlineRevision><InlineRevision since="C++20">`acc = std::move(acc) + (*i1) * (*i2)`</InlineRevision> for every iterator `i1` in the range [`first1`, `last1`) in order and its corresponding iterator `i2` in the range beginning at `first2`. For built-in meaning of `+` and `*`, this computes inner product of the two ranges.
+
+{/* source:cpp-algorithm-inner-product:0003 */}
+2. 2) Initializes the accumulator `acc` (of type `T`) with the initial value `init` and then modifies it with the expression <InlineRevision until="C++20">`acc = op1(acc, op2(*i1, *i2))`</InlineRevision><InlineRevision since="C++20">`acc = op1(std::move(acc), op2(*i1, *i2))`</InlineRevision> for every iterator `i1` in the range [`first1`, `last1`) in order and its corresponding iterator `i2` in the range beginning at `first2`.
+
+{/* source:cpp-algorithm-inner-product:0004 */}
+Given `last2` as the `std::distance(first1, last1)`th next iterator of `first2`, if any of the following conditions is satisfied, the behavior is undefined:
+
+{/* source:cpp-algorithm-inner-product:0005 */}
+- `T` is not [*CopyConstructible*](/docs/cpp/library/named_req/CopyConstructible).
+- `T` is not [*CopyAssignable*](/docs/cpp/library/named_req/CopyAssignable).
+- `op1` or `op2` modifies any element of [`first1`, `last1`) or [`first2`, `last2`).
+- `op1` or `op2` invalidates any iterator or subrange in [`first1`, `last1`] or [`first2`, `last2`].
+
+### Parameters
+
+{/* source:cpp-algorithm-inner-product:0006 */}
+<ParameterList>
+  <Parameter name="first1, last1">the first range of elements</Parameter>
+  <Parameter name="first2">the beginning of the second range of elements</Parameter>
+  <Parameter name="init">initial value of the sum of the products</Parameter>
+  <Parameter name="op1">
+binary operation function object that will be applied. This "sum" function takes a value returned by `op2` and the current value of the accumulator and produces a new value to be stored in the accumulator. The signature of the function should be equivalent to the following:
+
+`Ret fun(const Type1 &a, const Type2 &b);`
+
+The signature does not need to have `const &`.
+The types `Type1` and `Type2` must be such that objects of types `T` and `Type3` can be implicitly converted to `Type1` and `Type2` respectively. The type `Ret` must be such that an object of type `T` can be assigned a value of type `Ret`.
+  </Parameter>
+  <Parameter name="op2">
+binary operation function object that will be applied. This "product" function takes one value from each range and produces a new value. The signature of the function should be equivalent to the following:
+
+`Ret fun(const Type1 &a, const Type2 &b);`
+
+The signature does not need to have `const &`.
+The types `Type1` and `Type2` must be such that objects of types `InputIt1` and `InputIt2` can be dereferenced and then implicitly converted to `Type1` and `Type2` respectively. The type `Ret` must be such that an object of type `Type3` can be assigned a value of type `Ret`.
+  </Parameter>
+</ParameterList>
+
+Type requirements
+
+- `InputIt1, InputIt2` must meet the requirements of [*LegacyInputIterator*](/docs/cpp/library/named_req/InputIterator).
+
+### Return value
+
+{/* source:cpp-algorithm-inner-product:0007 */}
+`acc` after all modifications.
+
+### Possible implementation
+
+{/* source:cpp-algorithm-inner-product:0008 */}
+[`inner_product (1)`](/docs/cpp/library/numeric/inner_product#Version_1)
+
+```cpp
+template<class InputIt1, class InputIt2, class T>
+constexpr // since C++20
+T inner_product(InputIt1 first1, InputIt1 last1, InputIt2 first2, T init)
+{
+    while (first1 != last1)
+    {
+        init = std::move(init) + (*first1) * (*first2); // std::move since C++20
+        ++first1;
+        ++first2;
+    }
+ 
+    return init;
+}
+```
+
+[`inner_product (2)`](/docs/cpp/library/numeric/inner_product#Version_2)
+
+```cpp
+template<class InputIt1, class InputIt2, class T,
+         class BinaryOp1, class BinaryOp2>
+constexpr // since C++20
+T inner_product(InputIt1 first1, InputIt1 last1, InputIt2 first2, T init,
+                BinaryOp1 op1, BinaryOp2 op2)
+{
+    while (first1 != last1)
+    {
+        init = op1(std::move(init), op2(*first1, *first2)); // std::move since C++20
+        ++first1;
+        ++first2;
+    }
+ 
+    return init;
+}
+```
+
+### Notes
+
+{/* source:cpp-algorithm-inner-product:0009 */}
+The parallelizable version of this algorithm, [`std::transform_reduce`](/docs/cpp/library/numeric/transform_reduce), requires `op1` and `op2` to be commutative and associative, but `std::inner_product` makes no such requirement, and always performs the operations in the order given.
+
+### Example
+
+{/* source:cpp-algorithm-inner-product:0010 */}
+```cpp
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> a{0, 1, 2, 3, 4};
+    std::vector<int> b{5, 4, 2, 3, 1};
+ 
+    int r1 = std::inner_product(a.begin(), a.end(), b.begin(), 0);
+    std::cout << "Inner product of a and b: " << r1 << '\n';
+ 
+    int r2 = std::inner_product(a.begin(), a.end(), b.begin(), 0,
+                                std::plus<>(), std::equal_to<>());
+    std::cout << "Number of pairwise matches between a and b: " <<  r2 << '\n';
+}
+```
+
+Output:
+
+```text
+Inner product of a and b: 21
+Number of pairwise matches between a and b: 2
+```
+
+### Defect reports
+
+{/* source:cpp-algorithm-inner-product:0011 */}
+The following behavior-changing defect reports were applied retroactively to previously published C++ standards.
+
+{/* source:cpp-algorithm-inner-product:0012 */}
+<DefectReportList>
+  <DefectReport kind="lwg" id={242} standard="C++98">
+    <PublishedBehavior>`op1` and `op2` could not have side effects</PublishedBehavior>
+    <CorrectedBehavior>they cannot modify the ranges involved</CorrectedBehavior>
+  </DefectReport>
+</DefectReportList>
+
+### See also
+
+{/* source:cpp-algorithm-inner-product:0013 */}
+<DescriptionList>
+  <DescriptionItem>
+    <DescriptionTerm>[`transform_reduce`](/docs/cpp/library/numeric/transform_reduce) <InlineRevision since="C++17" /></DescriptionTerm>
+    <DescriptionBody>applies an invocable, then reduces out of order (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`accumulate`](/docs/cpp/library/numeric/accumulate)</DescriptionTerm>
+    <DescriptionBody>sums up or folds a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+  <DescriptionItem>
+    <DescriptionTerm>[`partial_sum`](/docs/cpp/library/numeric/partial_sum)</DescriptionTerm>
+    <DescriptionBody>computes the partial sum of a range of elements (function template)</DescriptionBody>
+  </DescriptionItem>
+</DescriptionList>
